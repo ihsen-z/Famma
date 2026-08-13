@@ -10,7 +10,7 @@
 | 0 — Reprise en main | **TERMINÉE** | Dépôt Git à `E:\Ecom`, `.gitattributes` (LF), `.env` local généré et ignoré |
 | 1 — Stack démarrable | **TERMINÉE** | WordPress 7.0.4 / PHP 8.3.33 / MariaDB 11.4 / WooCommerce 11.0.1 / Kadence 1.5.2 + `famma-child`. Boutique en TND à 3 décimales, COD seul moyen de paiement, livraison 0 TND, catalogue vide |
 | 2 — Boucle qualité | **TERMINÉE** | `scripts/lint.sh` conteneurisé. phpcs : **0 erreur, 0 avertissement** (251 au départ) |
-| 3 — Règles métier | **PARTIELLE** | P0-2, P1-1 et P1-2 corrigés et vérifiés par une vraie commande au navigateur. Reste D6 (politique de stock) et le §34 (e-mails transactionnels : aucun MTA configuré) |
+| 3 — Règles métier | **TERMINÉE** | Règle COD, checkout Tunisie, politique de stock (D6) et e-mails locaux vérifiés à l'exécution |
 | 4 — CAPI Meta | à faire | dépend des identifiants propriétaire (D7) |
 | 5 — Thème & design | amorcée | `famma-child` créé (jetons, CTA collant, RTL) ; le design réel reste à faire |
 | 6 — Documentation | amorcée | `ARCHITECTURE.md` et `ORDER-WORKFLOW.md` réalignés sur le code réel |
@@ -21,7 +21,7 @@ Décisions D1 à D5 : voir `DECISIONS.md` (ADR-001 à ADR-005).
 
 | # | Constat | Statut |
 |---|---|---|
-| P0-1 | Pont `.env` → constantes inexistant | **corrigé** — vérifié par `docker compose config` |
+| P0-1 | Pont `.env` → constantes inexistant | **corrigé** — première correction annoncée à tort (`docker compose config` ne prouve que l'interpolation YAML ; `wp-config.php` ne contenait aucune constante). Refait via un mu-plugin et prouvé en bout de chaîne : gtag et WhatsApp apparaissent avec une valeur, disparaissent sans |
 | P0-2 | COD jamais marquée payée | **confirmé cassé puis corrigé** — voir `ORDER-WORKFLOW.md` |
 | P0-3 | Montages Docker fantômes, `setup.sh` absent | **corrigé** |
 | P0-4 | Aucun dépôt Git | **corrigé** |
@@ -31,10 +31,10 @@ Décisions D1 à D5 : voir `DECISIONS.md` (ADR-001 à ADR-005).
 | — | COD marquée payée dès la création (`processing`) | **découvert au navigateur, corrigé** — violation directe du §12 |
 | — | Bloc « autre adresse de livraison » non nettoyé | **corrigé** |
 | — | E-mail obligatoire, absent des champs requis du §13 | **corrigé** — devenu facultatif |
-| — | Aucun MTA : les e-mails transactionnels ne partent pas | **ouvert** — §34, Mailpit est derrière le profil `tools` et WordPress n'est pas câblé en SMTP |
+| — | Aucun MTA : les e-mails transactionnels ne partent pas | **corrigé** — Mailpit sorti du profil `tools`, PHPMailer routé par mu-plugin. Boîte de réception : `http://localhost:8025` |
 | P1-3 | CAPI non implémentée | **ouvert** — Phase 4 |
 | P1-4 | Textdomain chargé trop tôt | **corrigé** (préventif : aucun `.mo` n'existe encore) |
-| P1-5 | Politique de stock indéfinie | **ouvert** — décision D6. Le stock n'est décrémenté qu'à la livraison |
+| P1-5 | Politique de stock indéfinie | **tranché et implémenté** — réservation à `confirmed`, restitution sur `cancelled` / `refused` / `returned` / `failed-delivery` |
 | P1-6 | Aucun thème | **corrigé** — Kadence + `famma-child` |
 | P2-1 | Scripts inline | **corrigé** — passés par `wp_enqueue_script` |
 | P2-3 | Cookie UTM non plafonné | **corrigé** |

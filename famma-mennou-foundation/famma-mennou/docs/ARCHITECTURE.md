@@ -7,11 +7,36 @@ FAMMA business logic lives in one versioned custom plugin, `famma-core`. Only
 are installed at runtime and ignored.
 
 ## Config flow (no hard-coded secrets)
-`.env` → docker-compose `environment:` → `wp-config` `define()` (via
-`WORDPRESS_CONFIG_EXTRA`) → `Famma\Core\Config` reads the constants. The Meta
-access token is defined server-side and is **never** enqueued to the browser
-(only the pixel *ID* is). Adding a real value later = edit `.env`, `docker
-compose up -d`. No code change.
+
+`.env` → docker-compose `environment:` → **`wp-content/mu-plugins/famma-env.php`**
+`define()` → `Famma\Core\Config` reads the constants. Adding a real value
+later = edit `.env`, `docker compose up -d`. No code change.
+
+The Meta access token is defined server-side and is **never** enqueued to the
+browser (only the pixel *ID* is). Verified by grepping the rendered HTML.
+
+> **Why a mu-plugin and not `WORDPRESS_CONFIG_EXTRA`.** The official WordPress
+> image writes `wp-config.php` only when the volume is empty, and never
+> regenerates it. Anything added to `WORDPRESS_CONFIG_EXTRA` after the first
+> `docker compose up` therefore never reaches PHP. This was verified the hard
+> way: the container had the variable, and `wp-config.php` contained not a
+> single `FAMMA_` constant — nor even `WP_HOME`. A mu-plugin loads before every
+> plugin and is immune to how the config file was generated.
+>
+> `getenv()` is used rather than `$_ENV`: PHP's `variables_order` defaults to
+> `GPCS`, which does not populate `$_ENV`, while `getenv()` always reads the
+> real process environment.
+
+`WP_ENVIRONMENT_TYPE` needs no constant at all — WordPress core reads that
+environment variable directly.
+
+## Local mail
+The WordPress image ships no mail transport, so every transactional email
+failed with `sendmail: can't connect`. `wp-content/mu-plugins/famma-local-mail.php`
+points PHPMailer at the Mailpit container, guarded on
+`wp_get_environment_type() === 'local'` so it can never act elsewhere. Mailpit
+is deliberately **not** behind the `tools` profile for this reason.
+Inbox: `http://localhost:8025`.
 
 ## famma-core layout — état réel
 
