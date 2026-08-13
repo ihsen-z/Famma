@@ -1,0 +1,38 @@
+/* ============================================================
+   FAMMA — jetons du design system (§6, §49)
+   Source de vérité : docs/DESIGN-SYSTEM.md
+   Toute couleur, espacement ou rayon utilisé ailleurs doit venir
+   d'ici. Aucune valeur littérale en dur dans les autres feuilles.
+   ============================================================ */
+
+:root {
+	/* --- Marque --- */
+	--famma-blue: #0B1F3A;      /* primaire — bleu tech sombre */
+	--famma-blue-600: #12315C;
+	--famma-orange: #FF7A00;    /* accent uniquement — CTA, mises en avant */
+	--famma-white: #FFFFFF;
+
+	/* --- Neutres --- */
+	--famma-ink: #12161C;
+	--famma-muted: #5B6470;
+	--famma-line: #E6E9EE;
+	--famma-bg: #F7F8FA;
+
+	/* --- Retour d'information --- */
+	--famma-success: #1FA65A;   /* COD / livré */
+	--famma-warning: #E6A700;
+	--famma-danger: #D64545;
+
+	/* --- Typographie --- */
+	--famma-font: system-ui, "Segoe UI", Tahoma, "Noto Sans Arabic", sans-serif;
+	--famma-radius: 12px;
+	--famma-shadow: 0 4px 14px rgba(11, 31, 58, 0.10);
+
+	/* --- Échelle d'espacement --- */
+	--sp-1: 4px;
+	--sp-2: 8px;
+	--sp-3: 12px;
+	--sp-4: 16px;
+	--sp-6: 24px;
+	--sp-8: 32px;
+}

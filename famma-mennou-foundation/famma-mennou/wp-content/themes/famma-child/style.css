@@ -1,0 +1,81 @@
+/*
+Theme Name:   FAMMA Child
+Theme URI:    https://github.com/famma-mennou
+Description:  Thème enfant FAMMA (parent : Kadence). Présentation uniquement — toute la logique métier vit dans le plugin famma-core. Mobile-first, bilingue FR / Derja, RTL par propriétés logiques.
+Author:       FAMMA
+Version:      0.1.0
+Template:     kadence
+License:      GNU General Public License v2 or later
+License URI:  http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain:  famma-child
+Tags:         e-commerce, rtl-language-support, translation-ready
+*/
+
+/* ============================================================
+   Les tokens du design system sont dans assets/css/tokens.css
+   (chargé avant cette feuille). Ici : uniquement les surcharges
+   de présentation.
+
+   RTL : n'utiliser QUE des propriétés logiques (margin-inline,
+   padding-inline, inset-inline, text-align: start/end) afin que
+   l'arabe s'affiche correctement sans feuille dupliquée.
+   ============================================================ */
+
+/* --- Accessibilité : cible tactile minimale (§10, §44) --- */
+.wp-block-button__link,
+.wc-block-components-button,
+button,
+input[type="submit"],
+.button {
+	min-block-size: 48px;
+	min-inline-size: 48px;
+}
+
+/* --- CTA principal « Commander / أطلب توا » (§13, §49) --- */
+.famma-cta,
+.woocommerce .single_add_to_cart_button,
+.woocommerce #place_order {
+	background-color: var(--famma-orange);
+	color: var(--famma-white);
+	border-radius: var(--famma-radius);
+	font-weight: 700;
+	padding-block: var(--sp-3);
+	padding-inline: var(--sp-6);
+}
+
+/* --- Focus visible : jamais supprimé (§44) --- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+	outline: 3px solid var(--famma-orange);
+	outline-offset: 2px;
+}
+
+/* --- CTA collant mobile (§13, §30) -------------------------
+   Implémenté ici, et non via une fonction du thème parent :
+   la présentation ne doit dépendre d'aucun palier gratuit/Pro.
+   ---------------------------------------------------------- */
+@media (max-width: 767px) {
+	.famma-sticky-cta {
+		position: fixed;
+		inset-inline: 0;
+		inset-block-end: 0;
+		z-index: 998;
+		display: flex;
+		gap: var(--sp-2);
+		align-items: center;
+		padding: var(--sp-2) var(--sp-4);
+		background: var(--famma-white);
+		border-block-start: 1px solid var(--famma-line);
+		box-shadow: 0 -4px 14px rgba(11, 31, 58, 0.10);
+		padding-block-end: calc(var(--sp-2) + env(safe-area-inset-bottom));
+	}
+
+	/* Le bouton WhatsApp flottant de famma-core ne doit pas
+	   recouvrir le CTA collant. */
+	body:has(.famma-sticky-cta) .famma-wa {
+		inset-block-end: 80px;
+	}
+}
