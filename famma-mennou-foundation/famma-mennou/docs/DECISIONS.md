@@ -1,0 +1,100 @@
+# Décisions d'architecture (ADR)
+
+Chaque décision est datée, argumentée, et déclarée **réversible ou non**. Une décision non documentée ici n'a pas été prise.
+
+---
+
+## ADR-001 — Racine Git et dépôt distant
+**Date** : 2026-08-13 · **Statut** : ACTÉE (propriétaire) · **Réversible** : oui
+
+**Décision** : racine Git = `E:\Ecom`. Dépôt distant **privé**.
+
+**Conséquences**
+- Le dépôt englobe `MASTER-PROMPT.md`, `ClaudeMemo.md`, `CLAUDE.md` **et** le projet imbriqué `famma-mennou-foundation/famma-mennou/`.
+- Le `.gitignore` existant du projet reste valide : ses motifs à barre oblique initiale (`/wp-content/plugins/*`) sont relatifs au dossier qui le contient, pas à la racine Git. Un second `.gitignore` racine couvre les artefacts de niveau supérieur.
+- **`gh` (GitHub CLI) n'est pas installé** (voir `ENVIRONMENT-AUDIT.md`). L'agent ne peut donc pas créer le dépôt distant, et le §40 interdit de demander un mot de passe. Deux chemins possibles, au choix du propriétaire :
+  1. installer GitHub CLI puis `gh auth login` (flux d'authentification sécurisé), l'agent crée ensuite `famma-mennou` en privé ;
+  2. créer le dépôt privé à la main sur github.com et fournir l'URL — l'agent configure le `remote`.
+- **Aucun `git push` ne sera exécuté sans feu vert explicite**, conformément à `ClaudeMemo.md`.
+
+---
+
+## ADR-002 — Spécification de référence
+**Date** : 2026-08-13 · **Statut** : ACTÉE (propriétaire) · **Réversible** : non
+
+**Décision** : `MASTER-PROMPT.md` (64 sections) est versionné à la racine du dépôt et devient la source de vérité des `§n` cités par toute la documentation.
+
+**Hiérarchie des règles en cas de conflit** : `MASTER-PROMPT.md` (le *quoi*) → `ClaudeMemo.md` (le *comment*, qualité et sécurité) → les docs de `docs/` (l'*état réel implémenté*).
+
+---
+
+## ADR-003 — Type de checkout WooCommerce
+**Date** : 2026-08-13 · **Statut** : ACTÉE (agent, §52) · **Réversible** : oui, coût contenu
+
+**Décision** : **checkout classique (shortcode `[woocommerce_checkout]`)** pour le MVP, et non le checkout en blocs.
+
+**Options évaluées**
+
+| Critère (§10, §13, §23) | Checkout blocs | Checkout classique |
+|---|---|---|
+| Retirer les champs inutiles (société, adresse 2, code postal, **pays**) | Impossible pour les champs d'adresse du cœur ; l'API `woocommerce_register_additional_checkout_field` **ajoute** des champs, elle n'en retire pas | `woocommerce_checkout_fields` : contrôle total |
+| Sélecteur de gouvernorat | via `woocommerce_states` (fonctionne), mais le champ **Pays** reste imposé | `woocommerce_states` + suppression du pays |
+| Validation du téléphone tunisien | callbacks Store API, plus indirects | `woocommerce_after_checkout_validation`, direct |
+| Poids JS sur connexion mobile lente | bundle React du checkout | jQuery + script Woo, nettement plus léger |
+| Code déjà écrit dans `famma-core` | à réécrire intégralement | **fonctionne tel quel** |
+| Trajectoire WooCommerce | défaut des nouvelles installations | toujours pris en charge, aucune date de retrait annoncée |
+
+**Justification** : le checkout est le point de friction n°1 d'une boutique COD tunisienne mobile-first sur réseau lent (§10, §47). Le checkout classique donne le contrôle total des champs exigé par le §13 *et* la charge JS la plus faible. Le checkout en blocs impose le champ Pays — inutile pour une boutique qui ne vend qu'en Tunisie — et n'apporte aucun bénéfice ici puisqu'il n'y a pas de passerelle de paiement en ligne à intégrer (§2).
+
+**Risque assumé** : WooCommerce fait des blocs le défaut des nouvelles installations. Le classique reste livré et supporté, sans retrait annoncé. **Non vérifié contre la documentation officielle** — Context7 n'est pas connecté (§53). À revalider dès la Phase 1 sur la version réellement installée.
+
+**Plan de sortie** : la bascule vers les blocs ne toucherait que la classe `Tunisia` de `famma-core`. Rien d'autre n'en dépend.
+
+---
+
+## ADR-004 — Thème
+**Date** : 2026-08-13 · **Statut** : ACTÉE (agent, §52) · **Réversible** : oui
+
+**Décision** : **Kadence** (gratuit, GPL) + thème enfant **`famma-child`** versionné dans le dépôt.
+
+**Options évaluées (§24)**
+
+| Thème | Perf. | Woo (version gratuite) | RTL | Éditeur de blocs | Verdict |
+|---|---|---|---|---|---|
+| Storefront | bonne | référence officielle | oui | limité | **Rejeté** — UX commerciale mobile datée, peu de contrôle sans code |
+| Astra | très bonne | contrôle Woo largement réservé à Astra Pro | oui | correct | **Rejeté** — trop de fonctions derrière le payant (§24 : gratuit uniquement) |
+| Blocksy | excellente | offre gratuite très généreuse | oui | correct | **Retenu en repli** — second choix assumé |
+| **Kadence** | excellente | meilleur contrôle des gabarits Woo en version gratuite | oui | bon, sans constructeur de pages | **CHOISI** |
+
+**Justification** : Kadence offre le meilleur rapport contrôle-des-gabarits-WooCommerce / poids en version gratuite, un RTL natif, et fonctionne avec Gutenberg **sans constructeur de pages** — ce qu'exige le §25. Sa base documentaire est la plus large des quatre, ce qui compte pour la maintenabilité à un seul développeur (§26 q.5).
+
+**Garde-fous**
+- Toute la logique métier reste dans `famma-core` ; `famma-child` ne fait que de la présentation (`ClaudeMemo.md` règle 6). Le thème est donc **remplaçable sans toucher au métier**.
+- Le CTA collant mobile (§13, §30) est implémenté dans le CSS de `famma-child`, pas via une fonction du thème : il ne dépend d'aucun palier gratuit/Pro.
+- La répartition exacte gratuit/Pro des fonctions Kadence sera **vérifiée à l'installation** (Context7 indisponible).
+
+---
+
+## ADR-005 — Multilingue et RTL
+**Date** : 2026-08-13 · **Statut** : ACTÉE (propriétaire : « plugin i18n gratuit, dialecte tunisien ») · **Réversible** : oui, coût élevé après saisie du contenu
+
+**Décision** : **TranslatePress (version gratuite)**. Langue par défaut **Français**, langue additionnelle unique **Arabe (Tunisie)**. Traduction **humaine** uniquement.
+
+**Options évaluées**
+
+| Solution | Coût | Produits WooCommerce | Verdict |
+|---|---|---|---|
+| Polylang gratuit | gratuit | **l'extension WooCommerce est payante** | **Rejeté** — inutilisable sur une boutique |
+| WPML / Weglot | payant | oui | **Rejeté** — §24/§26 : gratuit uniquement |
+| **TranslatePress gratuit** | gratuit | traduit tout le front, y compris les chaînes Woo | **CHOISI** |
+
+**Justification** : la version gratuite de TranslatePress autorise **exactement une langue additionnelle** — soit précisément le besoin (FR + Derja). Elle traduit le rendu final, ce qui couvre WooCommerce sans extension payante.
+
+**Contraintes imposées par ce choix**
+- **Traduction automatique désactivée**. Le §5 interdit la traduction machine de la copie commerciale : la Derja est rédigée par un humain.
+- Les traductions vivent dans les tables propres à TranslatePress → elles doivent entrer dans le périmètre des sauvegardes (§36) et du plan de migration (§43).
+- Les chaînes d'interface de `famma-core` restent traduites par `.po`/`.mo` sous `famma-core/languages/`, **pas** par TranslatePress — le domaine `famma-core` reste la seule source pour le code.
+- RTL : piloté par la locale `ar`, avec des propriétés logiques CSS (`margin-inline`, `padding-inline`) pour une feuille de style unique (`DESIGN-SYSTEM.md`).
+- Sélecteur de langue : dans l'en-tête, cible tactile ≥ 48 px (§10).
+
+**À inscrire dans `PLUGIN-REGISTER.md`** à l'installation (§26).
