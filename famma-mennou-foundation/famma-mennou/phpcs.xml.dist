@@ -25,11 +25,38 @@
 
 	<rule ref="WordPress">
 		<!--
-			Le plugin est volontairement un fichier unique consolidé
-			(ClaudeMemo règle 7) : la convention de nommage class-*.php ne
-			s'applique donc pas. Exclusion assumée et documentée.
+			Les trois exclusions ci-dessous découlent d'un seul choix, assumé
+			et documenté : famma-core est un fichier unique consolidé
+			(ClaudeMemo règle 7, docs/ARCHITECTURE.md). Un autoloader ou un
+			découpage prématuré est la cause n°1 d'erreur fatale à
+			l'activation (doublon de classe). À réévaluer si le plugin est
+			scindé en Phase 6.
 		-->
 		<exclude name="WordPress.Files.FileName"/>
+		<exclude name="Generic.Files.OneObjectStructurePerFile"/>
+		<exclude name="Universal.Files.SeparateFunctionsFromOO"/>
+	</rule>
+
+	<!--
+		Fonctions d'assainissement fournies par WooCommerce : phpcs ne les
+		connaît pas et considère donc l'entrée comme non assainie.
+	-->
+	<rule ref="WordPress.Security.ValidatedSanitizedInput">
+		<properties>
+			<property name="customSanitizingFunctions" type="array">
+				<element value="wc_clean"/>
+				<element value="wc_format_decimal"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Capacité déclarée dynamiquement par WooCommerce, inconnue de phpcs. -->
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="edit_product"/>
+			</property>
+		</properties>
 	</rule>
 
 	<rule ref="PHPCompatibilityWP"/>
