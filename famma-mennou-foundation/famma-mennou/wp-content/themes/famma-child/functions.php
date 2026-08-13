@@ -139,6 +139,34 @@ function famma_child_head_icons(): void {
 	printf( '<link rel="apple-touch-icon" href="%s" />' . "\n", esc_url( $img . 'famma-favicon.svg' ) );
 	printf( '<meta name="theme-color" content="%s" />' . "\n", esc_attr( '#0B1F3A' ) );
 }
+
+/**
+ * Déclare les métadonnées de partage social (§16).
+ *
+ * Volontairement minimal, et neutralisé dès qu'une extension SEO est active :
+ * deux jeux de balises Open Graph concurrents valent moins qu'aucun.
+ *
+ * @return void
+ */
+function famma_child_open_graph(): void {
+	if ( defined( 'WPSEO_VERSION' ) || defined( 'RANK_MATH_VERSION' ) || defined( 'SEOPRESS_VERSION' ) ) {
+		return;
+	}
+
+	$title = is_front_page() ? get_bloginfo( 'name' ) : wp_get_document_title();
+	$image = get_stylesheet_directory_uri() . '/assets/img/famma-og.png';
+
+	printf( '<meta property="og:site_name" content="%s" />' . "\n", esc_attr( get_bloginfo( 'name' ) ) );
+	printf( '<meta property="og:title" content="%s" />' . "\n", esc_attr( $title ) );
+	printf( '<meta property="og:type" content="%s" />' . "\n", esc_attr( is_singular( 'product' ) ? 'product' : 'website' ) );
+	printf( '<meta property="og:url" content="%s" />' . "\n", esc_url( home_url( add_query_arg( array() ) ) ) );
+	printf( '<meta property="og:locale" content="%s" />' . "\n", esc_attr( str_replace( '-', '_', get_bloginfo( 'language' ) ) ) );
+	printf( '<meta property="og:image" content="%s" />' . "\n", esc_url( $image ) );
+	printf( '<meta property="og:image:width" content="%s" />' . "\n", '1200' );
+	printf( '<meta property="og:image:height" content="%s" />' . "\n", '630' );
+	printf( '<meta name="twitter:card" content="%s" />' . "\n", 'summary_large_image' );
+}
+add_action( 'wp_head', 'famma_child_open_graph', 3 );
 add_action( 'wp_head', 'famma_child_head_icons', 2 );
 
 /**

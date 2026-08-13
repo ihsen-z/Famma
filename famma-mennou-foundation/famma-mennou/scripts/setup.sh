@@ -206,6 +206,11 @@ $WP eval-file /scripts/create-pages.php
 log "Navigation"
 $WP eval-file /scripts/create-menus.php
 
+log "Image de partage social (§16)"
+# Dans le conteneur `wordpress`, pas celui de WP-CLI : lui seul embarque GD
+# avec les polices URW nécessaires au rendu du texte.
+docker compose exec -T wordpress php /scripts/generate-og-image.php
+
 # ------------------------------------------------------------
 # 7. Catalogue vide (§58)
 # ------------------------------------------------------------

@@ -82,6 +82,9 @@ services:
       - ./wp-content/plugins/famma-core:/var/www/html/wp-content/plugins/famma-core
       - ./wp-content/themes/famma-child:/var/www/html/wp-content/themes/famma-child
       - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
+      # Les scripts sont aussi montes ici : la generation de l'image de
+      # partage utilise GD et les polices URW, absentes de l'image wp-cli.
+      - ./scripts:/scripts
       - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
 
   wpcli:
