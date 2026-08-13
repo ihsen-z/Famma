@@ -27,7 +27,13 @@ services:
       retries: 10
 
   wordpress:
-    image: wordpress:6.8-php8.3-apache
+    # WooCommerce courant exige WordPress 6.9 minimum. On epingle la
+    # branche stable actuelle (7.0) plutot qu'un tag flottant, pour rester
+    # reproductible (§28, §54). A garder aligne avec le coeur reellement
+    # installe dans le volume wp_core : l'image officielle ne met PAS a
+    # jour un site existant, elle ne copie les fichiers que si le
+    # repertoire est vide.
+    image: wordpress:7.0-php8.3-apache
     container_name: famma_wp
     restart: unless-stopped
     depends_on:
