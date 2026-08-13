@@ -53,6 +53,153 @@ textarea:focus-visible {
 	outline-offset: 2px;
 }
 
+/* ============================================================
+   Page d'accueil « catalogue vide » (§9)
+   Mobile-first : les règles de base visent le petit écran, les
+   media queries n'ajoutent que ce qui est nécessaire au-dessus.
+   ============================================================ */
+
+/* Kadence affiche un bandeau de titre au-dessus du contenu. Sur la page
+   d'accueil il ferait doublon avec le héros et repousserait le message de
+   marque sous la ligne de flottaison sur mobile. */
+.home .entry-hero {
+	display: none;
+}
+
+.famma-hero {
+	padding-block: var(--sp-8);
+	padding-inline: var(--sp-4);
+	text-align: center;
+	background: linear-gradient(180deg, var(--famma-blue) 0%, var(--famma-blue-600) 100%);
+	color: var(--famma-white);
+}
+
+.famma-hero__kicker {
+	margin-block-end: var(--sp-2);
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: var(--famma-orange);
+}
+
+.famma-hero__title {
+	margin-block: 0 var(--sp-3);
+	font-size: clamp(1.75rem, 6vw, 2.75rem);
+	line-height: 1.15;
+	color: var(--famma-white);
+}
+
+.famma-hero__lead {
+	max-inline-size: 46ch;
+	margin-inline: auto;
+	color: var(--famma-line);
+}
+
+/* --- Bandeau de confiance (§48) --- */
+.famma-chips {
+	padding-block: var(--sp-6);
+	padding-inline: var(--sp-4);
+	background: var(--famma-bg);
+}
+
+.famma-contact {
+	padding-inline: var(--sp-4);
+	background: var(--famma-bg);
+	text-align: center;
+}
+
+.famma-chip {
+	margin: 0;
+	padding: var(--sp-4);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+	text-align: center;
+	line-height: 1.5;
+}
+
+.famma-chip strong {
+	color: var(--famma-blue);
+}
+
+/* Le bloc colonnes de WordPress passe en pile sous 782px ; on garde
+   simplement un espacement lisible entre les cartes empilées. */
+.famma-chips__row {
+	gap: var(--sp-3);
+}
+
+/* --- Sections de contenu --- */
+.famma-soon,
+.famma-how,
+.famma-faq,
+.famma-contact {
+	padding-block: var(--sp-8);
+}
+
+.famma-section__title {
+	margin-block-end: var(--sp-3);
+	color: var(--famma-blue);
+	font-size: clamp(1.35rem, 4.5vw, 1.9rem);
+}
+
+.famma-soon__ar {
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: var(--famma-orange);
+}
+
+.famma-steps {
+	margin-block-start: var(--sp-4);
+	padding-inline-start: var(--sp-6);
+}
+
+.famma-steps li {
+	margin-block-end: var(--sp-2);
+}
+
+.famma-faq .wp-block-details {
+	padding: var(--sp-3) var(--sp-4);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+	margin-block-end: var(--sp-2);
+}
+
+.famma-faq summary {
+	cursor: pointer;
+	font-weight: 600;
+	color: var(--famma-blue);
+	/* Cible tactile confortable (§10, §44). */
+	min-block-size: 32px;
+	padding-block: var(--sp-2);
+}
+
+/* --- Sélecteur de langue flottant (TranslatePress) ----------
+   Le réglage « bottom-left » du plugin ne s'applique pas à son
+   sélecteur v2, qui se positionne par variables CSS. On le pousse
+   donc à l'opposé du bouton WhatsApp, qui occupe le bas de fin de
+   ligne. À remplacer par un sélecteur en en-tête en Phase 5 (§9).
+   ---------------------------------------------------------- */
+.trp-floating-switcher {
+	--right: auto;
+
+	inset-inline-start: var(--sp-4);
+	inset-inline-end: auto;
+}
+
+/* --- CTA WhatsApp rendu par le raccourci famma-core --- */
+.famma-wa-cta {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-block-size: 48px;
+	padding-inline: var(--sp-6);
+	border-radius: var(--famma-radius);
+	background: var(--famma-success);
+	color: var(--famma-white);
+	font-weight: 700;
+	text-decoration: none;
+}
+
 /* --- CTA collant mobile (§13, §30) -------------------------
    Implémenté ici, et non via une fonction du thème parent :
    la présentation ne doit dépendre d'aucun palier gratuit/Pro.

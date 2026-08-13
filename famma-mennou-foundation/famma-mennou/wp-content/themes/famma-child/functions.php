@@ -50,6 +50,26 @@ function famma_child_enqueue_styles(): void {
 add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_styles', 20 );
 
 /**
+ * Retire le bandeau de titre du thème sur la page d'accueil.
+ *
+ * Le masquer en CSS laissait un second `<h1>` (« Accueil ») dans le
+ * document, en concurrence avec le titre du héros : deux h1 pour une même
+ * page, ce que la hiérarchie de titres du §21 proscrit. On détache donc le
+ * rendu au lieu de le cacher.
+ *
+ * Accroché sur `wp` : la requête principale est résolue, donc
+ * `is_front_page()` répond juste, et le gabarit n'a pas encore été rendu.
+ *
+ * @return void
+ */
+function famma_child_remove_front_page_hero(): void {
+	if ( is_front_page() ) {
+		remove_action( 'kadence_entry_hero', 'Kadence\kadence_entry_header', 10 );
+	}
+}
+add_action( 'wp', 'famma_child_remove_front_page_hero' );
+
+/**
  * Déclare les capacités du thème.
  *
  * Chargé sur `after_setup_theme` : c'est le point d'accroche prévu par

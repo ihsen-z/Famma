@@ -195,6 +195,12 @@ $WP theme activate famma-child >/dev/null
 step "famma-child actif"
 
 # ------------------------------------------------------------
+# 6b. Page d'accueil « catalogue vide » (§9, §58)
+# ------------------------------------------------------------
+log "Page d'accueil"
+$WP eval-file /scripts/create-homepage.php
+
+# ------------------------------------------------------------
 # 7. Catalogue vide (§58)
 # ------------------------------------------------------------
 log "Vérification du catalogue"

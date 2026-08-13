@@ -942,6 +942,41 @@ final class WhatsApp {
 	private function hooks(): void {
 		add_action( 'wp_footer', array( $this, 'render_float' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'styles' ) );
+		add_shortcode( 'famma_whatsapp', array( $this, 'shortcode' ) );
+	}
+
+	/**
+	 * Renders a WhatsApp call to action, or nothing at all.
+	 *
+	 * Returning an empty string when no number is configured is the point:
+	 * page content can reference the CTA freely without ever producing a dead
+	 * link while the owner has not supplied a number (§15, §60).
+	 *
+	 * @param array<string,string>|string $atts Shortcode attributes.
+	 * @return string
+	 */
+	public function shortcode( $atts ): string {
+		$atts = shortcode_atts(
+			array(
+				'text'    => '',
+				'message' => '',
+			),
+			$atts,
+			'famma_whatsapp'
+		);
+
+		$href = self::link( $atts['message'] );
+		if ( '' === $href ) {
+			return '';
+		}
+
+		$label = '' !== $atts['text'] ? $atts['text'] : __( 'Contact us on WhatsApp', 'famma-core' );
+
+		return sprintf(
+			'<a class="famma-wa-cta" href="%1$s" target="_blank" rel="noopener nofollow">%2$s</a>',
+			esc_url( $href ),
+			esc_html( $label )
+		);
 	}
 
 	/**
