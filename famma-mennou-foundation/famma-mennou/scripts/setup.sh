@@ -12,6 +12,13 @@
 # ============================================================
 set -euo pipefail
 
+# Git Bash (MSYS) réécrit tout argument ressemblant à un chemin POSIX en
+# chemin Windows avant de le passer à docker.exe : `/var/www/html` devient
+# `C:/Program Files (x86)/Git/var/www/html`. Ces deux variables désactivent
+# la conversion ; elles sont sans effet sous Linux et macOS.
+export MSYS_NO_PATHCONV=1
+export MSYS2_ARG_CONV_EXCL='*'
+
 cd "$(dirname "$0")/.."
 
 if [ ! -f .env ]; then
@@ -22,7 +29,10 @@ set -a
 . ./.env
 set +a
 
-WP="docker compose exec -T wpcli wp --path=/var/www/html"
+# Pas de --path : le répertoire de travail de l'image wordpress:cli est
+# déjà /var/www/html, et un argument de chemin serait une cible de plus
+# pour la réécriture MSYS.
+WP="docker compose exec -T wpcli wp"
 ADMIN="${WP_ADMIN_USER:-famma_admin}"
 
 log()  { printf '\n==> %s\n' "$1"; }

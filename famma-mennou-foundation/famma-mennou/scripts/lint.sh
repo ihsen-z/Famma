@@ -14,6 +14,10 @@
 # ============================================================
 set -euo pipefail
 
+# Voir setup.sh : empêche Git Bash de réécrire les chemins POSIX passés à docker.
+export MSYS_NO_PATHCONV=1
+export MSYS2_ARG_CONV_EXCL='*'
+
 cd "$(dirname "$0")/.."
 
 # Docker Desktop attend un chemin Windows ; Git Bash fournit un chemin

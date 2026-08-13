@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # FAMMA — local backup (DB + uploads). Run before major changes.
 set -euo pipefail
+# Voir setup.sh : empêche Git Bash de réécrire les chemins POSIX passés à docker.
+export MSYS_NO_PATHCONV=1
+export MSYS2_ARG_CONV_EXCL='*'
+cd "$(dirname "$0")/.."
 if [ -f .env ]; then set -a; . ./.env; set +a; fi
 STAMP=$(date +%Y%m%d-%H%M%S)
 DEST="backups/${STAMP}"
