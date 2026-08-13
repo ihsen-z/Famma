@@ -1,0 +1,35 @@
+# ============================================================
+# FAMMA MENNOU — normalisation des fins de ligne
+# Le développement se fait sous Windows, l'exécution sous Linux (Docker).
+# Sans ces règles, un .sh checkouté en CRLF échoue dans le conteneur avec
+# « \r: command not found ».
+# ============================================================
+
+* text=auto eol=lf
+
+# Doivent impérativement rester en LF (exécutés dans un conteneur Linux)
+*.sh        text eol=lf
+*.php       text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.ini       text eol=lf
+*.css       text eol=lf
+*.js        text eol=lf
+*.json      text eol=lf
+*.po        text eol=lf
+*.pot       text eol=lf
+.env.example text eol=lf
+
+# Binaires — pas de normalisation
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.webp      binary
+*.avif      binary
+*.gif       binary
+*.ico       binary
+*.woff      binary
+*.woff2     binary
+*.mo        binary
+*.pdf       binary
+*.zip       binary

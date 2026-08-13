@@ -13,8 +13,10 @@
 graphify-out/
 *.original.md
 
-# Sauvegardes (peuvent contenir des données clients)
-backups/
+# Sauvegardes de niveau racine (peuvent contenir des données clients).
+# Le dossier backups/ du projet est géré par son propre .gitignore, qui
+# conserve son .gitkeep — ne pas l'ignorer ici, sinon Git n'y descend plus.
+/backups/
 
 # OS / éditeurs
 .DS_Store
