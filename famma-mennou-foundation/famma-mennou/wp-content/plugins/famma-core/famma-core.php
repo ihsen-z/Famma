@@ -216,6 +216,25 @@ final class Order_Statuses {
 		 * immediately. Observed at runtime.
 		 */
 		add_filter( 'woocommerce_payment_complete_order_status', array( $this, 'stay_delivered_when_paid' ), 99, 3 );
+
+		/*
+		 * WC_Gateway_COD drops a fresh order straight into "processing", and
+		 * "processing" is one of WooCommerce's paid statuses — so a brand-new,
+		 * undelivered order reported is_paid() === true. Observed on a real
+		 * browser checkout. §12 forbids exactly that. New COD orders therefore
+		 * start at "pending confirmation", which is the first step of the
+		 * workflow in §2 anyway.
+		 */
+		add_filter( 'woocommerce_cod_process_payment_order_status', array( $this, 'cod_initial_status' ) );
+	}
+
+	/**
+	 * First status of a cash-on-delivery order (§2, §12).
+	 *
+	 * @return string
+	 */
+	public function cod_initial_status(): string {
+		return 'pending-confirm';
 	}
 
 	/**
@@ -345,7 +364,18 @@ final class Order_Statuses {
 	 */
 	public function paid_statuses( array $statuses ): array {
 		$statuses[] = 'delivered';
-		return $statuses;
+
+		/*
+		 * "processing" is dropped on purpose. WooCommerce treats it as paid,
+		 * which is right for a prepaid gateway but wrong here: §2 places
+		 * PROCESSING between CONFIRMED and SHIPPED, i.e. while the parcel is
+		 * being prepared and no cash has been collected yet. Counting it as
+		 * revenue is the false-positive §12 forbids.
+		 *
+		 * Valid while cash on delivery is the only gateway (§2). Adding an
+		 * online payment method later means revisiting this line.
+		 */
+		return array_values( array_diff( $statuses, array( 'processing' ) ) );
 	}
 
 	/**
@@ -355,7 +385,9 @@ final class Order_Statuses {
 	 * @return string[]
 	 */
 	public function reporting_statuses( array $s ): array {
-		foreach ( array( 'delivered', 'completed', 'processing' ) as $x ) {
+		// Same reasoning as paid_statuses(): a COD order is revenue only once delivered.
+		$s = array_values( array_diff( $s, array( 'processing', 'on-hold' ) ) );
+		foreach ( array( 'delivered', 'completed' ) as $x ) {
 			if ( ! in_array( $x, $s, true ) ) {
 				$s[] = $x;
 			}
@@ -638,6 +670,40 @@ final class Tunisia {
 		add_filter( 'woocommerce_states', array( $this, 'governorates' ) );
 		add_filter( 'woocommerce_checkout_fields', array( $this, 'checkout_fields' ) );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate_phone' ), 10, 2 );
+
+		/*
+		 * The country field is removed from the checkout — the shop only sells
+		 * to Tunisia, so asking is pure friction (§13). But WooCommerce still
+		 * needs a country: WC_Checkout::process_checkout() aborts with
+		 * "Please enter an address to continue." when the customer's shipping
+		 * country is empty. Verified in a real browser checkout: no order
+		 * could be placed at all. These four filters supply it.
+		 */
+		add_filter( 'woocommerce_customer_default_country', array( $this, 'default_country' ) );
+		add_filter( 'default_checkout_billing_country', array( $this, 'default_country' ) );
+		add_filter( 'default_checkout_shipping_country', array( $this, 'default_country' ) );
+		add_filter( 'woocommerce_checkout_posted_data', array( $this, 'force_country' ) );
+	}
+
+	/**
+	 * Tunisia is the only country the shop sells to (§11).
+	 *
+	 * @return string
+	 */
+	public function default_country(): string {
+		return 'TN';
+	}
+
+	/**
+	 * Stamps Tunisia on the posted checkout data, since the field is hidden.
+	 *
+	 * @param array<string,mixed> $data Posted checkout data.
+	 * @return array<string,mixed>
+	 */
+	public function force_country( array $data ): array {
+		$data['billing_country']  = 'TN';
+		$data['shipping_country'] = 'TN';
+		return $data;
 	}
 
 	/**
@@ -689,6 +755,36 @@ final class Tunisia {
 			$f['billing']['billing_postcode'],
 			$f['billing']['billing_country']
 		);
+
+		/*
+		 * The same trim applies to the "ship to a different address" block:
+		 * leaving it untouched put the country and postcode fields back in
+		 * front of the customer as soon as the box was ticked.
+		 */
+		unset(
+			$f['shipping']['shipping_company'],
+			$f['shipping']['shipping_address_2'],
+			$f['shipping']['shipping_postcode'],
+			$f['shipping']['shipping_country']
+		);
+		if ( isset( $f['shipping']['shipping_state'] ) ) {
+			$f['shipping']['shipping_state']['label'] = __( 'Governorate / الولاية', 'famma-core' );
+		}
+		if ( isset( $f['shipping']['shipping_city'] ) ) {
+			$f['shipping']['shipping_city']['label'] = __( 'City / Delegation — المدينة', 'famma-core' );
+		}
+
+		/*
+		 * Email stays available but stops being mandatory: §13 lists the
+		 * required fields and email is not among them. On a cash-on-delivery
+		 * order the reachable channel is the phone number (§33), and an extra
+		 * required field on mobile is pure drop-off.
+		 */
+		if ( isset( $f['billing']['billing_email'] ) ) {
+			$f['billing']['billing_email']['required'] = false;
+			$f['billing']['billing_email']['priority'] = 90;
+			$f['billing']['billing_email']['label']    = __( 'Email (optional) / البريد الإلكتروني', 'famma-core' );
+		}
 
 		if ( isset( $f['billing']['billing_phone'] ) ) {
 			$f['billing']['billing_phone']['required']    = true;
