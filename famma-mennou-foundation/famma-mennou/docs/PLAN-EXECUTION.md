@@ -12,7 +12,7 @@
 | 2 — Boucle qualité | **TERMINÉE** | `scripts/lint.sh` conteneurisé. phpcs : **0 erreur, 0 avertissement** (251 au départ) |
 | 3 — Règles métier | **TERMINÉE** | Règle COD, checkout Tunisie, politique de stock (D6) et e-mails locaux vérifiés à l'exécution |
 | 4 — CAPI Meta | à faire | dépend des identifiants propriétaire (D7) |
-| 5 — Thème & design | amorcée | `famma-child` créé (jetons, CTA collant, RTL) ; le design réel reste à faire |
+| 5 — Thème & design | **AVANCÉE** | Logo 2a en en-tête, sceau 2b, favicon SVG, image de partage 1200×630, accueil §9, pages §8, navigation |
 | 6 — Documentation | amorcée | `ARCHITECTURE.md` et `ORDER-WORKFLOW.md` réalignés sur le code réel |
 
 Décisions D1 à D5 : voir `DECISIONS.md` (ADR-001 à ADR-005).

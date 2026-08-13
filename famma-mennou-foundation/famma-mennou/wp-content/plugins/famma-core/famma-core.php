@@ -1204,6 +1204,360 @@ final class Tracking {
 }
 
 /**
+ * Simplified merchant dashboard (§28).
+ *
+ * Revenue counts delivered orders only — a COD order is not money until the
+ * cash is collected (§12). Every figure here therefore differs on purpose
+ * from WooCommerce's own reports, which treat a placed order as revenue.
+ *
+ * Admin only, and never loaded on the front end (rule 10).
+ */
+final class Dashboard {
+
+	/**
+	 * Singleton instance.
+	 *
+	 * @var Dashboard|null
+	 */
+	private static ?Dashboard $i = null;
+
+	/**
+	 * Transient holding the computed figures.
+	 */
+	private const CACHE_KEY = 'famma_dashboard_stats';
+
+	/**
+	 * How long the figures stay cached, in seconds.
+	 */
+	private const CACHE_TTL = 300;
+
+	/**
+	 * Hard cap on orders read per window.
+	 *
+	 * Rule 10 forbids unbounded queries. When the cap is reached the page
+	 * says so rather than silently reporting a partial total.
+	 */
+	private const MAX_ORDERS = 1000;
+
+	/**
+	 * Returns the shared instance, registering hooks on first call.
+	 *
+	 * @return Dashboard
+	 */
+	public static function instance(): Dashboard {
+		if ( null === self::$i ) {
+			self::$i = new self();
+			self::$i->hooks();
+		}
+		return self::$i;
+	}
+
+	/**
+	 * Registers admin hooks.
+	 *
+	 * @return void
+	 */
+	private function hooks(): void {
+		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		add_action( 'admin_post_famma_refresh_stats', array( $this, 'refresh' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'styles' ) );
+	}
+
+	/**
+	 * Adds the FAMMA top-level admin menu.
+	 *
+	 * @return void
+	 */
+	public function register_menu(): void {
+		add_menu_page(
+			__( 'FAMMA', 'famma-core' ),
+			__( 'FAMMA', 'famma-core' ),
+			'manage_woocommerce',
+			'famma-dashboard',
+			array( $this, 'render' ),
+			'dashicons-chart-area',
+			56
+		);
+	}
+
+	/**
+	 * Loads the dashboard styles, on the dashboard screen only.
+	 *
+	 * @param string $hook Current admin page hook.
+	 * @return void
+	 */
+	public function styles( string $hook ): void {
+		if ( 'toplevel_page_famma-dashboard' !== $hook ) {
+			return;
+		}
+
+		$css = '.famma-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin:16px 0 28px}'
+			. '.famma-card{background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:16px}'
+			. '.famma-card__label{color:#50575e;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin:0 0 6px}'
+			. '.famma-card__value{font-size:26px;font-weight:700;color:#0B1F3A;line-height:1.2;margin:0}'
+			. '.famma-card__note{color:#787c82;font-size:12px;margin:6px 0 0}'
+			. '.famma-card--profit .famma-card__value{color:#1FA65A}'
+			. '.famma-card--loss .famma-card__value{color:#D64545}'
+			. '.famma-warn{border-inline-start:4px solid #E6A700;background:#fff8e6;padding:12px 16px;margin:16px 0}';
+
+		wp_register_style( 'famma-dashboard', false, array(), FAMMA_CORE_VERSION );
+		wp_enqueue_style( 'famma-dashboard' );
+		wp_add_inline_style( 'famma-dashboard', $css );
+	}
+
+	/**
+	 * Clears the cache and returns to the dashboard.
+	 *
+	 * @return void
+	 */
+	public function refresh(): void {
+		check_admin_referer( 'famma_refresh_stats' );
+
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_die( esc_html__( 'You are not allowed to do this.', 'famma-core' ) );
+		}
+
+		delete_transient( self::CACHE_KEY );
+		wp_safe_redirect( admin_url( 'admin.php?page=famma-dashboard' ) );
+		exit;
+	}
+
+	/**
+	 * Collects the figures for one time window.
+	 *
+	 * @param string $after ISO date the window starts at.
+	 * @return array<string,mixed>
+	 */
+	private function collect( string $after ): array {
+		$orders = wc_get_orders(
+			array(
+				'limit'        => self::MAX_ORDERS,
+				'date_created' => '>=' . $after,
+				'status'       => array_keys( wc_get_order_statuses() ),
+				'orderby'      => 'date',
+				'order'        => 'DESC',
+			)
+		);
+
+		$out = array(
+			'placed'    => 0,
+			'delivered' => 0,
+			'revenue'   => 0.0,
+			'cost'      => 0.0,
+			'cancelled' => 0,
+			'returned'  => 0,
+			'refused'   => 0,
+			'failed'    => 0,
+			'products'  => array(),
+			'sources'   => array(),
+			'capped'    => count( $orders ) >= self::MAX_ORDERS,
+		);
+
+		foreach ( $orders as $order ) {
+			if ( ! $order instanceof \WC_Order ) {
+				continue;
+			}
+
+			++$out['placed'];
+
+			switch ( $order->get_status() ) {
+				case 'cancelled':
+					++$out['cancelled'];
+					break;
+				case 'returned':
+					++$out['returned'];
+					break;
+				case 'refused':
+					++$out['refused'];
+					break;
+				case 'failed-delivery':
+					++$out['failed'];
+					break;
+			}
+
+			$source                    = $order->get_meta( '_famma_utm_source' );
+			$source                    = '' === (string) $source ? __( 'Direct', 'famma-core' ) : (string) $source;
+			$out['sources'][ $source ] = ( $out['sources'][ $source ] ?? 0 ) + 1;
+
+			// Seules les commandes livrées comptent comme du chiffre d'affaires (§12).
+			if ( ! $order->has_status( 'delivered' ) ) {
+				continue;
+			}
+
+			++$out['delivered'];
+			$out['revenue'] += (float) $order->get_total();
+			$out['cost']    += (float) $order->get_meta( '_famma_internal_shipping_cost' );
+
+			foreach ( $order->get_items() as $item ) {
+				$product = $item->get_product();
+				if ( ! $product instanceof \WC_Product ) {
+					continue;
+				}
+
+				$qty  = (int) $item->get_quantity();
+				$name = $product->get_name();
+
+				$out['products'][ $name ] = ( $out['products'][ $name ] ?? 0 ) + $qty;
+				$out['cost']             += (float) $product->get_meta( '_famma_cost_price' ) * $qty;
+				$out['cost']             += (float) $product->get_meta( '_famma_handling_cost' ) * $qty;
+				$out['cost']             += (float) $product->get_meta( '_famma_acquisition_cost' );
+			}
+		}
+
+		$out['profit'] = $out['revenue'] - $out['cost'];
+		$out['aov']    = $out['delivered'] > 0 ? $out['revenue'] / $out['delivered'] : 0.0;
+
+		arsort( $out['products'] );
+		arsort( $out['sources'] );
+
+		return $out;
+	}
+
+	/**
+	 * Returns every window's figures, cached.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function stats(): array {
+		$cached = get_transient( self::CACHE_KEY );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
+		$today = wp_date( 'Y-m-d' );
+		$stats = array(
+			'today'       => $this->collect( $today . ' 00:00:00' ),
+			'week'        => $this->collect( wp_date( 'Y-m-d', strtotime( '-6 days' ) ) . ' 00:00:00' ),
+			'month'       => $this->collect( wp_date( 'Y-m-d', strtotime( '-29 days' ) ) . ' 00:00:00' ),
+			'computed_at' => time(),
+		);
+
+		set_transient( self::CACHE_KEY, $stats, self::CACHE_TTL );
+
+		return $stats;
+	}
+
+	/**
+	 * Prints one figure card.
+	 *
+	 * @param string $label    Card label.
+	 * @param string $value    Already-escaped value markup.
+	 * @param string $note     Optional note under the value.
+	 * @param string $modifier Optional CSS modifier suffix.
+	 * @return void
+	 */
+	private function card( string $label, string $value, string $note = '', string $modifier = '' ): void {
+		printf(
+			'<div class="famma-card%1$s"><p class="famma-card__label">%2$s</p><p class="famma-card__value">%3$s</p>%4$s</div>',
+			$modifier ? ' famma-card--' . esc_attr( $modifier ) : '',
+			esc_html( $label ),
+			wp_kses_post( $value ),
+			'' !== $note ? '<p class="famma-card__note">' . esc_html( $note ) . '</p>' : ''
+		);
+	}
+
+	/**
+	 * Renders the dashboard page.
+	 *
+	 * @return void
+	 */
+	public function render(): void {
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			return;
+		}
+
+		$stats = $this->stats();
+		$month = $stats['month'];
+
+		echo '<div class="wrap"><h1>' . esc_html__( 'FAMMA — dashboard', 'famma-core' ) . '</h1>';
+
+		echo '<p>' . esc_html__( 'Revenue counts delivered orders only: a cash-on-delivery order is not money until the cash is collected. These figures therefore differ from WooCommerce reports on purpose.', 'famma-core' ) . '</p>';
+
+		if ( $month['capped'] ) {
+			echo '<div class="famma-warn"><strong>' . esc_html__( 'Partial figures.', 'famma-core' ) . '</strong> '
+				. esc_html(
+					sprintf(
+						/* translators: %d: maximum number of orders read. */
+						__( 'The last %d orders were read. Older orders in the window are not counted.', 'famma-core' ),
+						self::MAX_ORDERS
+					)
+				) . '</div>';
+		}
+
+		echo '<h2>' . esc_html__( 'Orders', 'famma-core' ) . '</h2><div class="famma-grid">';
+		$this->card( __( 'Today', 'famma-core' ), (string) $stats['today']['placed'], __( 'orders placed', 'famma-core' ) );
+		$this->card( __( '7 days', 'famma-core' ), (string) $stats['week']['placed'], __( 'orders placed', 'famma-core' ) );
+		$this->card( __( '30 days', 'famma-core' ), (string) $month['placed'], __( 'orders placed', 'famma-core' ) );
+		$this->card( __( 'Delivered — 30 days', 'famma-core' ), (string) $month['delivered'], __( 'cash collected', 'famma-core' ) );
+		echo '</div>';
+
+		echo '<h2>' . esc_html__( 'Money — last 30 days', 'famma-core' ) . '</h2><div class="famma-grid">';
+		$this->card( __( 'Revenue', 'famma-core' ), wc_price( $month['revenue'] ), __( 'delivered orders only', 'famma-core' ) );
+		$this->card( __( 'Estimated cost', 'famma-core' ), wc_price( $month['cost'] ), __( 'goods, shipping, handling', 'famma-core' ) );
+		$this->card(
+			__( 'Estimated margin', 'famma-core' ),
+			wc_price( $month['profit'] ),
+			__( 'revenue minus cost', 'famma-core' ),
+			$month['profit'] >= 0 ? 'profit' : 'loss'
+		);
+		$this->card( __( 'Average order', 'famma-core' ), wc_price( $month['aov'] ), __( 'per delivered order', 'famma-core' ) );
+		echo '</div>';
+
+		echo '<h2>' . esc_html__( 'Losses — last 30 days', 'famma-core' ) . '</h2><div class="famma-grid">';
+		$this->card( __( 'Failed delivery', 'famma-core' ), (string) $month['failed'] );
+		$this->card( __( 'Refused', 'famma-core' ), (string) $month['refused'] );
+		$this->card( __( 'Returned', 'famma-core' ), (string) $month['returned'] );
+		$this->card( __( 'Cancelled', 'famma-core' ), (string) $month['cancelled'] );
+		echo '</div>';
+
+		$this->table( __( 'Top products — 30 days', 'famma-core' ), __( 'Product', 'famma-core' ), __( 'Units delivered', 'famma-core' ), $month['products'] );
+		$this->table( __( 'Acquisition — 30 days', 'famma-core' ), __( 'Source', 'famma-core' ), __( 'Orders', 'famma-core' ), $month['sources'] );
+
+		printf(
+			'<p><a class="button" href="%1$s">%2$s</a> <span class="famma-card__note">%3$s</span></p>',
+			esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=famma_refresh_stats' ), 'famma_refresh_stats' ) ),
+			esc_html__( 'Recalculate now', 'famma-core' ),
+			esc_html(
+				sprintf(
+					/* translators: %s: human-readable time difference. */
+					__( 'Figures computed %s ago, cached to keep the page fast.', 'famma-core' ),
+					human_time_diff( (int) $stats['computed_at'] )
+				)
+			)
+		);
+
+		echo '</div>';
+	}
+
+	/**
+	 * Prints a two-column table, or a placeholder when there is nothing to show.
+	 *
+	 * @param string            $title  Section title.
+	 * @param string            $key    Left column header.
+	 * @param string            $value  Right column header.
+	 * @param array<string,int> $rows   Rows, already sorted.
+	 * @return void
+	 */
+	private function table( string $title, string $key, string $value, array $rows ): void {
+		echo '<h2>' . esc_html( $title ) . '</h2>';
+
+		if ( empty( $rows ) ) {
+			echo '<p class="famma-card__note">' . esc_html__( 'Nothing yet.', 'famma-core' ) . '</p>';
+			return;
+		}
+
+		echo '<table class="widefat striped" style="max-width:640px"><thead><tr><th>'
+			. esc_html( $key ) . '</th><th>' . esc_html( $value ) . '</th></tr></thead><tbody>';
+
+		foreach ( array_slice( $rows, 0, 10, true ) as $label => $count ) {
+			printf( '<tr><td>%1$s</td><td>%2$s</td></tr>', esc_html( $label ), esc_html( (string) $count ) );
+		}
+
+		echo '</tbody></table>';
+	}
+}
+
+/**
  * Loads the plugin translations.
  *
  * Hooked on `init` rather than `plugins_loaded`: since WordPress 6.7,
@@ -1240,6 +1594,12 @@ function boot(): void {
 	Tunisia::instance();
 	Tracking::instance();
 	WhatsApp::instance();
+
+	// Le tableau de bord ne sert qu'à l'administration : rien de tout cela
+	// n'est chargé sur le front (règle 10).
+	if ( is_admin() ) {
+		Dashboard::instance();
+	}
 }
 
 /**

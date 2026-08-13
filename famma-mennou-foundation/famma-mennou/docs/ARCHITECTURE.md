@@ -61,6 +61,31 @@ famma-core.php   (313 l.)   un seul fichier, namespace Famma\Core, singletons
 > Phase 3 : scinder un fichier avant d'avoir un test de bout en bout est le
 > meilleur moyen d'introduire un doublon de classe sans s'en apercevoir.
 
+## Tableau de bord marchand (§28)
+
+Menu **FAMMA** dans l'administration, capacité `manage_woocommerce`, chargé
+uniquement quand `is_admin()` est vrai.
+
+**Le chiffre d'affaires ne compte que les commandes livrées.** Une commande
+COD n'est pas de l'argent tant que l'espèce n'est pas encaissée : les chiffres
+diffèrent donc volontairement des rapports WooCommerce, qui comptent une
+commande passée comme du revenu. La page le dit explicitement à l'écran.
+
+Marge estimée = total livré − (coût produit × quantité + manutention +
+acquisition + coût interne de livraison stampé sur la commande).
+
+Deux garde-fous de performance (règle 10) :
+
+- les figures sont mises en cache dans un transient pendant 5 minutes, avec
+  un bouton « recalculer » protégé par nonce ;
+- la lecture est plafonnée à 1000 commandes par fenêtre. **Quand le plafond
+  est atteint, la page l'affiche** au lieu de présenter un total partiel
+  comme s'il était complet.
+
+Vérifié à l'exécution sur une commande réelle : produit à 30 TND de coût
+vendu 90, quantité 2, livraison interne 7 → CA 180, coût 67, marge 113, et
+la source d'acquisition remontée depuis l'UTM.
+
 ## Qualité du code
 `composer.json` + `phpcs.xml.dist` + `scripts/lint.sh` : `php -l` et `phpcs`
 (standard WordPress + PHPCompatibility) tournent dans un conteneur jetable,
