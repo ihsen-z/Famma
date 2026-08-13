@@ -49,6 +49,24 @@ services:
         define('DISALLOW_FILE_EDIT', true);
         define('WP_MEMORY_LIMIT', '256M');
         define('AUTOMATIC_UPDATER_DISABLED', true);
+        define('WP_ENVIRONMENT_TYPE', '${WP_ENV:-local}');
+        /* ---------------------------------------------------------------
+         * FAMMA — pont .env -> constantes PHP (§41).
+         * Famma\Core\Config ne lit QUE des constantes : sans ces define(),
+         * WhatsApp et toute la couche tracking restent silencieusement
+         * desactives. Une valeur vide = fonctionnalite desactivee, ce qui
+         * est le comportement voulu tant que le proprietaire n'a pas
+         * fourni ses identifiants.
+         * FAMMA_META_ACCESS_TOKEN reste strictement cote serveur : il
+         * n'est jamais enqueue vers le navigateur (§17).
+         * ------------------------------------------------------------- */
+        define('FAMMA_WHATSAPP_NUMBER', '${FAMMA_WHATSAPP_NUMBER}');
+        define('FAMMA_META_PIXEL_ID', '${META_PIXEL_ID}');
+        define('FAMMA_META_ACCESS_TOKEN', '${META_ACCESS_TOKEN}');
+        define('FAMMA_META_TEST_EVENT_CODE', '${META_TEST_EVENT_CODE}');
+        define('FAMMA_TIKTOK_PIXEL_ID', '${TIKTOK_PIXEL_ID}');
+        define('FAMMA_GA4_MEASUREMENT_ID', '${GA4_MEASUREMENT_ID}');
+        define('FAMMA_GOOGLE_SITE_VERIFICATION', '${GOOGLE_SITE_VERIFICATION}');
     volumes:
       - wp_core:/var/www/html
       # Bind-mount our code so the custom plugin + child theme live in the repo:
