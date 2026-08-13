@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 124 122" role="img" aria-label="FAMMA">
+	<title>FAMMA</title>
+	<!--
+		Variante monochrome sur fond sombre — prévue par la planche 2a.
+		Sert partout où l'orange ne tiendrait pas : tampon, gravure, fond navy.
+	-->
+	<g fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+		<path d="M34 28 H74 A20 20 0 0 1 94 48 V76 A20 20 0 0 1 74 96 H60 L50 114 L42 96 H34 A20 20 0 0 1 14 76 V48 A20 20 0 0 1 34 28 Z"/>
+	</g>
+	<path d="M54 28 V17" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+	<circle cx="54" cy="10" r="8" fill="#FFFFFF"/>
+	<rect x="36" y="50" width="10" height="20" rx="5" fill="#FFFFFF"/>
+	<path d="M74 52 L64 61 L74 70" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+	<path d="M44 76 Q54 87 64 76" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+	<g stroke="#FFFFFF" stroke-width="6.5" stroke-linecap="round">
+		<path d="M104 22 L114 12"/>
+		<path d="M110 36 L122 32"/>
+		<path d="M100 11 L104 2"/>
+	</g>
+</svg>

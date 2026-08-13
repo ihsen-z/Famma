@@ -50,6 +50,69 @@ function famma_child_enqueue_styles(): void {
 add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_styles', 20 );
 
 /**
+ * Renvoie le lockup horizontal FAMMA (planche 2a).
+ *
+ * Le texte est composé en HTML plutôt que gravé dans un SVG : la typo est
+ * ainsi celle du site, nette à toute taille et traduisible, là où un SVG
+ * textuel dépendrait de polices non embarquées. Seule l'icône, purement
+ * vectorielle, vient du fichier de marque.
+ *
+ * @return string
+ */
+function famma_child_lockup_markup(): string {
+	return '<span class="famma-lockup">'
+		. '<svg class="famma-lockup__mark" viewBox="0 0 124 122" aria-hidden="true" focusable="false">'
+		. '<path d="M34 28 H74 A20 20 0 0 1 94 48 V76 A20 20 0 0 1 74 96 H60 L50 114 L42 96 H34 A20 20 0 0 1 14 76 V48 A20 20 0 0 1 34 28 Z" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>'
+		. '<path d="M54 28 V17" stroke="#FF7A00" stroke-width="7" stroke-linecap="round"/>'
+		. '<circle cx="54" cy="10" r="8" fill="#FF7A00"/>'
+		. '<rect x="36" y="50" width="10" height="20" rx="5" fill="#FF7A00"/>'
+		. '<path d="M74 52 L64 61 L74 70" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>'
+		. '<path d="M44 76 Q54 87 64 76" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>'
+		. '<g stroke="#FF7A00" stroke-width="6.5" stroke-linecap="round">'
+		. '<path d="M104 22 L114 12"/><path d="M110 36 L122 32"/><path d="M100 11 L104 2"/>'
+		. '</g></svg>'
+		. '<span class="famma-lockup__text">'
+		. '<span class="famma-lockup__word">FAMM<span class="famma-lockup__a">A</span></span>'
+		. '<span class="famma-lockup__tagline" lang="ar" dir="rtl">'
+		. '<span class="famma-lockup__ar">فمّا</span> ديما حاجة جديدة'
+		. '</span></span></span>';
+}
+
+/**
+ * Affiche le lockup FAMMA tant qu'aucun logo n'est défini dans le personnalisateur.
+ *
+ * Un logo téléversé par le propriétaire l'emporte toujours : ce repli ne
+ * remplace jamais un choix explicite (§7 — ne pas modifier le logo sans
+ * autorisation).
+ *
+ * @param string $html Sortie du logo produite par le thème.
+ * @return string
+ */
+function famma_child_brand_logo( $html ) {
+	return '' === trim( (string) $html ) ? famma_child_lockup_markup() : $html;
+}
+add_filter( 'kadence_custom_logo', 'famma_child_brand_logo' );
+
+/**
+ * Déclare l'icône du site (§7).
+ *
+ * Le favicon est servi en SVG : une seule source, nette à toute densité,
+ * et pas de rastérisation — l'extension Imagick du conteneur n'a pas de
+ * délégué SVG de toute façon. `site_icon` de WordPress n'est pas utilisé
+ * puisqu'il exige une pièce jointe matricielle.
+ *
+ * @return void
+ */
+function famma_child_head_icons(): void {
+	$img = get_stylesheet_directory_uri() . '/assets/img/';
+
+	printf( '<link rel="icon" type="image/svg+xml" href="%s" />' . "\n", esc_url( $img . 'famma-favicon.svg' ) );
+	printf( '<link rel="apple-touch-icon" href="%s" />' . "\n", esc_url( $img . 'famma-favicon.svg' ) );
+	printf( '<meta name="theme-color" content="%s" />' . "\n", esc_attr( '#0B1F3A' ) );
+}
+add_action( 'wp_head', 'famma_child_head_icons', 2 );
+
+/**
  * Retire le bandeau de titre du thème sur la page d'accueil.
  *
  * Le masquer en CSS laissait un second `<h1>` (« Accueil ») dans le

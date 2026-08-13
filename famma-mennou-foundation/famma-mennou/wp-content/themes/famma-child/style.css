@@ -54,6 +54,98 @@ textarea:focus-visible {
 }
 
 /* ============================================================
+   Identité — lockup horizontal (planche 2a)
+   L'icône hérite de currentColor pour son tracé navy : elle passe
+   donc en blanc sur fond sombre sans fichier supplémentaire.
+   ============================================================ */
+
+.famma-lockup {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--sp-3);
+	color: var(--famma-blue);
+	text-decoration: none;
+}
+
+.famma-lockup__mark {
+	inline-size: 44px;
+	block-size: 43px;
+	flex: none;
+}
+
+.famma-lockup__text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	line-height: 1;
+}
+
+.famma-lockup__word {
+	font-family: var(--famma-font);
+	font-weight: 700;
+	font-size: 1.55rem;
+	letter-spacing: 0.01em;
+}
+
+/* Le A final en orange, avec son point navy — signe distinctif du logo. */
+.famma-lockup__a {
+	position: relative;
+	color: var(--famma-orange);
+}
+
+.famma-lockup__a::after {
+	content: "";
+	position: absolute;
+	inset-inline-start: 50%;
+	inset-block-end: 0.1em;
+	inline-size: 0.17em;
+	block-size: 0.17em;
+	margin-inline-start: -0.085em;
+	border-radius: 50%;
+	background: var(--famma-blue);
+}
+
+.famma-lockup__tagline {
+	font-size: 0.72rem;
+	font-weight: 500;
+	letter-spacing: 0;
+}
+
+.famma-lockup__ar {
+	color: var(--famma-orange);
+	font-weight: 700;
+}
+
+/* Le lockup porte déjà le mot FAMMA : le titre de site du thème le
+   répéterait mot pour mot à côté. On le réserve aux lecteurs d'écran
+   plutôt que de le supprimer, pour ne rien retirer à l'accessibilité. */
+.site-branding .site-title-wrap {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* Sous 340 px la baseline arabe passerait à la ligne et déséquilibrerait
+   l'en-tête : on ne garde alors que le mot-symbole. */
+@media (max-width: 340px) {
+	.famma-lockup__tagline {
+		display: none;
+	}
+}
+
+/* --- Sceau circulaire (planche 2b) --- */
+.famma-seal {
+	inline-size: 148px;
+	block-size: 148px;
+	margin-inline: auto;
+	margin-block-end: var(--sp-4);
+}
+
+/* ============================================================
    Page d'accueil « catalogue vide » (§9)
    Mobile-first : les règles de base visent le petit écran, les
    media queries n'ajoutent que ce qui est nécessaire au-dessus.

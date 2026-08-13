@@ -33,6 +33,38 @@ accent, never the dominant colour.
 }
 ```
 
+## Logo et identité (§6, §7)
+
+Source : projet Claude Design **« Logo Famma e-commerce »**, planches **2a**
+(lockup horizontal) et **2b** (badge circulaire).
+
+| Fichier | Rôle | Nature |
+|---|---|---|
+| `assets/img/famma-mark.svg` | icône seule, couleur | vectoriel pur, aucun texte |
+| `assets/img/famma-mark-mono-dark.svg` | icône sur fond sombre | vectoriel pur |
+| `assets/img/famma-favicon.svg` | onglet, écran d'accueil | version simplifiée, tient à 16 px |
+| `assets/img/famma-badge.svg` | sceau 2b — photo de profil réseaux, sticker colis | contient du texte |
+
+**Lockup d'en-tête** : rendu en HTML par `famma_child_lockup_markup()`, pas
+servi comme fichier. L'icône est du SVG en ligne, le mot FAMMA et la baseline
+arabe sont du texte réel. Un logo gravé dans un SVG dépendrait de polices non
+embarquées ; ici la typo est celle du site, nette à toute taille, et le titre
+du site reste lisible par les lecteurs d'écran.
+
+Le tracé de l'icône utilise `currentColor` : elle passe en blanc sur fond
+sombre sans second fichier. Seuls l'antenne, les étincelles et le point du A
+restent orange — l'accent, jamais la couleur dominante (§6).
+
+**Si le propriétaire téléverse un logo** dans le personnalisateur, il gagne
+toujours : le lockup n'est qu'un repli (§7 — ne pas modifier le logo sans
+autorisation).
+
+### Limite connue — image de partage social
+`og:image` n'est **pas** défini. Facebook, WhatsApp et Instagram refusent le
+SVG, et aucune rastérisation n'est possible ici : l'extension Imagick du
+conteneur n'a pas de délégué SVG. Il faut un PNG 1200×630 exporté depuis
+l'outil de design avant d'activer les balises Open Graph (§16).
+
 ## Primary CTA
 Background `--famma-orange`, white text, `--famma-radius`, min touch target
 48×48px. Label: FR **"Commander"** / Derja **"أطلب توا"**. On product + checkout,

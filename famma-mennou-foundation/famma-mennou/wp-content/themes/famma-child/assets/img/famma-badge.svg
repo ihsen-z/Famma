@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" role="img" aria-label="FAMMA — فمّا ديما حاجة جديدة">
+	<title>FAMMA — فمّا ديما حاجة جديدة</title>
+	<!--
+		Badge circulaire — variante 2b du projet Claude Design.
+		Destiné à la photo de profil des réseaux et au sticker colis :
+		anneau navy fermé par un quart orange, bandeau bas avec les trois
+		familles de produits.
+
+		Les deux libellés sont du texte SVG : la fidélité typographique
+		suppose que Poppins et Noto Kufi Arabic soient disponibles au moment
+		du rendu. Une pile de repli est déclarée pour que le badge reste
+		lisible partout.
+	-->
+	<defs>
+		<clipPath id="famma-badge-clip"><circle cx="150" cy="150" r="139"/></clipPath>
+	</defs>
+	<g clip-path="url(#famma-badge-clip)">
+		<rect x="0" y="0" width="300" height="300" fill="#FFFFFF"/>
+		<path d="M0 244 Q150 212 300 244 L300 300 L0 300 Z" fill="#0B1F3A"/>
+	</g>
+	<circle cx="150" cy="150" r="139" fill="none" stroke="#0B1F3A" stroke-width="8" stroke-dasharray="655 218"/>
+	<circle cx="150" cy="150" r="139" fill="none" stroke="#FF7A00" stroke-width="8" stroke-dasharray="218 655" stroke-dashoffset="-655"/>
+	<g transform="translate(88 36) scale(0.82)">
+		<path d="M34 28 H74 A20 20 0 0 1 94 48 V76 A20 20 0 0 1 74 96 H60 L50 114 L42 96 H34 A20 20 0 0 1 14 76 V48 A20 20 0 0 1 34 28 Z" fill="none" stroke="#0B1F3A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+		<path d="M54 28 V17" stroke="#FF7A00" stroke-width="7" stroke-linecap="round"/>
+		<circle cx="54" cy="10" r="8" fill="#FF7A00"/>
+		<rect x="36" y="50" width="10" height="20" rx="5" fill="#FF7A00"/>
+		<path d="M74 52 L64 61 L74 70" fill="none" stroke="#0B1F3A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+		<path d="M44 76 Q54 87 64 76" fill="none" stroke="#0B1F3A" stroke-width="7" stroke-linecap="round"/>
+		<g stroke="#FF7A00" stroke-width="6.5" stroke-linecap="round">
+			<path d="M104 22 L114 12"/>
+			<path d="M110 36 L122 32"/>
+			<path d="M100 11 L104 2"/>
+		</g>
+	</g>
+	<text x="150" y="180" text-anchor="middle" font-family="Poppins, 'Segoe UI', system-ui, sans-serif" font-weight="700" font-size="52" letter-spacing="1" fill="#0B1F3A">FAMM<tspan fill="#FF7A00">A</tspan></text>
+	<text x="150" y="204" text-anchor="middle" direction="rtl" font-family="'Noto Kufi Arabic', Tahoma, sans-serif" font-weight="500" font-size="16" fill="#0B1F3A"><tspan fill="#FF7A00" font-weight="700">فمّا </tspan>ديما حاجة جديدة</text>
+	<g stroke="#FFFFFF" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+		<path d="M112 258 V253 A10 10 0 0 1 132 253 V258"/>
+		<rect x="109" y="256" width="6" height="10" rx="3" fill="#FFFFFF" stroke="none"/>
+		<rect x="129" y="256" width="6" height="10" rx="3" fill="#FFFFFF" stroke="none"/>
+		<rect x="145" y="250" width="20" height="17" rx="3"/>
+		<path d="M145 256 H165"/>
+		<path d="M155 250 V256"/>
+		<rect x="172" y="248" width="14" height="20" rx="3.5"/>
+		<path d="M176 264 H182"/>
+	</g>
+</svg>

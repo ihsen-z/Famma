@@ -113,6 +113,9 @@
 
 <!-- wp:group {"tagName":"section","align":"full","className":"famma-contact","layout":{"type":"constrained"}} -->
 <section class="wp-block-group alignfull famma-contact">
+<!-- wp:html -->
+<img class="famma-seal" src="FAMMA_SEAL_URI" width="148" height="148" alt="FAMMA — فمّا ديما حاجة جديدة" loading="lazy" decoding="async">
+<!-- /wp:html -->
 <!-- wp:heading {"className":"famma-section__title"} -->
 <h2 class="wp-block-heading famma-section__title">Une question&nbsp;?</h2>
 <!-- /wp:heading -->
@@ -125,6 +128,19 @@
 </section>
 <!-- /wp:group -->
 HTML;
+
+	/*
+	 * Le sceau (planche 2b) vit dans le thème enfant, pas dans la
+	 * médiathèque : c'est un élément d'identité versionné avec le code, et
+	 * WordPress refuse de toute façon le téléversement de SVG par défaut.
+	 * L'URL est injectée ici pour que le contenu reste indépendant du nom
+	 * du thème.
+	 */
+	$blocks = str_replace(
+		'FAMMA_SEAL_URI',
+		esc_url( get_stylesheet_directory_uri() . '/assets/img/famma-badge.svg' ),
+		$blocks
+	);
 
 	$slug     = 'accueil';
 	$existing = get_page_by_path( $slug, OBJECT, 'page' );

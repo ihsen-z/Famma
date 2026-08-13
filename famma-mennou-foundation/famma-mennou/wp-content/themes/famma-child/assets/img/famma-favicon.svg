@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="FAMMA">
+	<title>FAMMA</title>
+	<!--
+		Icône simplifiée de la planche 2a, prévue pour les petites tailles.
+		La planche le dit explicitement : sous 48 px la bulle complète perd ses
+		détails, on garde donc l'œil, le clin d'œil et le sourire, sans antenne
+		ni étincelles. Tient à 32 px et jusqu'à 16 px.
+	-->
+	<rect x="0" y="0" width="100" height="100" rx="24" fill="#0B1F3A"/>
+	<rect x="35" y="33" width="11" height="23" rx="5.5" fill="#FF7A00"/>
+	<path d="M70 34 L59 44 L70 54" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+	<path d="M38 66 Q50 79 62 66" fill="none" stroke="#FFFFFF" stroke-width="7.5" stroke-linecap="round"/>
+</svg>
