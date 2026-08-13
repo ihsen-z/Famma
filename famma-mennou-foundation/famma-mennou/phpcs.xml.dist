@@ -9,6 +9,7 @@
 	<file>wp-content/plugins/famma-core</file>
 	<file>wp-content/themes/famma-child</file>
 	<file>wp-content/mu-plugins</file>
+	<file>scripts</file>
 
 	<exclude-pattern>*/vendor/*</exclude-pattern>
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
@@ -58,6 +59,15 @@
 				<element value="edit_product"/>
 			</property>
 		</properties>
+	</rule>
+
+	<!--
+		Les scripts de scripts/ tournent sous WP-CLI et ecrivent dans un
+		terminal, jamais dans une page. Les passer par esc_html() corromprait
+		l'affichage sans apporter la moindre securite.
+	-->
+	<rule ref="WordPress.Security.EscapeOutput">
+		<exclude-pattern>scripts/*</exclude-pattern>
 	</rule>
 
 	<rule ref="PHPCompatibilityWP"/>

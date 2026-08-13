@@ -141,6 +141,19 @@ log "Activation de FAMMA Core"
 $WP plugin activate famma-core >/dev/null
 
 # ------------------------------------------------------------
+# 3b. Multilingue FR + Derja (ADR-005, §5)
+# ------------------------------------------------------------
+log "Multilingue : TranslatePress (français par défaut + arabe)"
+if ! $WP plugin is-installed translatepress-multilingual >/dev/null 2>&1; then
+	$WP plugin install translatepress-multilingual >/dev/null
+	step "TranslatePress installé"
+fi
+$WP plugin activate translatepress-multilingual >/dev/null 2>&1 || true
+$WP language core install ar >/dev/null 2>&1 || true
+$WP eval-file /scripts/configure-translatepress.php
+step "traduction automatique désactivée — la Derja est écrite par un humain (§5)"
+
+# ------------------------------------------------------------
 # 4. Livraison — 0 TND côté client (§3, §4)
 # ------------------------------------------------------------
 log "Livraison : 0 TND affiché au client"
