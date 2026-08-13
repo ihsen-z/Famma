@@ -150,6 +150,7 @@ if ! $WP plugin is-installed translatepress-multilingual >/dev/null 2>&1; then
 fi
 $WP plugin activate translatepress-multilingual >/dev/null 2>&1 || true
 $WP language core install ar >/dev/null 2>&1 || true
+$WP i18n make-mo /var/www/html/wp-content/plugins/famma-core/languages >/dev/null 2>&1 || true
 $WP eval-file /scripts/configure-translatepress.php
 step "traduction automatique désactivée — la Derja est écrite par un humain (§5)"
 

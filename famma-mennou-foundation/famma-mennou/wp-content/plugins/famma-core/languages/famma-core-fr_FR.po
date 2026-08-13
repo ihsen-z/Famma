@@ -1,0 +1,224 @@
+# Traduction française de FAMMA Core.
+# Traduction humaine — aucune traduction automatique (§5).
+msgid ""
+msgstr ""
+"Project-Id-Version: FAMMA Core 0.2.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-13\n"
+"PO-Revision-Date: 2026-08-13\n"
+"Last-Translator: FAMMA\n"
+"Language-Team: Français\n"
+"Language: fr_FR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Domain: famma-core\n"
+
+msgid "FAMMA Core"
+msgstr "FAMMA Core"
+
+msgid "Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme."
+msgstr "Logique métier de FAMMA MENNOU — workflow de commande COD, prix coût×3 avec suivi de marge, règles de commande tunisiennes, WhatsApp et tracking piloté par l'environnement (Meta/TikTok/GA4). Garde toute personnalisation hors du cœur WordPress/WooCommerce et hors du thème."
+
+msgid "FAMMA"
+msgstr "FAMMA"
+
+msgctxt "Order status"
+msgid "Pending confirmation"
+msgstr "En attente de confirmation"
+
+msgctxt "Order status"
+msgid "Confirmed"
+msgstr "Confirmée"
+
+msgctxt "Order status"
+msgid "Shipped"
+msgstr "Expédiée"
+
+msgctxt "Order status"
+msgid "Delivered"
+msgstr "Livrée"
+
+msgctxt "Order status"
+msgid "Failed delivery"
+msgstr "Livraison échouée"
+
+msgctxt "Order status"
+msgid "Returned"
+msgstr "Retournée"
+
+msgctxt "Order status"
+msgid "Refused"
+msgstr "Refusée"
+
+msgid "COD payment collected on delivery."
+msgstr "Paiement à la livraison encaissé."
+
+msgid "FAMMA financials (internal — not shown to customers)"
+msgstr "Données financières FAMMA (interne — jamais montré au client)"
+
+msgid "Cost price (TND)"
+msgstr "Prix de revient (TND)"
+
+msgid "Leave selling price empty to auto-set to cost × 3."
+msgstr "Laissez le prix de vente vide pour appliquer automatiquement coût × 3."
+
+msgid "Internal shipping cost (TND)"
+msgstr "Coût de livraison interne (TND)"
+
+msgid "Included in price; customer pays 0."
+msgstr "Compris dans le prix ; le client paie 0."
+
+msgid "Handling cost (TND)"
+msgstr "Coût de manutention (TND)"
+
+msgid "Acquisition cost / order (TND)"
+msgstr "Coût d'acquisition par commande (TND)"
+
+msgid "Estimated net margin: %1$s TND (%2$s%%)"
+msgstr "Marge nette estimée : %1$s TND (%2$s%%)"
+
+msgid "FAMMA business rules"
+msgstr "Règles métier FAMMA"
+
+msgid "Default price multiplier"
+msgstr "Multiplicateur de prix par défaut"
+
+msgid "Selling price = cost × this (default 3). Manual prices override."
+msgstr "Prix de vente = coût × ce nombre (3 par défaut). Un prix saisi à la main l'emporte toujours."
+
+msgid "Included in price; customer pays 0. Margin only."
+msgstr "Compris dans le prix ; le client paie 0. Sert uniquement au calcul de marge."
+
+msgid "Governorate / الولاية"
+msgstr "Gouvernorat / الولاية"
+
+msgid "City / Delegation — المدينة"
+msgstr "Ville / Délégation — المدينة"
+
+msgid "Email (optional) / البريد الإلكتروني"
+msgstr "E-mail (facultatif) / البريد الإلكتروني"
+
+msgid "Phone / الهاتف"
+msgstr "Téléphone / الهاتف"
+
+msgid "Address / العنوان"
+msgstr "Adresse / العنوان"
+
+msgid "Please enter a valid Tunisian phone number (8 digits). أدخل رقم هاتف تونسي صحيح."
+msgstr "Saisissez un numéro de téléphone tunisien valide (8 chiffres). أدخل رقم هاتف تونسي صحيح."
+
+msgid "Contact us on WhatsApp"
+msgstr "Contactez-nous sur WhatsApp"
+
+msgid "Bonjour, j'ai une question 🙂 / سلام، عندي سؤال"
+msgstr "Bonjour, j'ai une question 🙂 / سلام، عندي سؤال"
+
+msgid "You are not allowed to do this."
+msgstr "Vous n'avez pas l'autorisation d'effectuer cette action."
+
+msgid "Direct"
+msgstr "Direct"
+
+msgid "FAMMA — dashboard"
+msgstr "FAMMA — tableau de bord"
+
+msgid "Revenue counts delivered orders only: a cash-on-delivery order is not money until the cash is collected. These figures therefore differ from WooCommerce reports on purpose."
+msgstr "Le chiffre d'affaires ne compte que les commandes livrées : une commande payée à la livraison n'est pas de l'argent tant que l'espèce n'est pas encaissée. Ces chiffres diffèrent donc volontairement des rapports WooCommerce."
+
+msgid "Partial figures."
+msgstr "Chiffres partiels."
+
+msgid "The last %d orders were read. Older orders in the window are not counted."
+msgstr "Les %d dernières commandes ont été lues. Les commandes plus anciennes de la période ne sont pas comptées."
+
+msgid "Orders"
+msgstr "Commandes"
+
+msgid "Today"
+msgstr "Aujourd'hui"
+
+msgid "orders placed"
+msgstr "commandes passées"
+
+msgid "7 days"
+msgstr "7 jours"
+
+msgid "30 days"
+msgstr "30 jours"
+
+msgid "Delivered — 30 days"
+msgstr "Livrées — 30 jours"
+
+msgid "cash collected"
+msgstr "espèces encaissées"
+
+msgid "Money — last 30 days"
+msgstr "Argent — 30 derniers jours"
+
+msgid "Revenue"
+msgstr "Chiffre d'affaires"
+
+msgid "delivered orders only"
+msgstr "commandes livrées uniquement"
+
+msgid "Estimated cost"
+msgstr "Coût estimé"
+
+msgid "goods, shipping, handling"
+msgstr "marchandise, livraison, manutention"
+
+msgid "Estimated margin"
+msgstr "Marge estimée"
+
+msgid "revenue minus cost"
+msgstr "chiffre d'affaires moins coût"
+
+msgid "Average order"
+msgstr "Panier moyen"
+
+msgid "per delivered order"
+msgstr "par commande livrée"
+
+msgid "Losses — last 30 days"
+msgstr "Pertes — 30 derniers jours"
+
+msgid "Failed delivery"
+msgstr "Livraisons échouées"
+
+msgid "Refused"
+msgstr "Refusées"
+
+msgid "Returned"
+msgstr "Retournées"
+
+msgid "Cancelled"
+msgstr "Annulées"
+
+msgid "Top products — 30 days"
+msgstr "Meilleures ventes — 30 jours"
+
+msgid "Product"
+msgstr "Produit"
+
+msgid "Units delivered"
+msgstr "Unités livrées"
+
+msgid "Acquisition — 30 days"
+msgstr "Acquisition — 30 jours"
+
+msgid "Source"
+msgstr "Source"
+
+msgid "Recalculate now"
+msgstr "Recalculer maintenant"
+
+msgid "Figures computed %s ago, cached to keep the page fast."
+msgstr "Chiffres calculés il y a %s, mis en cache pour garder la page rapide."
+
+msgid "Nothing yet."
+msgstr "Rien pour l'instant."
+
+msgid "FAMMA Core requires WooCommerce to be installed and active."
+msgstr "FAMMA Core requiert que WooCommerce soit installé et actif."

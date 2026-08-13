@@ -1,0 +1,308 @@
+# Copyright (C) 2026 FAMMA
+# This file is distributed under the same license as the FAMMA Core plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: FAMMA Core 0.2.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/famma-core\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-08-13T19:25:52+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: famma-core\n"
+
+#. Plugin Name of the plugin
+#: famma-core.php
+msgid "FAMMA Core"
+msgstr ""
+
+#. Description of the plugin
+#: famma-core.php
+msgid "Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme."
+msgstr ""
+
+#. Author of the plugin
+#: famma-core.php
+#: famma-core.php:1273
+#: famma-core.php:1274
+msgid "FAMMA"
+msgstr ""
+
+#: famma-core.php:179
+msgctxt "Order status"
+msgid "Pending confirmation"
+msgstr ""
+
+#: famma-core.php:180
+msgctxt "Order status"
+msgid "Confirmed"
+msgstr ""
+
+#: famma-core.php:181
+msgctxt "Order status"
+msgid "Shipped"
+msgstr ""
+
+#: famma-core.php:182
+msgctxt "Order status"
+msgid "Delivered"
+msgstr ""
+
+#: famma-core.php:183
+msgctxt "Order status"
+msgid "Failed delivery"
+msgstr ""
+
+#: famma-core.php:184
+msgctxt "Order status"
+msgid "Returned"
+msgstr ""
+
+#: famma-core.php:185
+msgctxt "Order status"
+msgid "Refused"
+msgstr ""
+
+#: famma-core.php:326
+msgid "COD payment collected on delivery."
+msgstr ""
+
+#: famma-core.php:521
+msgid "FAMMA financials (internal — not shown to customers)"
+msgstr ""
+
+#: famma-core.php:525
+msgid "Cost price (TND)"
+msgstr ""
+
+#: famma-core.php:527
+msgid "Leave selling price empty to auto-set to cost × 3."
+msgstr ""
+
+#: famma-core.php:534
+#: famma-core.php:685
+msgid "Internal shipping cost (TND)"
+msgstr ""
+
+#: famma-core.php:536
+msgid "Included in price; customer pays 0."
+msgstr ""
+
+#: famma-core.php:544
+msgid "Handling cost (TND)"
+msgstr ""
+
+#: famma-core.php:551
+msgid "Acquisition cost / order (TND)"
+msgstr ""
+
+#. translators: 1: net profit in TND, 2: margin as a percentage
+#: famma-core.php:562
+#, php-format
+msgid "Estimated net margin: %1$s TND (%2$s%%)"
+msgstr ""
+
+#: famma-core.php:669
+msgid "FAMMA business rules"
+msgstr ""
+
+#: famma-core.php:674
+msgid "Default price multiplier"
+msgstr ""
+
+#: famma-core.php:675
+msgid "Selling price = cost × this (default 3). Manual prices override."
+msgstr ""
+
+#: famma-core.php:686
+msgid "Included in price; customer pays 0. Margin only."
+msgstr ""
+
+#: famma-core.php:849
+#: famma-core.php:874
+msgid "Governorate / الولاية"
+msgstr ""
+
+#: famma-core.php:852
+#: famma-core.php:878
+msgid "City / Delegation — المدينة"
+msgstr ""
+
+#: famma-core.php:864
+msgid "Email (optional) / البريد الإلكتروني"
+msgstr ""
+
+#: famma-core.php:871
+msgid "Phone / الهاتف"
+msgstr ""
+
+#: famma-core.php:881
+msgid "Address / العنوان"
+msgstr ""
+
+#: famma-core.php:904
+msgid "Please enter a valid Tunisian phone number (8 digits). أدخل رقم هاتف تونسي صحيح."
+msgstr ""
+
+#: famma-core.php:973
+#: famma-core.php:1028
+msgid "Contact us on WhatsApp"
+msgstr ""
+
+#: famma-core.php:1021
+msgid "Bonjour, j'ai une question 🙂 / سلام، عندي سؤال"
+msgstr ""
+
+#: famma-core.php:1317
+msgid "You are not allowed to do this."
+msgstr ""
+
+#: famma-core.php:1379
+msgid "Direct"
+msgstr ""
+
+#: famma-core.php:1472
+msgid "FAMMA — dashboard"
+msgstr ""
+
+#: famma-core.php:1474
+msgid "Revenue counts delivered orders only: a cash-on-delivery order is not money until the cash is collected. These figures therefore differ from WooCommerce reports on purpose."
+msgstr ""
+
+#: famma-core.php:1477
+msgid "Partial figures."
+msgstr ""
+
+#. translators: %d: maximum number of orders read.
+#: famma-core.php:1481
+#, php-format
+msgid "The last %d orders were read. Older orders in the window are not counted."
+msgstr ""
+
+#: famma-core.php:1487
+#: famma-core.php:1514
+msgid "Orders"
+msgstr ""
+
+#: famma-core.php:1488
+msgid "Today"
+msgstr ""
+
+#: famma-core.php:1488
+#: famma-core.php:1489
+#: famma-core.php:1490
+msgid "orders placed"
+msgstr ""
+
+#: famma-core.php:1489
+msgid "7 days"
+msgstr ""
+
+#: famma-core.php:1490
+msgid "30 days"
+msgstr ""
+
+#: famma-core.php:1491
+msgid "Delivered — 30 days"
+msgstr ""
+
+#: famma-core.php:1491
+msgid "cash collected"
+msgstr ""
+
+#: famma-core.php:1494
+msgid "Money — last 30 days"
+msgstr ""
+
+#: famma-core.php:1495
+msgid "Revenue"
+msgstr ""
+
+#: famma-core.php:1495
+msgid "delivered orders only"
+msgstr ""
+
+#: famma-core.php:1496
+msgid "Estimated cost"
+msgstr ""
+
+#: famma-core.php:1496
+msgid "goods, shipping, handling"
+msgstr ""
+
+#: famma-core.php:1498
+msgid "Estimated margin"
+msgstr ""
+
+#: famma-core.php:1500
+msgid "revenue minus cost"
+msgstr ""
+
+#: famma-core.php:1503
+msgid "Average order"
+msgstr ""
+
+#: famma-core.php:1503
+msgid "per delivered order"
+msgstr ""
+
+#: famma-core.php:1506
+msgid "Losses — last 30 days"
+msgstr ""
+
+#: famma-core.php:1507
+msgid "Failed delivery"
+msgstr ""
+
+#: famma-core.php:1508
+msgid "Refused"
+msgstr ""
+
+#: famma-core.php:1509
+msgid "Returned"
+msgstr ""
+
+#: famma-core.php:1510
+msgid "Cancelled"
+msgstr ""
+
+#: famma-core.php:1513
+msgid "Top products — 30 days"
+msgstr ""
+
+#: famma-core.php:1513
+msgid "Product"
+msgstr ""
+
+#: famma-core.php:1513
+msgid "Units delivered"
+msgstr ""
+
+#: famma-core.php:1514
+msgid "Acquisition — 30 days"
+msgstr ""
+
+#: famma-core.php:1514
+msgid "Source"
+msgstr ""
+
+#: famma-core.php:1519
+msgid "Recalculate now"
+msgstr ""
+
+#. translators: %s: human-readable time difference.
+#: famma-core.php:1523
+#, php-format
+msgid "Figures computed %s ago, cached to keep the page fast."
+msgstr ""
+
+#: famma-core.php:1545
+msgid "Nothing yet."
+msgstr ""
+
+#: famma-core.php:1583
+msgid "FAMMA Core requires WooCommerce to be installed and active."
+msgstr ""
