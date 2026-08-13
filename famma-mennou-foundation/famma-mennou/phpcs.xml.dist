@@ -8,6 +8,7 @@
 
 	<file>wp-content/plugins/famma-core</file>
 	<file>wp-content/themes/famma-child</file>
+	<file>wp-content/mu-plugins</file>
 
 	<exclude-pattern>*/vendor/*</exclude-pattern>
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
@@ -60,6 +61,19 @@
 	</rule>
 
 	<rule ref="PHPCompatibilityWP"/>
+
+	<!--
+		Faux positif : le sniff prend le prefixe « famma_ » pour l'extension
+		« fam », supprimee en PHP 5.1. On liste la fonction concernee plutot
+		que de desactiver le controle de compatibilite.
+	-->
+	<rule ref="PHPCompatibility.Extensions.RemovedExtensions">
+		<properties>
+			<property name="functionWhitelist" type="array">
+				<element value="famma_env_define_constants"/>
+			</property>
+		</properties>
+	</rule>
 
 	<rule ref="WordPress.WP.I18n">
 		<properties>

@@ -397,6 +397,84 @@ final class Order_Statuses {
 }
 
 /**
+ * Stock reservation policy for the cash-on-delivery workflow (§2).
+ *
+ * WooCommerce reserves stock when an order reaches processing, on-hold or
+ * completed. None of those is on the COD path, so without this class stock
+ * was only ever decremented at delivery — long after the parcel left, and
+ * late enough for two orders to be taken on the same last unit.
+ *
+ * The reservation point is "confirmed", i.e. once a human has confirmed the
+ * order by phone. Reserving earlier would let unconfirmed or fake orders
+ * block real stock, which is a routine problem on Tunisian COD stores (§47).
+ * Stock is given back on every outcome where the goods come home.
+ */
+final class Stock {
+
+	/**
+	 * Singleton instance.
+	 *
+	 * @var Stock|null
+	 */
+	private static ?Stock $i = null;
+
+	/**
+	 * Statuses on which the goods return to stock.
+	 *
+	 * @var string[]
+	 */
+	private const RELEASING_STATUSES = array( 'cancelled', 'refused', 'returned', 'failed-delivery' );
+
+	/**
+	 * Returns the shared instance, registering hooks on first call.
+	 *
+	 * @return Stock
+	 */
+	public static function instance(): Stock {
+		if ( null === self::$i ) {
+			self::$i = new self();
+			self::$i->hooks();
+		}
+		return self::$i;
+	}
+
+	/**
+	 * Registers the reservation and release hooks.
+	 *
+	 * @return void
+	 */
+	private function hooks(): void {
+		add_action( 'woocommerce_order_status_confirmed', array( $this, 'reserve' ) );
+		foreach ( self::RELEASING_STATUSES as $status ) {
+			add_action( 'woocommerce_order_status_' . $status, array( $this, 'release' ) );
+		}
+	}
+
+	/**
+	 * Reserves stock for a confirmed order.
+	 *
+	 * Idempotent: WooCommerce guards on the _order_stock_reduced meta, so a
+	 * replayed transition cannot decrement twice.
+	 *
+	 * @param int $order_id Order identifier.
+	 * @return void
+	 */
+	public function reserve( int $order_id ): void {
+		wc_maybe_reduce_stock_levels( $order_id );
+	}
+
+	/**
+	 * Puts the goods back in stock when the order does not reach the customer.
+	 *
+	 * @param int $order_id Order identifier.
+	 * @return void
+	 */
+	public function release( int $order_id ): void {
+		wc_maybe_increase_stock_levels( $order_id );
+	}
+}
+
+/**
  * Internal product economics: cost, margin, and the cost×3 default price (§3).
  *
  * None of these figures is ever shown to a customer.
@@ -1121,6 +1199,7 @@ function boot(): void {
 
 	Config::instance();
 	Order_Statuses::instance();
+	Stock::instance();
 	Product_Financials::instance();
 	Shipping::instance();
 	Tunisia::instance();

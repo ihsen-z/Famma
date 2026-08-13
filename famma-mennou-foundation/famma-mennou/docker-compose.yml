@@ -47,6 +47,27 @@ services:
       WORDPRESS_DB_USER: ${DB_USER}
       WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
       WORDPRESS_DEBUG: ${WP_DEBUG:-1}
+      # ------------------------------------------------------------------
+      # Pont .env -> PHP (§41).
+      #
+      # Ces variables sont lues par le mu-plugin famma-env, qui les
+      # transforme en constantes FAMMA_*. On ne passe PAS par
+      # WORDPRESS_CONFIG_EXTRA : l'image officielle n'ecrit wp-config.php
+      # qu'a la creation du volume et ne le met jamais a jour ensuite, donc
+      # toute variable ajoutee apres coup n'atteint jamais PHP. Constate a
+      # l'execution : wp-config.php ne contenait aucune constante FAMMA_.
+      #
+      # WP_ENVIRONMENT_TYPE n'a pas besoin de mu-plugin : le coeur de
+      # WordPress lit cette variable d'environnement directement.
+      # ------------------------------------------------------------------
+      WP_ENVIRONMENT_TYPE: ${WP_ENV:-local}
+      FAMMA_WHATSAPP_NUMBER: ${FAMMA_WHATSAPP_NUMBER}
+      FAMMA_META_PIXEL_ID: ${META_PIXEL_ID}
+      FAMMA_META_ACCESS_TOKEN: ${META_ACCESS_TOKEN}
+      FAMMA_META_TEST_EVENT_CODE: ${META_TEST_EVENT_CODE}
+      FAMMA_TIKTOK_PIXEL_ID: ${TIKTOK_PIXEL_ID}
+      FAMMA_GA4_MEASUREMENT_ID: ${GA4_MEASUREMENT_ID}
+      FAMMA_GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION}
       WORDPRESS_CONFIG_EXTRA: |
         define('WP_HOME', '${WP_HOME}');
         define('WP_SITEURL', '${WP_SITEURL}');
@@ -55,29 +76,12 @@ services:
         define('DISALLOW_FILE_EDIT', true);
         define('WP_MEMORY_LIMIT', '256M');
         define('AUTOMATIC_UPDATER_DISABLED', true);
-        define('WP_ENVIRONMENT_TYPE', '${WP_ENV:-local}');
-        /* ---------------------------------------------------------------
-         * FAMMA — pont .env -> constantes PHP (§41).
-         * Famma\Core\Config ne lit QUE des constantes : sans ces define(),
-         * WhatsApp et toute la couche tracking restent silencieusement
-         * desactives. Une valeur vide = fonctionnalite desactivee, ce qui
-         * est le comportement voulu tant que le proprietaire n'a pas
-         * fourni ses identifiants.
-         * FAMMA_META_ACCESS_TOKEN reste strictement cote serveur : il
-         * n'est jamais enqueue vers le navigateur (§17).
-         * ------------------------------------------------------------- */
-        define('FAMMA_WHATSAPP_NUMBER', '${FAMMA_WHATSAPP_NUMBER}');
-        define('FAMMA_META_PIXEL_ID', '${META_PIXEL_ID}');
-        define('FAMMA_META_ACCESS_TOKEN', '${META_ACCESS_TOKEN}');
-        define('FAMMA_META_TEST_EVENT_CODE', '${META_TEST_EVENT_CODE}');
-        define('FAMMA_TIKTOK_PIXEL_ID', '${TIKTOK_PIXEL_ID}');
-        define('FAMMA_GA4_MEASUREMENT_ID', '${GA4_MEASUREMENT_ID}');
-        define('FAMMA_GOOGLE_SITE_VERIFICATION', '${GOOGLE_SITE_VERIFICATION}');
     volumes:
       - wp_core:/var/www/html
       # Bind-mount our code so the custom plugin + child theme live in the repo:
       - ./wp-content/plugins/famma-core:/var/www/html/wp-content/plugins/famma-core
       - ./wp-content/themes/famma-child:/var/www/html/wp-content/themes/famma-child
+      - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
       - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
 
   wpcli:
@@ -92,10 +96,22 @@ services:
       WORDPRESS_DB_NAME: ${DB_NAME}
       WORDPRESS_DB_USER: ${DB_USER}
       WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      # WP-CLI doit voir exactement le meme environnement que le site,
+      # sinon un `wp eval` ne reflete pas le comportement reel.
+      WP_ENVIRONMENT_TYPE: ${WP_ENV:-local}
+      FAMMA_WHATSAPP_NUMBER: ${FAMMA_WHATSAPP_NUMBER}
+      FAMMA_META_PIXEL_ID: ${META_PIXEL_ID}
+      FAMMA_META_ACCESS_TOKEN: ${META_ACCESS_TOKEN}
+      FAMMA_META_TEST_EVENT_CODE: ${META_TEST_EVENT_CODE}
+      FAMMA_TIKTOK_PIXEL_ID: ${TIKTOK_PIXEL_ID}
+      FAMMA_GA4_MEASUREMENT_ID: ${GA4_MEASUREMENT_ID}
+      FAMMA_GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION}
+      HOME: /tmp
     volumes:
       - wp_core:/var/www/html
       - ./wp-content/plugins/famma-core:/var/www/html/wp-content/plugins/famma-core
       - ./wp-content/themes/famma-child:/var/www/html/wp-content/themes/famma-child
+      - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
       - ./scripts:/scripts
     # Kept idle; invoked on demand by scripts/setup.sh
     entrypoint: ["tail", "-f", "/dev/null"]
@@ -114,13 +130,15 @@ services:
       UPLOAD_LIMIT: 64M
     profiles: ["tools"]
 
+  # Pas dans le profil « tools » : WordPress y route tout son courrier via
+  # le mu-plugin famma-local-mail. Derriere un profil, chaque e-mail
+  # transactionnel echouait sur « sendmail: can't connect » (§34).
   mailpit:
     image: axllent/mailpit:latest
     container_name: famma_mail
     restart: unless-stopped
     ports:
       - "${MAILPIT_UI_PORT:-8025}:8025"
-    profiles: ["tools"]
 
 volumes:
   db_data:
