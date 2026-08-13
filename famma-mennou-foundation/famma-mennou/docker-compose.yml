@@ -1,0 +1,103 @@
+# ============================================================
+# FAMMA MENNOU — Local Development Environment
+# WordPress + WooCommerce (Tunisia / COD-first)
+# ============================================================
+# Usage:
+#   1. cp .env.example .env  (then edit values if needed)
+#   2. docker compose up -d
+#   3. bash scripts/setup.sh   (first run only — configures WP + Woo)
+# ============================================================
+
+services:
+  db:
+    image: mariadb:11.4
+    container_name: famma_db
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  wordpress:
+    image: wordpress:6.8-php8.3-apache
+    container_name: famma_wp
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${WP_PORT:-8080}:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_DEBUG: ${WP_DEBUG:-1}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME', '${WP_HOME}');
+        define('WP_SITEURL', '${WP_SITEURL}');
+        define('WP_DEBUG_LOG', true);
+        define('WP_DEBUG_DISPLAY', false);
+        define('DISALLOW_FILE_EDIT', true);
+        define('WP_MEMORY_LIMIT', '256M');
+        define('AUTOMATIC_UPDATER_DISABLED', true);
+    volumes:
+      - wp_core:/var/www/html
+      # Bind-mount our code so the custom plugin + child theme live in the repo:
+      - ./wp-content/plugins/famma-core:/var/www/html/wp-content/plugins/famma-core
+      - ./wp-content/themes/famma-child:/var/www/html/wp-content/themes/famma-child
+      - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+
+  wpcli:
+    image: wordpress:cli-php8.3
+    container_name: famma_wpcli
+    depends_on:
+      db:
+        condition: service_healthy
+    user: "33:33"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - wp_core:/var/www/html
+      - ./wp-content/plugins/famma-core:/var/www/html/wp-content/plugins/famma-core
+      - ./wp-content/themes/famma-child:/var/www/html/wp-content/themes/famma-child
+      - ./scripts:/scripts
+    # Kept idle; invoked on demand by scripts/setup.sh
+    entrypoint: ["tail", "-f", "/dev/null"]
+
+  # --- Optional developer tooling (safe to remove) ---
+  phpmyadmin:
+    image: phpmyadmin:5
+    container_name: famma_pma
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "${PMA_PORT:-8081}:80"
+    environment:
+      PMA_HOST: db
+      UPLOAD_LIMIT: 64M
+    profiles: ["tools"]
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: famma_mail
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+    profiles: ["tools"]
+
+volumes:
+  db_data:
+  wp_core:

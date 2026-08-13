@@ -1,0 +1,26 @@
+# Secrets & local config
+.env
+*.env.local
+
+# WordPress core (installed via Docker volume, not tracked)
+/wp-content/uploads/
+/wp-content/upgrade/
+/wp-content/cache/
+wp-config.php
+
+# Third-party plugins & themes installed at runtime (only famma-* is tracked)
+/wp-content/plugins/*
+!/wp-content/plugins/famma-core/
+/wp-content/themes/*
+!/wp-content/themes/famma-child/
+
+# Backups (may contain customer data)
+/backups/*
+!/backups/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+node_modules/
+vendor/

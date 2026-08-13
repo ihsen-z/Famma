@@ -1,0 +1,31 @@
+# ============================================================
+# FAMMA MENNOU — racine du dépôt (§39)
+# Le projet imbriqué famma-mennou/ possède son propre .gitignore ;
+# ses motifs y sont relatifs à son dossier et restent valides.
+# ============================================================
+
+# Secrets — ne JAMAIS committer (§39, §41)
+.env
+.env.*
+!.env.example
+
+# Artefacts d'outillage d'analyse
+graphify-out/
+*.original.md
+
+# Sauvegardes (peuvent contenir des données clients)
+backups/
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# Dépendances
+node_modules/
+vendor/
+
+# Journaux
+*.log
