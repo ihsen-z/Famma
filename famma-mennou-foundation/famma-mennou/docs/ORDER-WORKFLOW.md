@@ -47,11 +47,41 @@ above. Guarding on `date_paid` would return early and `payment_complete()`
 would never run, so `woocommerce_payment_complete` would never fire and
 **stock would never be decremented**.
 
+### Where a COD order starts, and why it matters
+
+`WC_Gateway_COD` drops a fresh order straight into `processing`, and
+`processing` is one of WooCommerce's paid statuses. A brand-new, undelivered
+order therefore reported `is_paid() === true` — the exact false positive §12
+forbids. Observed on a real browser checkout, not in theory.
+
+Two changes fix it:
+
+- `woocommerce_cod_process_payment_order_status` → **`pending-confirm`**, which
+  is the first step of the §2 workflow anyway;
+- `processing` is removed from both the paid statuses and the reporting
+  statuses, because §2 places PROCESSING *before* SHIPPED — the parcel is being
+  prepared and no cash has been collected.
+
+> Valid while cash on delivery is the only gateway (§2). **Adding an online
+> payment method later means revisiting `paid_statuses()`**, since a prepaid
+> order legitimately is paid at `processing`.
+
 ### Verified behaviour
-An order taken through `pending-confirm → confirmed → shipped → delivered`:
-status stays `delivered`, `is_paid()` true, `date_paid` stamped, stock
-decremented exactly once, one `COD payment collected on delivery` note.
-Replaying the hook changes nothing.
+A real browser order at 375×812, placed with no email and a local 8-digit
+phone number:
+
+| Stage | `is_paid()` |
+|---|---|
+| `pending-confirm` (on placement) | false |
+| `confirmed` | false |
+| `processing` | false |
+| `shipped` | false |
+| **`delivered`** | **true**, `date_paid` stamped |
+
+Status stays `delivered`, stock decremented exactly once, a single
+`COD payment collected on delivery` note. Replaying the hook changes nothing.
+An invalid phone number is rejected with the bilingual message before the
+order is created.
 
 > **Ouvert (D6)** — le stock n'est décrémenté qu'à la livraison. Réserver le
 > stock plus tôt (à `confirmed`) est une décision métier qui n'a pas encore

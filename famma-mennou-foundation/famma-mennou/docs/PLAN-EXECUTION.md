@@ -10,7 +10,7 @@
 | 0 — Reprise en main | **TERMINÉE** | Dépôt Git à `E:\Ecom`, `.gitattributes` (LF), `.env` local généré et ignoré |
 | 1 — Stack démarrable | **TERMINÉE** | WordPress 7.0.4 / PHP 8.3.33 / MariaDB 11.4 / WooCommerce 11.0.1 / Kadence 1.5.2 + `famma-child`. Boutique en TND à 3 décimales, COD seul moyen de paiement, livraison 0 TND, catalogue vide |
 | 2 — Boucle qualité | **TERMINÉE** | `scripts/lint.sh` conteneurisé. phpcs : **0 erreur, 0 avertissement** (251 au départ) |
-| 3 — Règles métier | **PARTIELLE** | P0-2 corrigé et vérifié de bout en bout. Restent P1-1 (checkout), P1-2 (pays TN) et D6 (politique de stock) |
+| 3 — Règles métier | **PARTIELLE** | P0-2, P1-1 et P1-2 corrigés et vérifiés par une vraie commande au navigateur. Reste D6 (politique de stock) et le §34 (e-mails transactionnels : aucun MTA configuré) |
 | 4 — CAPI Meta | à faire | dépend des identifiants propriétaire (D7) |
 | 5 — Thème & design | amorcée | `famma-child` créé (jetons, CTA collant, RTL) ; le design réel reste à faire |
 | 6 — Documentation | amorcée | `ARCHITECTURE.md` et `ORDER-WORKFLOW.md` réalignés sur le code réel |
@@ -26,8 +26,12 @@ Décisions D1 à D5 : voir `DECISIONS.md` (ADR-001 à ADR-005).
 | P0-3 | Montages Docker fantômes, `setup.sh` absent | **corrigé** |
 | P0-4 | Aucun dépôt Git | **corrigé** |
 | P0-5 | `MASTER-PROMPT.md` introuvable | **corrigé** — fourni et versionné |
-| P1-1 | Checkout en blocs incompatible | **écarté** — checkout classique forcé (ADR-003), à re-tester avec une vraie commande navigateur |
-| P1-2 | `billing_country` retiré sans défaut TN | **ouvert** |
+| P1-1 | Checkout en blocs incompatible | **écarté et vérifié** — checkout classique (ADR-003) : 24 gouvernorats, libellés bilingues et validation du téléphone tous actifs en conditions réelles |
+| P1-2 | `billing_country` retiré sans défaut TN | **confirmé bloquant puis corrigé** — aucune commande ne pouvait aboutir |
+| — | COD marquée payée dès la création (`processing`) | **découvert au navigateur, corrigé** — violation directe du §12 |
+| — | Bloc « autre adresse de livraison » non nettoyé | **corrigé** |
+| — | E-mail obligatoire, absent des champs requis du §13 | **corrigé** — devenu facultatif |
+| — | Aucun MTA : les e-mails transactionnels ne partent pas | **ouvert** — §34, Mailpit est derrière le profil `tools` et WordPress n'est pas câblé en SMTP |
 | P1-3 | CAPI non implémentée | **ouvert** — Phase 4 |
 | P1-4 | Textdomain chargé trop tôt | **corrigé** (préventif : aucun `.mo` n'existe encore) |
 | P1-5 | Politique de stock indéfinie | **ouvert** — décision D6. Le stock n'est décrémenté qu'à la livraison |
