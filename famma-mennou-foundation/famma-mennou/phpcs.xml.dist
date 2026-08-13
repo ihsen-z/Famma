@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<ruleset name="FAMMA">
+	<description>
+		Standards WordPress appliqués au code FAMMA (ClaudeMemo, règle 3 :
+		tolérance zéro). Seul le code que nous écrivons est analysé — jamais
+		le cœur WordPress, WooCommerce ni les thèmes tiers.
+	</description>
+
+	<file>wp-content/plugins/famma-core</file>
+	<file>wp-content/themes/famma-child</file>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/languages/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="basepath" value="."/>
+	<arg name="colors"/>
+	<arg name="parallel" value="4"/>
+	<arg value="sp"/>
+
+	<!-- Cible technique du projet (§54, ClaudeMemo règle 3). -->
+	<config name="minimum_wp_version" value="6.6"/>
+	<config name="testVersion" value="8.1-"/>
+
+	<rule ref="WordPress">
+		<!--
+			Le plugin est volontairement un fichier unique consolidé
+			(ClaudeMemo règle 7) : la convention de nommage class-*.php ne
+			s'applique donc pas. Exclusion assumée et documentée.
+		-->
+		<exclude name="WordPress.Files.FileName"/>
+	</rule>
+
+	<rule ref="PHPCompatibilityWP"/>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="famma-core"/>
+				<element value="famma-child"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="famma"/>
+				<element value="FAMMA"/>
+				<element value="Famma\Core"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>
