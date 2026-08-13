@@ -62,6 +62,26 @@ final class Order_Statuses {
 		add_filter( 'wc_order_statuses', array( $this, 'add_to_wc_list' ) );
 		add_action( 'woocommerce_order_status_delivered', array( $this, 'mark_cod_paid_on_delivery' ) );
 		add_filter( 'woocommerce_reports_order_statuses', array( $this, 'reporting_statuses' ) );
+
+		/*
+		 * Sans ces trois filtres, payment_complete() ne fait strictement rien
+		 * depuis un statut personnalise : WooCommerce n'autorise l'encaissement
+		 * que depuis on-hold / pending / failed / cancelled. Verifie a
+		 * l'execution sur WooCommerce 11.0.1 — la commande restait « livre »
+		 * mais sans date de paiement, et le chiffre d'affaires n'etait jamais
+		 * comptabilise. C'est la regle metier non negociable n°4 (§12).
+		 */
+		add_filter( 'woocommerce_valid_order_statuses_for_payment_complete', array( $this, 'allow_complete_from_delivered' ) );
+		add_filter( 'woocommerce_order_is_paid_statuses', array( $this, 'paid_statuses' ) );
+
+		/*
+		 * Priorite 99, et non 10 : WC_Gateway_COD declare son propre filtre
+		 * sur ce hook et force « completed » pour toute commande payee a la
+		 * livraison. Les passerelles etant instanciees apres plugins_loaded,
+		 * son callback passerait apres le notre a priorite egale et la
+		 * commande quitterait « livre » immediatement. Constate a l'execution.
+		 */
+		add_filter( 'woocommerce_payment_complete_order_status', array( $this, 'stay_delivered_when_paid' ), 99, 3 );
 	}
 	public function register_post_statuses(): void {
 		foreach ( $this->statuses() as $slug => $label ) {
@@ -86,7 +106,69 @@ final class Order_Statuses {
 	}
 	public function mark_cod_paid_on_delivery( int $order_id ): void {
 		$o = wc_get_order( $order_id );
-		if ( $o && ! $o->is_paid() ) { $o->payment_complete(); $o->add_order_note( __( 'COD payment collected on delivery.', 'famma-core' ) ); }
+		if ( ! $o instanceof \WC_Order ) {
+			return;
+		}
+		/*
+		 * Le garde-fou s'appuie sur un marqueur qui nous appartient, et non
+		 * sur is_paid() ni sur date_paid. Les deux sont deja vrais a l'entree :
+		 * WC_Abstract_Order::maybe_set_date_paid() s'execute pendant save(),
+		 * donc avant cette transition, et considere « livre » comme statut
+		 * d'encaissement du fait de notre filtre stay_delivered_when_paid().
+		 * S'y fier ferait sortir en avance et payment_complete() ne serait
+		 * jamais appele : l'action woocommerce_payment_complete ne partirait
+		 * pas et le stock ne serait jamais decremente.
+		 */
+		if ( 'yes' === $o->get_meta( '_famma_cod_paid' ) ) {
+			return;
+		}
+		$o->payment_complete();
+		$o->update_meta_data( '_famma_cod_paid', 'yes' );
+		$o->add_order_note( __( 'COD payment collected on delivery.', 'famma-core' ) );
+		$o->save();
+	}
+
+	/**
+	 * Autorise payment_complete() a s'executer depuis le statut « livre ».
+	 *
+	 * @param string[] $statuses Statuts depuis lesquels l'encaissement est permis.
+	 * @return string[]
+	 */
+	public function allow_complete_from_delivered( array $statuses ): array {
+		$statuses[] = 'delivered';
+		return $statuses;
+	}
+
+	/**
+	 * Empeche payment_complete() de faire sortir la commande de « livre ».
+	 *
+	 * Par defaut WooCommerce basculerait en processing ou completed, ce qui
+	 * rendrait le statut « livre » inatteignable dans les faits.
+	 *
+	 * @param string         $status   Statut cible par defaut.
+	 * @param int            $order_id Identifiant de la commande.
+	 * @param \WC_Order|null $order    Commande concernee.
+	 * @return string
+	 */
+	public function stay_delivered_when_paid( string $status, int $order_id, $order = null ): string {
+		if ( $order instanceof \WC_Order && $order->has_status( 'delivered' ) ) {
+			return 'delivered';
+		}
+		return $status;
+	}
+
+	/**
+	 * Fait compter « livre » comme paye.
+	 *
+	 * Sans cela is_paid() reste faux et les rapports de chiffre d'affaires
+	 * ignorent purement et simplement les commandes livrees.
+	 *
+	 * @param string[] $statuses Statuts consideres comme payes.
+	 * @return string[]
+	 */
+	public function paid_statuses( array $statuses ): array {
+		$statuses[] = 'delivered';
+		return $statuses;
 	}
 	public function reporting_statuses( array $s ): array {
 		foreach ( array( 'delivered', 'completed', 'processing' ) as $x ) { if ( ! in_array( $x, $s, true ) ) { $s[] = $x; } }
@@ -216,6 +298,11 @@ final class WhatsApp {
 		return $u;
 	}
 	public function styles(): void {
+		// Aucun numero configure : le bouton n'est pas rendu, son CSS n'a
+		// donc rien a faire dans la page (§23).
+		if ( '' === Config::instance()->whatsapp_number() ) {
+			return;
+		}
 		$css = '.famma-wa{position:fixed;right:16px;bottom:16px;z-index:9999;display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;background:#25D366;box-shadow:0 4px 14px rgba(0,0,0,.25);text-decoration:none}.famma-wa svg{width:30px;height:30px;fill:#fff}.famma-wa:focus-visible{outline:3px solid #ff7a00;outline-offset:2px}';
 		wp_register_style( 'famma-wa', false, array(), FAMMA_CORE_VERSION );
 		wp_enqueue_style( 'famma-wa' );
@@ -288,8 +375,19 @@ final class Tracking {
 }
 
 /* =============================== Bootstrap ============================== */
-function boot(): void {
+/**
+ * Charge les traductions du plugin.
+ *
+ * Accroche sur `init` et non `plugins_loaded` : depuis WordPress 6.7,
+ * declencher le chargement d'un domaine avant `init` provoque un
+ * avertissement _doing_it_wrong des qu'un fichier .mo existe.
+ */
+function load_textdomain(): void {
 	load_plugin_textdomain( 'famma-core', false, dirname( plugin_basename( FAMMA_CORE_FILE ) ) . '/languages' );
+}
+add_action( 'init', __NAMESPACE__ . '\\load_textdomain' );
+
+function boot(): void {
 	if ( ! class_exists( 'WooCommerce' ) ) {
 		add_action( 'admin_notices', static function () {
 			echo '<div class="notice notice-error"><p>' . esc_html__( 'FAMMA Core requires WooCommerce to be installed and active.', 'famma-core' ) . '</p></div>';
