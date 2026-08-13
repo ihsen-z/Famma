@@ -13,17 +13,33 @@ access token is defined server-side and is **never** enqueued to the browser
 (only the pixel *ID* is). Adding a real value later = edit `.env`, `docker
 compose up -d`. No code change.
 
-## famma-core layout
+## famma-core layout — état réel
+
+Le plugin est un **fichier unique consolidé**, délibérément : pas d'autoloader,
+donc aucun chargement croisé ne peut échouer, et aucun risque de définir deux
+fois la même classe (cause n°1 d'erreur fatale à l'activation). Ce choix est
+verrouillé par la règle 7 de `ClaudeMemo.md`.
+
 ```
-famma-core.php              bootstrap + autoloader + WooCommerce/HPOS guards
-includes/class-config.php           reads env-fed constants + options
-includes/class-order-statuses.php   custom COD order workflow
-includes/class-product-financials.php  cost×3, margin fields, admin panel
-includes/class-shipping.php         0 TND customer / 7 TND internal + settings
-includes/class-tunisia.php          governorates dropdown + phone validation
-frontend/class-whatsapp.php         floating button + dynamic wa.me links
-tracking/class-tracking.php         GA4/Meta/TikTok (ID-only) + UTM + delivery Purchase
+famma-core.php   (313 l.)   un seul fichier, namespace Famma\Core, singletons
+  ├── Config              lit les constantes issues de .env + les options WP
+  ├── Order_Statuses      workflow COD personnalisé
+  ├── Product_Financials  coût×3, champs de marge, panneau admin
+  ├── Shipping            0 TND client / 7 TND interne + réglages
+  ├── Tunisia             gouvernorats + validation du téléphone
+  ├── WhatsApp            bouton flottant + liens wa.me dynamiques
+  └── Tracking            GA4/Meta/TikTok (ID seul) + UTM + Purchase à la livraison
 ```
+
+> Le découpage en `includes/`, `frontend/`, `tracking/` décrit par le §27 reste
+> l'objectif à terme. Il ne sera fait qu'une fois les règles métier vertes en
+> Phase 3 : scinder un fichier avant d'avoir un test de bout en bout est le
+> meilleur moyen d'introduire un doublon de classe sans s'en apercevoir.
+
+## Qualité du code
+`composer.json` + `phpcs.xml.dist` + `scripts/lint.sh` : `php -l` et `phpcs`
+(standard WordPress + PHPCompatibility) tournent dans un conteneur jetable,
+sans rien installer sur la machine.
 
 ## Language / RTL (§5) — decision deferred on purpose
 Two free paths, documented so you choose deliberately rather than defaulting:
