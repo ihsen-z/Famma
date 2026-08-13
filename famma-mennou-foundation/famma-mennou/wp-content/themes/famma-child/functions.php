@@ -94,6 +94,35 @@ function famma_child_brand_logo( $html ) {
 add_filter( 'kadence_custom_logo', 'famma_child_brand_logo' );
 
 /**
+ * Affiche la barre de liens légaux en bas de page (§8, §45).
+ *
+ * Rendue ici plutôt que par le constructeur de pied de page du thème :
+ * assigner un menu à l'emplacement `footer` ne suffit pas, Kadence
+ * n'affiche cet élément que si sa rangée de pied de page le contient.
+ * Cette version ne dépend d'aucun réglage du thème et se teste.
+ *
+ * @return void
+ */
+function famma_child_legal_bar(): void {
+	if ( ! has_nav_menu( 'footer' ) ) {
+		return;
+	}
+
+	echo '<nav class="famma-legal" aria-label="' . esc_attr__( 'Informations légales', 'famma-child' ) . '">';
+	wp_nav_menu(
+		array(
+			'theme_location' => 'footer',
+			'container'      => false,
+			'menu_class'     => 'famma-legal__list',
+			'depth'          => 1,
+			'fallback_cb'    => false,
+		)
+	);
+	echo '</nav>';
+}
+add_action( 'wp_footer', 'famma_child_legal_bar', 5 );
+
+/**
  * Déclare l'icône du site (§7).
  *
  * Le favicon est servi en SVG : une seule source, nette à toute densité,

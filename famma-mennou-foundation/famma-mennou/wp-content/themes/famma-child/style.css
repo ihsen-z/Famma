@@ -137,6 +137,53 @@ textarea:focus-visible {
 	}
 }
 
+/* --- Barre de liens légaux (§8) --- */
+.famma-legal {
+	padding: var(--sp-4);
+	background: var(--famma-blue);
+}
+
+.famma-legal__list {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--sp-2) var(--sp-4);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-legal__list a {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: 44px;
+	color: var(--famma-line);
+	font-size: 0.85rem;
+	text-decoration: none;
+}
+
+.famma-legal__list a:hover,
+.famma-legal__list a:focus-visible {
+	color: var(--famma-orange);
+	text-decoration: underline;
+}
+
+/* --- Encart « à compléter » (§45) ---------------------------
+   Volontairement voyant : ces blocs signalent du contenu qui
+   engage la boutique et qui n'a pas encore été validé. Ils
+   doivent avoir disparu avant toute mise en production.
+   ---------------------------------------------------------- */
+.famma-todo {
+	margin-block: var(--sp-4);
+	padding: var(--sp-4);
+	border: 1px dashed var(--famma-warning);
+	border-radius: var(--famma-radius);
+	background: #FFF8E6;
+	color: #6B5200;
+	font-size: 0.95rem;
+	line-height: 1.6;
+}
+
 /* --- Sceau circulaire (planche 2b) --- */
 .famma-seal {
 	inline-size: 148px;
