@@ -7,15 +7,36 @@
 
 | Phase | État | Note |
 |---|---|---|
-| 0 — Reprise en main | **TERMINÉE** | Dépôt Git initialisé à `E:\Ecom`, `.gitattributes` (LF), `.env` local généré et ignoré, 7 commits |
-| 1 — Stack démarrable | **PARTIELLE** | Tous les fichiers écrits et validés hors ligne (`docker compose config` OK, `bash -n` OK). **Bloquée sur le démarrage de Docker Desktop** — action propriétaire |
-| 2 — Boucle qualité | à faire | dépend de la Phase 1 |
-| 3 — Règles métier | à faire | P0-2 et P1-1 doivent être confirmés à l'exécution avant correction |
+| 0 — Reprise en main | **TERMINÉE** | Dépôt Git à `E:\Ecom`, `.gitattributes` (LF), `.env` local généré et ignoré |
+| 1 — Stack démarrable | **TERMINÉE** | WordPress 7.0.4 / PHP 8.3.33 / MariaDB 11.4 / WooCommerce 11.0.1 / Kadence 1.5.2 + `famma-child`. Boutique en TND à 3 décimales, COD seul moyen de paiement, livraison 0 TND, catalogue vide |
+| 2 — Boucle qualité | **TERMINÉE** | `scripts/lint.sh` conteneurisé. phpcs : **0 erreur, 0 avertissement** (251 au départ) |
+| 3 — Règles métier | **PARTIELLE** | P0-2 corrigé et vérifié de bout en bout. Restent P1-1 (checkout), P1-2 (pays TN) et D6 (politique de stock) |
 | 4 — CAPI Meta | à faire | dépend des identifiants propriétaire (D7) |
 | 5 — Thème & design | amorcée | `famma-child` créé (jetons, CTA collant, RTL) ; le design réel reste à faire |
-| 6 — Documentation | à faire | `ARCHITECTURE.md` décrit encore une arborescence inexistante (P2-6) |
+| 6 — Documentation | amorcée | `ARCHITECTURE.md` et `ORDER-WORKFLOW.md` réalignés sur le code réel |
 
 Décisions D1 à D5 : voir `DECISIONS.md` (ADR-001 à ADR-005).
+
+### Constats de l'analyse initiale — état après vérification à l'exécution
+
+| # | Constat | Statut |
+|---|---|---|
+| P0-1 | Pont `.env` → constantes inexistant | **corrigé** — vérifié par `docker compose config` |
+| P0-2 | COD jamais marquée payée | **confirmé cassé puis corrigé** — voir `ORDER-WORKFLOW.md` |
+| P0-3 | Montages Docker fantômes, `setup.sh` absent | **corrigé** |
+| P0-4 | Aucun dépôt Git | **corrigé** |
+| P0-5 | `MASTER-PROMPT.md` introuvable | **corrigé** — fourni et versionné |
+| P1-1 | Checkout en blocs incompatible | **écarté** — checkout classique forcé (ADR-003), à re-tester avec une vraie commande navigateur |
+| P1-2 | `billing_country` retiré sans défaut TN | **ouvert** |
+| P1-3 | CAPI non implémentée | **ouvert** — Phase 4 |
+| P1-4 | Textdomain chargé trop tôt | **corrigé** (préventif : aucun `.mo` n'existe encore) |
+| P1-5 | Politique de stock indéfinie | **ouvert** — décision D6. Le stock n'est décrémenté qu'à la livraison |
+| P1-6 | Aucun thème | **corrigé** — Kadence + `famma-child` |
+| P2-1 | Scripts inline | **corrigé** — passés par `wp_enqueue_script` |
+| P2-3 | Cookie UTM non plafonné | **corrigé** |
+| P2-6, P2-7 | Docs contredisant le code | **corrigés** |
+| P2-8 | Porte qualité inapplicable | **corrigé** — lint conteneurisé |
+| P2-2, P2-4, P2-5 | Nonce, `esc_url`, marge sur prix promo | **ouverts** — sans impact vérifié à ce stade |
 
 ---
 
