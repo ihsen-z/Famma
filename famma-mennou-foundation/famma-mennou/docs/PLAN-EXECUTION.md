@@ -3,6 +3,20 @@
 > Analyse du dépôt au 2026-08-13 et plan de reprise en main.
 > Statut du code analysé : `famma-core` v0.1.0, jamais exécuté sur une install WP+Woo réelle.
 
+## Avancement
+
+| Phase | État | Note |
+|---|---|---|
+| 0 — Reprise en main | **TERMINÉE** | Dépôt Git initialisé à `E:\Ecom`, `.gitattributes` (LF), `.env` local généré et ignoré, 7 commits |
+| 1 — Stack démarrable | **PARTIELLE** | Tous les fichiers écrits et validés hors ligne (`docker compose config` OK, `bash -n` OK). **Bloquée sur le démarrage de Docker Desktop** — action propriétaire |
+| 2 — Boucle qualité | à faire | dépend de la Phase 1 |
+| 3 — Règles métier | à faire | P0-2 et P1-1 doivent être confirmés à l'exécution avant correction |
+| 4 — CAPI Meta | à faire | dépend des identifiants propriétaire (D7) |
+| 5 — Thème & design | amorcée | `famma-child` créé (jetons, CTA collant, RTL) ; le design réel reste à faire |
+| 6 — Documentation | à faire | `ARCHITECTURE.md` décrit encore une arborescence inexistante (P2-6) |
+
+Décisions D1 à D5 : voir `DECISIONS.md` (ADR-001 à ADR-005).
+
 ---
 
 ## 0. Méthode et limites de cette analyse
