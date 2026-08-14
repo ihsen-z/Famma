@@ -571,21 +571,30 @@ final class Product_Financials {
 	/**
 	 * Persists the financial fields and applies the cost×3 default (§3).
 	 *
-	 * Nonce and capability are verified by WooCommerce before this hook fires
-	 * (WC_Meta_Box_Product_Data::save checks woocommerce_meta_nonce); the
-	 * capability check below is kept as a defence in depth.
+	 * WooCommerce vérifie déjà le nonce avant de déclencher ce hook, mais la
+	 * règle 4 du projet impose la séquence complète — nonce, capacité,
+	 * assainissement — sur place et sans la déléguer. Le contrôle est donc
+	 * refait ici, ce qui supprime au passage les `phpcs:ignore` qui
+	 * signalaient l'absence de vérification.
 	 *
 	 * @param \WC_Product $product Product being saved.
 	 * @return void
 	 */
 	public function save_fields( \WC_Product $product ): void {
+		$nonce = isset( $_POST['woocommerce_meta_nonce'] )
+			? sanitize_key( wp_unslash( $_POST['woocommerce_meta_nonce'] ) )
+			: '';
+
+		if ( '' === $nonce || ! wp_verify_nonce( $nonce, 'woocommerce_save_data' ) ) {
+			return;
+		}
+
 		if ( ! current_user_can( 'edit_product', $product->get_id() ) ) {
 			return;
 		}
+
 		foreach ( array( '_famma_cost_price', '_famma_shipping_cost', '_famma_handling_cost', '_famma_acquisition_cost' ) as $key ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by WooCommerce before this hook.
 			if ( isset( $_POST[ $key ] ) ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- see above.
 				$val = wc_clean( wp_unslash( $_POST[ $key ] ) );
 				$product->update_meta_data( $key, '' === $val ? '' : wc_format_decimal( $val ) );
 			}
@@ -600,11 +609,20 @@ final class Product_Financials {
 	/**
 	 * Computes the estimated margin for a product.
 	 *
+	 * Le prix retenu est le prix EFFECTIF, pas le prix barré : c'est celui
+	 * que le client paie, donc le seul qui produise une marge réelle. Sur un
+	 * produit en promotion, se fier au prix régulier surestimait la marge en
+	 * silence — exactement au moment où elle se resserre.
+	 *
 	 * @param \WC_Product $product Product to evaluate.
 	 * @return array{price:float,total_cost:float,profit:float,percent:float}
 	 */
 	public function margin( \WC_Product $product ): array {
-		$price  = (float) $product->get_regular_price();
+		$effective = $product->get_price();
+		$price     = '' === (string) $effective
+			? (float) $product->get_regular_price()
+			: (float) $effective;
+
 		$cost   = (float) $product->get_meta( '_famma_cost_price' );
 		$sm     = $product->get_meta( '_famma_shipping_cost' );
 		$ship   = '' === (string) $sm ? Config::instance()->internal_shipping_cost() : (float) $sm;

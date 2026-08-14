@@ -80,6 +80,38 @@ commande prépayée est légitimement payée dès `processing`.
 - [ ] Une commande de bout en bout passée sur l'environnement cible, jusqu'au
       statut « livrée », en vérifiant que le stock décrémente une seule fois.
 
+## Planifier les sauvegardes (§36)
+
+`scripts/backup.sh` exporte la base et les téléversements, vérifie que
+l'export n'est pas vide, signale l'absence des tables WooCommerce ou
+TranslatePress, et supprime les sauvegardes de plus de 14 jours
+(`FAMMA_BACKUP_KEEP_DAYS` pour changer ce seuil, `0` pour tout garder).
+
+Il **échoue bruyamment** plutôt que d'écrire une archive vide : une
+sauvegarde silencieusement corrompue est pire que pas de sauvegarde, puisque
+l'on se croit couvert.
+
+La planification est une action au niveau du système, à lancer par le
+propriétaire — l'agent n'y a pas accès.
+
+**Windows** — tâche quotidienne à 3 h du matin :
+
+```
+schtasks /create /sc daily /st 03:00 /tn "FAMMA sauvegarde" ^
+  /tr "\"C:\Program Files\Git\bin\bash.exe\" -lc \"cd /e/Ecom/famma-mennou-foundation/famma-mennou && ./scripts/backup.sh\""
+```
+
+**Linux / serveur** — ligne de crontab :
+
+```
+0 3 * * * cd /srv/famma-mennou && ./scripts/backup.sh >> backups/cron.log 2>&1
+```
+
+Deux points à ne pas oublier : la sauvegarde n'a de valeur que **testée**
+(restaurer un export dans une base jetable au moins une fois), et le dossier
+`backups/` contient des données clients — il est ignoré par Git, et doit le
+rester.
+
 ## Ce qui n'est pas prêt pour la production
 
 - **Conversions API Meta** : l'action `famma_capi_purchase` se déclenche bien à
