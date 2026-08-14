@@ -170,6 +170,78 @@ add_action( 'wp_head', 'famma_child_open_graph', 3 );
 add_action( 'wp_head', 'famma_child_head_icons', 2 );
 
 /**
+ * Émet les données structurées Organization et WebSite (§21).
+ *
+ * Volontairement limité à ces deux types. WooCommerce produit déjà lui-même
+ * `Product`, `Offer`, `Review` et `BreadcrumbList` dès qu'un produit existe :
+ * les redéclarer créerait des entités concurrentes, ce qui vaut moins que
+ * pas de balisage du tout.
+ *
+ * Aucune adresse, aucun téléphone, aucun profil social n'est déclaré : le
+ * propriétaire ne les a pas fournis et une donnée structurée inventée est
+ * exactement ce que le §60 interdit.
+ *
+ * @return void
+ */
+function famma_child_structured_data(): void {
+	if ( ! is_front_page() ) {
+		return;
+	}
+
+	if ( defined( 'WPSEO_VERSION' ) || defined( 'RANK_MATH_VERSION' ) || defined( 'SEOPRESS_VERSION' ) ) {
+		return;
+	}
+
+	$home = home_url( '/' );
+	$name = get_bloginfo( 'name' );
+
+	$graph = array(
+		'@context' => 'https://schema.org',
+		'@graph'   => array(
+			array(
+				'@type'      => 'Organization',
+				'@id'        => $home . '#organization',
+				'name'       => $name,
+				'url'        => $home,
+				'logo'       => array(
+					'@type'  => 'ImageObject',
+					'url'    => get_stylesheet_directory_uri() . '/assets/img/famma-og.png',
+					'width'  => 1200,
+					'height' => 630,
+				),
+				'areaServed' => array(
+					'@type' => 'Country',
+					'name'  => 'Tunisie',
+				),
+			),
+			array(
+				'@type'           => 'WebSite',
+				'@id'             => $home . '#website',
+				'url'             => $home,
+				'name'            => $name,
+				'inLanguage'      => get_bloginfo( 'language' ),
+				'publisher'       => array( '@id' => $home . '#organization' ),
+				// Recherche produit : utile dès que le catalogue sera rempli.
+				'potentialAction' => array(
+					'@type'       => 'SearchAction',
+					'target'      => array(
+						'@type'       => 'EntryPoint',
+						'urlTemplate' => $home . '?s={search_term_string}&post_type=product',
+					),
+					'query-input' => 'required name=search_term_string',
+				),
+			),
+		),
+	);
+
+	printf(
+		'<script type="application/ld+json">%s</script>' . "\n",
+		wp_json_encode( $graph, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
+	);
+}
+add_action( 'wp_head', 'famma_child_structured_data', 4 );
+
+/**
  * Retire le bandeau de titre du thème sur la page d'accueil.
  *
  * Le masquer en CSS laissait un second `<h1>` (« Accueil ») dans le
