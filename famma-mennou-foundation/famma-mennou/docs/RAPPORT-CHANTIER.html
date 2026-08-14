@@ -1,0 +1,601 @@
+<title>FAMMA MENNOU — rapport de chantier</title>
+<style>
+	:root {
+		/* Palette reprise de docs/DESIGN-SYSTEM.md — le projet a déjà la sienne. */
+		--navy: #0B1F3A;
+		--navy-600: #12315C;
+		--orange: #FF7A00;
+		--ink: #12161C;
+		--muted: #5B6470;
+		--line: #E6E9EE;
+		--bg: #F7F8FA;
+		--surface: #FFFFFF;
+		--surface-2: #FBFCFD;
+		--success: #1FA65A;
+		--warning: #B98400;
+		--danger: #D64545;
+		--ok-bg: #E9F7EF;
+		--warn-bg: #FFF6E0;
+		--danger-bg: #FBEBEB;
+		--rule: #E6E9EE;
+		--code-ink: #12315C;
+		--link: #12315C;
+		--masthead-lede: #C6D0DE;
+		--masthead-label: #93A2B6;
+		--masthead-rule: rgba(255, 255, 255, 0.16);
+
+		--display: "Segoe UI Semibold", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+		--body: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+		--mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme="light"]) {
+			--navy: #081527;
+			--navy-600: #1B3557;
+			--orange: #FF9233;
+			--ink: #E8ECF3;
+			--muted: #98A3B4;
+			--line: #253449;
+			--bg: #0A1220;
+			--surface: #111C2E;
+			--surface-2: #16233A;
+			--success: #3FCB80;
+			--warning: #F0BE45;
+			--danger: #F07575;
+			--ok-bg: #11301F;
+			--warn-bg: #33280A;
+			--danger-bg: #37181A;
+			--rule: #243146;
+			--code-ink: #A9C4E8;
+			--link: #8FB6E8;
+			--masthead-lede: #B7C4D6;
+			--masthead-label: #8695AA;
+			--masthead-rule: rgba(255, 255, 255, 0.12);
+		}
+	}
+
+	:root[data-theme="dark"] {
+		--navy: #081527;
+		--navy-600: #1B3557;
+		--orange: #FF9233;
+		--ink: #E8ECF3;
+		--muted: #98A3B4;
+		--line: #253449;
+		--bg: #0A1220;
+		--surface: #111C2E;
+		--surface-2: #16233A;
+		--success: #3FCB80;
+		--warning: #F0BE45;
+		--danger: #F07575;
+		--ok-bg: #11301F;
+		--warn-bg: #33280A;
+		--danger-bg: #37181A;
+		--rule: #243146;
+		--code-ink: #A9C4E8;
+		--link: #8FB6E8;
+		--masthead-lede: #B7C4D6;
+		--masthead-label: #8695AA;
+		--masthead-rule: rgba(255, 255, 255, 0.12);
+	}
+
+	* { box-sizing: border-box; }
+
+	body {
+		margin: 0;
+		background: var(--bg);
+		color: var(--ink);
+		font-family: var(--body);
+		font-size: 16px;
+		line-height: 1.65;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	.wrap {
+		max-inline-size: 900px;
+		margin-inline: auto;
+		padding: 0 24px 96px;
+	}
+
+	.masthead {
+		background: var(--navy);
+		padding: 56px 24px 44px;
+		margin-block-end: 40px;
+	}
+
+	.masthead__inner {
+		max-inline-size: 900px;
+		margin-inline: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+	}
+
+	.eyebrow {
+		font-family: var(--mono);
+		font-size: 11.5px;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--orange);
+		margin: 0;
+	}
+
+	h1 {
+		font-family: var(--display);
+		font-weight: 700;
+		font-size: clamp(27px, 5vw, 42px);
+		line-height: 1.12;
+		letter-spacing: -0.02em;
+		margin: 0;
+		text-wrap: balance;
+		color: #FFFFFF;
+	}
+
+	.lede {
+		margin: 0;
+		max-inline-size: 62ch;
+		color: var(--masthead-lede);
+		font-size: 17px;
+	}
+
+	.facts {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 14px 32px;
+		margin-block-start: 8px;
+		padding-block-start: 20px;
+		border-block-start: 1px solid var(--masthead-rule);
+	}
+
+	.fact { display: flex; flex-direction: column; gap: 1px; }
+
+	.fact__value {
+		font-family: var(--mono);
+		font-size: 19px;
+		font-weight: 600;
+		color: #FFFFFF;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.fact__label { font-size: 12px; color: var(--masthead-label); }
+
+	section { margin-block-start: 52px; }
+
+	h2 {
+		font-family: var(--display);
+		font-size: 23px;
+		font-weight: 700;
+		letter-spacing: -0.01em;
+		line-height: 1.25;
+		margin: 0 0 6px;
+		color: var(--ink);
+		text-wrap: balance;
+	}
+
+	h2::before {
+		content: "";
+		display: block;
+		inline-size: 34px;
+		block-size: 3px;
+		background: var(--orange);
+		margin-block-end: 14px;
+	}
+
+	h3 {
+		font-family: var(--display);
+		font-size: 16.5px;
+		font-weight: 700;
+		margin: 28px 0 8px;
+		color: var(--ink);
+	}
+
+	p { margin: 0 0 14px; max-inline-size: 68ch; }
+
+	.section-note { color: var(--muted); margin-block-end: 22px; }
+
+	code {
+		font-family: var(--mono);
+		font-size: 0.875em;
+		background: var(--surface-2);
+		border: 1px solid var(--line);
+		border-radius: 4px;
+		padding: 1px 5px;
+		color: var(--code-ink);
+	}
+
+	.findings { display: flex; flex-direction: column; gap: 14px; }
+
+	.finding {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-inline-start: 4px solid var(--success);
+		border-radius: 6px;
+		padding: 18px 20px;
+	}
+
+	.finding__head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 10px;
+		margin-block-end: 8px;
+	}
+
+	.finding__title { font-family: var(--display); font-weight: 700; font-size: 16px; margin: 0; }
+	.finding p { margin: 0 0 8px; font-size: 15px; }
+	.finding p:last-child { margin-block-end: 0; }
+
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		font-family: var(--mono);
+		font-size: 10.5px;
+		letter-spacing: 0.07em;
+		text-transform: uppercase;
+		font-weight: 600;
+		padding: 3px 8px;
+		border-radius: 3px;
+		white-space: nowrap;
+	}
+
+	.chip--ok { background: var(--ok-bg); color: var(--success); }
+	.chip--warn { background: var(--warn-bg); color: var(--warning); }
+	.chip--todo { background: var(--danger-bg); color: var(--danger); }
+	.chip--info { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+
+	.table-scroll {
+		overflow-x: auto;
+		border: 1px solid var(--line);
+		border-radius: 6px;
+		background: var(--surface);
+	}
+
+	table { inline-size: 100%; border-collapse: collapse; font-size: 14.5px; }
+
+	th, td {
+		text-align: start;
+		padding: 11px 16px;
+		border-block-end: 1px solid var(--rule);
+		vertical-align: top;
+	}
+
+	thead th {
+		font-family: var(--mono);
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--muted);
+		font-weight: 600;
+		background: var(--surface-2);
+		white-space: nowrap;
+	}
+
+	tbody tr:last-child td { border-block-end: 0; }
+
+	td.ver { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+	.todo-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.todo-list li {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 6px;
+		padding: 15px 18px;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.todo__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+	.todo__title { font-weight: 700; }
+	.todo__why { color: var(--muted); font-size: 14.5px; margin: 0; }
+	.todo__why strong { color: var(--ink); }
+
+	pre {
+		font-family: var(--mono);
+		font-size: 13.5px;
+		background: var(--navy);
+		color: #D6E1F0;
+		padding: 16px 18px;
+		border-radius: 6px;
+		overflow-x: auto;
+		margin: 0 0 12px;
+		line-height: 1.6;
+	}
+
+	pre .c { color: #7E93AD; }
+
+	.callout {
+		background: var(--warn-bg);
+		border: 1px solid var(--warning);
+		border-radius: 6px;
+		padding: 16px 20px;
+		margin-block: 20px;
+	}
+
+	.callout p { margin: 0; max-inline-size: none; }
+	.callout p + p { margin-block-start: 12px; }
+
+	footer {
+		margin-block-start: 64px;
+		padding-block-start: 22px;
+		border-block-start: 1px solid var(--rule);
+		color: var(--muted);
+		font-size: 14px;
+	}
+
+	a { color: var(--link); }
+	a:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+</style>
+
+<header class="masthead">
+	<div class="masthead__inner">
+		<p class="eyebrow">FAMMA MENNOU · rapport de chantier · 13 août 2026</p>
+		<h1>D'une fondation qui ne démarrait pas à une boutique qui prend des commandes</h1>
+		<p class="lede">Le code existait sur le papier mais n'avait jamais tourné. En le mettant réellement en marche, cinq défauts bloquants sont apparus — dont trois rendaient la boutique inutilisable et un violait la règle métier centrale du projet.</p>
+		<div class="facts">
+			<div class="fact"><span class="fact__value">29</span><span class="fact__label">commits</span></div>
+			<div class="fact"><span class="fact__value">44</span><span class="fact__label">fichiers versionnés</span></div>
+			<div class="fact"><span class="fact__value">3 555</span><span class="fact__label">lignes PHP / CSS / SH / SVG</span></div>
+			<div class="fact"><span class="fact__value">251 → 0</span><span class="fact__label">violations WPCS</span></div>
+			<div class="fact"><span class="fact__value">0</span><span class="fact__label">produit — §58 respecté</span></div>
+		</div>
+	</div>
+</header>
+
+<div class="wrap">
+
+<section>
+	<h2>Ce qui tourne aujourd'hui</h2>
+	<p class="section-note">Stack complète en local, provisionnée par un script idempotent : <code>bash scripts/setup.sh</code> reconstruit tout depuis zéro.</p>
+
+	<div class="table-scroll">
+		<table>
+			<thead><tr><th>Composant</th><th>Version</th><th>État</th></tr></thead>
+			<tbody>
+				<tr><td>WordPress</td><td class="ver">7.0.4</td><td><span class="chip chip--ok">actif</span></td></tr>
+				<tr><td>PHP</td><td class="ver">8.3.33</td><td><span class="chip chip--ok">conforme §54</span></td></tr>
+				<tr><td>MariaDB</td><td class="ver">11.4</td><td><span class="chip chip--ok">healthy</span></td></tr>
+				<tr><td>WooCommerce</td><td class="ver">11.0.1</td><td><span class="chip chip--ok">TND, 3 décimales</span></td></tr>
+				<tr><td>famma-core</td><td class="ver">0.2.0</td><td><span class="chip chip--ok">actif</span></td></tr>
+				<tr><td>Kadence + famma-child</td><td class="ver">1.5.2 / 0.1.0</td><td><span class="chip chip--ok">actif</span></td></tr>
+				<tr><td>TranslatePress</td><td class="ver">3.3.2</td><td><span class="chip chip--ok">FR + AR, RTL</span></td></tr>
+				<tr><td>Mailpit</td><td class="ver">latest</td><td><span class="chip chip--ok">reçoit</span></td></tr>
+			</tbody>
+		</table>
+	</div>
+
+	<h3>Adresses locales</h3>
+	<pre>Boutique       http://localhost:8080
+Admin          http://localhost:8080/wp-admin      <span class="c"># famma_admin</span>
+Tableau de bord  .../wp-admin/admin.php?page=famma-dashboard
+Courrier       http://localhost:8025               <span class="c"># Mailpit</span>
+phpMyAdmin     http://localhost:8081               <span class="c"># profil « tools »</span></pre>
+</section>
+
+<section>
+	<h2>Les cinq défauts qui bloquaient</h2>
+	<p class="section-note">Aucun n'a été déduit du code seul. Chacun a été reproduit à l'exécution, corrigé, puis re-testé.</p>
+
+	<div class="findings">
+
+		<article class="finding">
+			<div class="finding__head">
+				<h3 class="finding__title">Aucune commande ne pouvait aboutir</h3>
+				<span class="chip chip--ok">corrigé</span>
+			</div>
+			<p>Le champ pays était retiré du checkout, comme le demande le §13. Mais WooCommerce refusait alors toute commande : <code>get_shipping_country()</code> était vide et le passage en caisse s'arrêtait sur « Please enter an address to continue. » La boutique était entièrement non fonctionnelle.</p>
+			<p>Quatre filtres fournissent désormais <code>TN</code> sans réafficher le champ.</p>
+		</article>
+
+		<article class="finding">
+			<div class="finding__head">
+				<h3 class="finding__title">La commande naissait « payée »</h3>
+				<span class="chip chip--ok">corrigé</span>
+			</div>
+			<p>Le plus grave. <code>WC_Gateway_COD</code> place toute commande neuve en <code>processing</code>, qui fait partie des statuts payés de WooCommerce : <code>is_paid()</code> était vrai dès le clic sur « Commander ». Chaque commande jamais livrée aurait gonflé le chiffre d'affaires — exactement la fausse recette que le §12 interdit.</p>
+			<p>Les commandes démarrent maintenant en <code>pending-confirm</code>, et <code>processing</code> est retiré des statuts payés comme des rapports.</p>
+		</article>
+
+		<article class="finding">
+			<div class="finding__head">
+				<h3 class="finding__title">« Payé à la livraison » ne fonctionnait pas</h3>
+				<span class="chip chip--ok">corrigé</span>
+			</div>
+			<p>La commande atteignait <code>delivered</code> mais restait impayée : <code>payment_complete()</code> ne fait rien depuis un statut personnalisé. Pas de date de paiement, pas de décrément de stock, chiffre d'affaires jamais comptabilisé.</p>
+			<p>Trois filtres, dont un en priorité 99 — la passerelle COD déclare le même filtre et gagnait à priorité égale, faisant quitter <code>delivered</code> aussitôt.</p>
+		</article>
+
+		<article class="finding">
+			<div class="finding__head">
+				<h3 class="finding__title">Le pont <code>.env</code> n'atteignait jamais PHP</h3>
+				<span class="chip chip--ok">corrigé</span>
+				<span class="chip chip--warn">j'avais annoncé l'inverse</span>
+			</div>
+			<p>J'ai d'abord déclaré ce point corrigé en m'appuyant sur <code>docker compose config</code>, qui ne prouve que l'interpolation YAML. Vérification faite : <code>wp-config.php</code> ne contenait aucune constante <code>FAMMA_</code>, ni même <code>WP_HOME</code>. WhatsApp et tout le tracking étaient restés du code mort.</p>
+			<p>L'image officielle n'écrit <code>wp-config.php</code> qu'à la création du volume. Le pont passe désormais par un mu-plugin, prouvé en bout de chaîne : avec un identifiant GA4 renseigné, le script gtag sort ; à vide, rien.</p>
+		</article>
+
+		<article class="finding">
+			<div class="finding__head">
+				<h3 class="finding__title">Des erreurs SQL derrière des pages en HTTP 200</h3>
+				<span class="chip chip--ok">corrigé</span>
+			</div>
+			<p>Configurer TranslatePress par WP-CLI court-circuite sa routine de création de tables. Toutes les pages répondaient 200 alors que chaque requête jetait <code>Table wp_trp_dictionary_fr_fr_ar doesn't exist</code>. Un test qui ne regarde que le code HTTP l'aurait manqué entièrement — c'est <code>debug.log</code> qui l'a révélé.</p>
+		</article>
+
+	</div>
+</section>
+
+<section>
+	<h2>Travail accompli</h2>
+	<p class="section-note">Par domaine, avec la vérification qui l'accompagne. Rien n'est marqué fait sur la seule foi du code écrit.</p>
+
+	<div class="table-scroll">
+		<table>
+			<thead><tr><th>Domaine</th><th>Livré</th><th>Vérifié par</th></tr></thead>
+			<tbody>
+				<tr>
+					<td><strong>Reprise en main</strong></td>
+					<td>Dépôt Git à <code>E:\Ecom</code>, <code>.gitattributes</code> en LF, <code>.env</code> local généré, spécification 64 sections versionnée</td>
+					<td>Aucun secret dans l'index, arbre propre</td>
+				</tr>
+				<tr>
+					<td><strong>Environnement</strong></td>
+					<td><code>setup.sh</code> idempotent, montages Docker manquants créés, WordPress remonté en 7.0 (WooCommerce exige 6.9)</td>
+					<td>Script relancé sans effet de bord</td>
+				</tr>
+				<tr>
+					<td><strong>Règle COD</strong></td>
+					<td>Impayée jusqu'à la livraison, payée exactement à <code>delivered</code>, stock décrémenté une seule fois</td>
+					<td>Commande réelle au navigateur, 375×812</td>
+				</tr>
+				<tr>
+					<td><strong>Checkout Tunisie</strong></td>
+					<td>24 gouvernorats, téléphone TN validé, e-mail rendu facultatif, pays et code postal retirés, bloc « autre adresse » nettoyé</td>
+					<td>Numéro invalide rejeté, commande passée sans e-mail</td>
+				</tr>
+				<tr>
+					<td><strong>Stock</strong></td>
+					<td>Réservé à <code>confirmed</code>, restitué sur annulation, refus, retour et échec de livraison</td>
+					<td>10 → 8 → 10 sur trois scénarios</td>
+				</tr>
+				<tr>
+					<td><strong>Identité</strong></td>
+					<td>Lockup 2a en en-tête, sceau 2b, favicon SVG, image de partage 1200×630 générée en GD</td>
+					<td>Un seul <code>h1</code>, PNG servi avec en-tête valide</td>
+				</tr>
+				<tr>
+					<td><strong>Contenu</strong></td>
+					<td>Accueil « catalogue vide » (§9), 8 pages d'information et légales, 2 menus</td>
+					<td>Toutes en 200, en FR et en AR</td>
+				</tr>
+				<tr>
+					<td><strong>Bilingue</strong></td>
+					<td>TranslatePress FR + AR, RTL natif, traduction automatique désactivée, 68 chaînes traduites à la main</td>
+					<td><code>/ar/</code> rend <code>dir="rtl"</code>, statuts en français</td>
+				</tr>
+				<tr>
+					<td><strong>Pilotage</strong></td>
+					<td>Tableau de bord §28 : commandes, CA livré, coût, marge, panier moyen, pertes, top produits, acquisition</td>
+					<td>Coût 30 × 2 + 7 → marge 113, exacte</td>
+				</tr>
+				<tr>
+					<td><strong>SEO</strong></td>
+					<td>Open Graph, Twitter card, <code>Organization</code> et <code>WebSite</code> en JSON-LD, permaliens propres</td>
+					<td>JSON valide, aucun doublon avec WooCommerce</td>
+				</tr>
+				<tr>
+					<td><strong>Qualité</strong></td>
+					<td><code>scripts/lint.sh</code> conteneurisé : <code>php -l</code> + phpcs WordPress + PHPCompatibility</td>
+					<td>0 erreur, 0 avertissement sur 9 fichiers</td>
+				</tr>
+				<tr>
+					<td><strong>Documentation</strong></td>
+					<td>Audit d'environnement, 5 ADR, plan d'exécution, workflow de commande, design system, registre d'extensions, guide de déploiement</td>
+					<td>Réalignée sur le code réel</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<section>
+	<h2>Ce qui dépend de toi</h2>
+	<p class="section-note">Rien de tout cela n'a été inventé, conformément au §60. Chaque élément attend une information ou une décision que je ne peux pas produire à ta place.</p>
+
+	<ul class="todo-list">
+		<li>
+			<div class="todo__head"><span class="todo__title">Identifiants Meta</span><span class="chip chip--todo">bloque la Phase 4</span></div>
+			<p class="todo__why">L'ossature CAPI est prête : l'action <code>famma_capi_purchase</code> se déclenche à la livraison avec son <code>event_id</code> de déduplication. Il manque le client HTTP et tes <code>META_PIXEL_ID</code> / <code>META_ACCESS_TOKEN</code>. <strong>Aucun événement Purchase ne part côté serveur aujourd'hui.</strong></p>
+		</li>
+		<li>
+			<div class="todo__head"><span class="todo__title">Textes légaux</span><span class="chip chip--todo">bloque la production</span></div>
+			<p class="todo__why">Retours, conditions générales et mentions légales sont vides par choix. Les pages existent avec un encart listant précisément les points à trancher — délai de rétractation, qui paie le retour, traitement d'un colis refusé. <strong>Ces encarts sont visibles par les clients</strong> et doivent disparaître avant toute mise en ligne.</p>
+		</li>
+		<li>
+			<div class="todo__head"><span class="todo__title">Numéro WhatsApp</span><span class="chip chip--warn">dégrade proprement</span></div>
+			<p class="todo__why">Le raccourci <code>[famma_whatsapp]</code> ne rend rien tant qu'aucun numéro n'existe — donc jamais de lien mort. Renseigne <code>FAMMA_WHATSAPP_NUMBER</code> dans <code>.env</code> et le bouton flottant comme les CTA apparaissent seuls.</p>
+		</li>
+		<li>
+			<div class="todo__head"><span class="todo__title">Transporteur et délais</span><span class="chip chip--warn">FAQ incomplète</span></div>
+			<p class="todo__why">Aucun transporteur n'est sélectionné (§4). Les délais de livraison manquent dans la FAQ et sur la page Livraison : je ne les ai pas inventés.</p>
+		</li>
+		<li>
+			<div class="todo__head"><span class="todo__title">Les trois premiers produits</span><span class="chip chip--info">catalogue vide</span></div>
+			<p class="todo__why">Coût de revient, photos, descriptions. Le prix se calculera en coût × 3, avec possibilité de le forcer à la main. « Boutique » n'est volontairement pas au menu tant qu'il n'y a rien à y voir.</p>
+		</li>
+		<li>
+			<div class="todo__head"><span class="todo__title">Copie en Derja</span><span class="chip chip--info">§5</span></div>
+			<p class="todo__why">Les formulations que tu as fournies sont en place. Au-delà, la Derja doit être écrite par un humain : la traduction automatique est désactivée dans TranslatePress, délibérément.</p>
+		</li>
+		<li>
+			<div class="todo__head"><span class="todo__title">Dépôt distant privé</span><span class="chip chip--info">décision D1 prise</span></div>
+			<p class="todo__why">GitHub CLI n'est pas installé et le §40 m'interdit de demander un mot de passe. Soit tu installes <code>gh</code> puis <code>gh auth login</code>, soit tu crées le dépôt à la main et me donnes l'URL.</p>
+		</li>
+	</ul>
+</section>
+
+<section>
+	<h2>Ce que je peux encore faire seul</h2>
+
+	<ul class="todo-list">
+		<li>
+			<div class="todo__head"><span class="todo__title">Gabarit de fiche produit (§30)</span><span class="chip chip--info">prêt à démarrer</span></div>
+			<p class="todo__why">CTA collant mobile, messages COD et livraison, blocs bénéfices, FAQ produit, WhatsApp. Le CSS du CTA existe déjà dans <code>famma-child</code> ; il manque le gabarit qui l'utilise.</p>
+		</li>
+		<li>
+			<div class="todo__head"><span class="todo__title">Sauvegardes planifiées (§36)</span><span class="chip chip--warn">manuel aujourd'hui</span></div>
+			<p class="todo__why"><code>scripts/backup.sh</code> fonctionne mais doit être lancé à la main. Aucune planification n'existe.</p>
+		</li>
+		<li>
+			<div class="todo__head"><span class="todo__title">Bannière de consentement</span><span class="chip chip--warn">avant tout tracking</span></div>
+			<p class="todo__why">Aucune bannière. Tant qu'aucun identifiant n'est configuré, aucun cookie de mesure n'est déposé : le sujet ne devient bloquant qu'au moment d'activer Meta, TikTok ou GA4.</p>
+		</li>
+		<li>
+			<div class="todo__head"><span class="todo__title">Trois points de finition</span><span class="chip chip--info">sans impact vérifié</span></div>
+			<p class="todo__why">Vérification de nonce explicite à l'enregistrement produit, <code>esc_url</code> au lieu d'<code>esc_attr</code> sur une URL, et calcul de marge qui ignore un prix promotionnel.</p>
+		</li>
+	</ul>
+</section>
+
+<section>
+	<h2>Pièges consignés pour la suite</h2>
+	<p class="section-note">Tous rencontrés en vrai. <code>docs/DEPLOYMENT.md</code> les détaille.</p>
+
+	<div class="callout">
+		<p><strong>Le courrier échoue en silence hors du local.</strong> Le routage vers Mailpit se désactive seul dès que l'environnement n'est plus <code>local</code>. Sans SMTP configuré en production, WordPress retombe sur <code>sendmail</code>, absent de la plupart des conteneurs, et aucun e-mail ne part — sans la moindre erreur visible.</p>
+		<p><strong>La ligne <code>paid_statuses()</code> devra être revue.</strong> Elle retire <code>processing</code> des statuts payés, ce qui est juste tant que le paiement à la livraison est le seul moyen de paiement. Une commande prépayée, elle, est légitimement payée dès <code>processing</code>.</p>
+		<p><strong>Les tables TranslatePress doivent partir avec la base.</strong> Un export sélectif par table les oublierait et tout le contenu arabe serait perdu.</p>
+		<p><strong>L'image Docker ne met jamais à jour une installation existante.</strong> Elle ne copie WordPress que si le répertoire est vide : volume et image peuvent diverger silencieusement.</p>
+	</div>
+</section>
+
+<section>
+	<h2>Reprendre la main</h2>
+	<pre><span class="c"># démarrer</span>
+cd E:\Ecom\famma-mennou-foundation\famma-mennou
+docker compose up -d
+
+<span class="c"># reconstruire tout le contenu — idempotent</span>
+bash scripts/setup.sh
+
+<span class="c"># porte qualité — doit rester à 0</span>
+bash scripts/lint.sh
+
+<span class="c"># sauvegarde avant toute opération sensible</span>
+bash scripts/backup.sh</pre>
+</section>
+
+<footer>
+	<p>Le suivi vivant reste <code>docs/PLAN-EXECUTION.md</code> dans le dépôt : il porte l'état phase par phase et le statut de chaque constat d'analyse. Les décisions d'architecture sont dans <code>docs/DECISIONS.md</code>, ADR-001 à ADR-005.</p>
+</footer>
+
+</div>
