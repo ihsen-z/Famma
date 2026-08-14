@@ -339,10 +339,53 @@ textarea:focus-visible {
 	text-decoration: none;
 }
 
+/* --- Réassurance sous le bouton d'achat (§30, §48) --- */
+.famma-reassure {
+	list-style: none;
+	margin: var(--sp-4) 0;
+	padding: var(--sp-3) var(--sp-4);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-bg);
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-2);
+}
+
+.famma-reassure__item {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--sp-2);
+	font-size: 0.95rem;
+}
+
+.famma-reassure__item::before {
+	content: "";
+	inline-size: 8px;
+	block-size: 8px;
+	border-radius: 50%;
+	background: var(--famma-success);
+	flex: none;
+}
+
+.famma-reassure__ar {
+	color: var(--famma-muted);
+	font-size: 0.9rem;
+}
+
 /* --- CTA collant mobile (§13, §30) -------------------------
    Implémenté ici, et non via une fonction du thème parent :
    la présentation ne doit dépendre d'aucun palier gratuit/Pro.
+   VISIBLE par défaut, en CSS seul. Le script ne fait que la ranger
+   pendant que le vrai bouton d'achat est déjà à l'écran. Si le
+   script échoue, la barre reste affichée : un CTA redondant vaut
+   infiniment mieux qu'un CTA absent sur la page qui fait vendre.
    ---------------------------------------------------------- */
+.famma-sticky-cta {
+	display: none;
+}
+
 @media (max-width: 767px) {
 	.famma-sticky-cta {
 		position: fixed;
@@ -350,18 +393,63 @@ textarea:focus-visible {
 		inset-block-end: 0;
 		z-index: 998;
 		display: flex;
-		gap: var(--sp-2);
+		gap: var(--sp-3);
 		align-items: center;
+		justify-content: space-between;
 		padding: var(--sp-2) var(--sp-4);
+		padding-block-end: calc(var(--sp-2) + env(safe-area-inset-bottom));
 		background: var(--famma-white);
 		border-block-start: 1px solid var(--famma-line);
 		box-shadow: 0 -4px 14px rgba(11, 31, 58, 0.10);
-		padding-block-end: calc(var(--sp-2) + env(safe-area-inset-bottom));
+		transform: translateY(0);
+		transition: transform 0.18s ease-out;
+	}
+
+	.famma-sticky-cta.is-hidden {
+		transform: translateY(110%);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.famma-sticky-cta {
+			transition: none;
+		}
+	}
+
+	.famma-sticky-cta__price {
+		font-weight: 700;
+		color: var(--famma-blue);
+		white-space: nowrap;
+	}
+
+	.famma-sticky-cta__button {
+		display: inline-flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		min-block-size: 48px;
+		flex: 1;
+		max-inline-size: 62%;
+		padding-inline: var(--sp-4);
+		border: 0;
+		border-radius: var(--famma-radius);
+		background: var(--famma-orange);
+		color: var(--famma-white);
+		font-family: inherit;
+		font-size: 1rem;
+		font-weight: 700;
+		line-height: 1.15;
+		cursor: pointer;
+	}
+
+	.famma-sticky-cta__ar {
+		font-size: 0.78rem;
+		font-weight: 500;
+		opacity: 0.9;
 	}
 
 	/* Le bouton WhatsApp flottant de famma-core ne doit pas
 	   recouvrir le CTA collant. */
-	body:has(.famma-sticky-cta) .famma-wa {
-		inset-block-end: 80px;
+	body:has(.famma-sticky-cta:not(.is-hidden)) .famma-wa {
+		inset-block-end: 84px;
 	}
 }

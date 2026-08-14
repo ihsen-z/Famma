@@ -170,6 +170,100 @@ add_action( 'wp_head', 'famma_child_open_graph', 3 );
 add_action( 'wp_head', 'famma_child_head_icons', 2 );
 
 /**
+ * Bloc de réassurance sous le bouton d'achat (§30, §48).
+ *
+ * Ne contient que des faits établis : paiement à la livraison, 0 TND de
+ * frais, 24 gouvernorats. Aucun délai, aucune garantie, aucune statistique
+ * — le §60 les interdit tant que le propriétaire ne les a pas fournis.
+ *
+ * @return void
+ */
+function famma_child_product_reassurance(): void {
+	$items = array(
+		array(
+			'fr' => __( 'Paiement à la livraison', 'famma-child' ),
+			'ar' => 'الدفع عند التوصيل',
+		),
+		array(
+			'fr' => __( 'Livraison offerte, partout en Tunisie', 'famma-child' ),
+			'ar' => 'التوصيل للدار',
+		),
+		array(
+			'fr' => __( 'Commande sans créer de compte', 'famma-child' ),
+			'ar' => '',
+		),
+	);
+
+	echo '<ul class="famma-reassure">';
+	foreach ( $items as $item ) {
+		echo '<li class="famma-reassure__item"><span>' . esc_html( $item['fr'] ) . '</span>';
+		if ( '' !== $item['ar'] ) {
+			echo '<span class="famma-reassure__ar" lang="ar" dir="rtl">' . esc_html( $item['ar'] ) . '</span>';
+		}
+		echo '</li>';
+	}
+	echo '</ul>';
+
+	// Rend une invitation WhatsApp, ou rien du tout si aucun numéro n'existe.
+	echo do_shortcode( '[famma_whatsapp text="' . esc_attr__( 'Une question sur ce produit ?', 'famma-child' ) . '"]' );
+}
+add_action( 'woocommerce_single_product_summary', 'famma_child_product_reassurance', 35 );
+
+/**
+ * Barre d'achat collante sur mobile (§13, §30).
+ *
+ * Le bouton ne réimplémente pas l'ajout au panier : il déclenche le
+ * formulaire WooCommerce d'origine, donc quantité, variations et validations
+ * restent celles du cœur.
+ *
+ * @return void
+ */
+function famma_child_sticky_cta(): void {
+	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return;
+	}
+
+	$product = wc_get_product();
+	if ( ! $product instanceof WC_Product || ! $product->is_purchasable() || ! $product->is_in_stock() ) {
+		return;
+	}
+
+	printf(
+		'<div class="famma-sticky-cta"><span class="famma-sticky-cta__price">%1$s</span>'
+		. '<button type="button" class="famma-sticky-cta__button">%2$s<span class="famma-sticky-cta__ar" lang="ar" dir="rtl">%3$s</span></button></div>',
+		wp_kses_post( $product->get_price_html() ),
+		esc_html__( 'Commander', 'famma-child' ),
+		esc_html( 'أطلب توا' )
+	);
+}
+add_action( 'wp_footer', 'famma_child_sticky_cta', 4 );
+
+/**
+ * Charge le script de la barre collante, sur les fiches produit seulement.
+ *
+ * @return void
+ */
+function famma_child_product_scripts(): void {
+	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return;
+	}
+
+	$path = get_stylesheet_directory() . '/assets/js/sticky-cta.js';
+	if ( ! file_exists( $path ) ) {
+		return;
+	}
+
+	wp_enqueue_script(
+		'famma-sticky-cta',
+		get_stylesheet_directory_uri() . '/assets/js/sticky-cta.js',
+		array(),
+		(string) filemtime( $path ),
+		true
+	);
+}
+add_action( 'wp_enqueue_scripts', 'famma_child_product_scripts', 21 );
+
+/**
  * Émet les données structurées Organization et WebSite (§21).
  *
  * Volontairement limité à ces deux types. WooCommerce produit déjà lui-même
