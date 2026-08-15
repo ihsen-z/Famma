@@ -90,8 +90,9 @@ au navigateur avant tout commit.
 | E-30 | Cibles tactiles du checkout : champs 42,8px, gouvernorat (select2) 38px, cases à cocher **13px** | **P0** | ✔ levé — 48px, case 24px dans une ligne de 48px |
 | E-31 | Champ quantité à 40px sur la fiche produit | P1 | ✔ levé |
 | E-32 | Le CTA collant s'affichait **sans formulaire à déclencher** quand la boutique est en « bientôt disponible » — CTA mort | P1 | ✔ levé |
-| E-33 | La boutique entière est masquée : `woocommerce_coming_soon = yes`, `store_pages_only = yes` | — | **décision propriétaire** — état voulu avant lancement ? |
-| E-34 | Page de checkout intitulée « Checkout », en anglais dans le contenu (pas une question de traduction) | P2 | ouvert |
+| E-33 | La boutique entière était masquée : `woocommerce_coming_soon = yes` (défaut WooCommerce sur installation neuve, jamais un choix) | — | ✔ **tranché** — le propriétaire veut la boutique ouverte. Posé explicitement dans `setup.sh` : le catalogue vide se traite par l'accueil dédié (§9), pas en masquant le site |
+| E-34 | Titres de page en anglais dans le **contenu** : « Shop », « Checkout » (pas une question de traduction) | P2 | ouvert |
+| E-37 | Slugs en anglais sur un site français : `/shop/`, `/cart/`, `/checkout/`. `/boutique/` et `/panier/` renvoient 404 | P1 | ouvert — compte pour le SEO Tunisie (§22) et pour la lisibilité d'une URL partagée sur WhatsApp |
 | E-35 | Prix rendu `120,000 د.ت` : symbole de devise en arabe sous locale française | P1 | ouvert — Lot 4, position et format de devise par langue |
 | E-36 | Produit `teste11` publié, non marqué comme donnée de test (règle 12) | P1 | ouvert — à supprimer avant mise en production |
 

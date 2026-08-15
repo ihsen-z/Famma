@@ -108,6 +108,14 @@ $WP option update woocommerce_allowed_countries "specific" >/dev/null
 $WP option update woocommerce_specific_allowed_countries '["TN"]' --format=json >/dev/null
 $WP option update woocommerce_ship_to_countries "" >/dev/null
 
+step "boutique visible (pas de mode « bientôt disponible »)"
+# WooCommerce active ce mode par defaut sur une installation neuve : boutique,
+# fiches produit, panier et checkout deviennent invisibles aux visiteurs, sans
+# que rien ne le signale. Choix explicite du proprietaire : la boutique reste
+# ouverte. Le catalogue vide est traite par l'accueil dedie (§9), pas en
+# masquant le site.
+$WP option update woocommerce_coming_soon "no" >/dev/null
+
 step "devise TND, 3 décimales (millimes)"
 $WP option update woocommerce_currency "TND" >/dev/null
 $WP option update woocommerce_currency_pos "right_space" >/dev/null
