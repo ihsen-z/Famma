@@ -84,6 +84,7 @@
 				<element value="famma_env_define_constants"/>
 				<element value="famma_child_lockup_markup"/>
 				<element value="famma_child_reassurance_list"/>
+				<element value="famma_child_order_received_title"/>
 			</property>
 		</properties>
 	</rule>

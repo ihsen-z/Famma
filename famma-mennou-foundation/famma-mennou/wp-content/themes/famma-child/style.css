@@ -614,6 +614,86 @@ summary:focus-visible,
 	margin-block: var(--sp-4) var(--sp-3);
 }
 
+/* ============================================================
+   Écran de confirmation COD (§14, D-8 du plan UX)
+
+   L'écran qui suit la commande est le moment de vérité du
+   paiement à la livraison : c'est là que le client décide, sans
+   le dire, s'il ouvrira la porte au livreur.
+   ============================================================ */
+
+.famma-confirm {
+	margin-block: var(--sp-6);
+	padding: var(--sp-6) var(--sp-4);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-bg);
+}
+
+.famma-confirm__title {
+	margin-block: 0 var(--sp-4);
+	color: var(--famma-blue);
+	font-size: var(--fs-h3);
+	line-height: var(--lh-tight);
+}
+
+.famma-confirm__steps {
+	margin: 0 0 var(--sp-6);
+	padding-inline-start: var(--sp-6);
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-3);
+}
+
+.famma-confirm__step {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-1);
+	line-height: var(--lh-base);
+}
+
+.famma-confirm__ar {
+	color: var(--famma-muted);
+	font-size: var(--fs-small);
+	line-height: var(--lh-ar);
+}
+
+/* Les deux faits que le client doit retenir : le numéro qu'on va
+   appeler, et la somme à préparer. Rien d'autre dans ce bloc. */
+.famma-confirm__facts {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--sp-1);
+	margin-block: 0 var(--sp-4);
+	padding: var(--sp-4);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-white);
+	border: 1px solid var(--famma-line);
+}
+
+.famma-confirm__facts dt {
+	color: var(--famma-muted);
+	font-size: var(--fs-small);
+}
+
+.famma-confirm__facts dd {
+	margin: 0 0 var(--sp-3);
+	color: var(--famma-blue);
+	font-size: var(--fs-h4);
+	font-weight: var(--fw-bold);
+}
+
+.famma-confirm__facts dd:last-child {
+	margin-block-end: 0;
+}
+
+.famma-confirm__fix {
+	margin-block: 0 var(--sp-3);
+	color: var(--famma-muted);
+	font-size: var(--fs-small);
+	line-height: var(--lh-base);
+}
+
 /* --- CTA collant mobile (§13, §30) -------------------------
    Implémenté ici, et non via une fonction du thème parent :
    la présentation ne doit dépendre d'aucun palier gratuit/Pro.

@@ -333,6 +333,163 @@ function famma_child_price_savings(): void {
 add_action( 'woocommerce_single_product_summary', 'famma_child_price_savings', 11 );
 
 /**
+ * Remplace le message de confirmation de commande (§14, D-8 du plan UX).
+ *
+ * En paiement à la livraison, le moment de vérité n'est pas le paiement —
+ * il n'y en a pas — mais l'écran qui suit la commande. « Merci, votre
+ * commande a été reçue » ne dit ni ce qui se passe ensuite, ni ce que le
+ * client doit préparer. Un écran de confirmation faible se paie en refus
+ * à la livraison, le KPI le plus coûteux du modèle.
+ *
+ * @param string    $text  Message d'origine.
+ * @param \WC_Order $order Commande concernée.
+ * @return string
+ */
+function famma_child_order_received_text( $text, $order ) {
+	if ( ! $order instanceof WC_Order ) {
+		return $text;
+	}
+
+	return sprintf(
+		'<strong>%1$s</strong> <span lang="ar" dir="rtl">%2$s</span>',
+		esc_html__( 'Commande enregistrée. Nous vous contactons pour la confirmer.', 'famma-child' ),
+		esc_html( 'طلبك وصلنا. باش نتصلو بيك باش نأكدوه.' )
+	);
+}
+add_filter( 'woocommerce_thankyou_order_received_text', 'famma_child_order_received_text', 10, 2 );
+
+/**
+ * Corrige le titre de la page de confirmation (§14, §21).
+ *
+ * La confirmation est un point de terminaison de la page Checkout : son
+ * `<h1>` reprenait donc le titre de cette page, « Checkout » — en anglais,
+ * et faux sur le plan du sens puisque la commande est déjà passée. Le
+ * visiteur lisait « Checkout » au-dessus de « Commande enregistrée ».
+ *
+ * Le titre d'origine n'est pas repris en paramètre : il est remplacé, pas
+ * complété. PHP admet qu'un callback déclare moins d'arguments qu'il n'en
+ * reçoit, et un paramètre inutilisé serait signalé par phpcs.
+ *
+ * @return string
+ */
+function famma_child_order_received_title(): string {
+	return esc_html__( 'Commande reçue', 'famma-child' );
+}
+add_filter( 'woocommerce_endpoint_order-received_title', 'famma_child_order_received_title' );
+
+/**
+ * Applique ce titre au bandeau du thème parent (§14, §21).
+ *
+ * Le filtre officiel de WooCommerce ne suffit pas : `wc_page_endpoint_title()`
+ * exige `in_the_loop()`, or Kadence rend son bandeau de titre **hors boucle**,
+ * avant le contenu. Le `<h1>` de la page continuait donc d'afficher
+ * « Checkout » pendant que le reste de la page annonçait la commande reçue.
+ *
+ * Portée resserrée : uniquement le point de terminaison order-received, et
+ * uniquement le titre de la page interrogée — un autre titre rendu sur la
+ * même page n'est pas touché.
+ *
+ * @param string $title   Titre d'origine.
+ * @param int    $post_id Publication dont le titre est rendu.
+ * @return string
+ */
+function famma_child_order_received_hero_title( $title, $post_id = 0 ) {
+	if ( is_admin() || ! function_exists( 'is_wc_endpoint_url' ) || ! is_wc_endpoint_url( 'order-received' ) ) {
+		return $title;
+	}
+
+	if ( $post_id && get_queried_object_id() !== (int) $post_id ) {
+		return $title;
+	}
+
+	return famma_child_order_received_title();
+}
+add_filter( 'the_title', 'famma_child_order_received_hero_title', 10, 2 );
+
+/**
+ * Détaille la suite après une commande payée à la livraison (§14, D-8).
+ *
+ * Accroché à `woocommerce_thankyou_cod` : ce bloc ne concerne que le
+ * paiement à la livraison, et disparaît de lui-même si un autre moyen de
+ * paiement est ajouté un jour.
+ *
+ * Les trois étapes reprennent le workflow réel de `famma-core`
+ * (pending-confirm → confirmed → shipped → delivered), pas une promesse
+ * commerciale. Aucun délai n'est annoncé : le §60 l'interdit tant que le
+ * propriétaire n'a pas arrêté ses engagements de livraison.
+ *
+ * Le téléphone est rappelé tel qu'il a été saisi — c'est le seul champ
+ * dont une faute de frappe fait échouer toute la commande, et le client
+ * n'a aucun autre endroit pour s'en apercevoir.
+ *
+ * @param int $order_id Identifiant de la commande.
+ * @return void
+ */
+function famma_child_cod_next_steps( $order_id ): void {
+	$order = wc_get_order( $order_id );
+
+	if ( ! $order instanceof WC_Order ) {
+		return;
+	}
+
+	$steps = array(
+		array(
+			'fr' => __( 'Nous vous contactons pour confirmer la commande.', 'famma-child' ),
+			'ar' => 'نتصلو بيك باش نأكدو الطلب',
+		),
+		array(
+			'fr' => __( 'Le colis part une fois la commande confirmée.', 'famma-child' ),
+			'ar' => 'الكولي يخرج كي يتأكد الطلب',
+		),
+		array(
+			'fr' => __( 'Vous payez en espèces au livreur, à la réception.', 'famma-child' ),
+			'ar' => 'تخلّص كاش كي توصلك',
+		),
+	);
+
+	echo '<section class="famma-confirm">';
+	printf( '<h2 class="famma-confirm__title">%s</h2>', esc_html__( 'Et maintenant ?', 'famma-child' ) );
+
+	echo '<ol class="famma-confirm__steps">';
+	foreach ( $steps as $step ) {
+		printf(
+			'<li class="famma-confirm__step"><span>%1$s</span><span class="famma-confirm__ar" lang="ar" dir="rtl">%2$s</span></li>',
+			esc_html( $step['fr'] ),
+			esc_html( $step['ar'] )
+		);
+	}
+	echo '</ol>';
+
+	echo '<dl class="famma-confirm__facts">';
+
+	$phone = $order->get_billing_phone();
+	if ( '' !== $phone ) {
+		printf(
+			'<dt>%1$s</dt><dd>%2$s</dd>',
+			esc_html__( 'Numéro à appeler', 'famma-child' ),
+			esc_html( $phone )
+		);
+	}
+
+	printf(
+		'<dt>%1$s</dt><dd>%2$s</dd>',
+		esc_html__( 'À préparer en espèces', 'famma-child' ),
+		wp_kses_post( wc_price( $order->get_total(), array( 'currency' => $order->get_currency() ) ) )
+	);
+
+	echo '</dl>';
+
+	printf(
+		'<p class="famma-confirm__fix">%s</p>',
+		esc_html__( 'Une erreur dans le numéro ou l’adresse ? Écrivez-nous, on corrige avant l’envoi.', 'famma-child' )
+	);
+
+	echo do_shortcode( '[famma_whatsapp text="' . esc_attr__( 'Corriger ma commande', 'famma-child' ) . '"]' );
+	echo '</section>';
+}
+add_action( 'woocommerce_thankyou_cod', 'famma_child_cod_next_steps' );
+
+/**
  * Barre d'achat collante sur mobile (§13, §30).
  *
  * Le bouton ne réimplémente pas l'ajout au panier : il déclenche le
