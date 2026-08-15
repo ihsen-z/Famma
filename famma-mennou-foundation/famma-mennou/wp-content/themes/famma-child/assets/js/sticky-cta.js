@@ -15,7 +15,18 @@
 	var bar = document.querySelector( '.famma-sticky-cta' );
 	var form = document.querySelector( 'form.cart' );
 
-	if ( ! bar || ! form ) {
+	if ( ! bar ) {
+		return;
+	}
+
+	/*
+	 * Aucun formulaire d'achat sur la page : boutique en « bientôt
+	 * disponible », produit non achetable, ou gabarit remplacé. La barre
+	 * n'aurait alors rien à déclencher. Un CTA redondant vaut mieux qu'un
+	 * CTA absent — mais un CTA mort vaut moins que pas de CTA du tout.
+	 */
+	if ( ! form ) {
+		bar.remove();
 		return;
 	}
 
