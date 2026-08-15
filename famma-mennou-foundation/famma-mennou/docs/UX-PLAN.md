@@ -63,9 +63,9 @@ conversion · **P2** = dette de cohérence.
 | E-11 | **Recherche absente de l'interface** (§B23) — pourtant déclarée en `SearchAction` JSON-LD | P1 | M | Découverte |
 | E-12 | Boutique sans grille, tri, ni **filtres en bottom sheet** (§B22) | P1 | L | Découverte |
 | E-13 | **Cartes catégories** inexistantes (§B24) | P1 | S | Découverte |
-| E-14 | **Identité promo** inexistante : badge, ancien prix, économie (§B25) | P1 | S | Intention d'achat |
-| E-15 | Champs de formulaire non stylés, **sans `autocomplete`/`inputmode`** (§B18, §B30) | P1 | S | Add to Cart → Checkout |
-| E-16 | Confiance **absente du checkout lui-même** (§B19) | P1 | S | Checkout → Order |
+| E-14 | **Identité promo** inexistante : badge, ancien prix, économie (§B25) | P1 | S | ✔ **levé** — badge et économie calculés depuis les prix réels |
+| E-15 | Champs de formulaire non stylés (§B18, §B30) | P1 | S | ✔ **levé** — 48px partout. *Correction : `autocomplete` était déjà posé par WooCommerce, l'écart annoncé était faux* |
+| E-16 | Confiance **absente du checkout lui-même** (§B19) | P1 | S | ✔ **levé** — réassurance au-dessus du bouton |
 | E-17 | Footer réduit à la barre légale : ni navigation, ni assistance, ni social (§B28) | P1 | S | Confiance |
 | E-18 | Sélecteur de langue **flottant en rustine**, en concurrence avec WhatsApp et le CTA collant (§B21) | P1 | S | Bilingue |
 | E-19 | Le CTA collant **recouvre** le bas de page (aucune compensation de hauteur) | P1 | S | Fin de fiche produit inatteignable |
@@ -75,8 +75,25 @@ conversion · **P2** = dette de cohérence.
 | E-23 | `famma-child/languages/` déclaré mais **inexistant** (`functions.php:365`) | P2 | S | Chaînes du thème non traduisibles |
 | E-24 | `DESIGN-SYSTEM.md` mi-anglais mi-français, contrairement aux autres docs | P2 | S | Cohérence doc |
 | E-25 | Encarts `.famma-todo` (§45) encore présents — à faire disparaître avant prod | P2 | S | Crédibilité |
-| E-26 | Anneau de focus du bouton WhatsApp : orange sur vert = **1,32:1**, invisible (`famma-core.php:1027`) | **P0** | S | Accessibilité clavier |
-| E-27 | `z-index: 9999` du bouton WhatsApp contre `998` du CTA collant — le flottant passait devant le bouton d'achat | P1 | S | Dette + recouvrement |
+| E-26 | Anneau de focus du bouton WhatsApp : orange sur vert = **1,32:1**, invisible (`famma-core.php:1027`) | **P0** | S | ✔ levé |
+| E-27 | `z-index: 9999` du bouton WhatsApp contre `998` du CTA collant — le flottant passait devant le bouton d'achat | P1 | S | ✔ levé |
+
+### Écarts découverts à l'exécution (2026-08-15)
+
+Aucun n'était visible en lecture de code seule. Ils justifient à eux seuls le passage
+au navigateur avant tout commit.
+
+| # | Écart | Sév. | État |
+|---|---|---|---|
+| E-28 | **Le checkout s'affichait en anglais** — « First name », « Place order ». `WPLANG=fr_FR` et pack du cœur installé, mais `setup.sh` n'installait aucun pack d'**extension** : WooCommerce retombait sur ses chaînes d'origine | **P0** | ✔ levé — corrigé dans `setup.sh`, donc non reproductible |
+| E-29 | Palette Kadence restée sur ses valeurs par défaut (bleu `#2B6CB0`) : tout ce que le thème parent stylait était hors marque | **P0** | ✔ levé — les 15 emplacements pointent sur les jetons FAMMA |
+| E-30 | Cibles tactiles du checkout : champs 42,8px, gouvernorat (select2) 38px, cases à cocher **13px** | **P0** | ✔ levé — 48px, case 24px dans une ligne de 48px |
+| E-31 | Champ quantité à 40px sur la fiche produit | P1 | ✔ levé |
+| E-32 | Le CTA collant s'affichait **sans formulaire à déclencher** quand la boutique est en « bientôt disponible » — CTA mort | P1 | ✔ levé |
+| E-33 | La boutique entière est masquée : `woocommerce_coming_soon = yes`, `store_pages_only = yes` | — | **décision propriétaire** — état voulu avant lancement ? |
+| E-34 | Page de checkout intitulée « Checkout », en anglais dans le contenu (pas une question de traduction) | P2 | ouvert |
+| E-35 | Prix rendu `120,000 د.ت` : symbole de devise en arabe sous locale française | P1 | ouvert — Lot 4, position et format de devise par langue |
+| E-36 | Produit `teste11` publié, non marqué comme donnée de test (règle 12) | P1 | ouvert — à supprimer avant mise en production |
 
 ---
 
@@ -321,17 +338,22 @@ nouvelle entrée ; accueil en HTTP 200.
 **Reste à prouver** : navigation clavier avec anneau visible sur le CTA orange, et rendu du CTA
 principal — le catalogue est vide, donc aucune fiche produit n'existe encore pour l'observer.
 
-### Lot 1 — Le chemin d'achat *(5-7 j)*
-1. **Product card** (§B13) : image 1:1, titre 2 lignes max, bénéfice, bloc prix, badge, CTA.
-2. **Bloc prix** : prix courant, ancien prix barré, économie calculée — jamais de compte à
-   rebours factice (§B25).
-3. **Fiche produit** (§B14-15) : ordre au-dessus de la ligne de flottaison, accordéons
-   description/livraison/retours, bénéfice principal en une ligne.
-4. **Checkout** (§B18-19) : champs stylés, `autocomplete="tel name address-level1"`,
-   `inputmode="tel"`, messages d'erreur liés par `aria-describedby`, chips de confiance
-   **au-dessus du bouton de validation**.
-5. **Écran de confirmation** (D-8).
-6. Parcours **B** du §7 si validé.
+### Lot 1 — Le chemin d'achat *(5-7 j)* — **entamé le 2026-08-15**
+
+| # | Tâche | État |
+|---|---|---|
+| 1 | **Product card** (§B13) : image 1:1, titre 2 lignes, bénéfice, bloc prix, badge, CTA | à faire |
+| 2 | **Bloc prix** : prix courant, ancien prix barré, économie calculée, badge de remise réelle | ✔ livré |
+| 3 | **Fiche produit** (§B14-15) : accordéons, bénéfice principal en une ligne | partiel — quantité et prix faits, accordéons à faire |
+| 4 | **Checkout** (§B18-19) : champs à 48px, réassurance avant validation, erreurs en `-700` | ✔ livré |
+| 5 | **Écran de confirmation** (D-8) | à faire — **le plus important du lot** |
+| 6 | Parcours **B** du §7 | bloqué — décision D-8 |
+
+Le badge et l'économie sont **calculés depuis le prix barré et le prix promo réels**. Un produit
+sans promo ne porte aucun badge, et aucun compte à rebours n'accompagne l'offre (§B25, §60).
+
+Le prix ne prend pas l'orange : `#FF7A00` en texte sur blanc vaut 2,61:1. La hiérarchie se fait
+par la graisse et la taille — l'orange reste au CTA.
 
 **Sortie** : parcours pub → fiche → commande → confirmation réalisé au doigt sur un écran de
 360 px, en FR et en AR, sans zoom ni défilement horizontal ; règle §12 intacte (la commande n'est
