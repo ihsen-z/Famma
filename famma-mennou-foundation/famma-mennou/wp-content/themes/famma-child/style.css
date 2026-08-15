@@ -21,6 +21,45 @@ Tags:         e-commerce, rtl-language-support, translation-ready
    l'arabe s'affiche correctement sans feuille dupliquée.
    ============================================================ */
 
+/* ============================================================
+   Correspondance palette Kadence -> FAMMA (§6, §49)
+
+   Kadence expose quinze emplacements `--global-paletteN` dont
+   dérivent ses liens, ses boutons et ses fonds. Ils portaient
+   encore ses valeurs par défaut (bleu #2B6CB0) : tout ce que le
+   thème parent stylait restait hors marque, seuls les sélecteurs
+   surchargés plus bas étaient aux couleurs FAMMA.
+
+   Fait ici, en CSS, et non dans le personnalisateur : un réglage
+   du personnalisateur vit en base, donc ni relisible en diff ni
+   reproductible à la réinstallation (c'est le défaut D-7 du plan
+   UX). Kadence émet ses variables en ligne dans le `<head>` avant
+   cette feuille : `:root` suffit, sans surenchère de spécificité.
+
+   L'emplacement 1 vaut le BLEU, pas l'orange. Kadence en tire la
+   couleur des liens et le fond des boutons : de l'orange y placerait
+   du texte à 2,61:1 sur blanc dans tout le site. Le bleu tient
+   16,5:1, et le §6 réserve l'orange à l'accent.
+   ============================================================ */
+
+:root {
+	--global-palette1: var(--famma-blue);          /* accent — liens, boutons */
+	--global-palette2: var(--famma-blue-600);      /* accent survolé */
+	--global-palette3: var(--famma-ink);           /* texte le plus fort */
+	--global-palette4: var(--famma-blue);          /* texte fort */
+	--global-palette5: var(--famma-muted);         /* texte moyen */
+	--global-palette6: var(--famma-muted);         /* texte discret */
+	--global-palette7: var(--famma-line);          /* fond discret, filets */
+	--global-palette8: var(--famma-bg);            /* fond de page */
+	--global-palette9: var(--famma-white);         /* blanc */
+	--global-palette10: var(--famma-orange);       /* complément — l'accent de marque */
+	--global-palette11: var(--famma-success-700);  /* succès */
+	--global-palette12: var(--famma-blue-600);     /* information */
+	--global-palette13: var(--famma-danger-700);   /* alerte */
+	--global-palette14: var(--famma-warning);      /* avertissement */
+	--global-palette15: var(--famma-warning);      /* notation, étoiles */
+}
+
 /* --- Accessibilité : cible tactile minimale (§10, §44) --- */
 .wp-block-button__link,
 .wc-block-components-button,
@@ -36,8 +75,16 @@ input[type="submit"],
    à 2,61:1, sous le seuil AA même en grand texte (§44). Le bleu
    monte à 6,31:1 sans rien retirer à la vibration de la marque.
    ---------------------------------------------------------- */
+/* Le sélecteur composé n'est pas de la coquetterie : Kadence stylise le
+   bouton d'achat via `.woocommerce button.button.alt` (0,3,1) dans son
+   woocommerce.min.css. Depuis que les emplacements de palette pointent
+   sur les couleurs FAMMA, cette règle rendait le CTA navy — lisible,
+   mais plus l'orange de la marque sur le bouton qui fait la vente.
+   On repasse au-dessus par la spécificité plutôt que par l'ordre des
+   feuilles, qui n'est pas garanti. */
 .famma-cta,
 .woocommerce .single_add_to_cart_button,
+.woocommerce button.single_add_to_cart_button.button.alt,
 .woocommerce #place_order {
 	background-color: var(--famma-orange);
 	color: var(--famma-blue);

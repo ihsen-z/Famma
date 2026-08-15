@@ -48,6 +48,34 @@ donc **contextuel**. Il vaut `-700` par défaut et bascule sur l'orange vif dans
 conteneurs sombres (`.famma-hero`, `.famma-legal`, `.famma-on-dark`). Un composant
 posé sur fond sombre hérite du bon ton sans surcharge de couleur.
 
+### Correspondance avec la palette de Kadence
+
+Kadence dérive ses liens, ses boutons et ses fonds de quinze variables
+`--global-palette1..15`. Elles portaient ses valeurs par défaut (bleu `#2B6CB0`) :
+tout ce que le thème parent stylait restait hors marque. `style.css` les redirige
+donc vers les jetons FAMMA.
+
+| Kadence | Rôle | FAMMA |
+|---|---|---|
+| 1 | accent — liens, fond des boutons | `--famma-blue` |
+| 2 | accent survolé | `--famma-blue-600` |
+| 3 · 4 | texte fort | `--famma-ink` · `--famma-blue` |
+| 5 · 6 | texte moyen, texte discret | `--famma-muted` |
+| 7 · 8 | fond discret, fond de page | `--famma-line` · `--famma-bg` |
+| 9 | blanc | `--famma-white` |
+| 10 | complément d'accent | `--famma-orange` |
+| 11 → 15 | succès, info, alerte, avertissement, notation | `-700` correspondants |
+
+**L'emplacement 1 vaut le bleu, jamais l'orange** : Kadence en tire la couleur des
+liens et le fond des boutons ; de l'orange y placerait du texte à 2,61:1 sur blanc
+dans tout le site.
+
+Conséquence à connaître : depuis ce basculement, le bouton d'achat doit être
+récupéré par un sélecteur composé. Kadence le stylise via
+`.woocommerce button.button.alt` (0,3,1) ; sans surenchère de spécificité le CTA
+repasse en bleu — lisible, mais ce n'est plus l'orange de la marque sur le bouton
+qui fait la vente.
+
 ### Focus
 
 Anneau **bleu**, jamais orange : un anneau orange sur un CTA orange n'existe pas.
