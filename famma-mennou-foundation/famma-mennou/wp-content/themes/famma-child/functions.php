@@ -262,6 +262,37 @@ function famma_child_checkout_trust(): void {
 add_action( 'woocommerce_review_order_before_submit', 'famma_child_checkout_trust' );
 
 /**
+ * Ajoute le bénéfice principal sur la carte produit (§13 du brief UX).
+ *
+ * Une carte qui ne porte qu'un nom et un prix oblige à ouvrir la fiche pour
+ * savoir à quoi sert l'objet — un aller-retour de trop pour un visiteur venu
+ * d'une publicité. Le bénéfice vient du résumé court du produit, saisi par le
+ * propriétaire : rien n'est généré, et un produit sans résumé n'affiche
+ * simplement rien (§60).
+ *
+ * @return void
+ */
+function famma_child_loop_benefit(): void {
+	global $product;
+
+	if ( ! $product instanceof WC_Product ) {
+		return;
+	}
+
+	$short = trim( wp_strip_all_tags( $product->get_short_description() ) );
+
+	if ( '' === $short ) {
+		return;
+	}
+
+	printf(
+		'<p class="famma-card__benefit">%s</p>',
+		esc_html( wp_trim_words( $short, 12, '…' ) )
+	);
+}
+add_action( 'woocommerce_after_shop_loop_item_title', 'famma_child_loop_benefit', 6 );
+
+/**
  * Remplace le badge « Promo ! » par la remise réelle (§25 du brief UX).
  *
  * Le pourcentage est calculé à partir du prix barré et du prix promo du

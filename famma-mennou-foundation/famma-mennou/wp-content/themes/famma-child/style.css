@@ -418,6 +418,122 @@ summary:focus-visible,
 }
 
 /* ============================================================
+   Carte produit (§13 du brief UX)
+
+   La carte doit répondre seule : à quoi sert l'objet, combien il
+   coûte, et comment le commander. Un visiteur venu d'une publicité
+   ne doit pas avoir à ouvrir la fiche pour le savoir.
+
+   Le CTA de carte est BLEU, pas orange. L'orange reste au bouton
+   d'achat de la fiche produit : s'il couvre aussi la grille, il
+   ne signale plus rien (§6 — accent, jamais dominante).
+   ============================================================ */
+
+.woocommerce ul.products li.product {
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	overflow: hidden;
+	background: var(--famma-white);
+	transition: box-shadow var(--dur-base) var(--ease-out),
+		transform var(--dur-base) var(--ease-out);
+}
+
+.woocommerce ul.products li.product:hover,
+.woocommerce ul.products li.product:focus-within {
+	box-shadow: var(--elev-2);
+	transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.woocommerce ul.products li.product {
+		transition: none;
+	}
+
+	.woocommerce ul.products li.product:hover,
+	.woocommerce ul.products li.product:focus-within {
+		transform: none;
+	}
+}
+
+.woocommerce ul.products li.product .product-details {
+	padding: var(--sp-3) var(--sp-4) var(--sp-4);
+}
+
+/* Deux lignes maximum : au-delà, les cartes d'une même rangée
+   cessent de s'aligner et la grille se met à onduler. */
+.woocommerce ul.products li.product .woocommerce-loop-product__title {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	color: var(--famma-blue);
+	font-size: var(--fs-body);
+	font-weight: var(--fw-semibold);
+	line-height: var(--lh-base);
+}
+
+/* Bénéfice principal — n'existe que si le propriétaire l'a saisi. */
+.famma-card__benefit {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	margin-block: var(--sp-1) var(--sp-2);
+	color: var(--famma-muted);
+	font-size: var(--fs-small);
+	line-height: var(--lh-base);
+}
+
+/* Le bloc prix de la fiche ne visait que `div.product` : sur la
+   grille, l'élément est un `li.product` et restait sans style. */
+.woocommerce ul.products li.product .price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--sp-2);
+	color: var(--famma-blue);
+	font-size: var(--fs-h4);
+	font-weight: var(--fw-bold);
+}
+
+.woocommerce ul.products li.product .price del {
+	color: var(--famma-muted);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-regular);
+	opacity: 1;
+}
+
+.woocommerce ul.products li.product .price ins {
+	background: none;
+	text-decoration: none;
+	font-weight: var(--fw-bold);
+}
+
+/* Kadence neutralise le fond du bouton de grille avec un sélecteur à
+   (0,5,2) — cinq classes, deux types, dont deux `:not()` qui comptent
+   chacun pour une classe. On monte à (0,5,3), et le `:not(.kb-button)`
+   n'est pas qu'un poids : il reprend l'exclusion de Kadence pour ne pas
+   restyler les boutons de ses propres blocs. Aucun !important. */
+.woocommerce ul.products li.product a.button:not(.kb-button) {
+	display: block;
+	inline-size: 100%;
+	margin-block-start: var(--sp-3);
+	padding-block: var(--sp-3);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-bold);
+	text-align: center;
+}
+
+.woocommerce ul.products li.product a.button:not(.kb-button):hover,
+.woocommerce ul.products li.product a.button:not(.kb-button):focus-visible {
+	background: var(--famma-blue-600);
+	color: var(--famma-white);
+}
+
+/* ============================================================
    Bloc prix, remise et quantité (§13, §25 du brief UX)
 
    Le prix ne prend PAS l'orange : #FF7A00 en texte sur blanc vaut
