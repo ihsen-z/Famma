@@ -91,7 +91,8 @@ au navigateur avant tout commit.
 | E-31 | Champ quantité à 40px sur la fiche produit | P1 | ✔ levé |
 | E-32 | Le CTA collant s'affichait **sans formulaire à déclencher** quand la boutique est en « bientôt disponible » — CTA mort | P1 | ✔ levé |
 | E-33 | La boutique entière était masquée : `woocommerce_coming_soon = yes` (défaut WooCommerce sur installation neuve, jamais un choix) | — | ✔ **tranché** — le propriétaire veut la boutique ouverte. Posé explicitement dans `setup.sh` : le catalogue vide se traite par l'accueil dédié (§9), pas en masquant le site |
-| E-34 | Titres de page en anglais dans le **contenu** : « Shop », « Checkout » (pas une question de traduction) | P2 | ouvert |
+| E-34 | Titres de page en anglais dans le **contenu** : « Shop », « Checkout » (pas une question de traduction) | P2 | partiel — la confirmation est corrigée par filtre ; les pages Boutique et Checkout restent à renommer |
+| E-38 | Sous HPOS, `wp post delete` **ne supprime pas** une commande : elle ne vit pas dans `posts`. Passer par `$order->delete( true )` | P2 | consigné — piège de maintenance, pas un défaut UX |
 | E-37 | Slugs en anglais sur un site français : `/shop/`, `/cart/`, `/checkout/`. `/boutique/` et `/panier/` renvoient 404 | P1 | ouvert — compte pour le SEO Tunisie (§22) et pour la lisibilité d'une URL partagée sur WhatsApp |
 | E-35 | Prix rendu `120,000 د.ت` : symbole de devise en arabe sous locale française | P1 | ouvert — Lot 4, position et format de devise par langue |
 | E-36 | Produit `teste11` publié, non marqué comme donnée de test (règle 12) | P1 | ouvert — à supprimer avant mise en production |
@@ -347,8 +348,20 @@ principal — le catalogue est vide, donc aucune fiche produit n'existe encore p
 | 2 | **Bloc prix** : prix courant, ancien prix barré, économie calculée, badge de remise réelle | ✔ livré |
 | 3 | **Fiche produit** (§B14-15) : accordéons, bénéfice principal en une ligne | partiel — quantité et prix faits, accordéons à faire |
 | 4 | **Checkout** (§B18-19) : champs à 48px, réassurance avant validation, erreurs en `-700` | ✔ livré |
-| 5 | **Écran de confirmation** (D-8) | à faire — **le plus important du lot** |
+| 5 | **Écran de confirmation** (D-8) | ✔ livré |
 | 6 | Parcours **B** du §7 | bloqué — décision D-8 |
+
+L'écran de confirmation reprend le workflow réel de `famma-core`
+(`pending-confirm → confirmed → shipped → delivered`), pas une promesse commerciale, et
+n'annonce **aucun délai** (§60). Il rappelle le téléphone tel qu'il a été saisi : c'est le seul
+champ dont une faute de frappe fait échouer toute la commande, et le client n'avait nulle part
+où s'en apercevoir.
+
+Découvert en le construisant : le `<h1>` affichait « Checkout ». La confirmation est un point de
+terminaison de la page Checkout et en héritait le titre. Le filtre officiel de WooCommerce est
+inopérant ici — `wc_page_endpoint_title()` exige `in_the_loop()`, or **Kadence rend son bandeau
+de titre hors boucle**. À retenir pour toute autre page de terminaison (`view-order`,
+`edit-address`) : elles portent le même défaut.
 
 Le badge et l'économie sont **calculés depuis le prix barré et le prix promo réels**. Un produit
 sans promo ne porte aucun badge, et aucun compte à rebours n'accompagne l'offre (§B25, §60).
