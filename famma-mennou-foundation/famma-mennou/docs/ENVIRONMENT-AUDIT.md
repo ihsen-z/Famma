@@ -49,8 +49,26 @@ Audit exécuté le **2026-08-13** sur la machine du propriétaire. Aucune valeur
 | Élément | État |
 |---|---|
 | Graphify CLI | présent (`~/AppData/Roaming/Python/Python314/Scripts/graphify`) |
-| Graphe du projet | **inexploitable** — `extract --code-only` produit 2 nœuds (`backup.sh`), le PHP n'est pas indexé par l'AST local |
-| Context7 MCP | **non connecté** — aucune vérification possible contre la documentation officielle en direct (§53) |
+| Graphe du projet | **exploitable depuis le 2026-08-15** — 253 nœuds / 340 arêtes, santé OK. Le PHP *est* indexé par l'AST : le corpus était amputé, pas l'extracteur (voir ci-dessous) |
+| Context7 MCP | **connecté le 2026-08-15** — serveur HTTP de portée projet dans `.mcp.json`, sans clé API. Reste à approuver au premier lancement interactif |
+
+### Pourquoi le graphe ne voyait pas le code (résolu)
+
+`.gitignore` exclut `/wp-content/plugins/*` et `/wp-content/themes/*` puis ré-inclut
+`famma-core` et `famma-child` par négation. Git descend dans un dossier ré-inclus ;
+graphify applique à la lettre la règle d'exclusion parente de la spec gitignore
+(`detect.py`) et laissait donc hors corpus **les deux fichiers les plus importants du
+projet**. `detect()` remontait 28 fichiers, dont 0 de `famma-core`/`famma-child`.
+
+Correctif : `famma-mennou/.graphifyignore`, lu après `.gitignore` et prioritaire, qui
+ré-inclut explicitement les deux arborescences. Le corpus passe à 36 fichiers ; l'AST
+extrait 105 nœuds et 181 arêtes des 3 fichiers de code concernés. Les visuels de marque
+restent exclus : une extraction vision par fichier, pour un contenu déjà décrit dans
+`DESIGN-SYSTEM.md`.
+
+**Limite subsistante** : `.css` n'est pas un type de code reconnu par graphify —
+`tokens.css` et `style.css` n'entrent pas dans le graphe. Le design system n'y est
+présent qu'à travers sa documentation.
 
 ## Dépôt
 

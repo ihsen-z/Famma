@@ -1,0 +1,18 @@
+# Correctif de périmètre pour graphify uniquement — ne concerne pas git.
+#
+# .gitignore exclut /wp-content/plugins/* et /wp-content/themes/* puis ré-inclut
+# famma-core et famma-child par négation. git descend malgré tout dans un dossier
+# ré-inclus ; graphify applique la règle d'exclusion parente de la spec gitignore
+# à la lettre (detect.py) et laissait donc hors du corpus les deux fichiers les
+# plus importants du projet — d'où les « graph miss » à répétition.
+#
+# .graphifyignore est lu APRÈS .gitignore et l'emporte (last-match-wins).
+
+!/wp-content/plugins/famma-core/
+!/wp-content/plugins/famma-core/**
+!/wp-content/themes/famma-child/
+!/wp-content/themes/famma-child/**
+
+# Visuels de marque : une extraction vision par fichier, pour un contenu déjà
+# décrit dans docs/DESIGN-SYSTEM.md. Retirer cette ligne pour les réintégrer.
+/wp-content/themes/famma-child/assets/img/
