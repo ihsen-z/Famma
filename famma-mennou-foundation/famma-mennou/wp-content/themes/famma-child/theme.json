@@ -1,0 +1,75 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 2,
+	"settings": {
+		"appearanceTools": true,
+		"color": {
+			"custom": true,
+			"defaultPalette": false,
+			"link": true,
+			"palette": [
+				{ "name": "Accent", "slug": "theme-palette1", "color": "var(--global-palette1)" },
+				{ "name": "Accent - alt", "slug": "theme-palette2", "color": "var(--global-palette2)" },
+				{ "name": "Strongest text", "slug": "theme-palette3", "color": "var(--global-palette3)" },
+				{ "name": "Strong Text", "slug": "theme-palette4", "color": "var(--global-palette4)" },
+				{ "name": "Medium text", "slug": "theme-palette5", "color": "var(--global-palette5)" },
+				{ "name": "Subtle Text", "slug": "theme-palette6", "color": "var(--global-palette6)" },
+				{ "name": "Subtle Background", "slug": "theme-palette7", "color": "var(--global-palette7)" },
+				{ "name": "Lighter Background", "slug": "theme-palette8", "color": "var(--global-palette8)" },
+				{ "name": "White or offwhite", "slug": "theme-palette9", "color": "var(--global-palette9)" },
+				{ "name": "Accent - Complement", "slug": "theme-palette10", "color": "var(--global-palette10)" },
+				{ "name": "Notices - Success", "slug": "theme-palette11", "color": "var(--global-palette11)" },
+				{ "name": "Notices - Info", "slug": "theme-palette12", "color": "var(--global-palette12)" },
+				{ "name": "Notices - Alert", "slug": "theme-palette13", "color": "var(--global-palette13)" },
+				{ "name": "Notices - Warning", "slug": "theme-palette14", "color": "var(--global-palette14)" },
+				{ "name": "Notices - Rating", "slug": "theme-palette15", "color": "var(--global-palette15)" },
+
+				{ "name": "FAMMA — Bleu", "slug": "famma-blue", "color": "var(--famma-blue)" },
+				{ "name": "FAMMA — Bleu clair", "slug": "famma-blue-600", "color": "var(--famma-blue-600)" },
+				{ "name": "FAMMA — Orange (fond)", "slug": "famma-orange", "color": "var(--famma-orange)" },
+				{ "name": "FAMMA — Orange (texte)", "slug": "famma-orange-700", "color": "var(--famma-orange-700)" },
+				{ "name": "FAMMA — Encre", "slug": "famma-ink", "color": "var(--famma-ink)" },
+				{ "name": "FAMMA — Texte secondaire", "slug": "famma-muted", "color": "var(--famma-muted)" },
+				{ "name": "FAMMA — Filet", "slug": "famma-line", "color": "var(--famma-line)" },
+				{ "name": "FAMMA — Fond", "slug": "famma-bg", "color": "var(--famma-bg)" },
+				{ "name": "FAMMA — Blanc", "slug": "famma-white", "color": "var(--famma-white)" },
+				{ "name": "FAMMA — Succès (fond)", "slug": "famma-success", "color": "var(--famma-success)" },
+				{ "name": "FAMMA — Succès (texte)", "slug": "famma-success-700", "color": "var(--famma-success-700)" },
+				{ "name": "FAMMA — Erreur (texte)", "slug": "famma-danger-700", "color": "var(--famma-danger-700)" }
+			]
+		},
+		"spacing": {
+			"margin": true,
+			"padding": true,
+			"units": ["px", "em", "rem", "vh", "vw", "%"],
+			"spacingSizes": [
+				{ "name": "XS", "slug": "20", "size": "var(--sp-2)" },
+				{ "name": "S", "slug": "30", "size": "var(--sp-4)" },
+				{ "name": "M", "slug": "40", "size": "var(--sp-6)" },
+				{ "name": "L", "slug": "50", "size": "var(--sp-8)" },
+				{ "name": "XL", "slug": "60", "size": "var(--sp-12)" }
+			]
+		},
+		"typography": {
+			"customFontSize": true,
+			"lineHeight": true,
+			"fontSizes": [
+				{ "name": "Small", "slug": "small", "size": "var(--global-font-size-small)" },
+				{ "name": "Medium", "slug": "medium", "size": "var(--global-font-size-medium)" },
+				{ "name": "Large", "slug": "large", "size": "var(--global-font-size-large)" },
+				{ "name": "Larger", "slug": "larger", "size": "var(--global-font-size-larger)" },
+				{ "name": "XX-Large", "slug": "xxlarge", "size": "var(--global-font-size-xxlarge)" },
+
+				{ "name": "FAMMA — Légende", "slug": "famma-caption", "size": "var(--fs-caption)" },
+				{ "name": "FAMMA — Petit", "slug": "famma-small", "size": "var(--fs-small)" },
+				{ "name": "FAMMA — Corps", "slug": "famma-body", "size": "var(--fs-body)" },
+				{ "name": "FAMMA — Chapeau", "slug": "famma-lead", "size": "var(--fs-lead)" },
+				{ "name": "FAMMA — Titre 4", "slug": "famma-h4", "size": "var(--fs-h4)" },
+				{ "name": "FAMMA — Titre 3", "slug": "famma-h3", "size": "var(--fs-h3)" },
+				{ "name": "FAMMA — Titre 2", "slug": "famma-h2", "size": "var(--fs-h2)" },
+				{ "name": "FAMMA — Titre 1", "slug": "famma-h1", "size": "var(--fs-h1)" },
+				{ "name": "FAMMA — Prix", "slug": "famma-price", "size": "var(--fs-price)" }
+			]
+		}
+	}
+}

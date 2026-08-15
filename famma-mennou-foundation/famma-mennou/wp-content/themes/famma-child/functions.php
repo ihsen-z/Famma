@@ -356,6 +356,39 @@ function famma_child_remove_front_page_hero(): void {
 add_action( 'wp', 'famma_child_remove_front_page_hero' );
 
 /**
+ * Réapplique le theme.json de l'enfant, que Kadence écrase par défaut (§25, §49).
+ *
+ * Kadence branche `edit_theme_json` en priorité 10 et remplace l'intégralité des
+ * données par un tableau PHP figé, tant que le réglage `theme_json_mode` n'est pas
+ * activé (`inc/components/editor/component.php:219`). Le fichier du parent comme
+ * celui de l'enfant sont alors ignorés : sans ce filtre, la palette FAMMA
+ * n'apparaît jamais dans l'éditeur de blocs, et le fichier `theme.json` est un
+ * document mort.
+ *
+ * On repasse donc derrière, en priorité 20, en relisant le fichier plutôt qu'en
+ * recopiant ses valeurs ici : `theme.json` reste la source unique, et activer un
+ * jour `theme_json_mode` ne créerait pas deux définitions divergentes.
+ *
+ * @param mixed $theme_json Instance WP_Theme_JSON_Data accumulée par les filtres.
+ * @return mixed
+ */
+function famma_child_theme_json( $theme_json ) {
+	if ( ! is_object( $theme_json ) || ! method_exists( $theme_json, 'update_with' ) ) {
+		return $theme_json;
+	}
+
+	$path = get_stylesheet_directory() . '/theme.json';
+	if ( ! is_readable( $path ) ) {
+		return $theme_json;
+	}
+
+	$data = wp_json_file_decode( $path, array( 'associative' => true ) );
+
+	return is_array( $data ) ? $theme_json->update_with( $data ) : $theme_json;
+}
+add_filter( 'wp_theme_json_data_theme', 'famma_child_theme_json', 20 );
+
+/**
  * Déclare les capacités du thème.
  *
  * Chargé sur `after_setup_theme` : c'est le point d'accroche prévu par
