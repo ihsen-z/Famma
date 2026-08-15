@@ -83,6 +83,7 @@
 			<property name="functionWhitelist" type="array">
 				<element value="famma_env_define_constants"/>
 				<element value="famma_child_lockup_markup"/>
+				<element value="famma_child_reassurance_list"/>
 			</property>
 		</properties>
 	</rule>

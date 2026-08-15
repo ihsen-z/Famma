@@ -71,6 +71,9 @@ log "Réglages WordPress"
 step "locale FR + fuseau Africa/Tunis"
 $WP language core install fr_FR >/dev/null 2>&1 || true
 $WP site switch-language fr_FR >/dev/null 2>&1 || true
+# Le pack du coeur ne traduit pas les extensions : sans cette ligne, tout le
+# checkout WooCommerce s'affiche en anglais sur un site declare en francais.
+$WP language plugin install --all fr_FR >/dev/null 2>&1 || true
 $WP option update timezone_string "Africa/Tunis" >/dev/null
 $WP option update date_format "d/m/Y" >/dev/null
 $WP option update start_of_week 1 >/dev/null

@@ -541,6 +541,79 @@ summary:focus-visible,
 	line-height: var(--lh-ar);
 }
 
+/* ============================================================
+   Checkout — ergonomie de saisie (§13, §19 du brief, §44)
+
+   Les champs tombaient à 42,8px, le sélecteur de gouvernorat à
+   38px et les cases à cocher à 13px : sous la cible de 48px du
+   §10, sur la page qui décide de la vente.
+   ============================================================ */
+
+.woocommerce form .form-row input.input-text,
+.woocommerce form .form-row textarea,
+.woocommerce form .form-row select,
+.woocommerce-page form .form-row input.input-text {
+	min-block-size: var(--sp-12);
+	padding-inline: var(--sp-3);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius-sm);
+	/* Jamais sous 16px : Safari iOS zoome au focus et casse la page. */
+	font-size: var(--fs-input);
+}
+
+/* Le gouvernorat passe par select2, qui masque le `select` natif et
+   dessine son propre contrôle : la hauteur doit être posée sur lui. */
+.woocommerce .select2-container .select2-selection--single {
+	min-block-size: var(--sp-12);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius-sm);
+}
+
+.woocommerce .select2-container .select2-selection--single .select2-selection__rendered {
+	line-height: var(--sp-12);
+	font-size: var(--fs-input);
+}
+
+.woocommerce .select2-container .select2-selection--single .select2-selection__arrow {
+	block-size: var(--sp-12);
+}
+
+/* Une case de 13px ne se vise pas au doigt. On agrandit la case ET on
+   étend la zone cliquable à toute la ligne via son libellé. */
+.woocommerce form .form-row input[type="checkbox"],
+.woocommerce-page form input[type="checkbox"] {
+	inline-size: 24px;
+	block-size: 24px;
+	min-block-size: 24px;
+	accent-color: var(--famma-blue);
+}
+
+.woocommerce form .woocommerce-form__label-for-checkbox,
+.woocommerce-page form .woocommerce-form__label-for-checkbox {
+	display: flex;
+	align-items: center;
+	gap: var(--sp-2);
+	min-block-size: var(--sp-12);
+	cursor: pointer;
+}
+
+/* Message d'erreur : la nuance -700, la nue échouant à 4,38:1. */
+.woocommerce form .form-row.woocommerce-invalid label,
+.woocommerce-error,
+.woocommerce-error li {
+	color: var(--famma-danger-700);
+}
+
+.woocommerce form .form-row.woocommerce-invalid input.input-text,
+.woocommerce form .form-row.woocommerce-invalid select {
+	border-color: var(--famma-danger-700);
+}
+
+/* Réassurance rappelée juste au-dessus du bouton de validation. */
+.famma-reassure--checkout {
+	margin-block: var(--sp-4) var(--sp-3);
+}
+
 /* --- CTA collant mobile (§13, §30) -------------------------
    Implémenté ici, et non via une fonction du thème parent :
    la présentation ne doit dépendre d'aucun palier gratuit/Pro.

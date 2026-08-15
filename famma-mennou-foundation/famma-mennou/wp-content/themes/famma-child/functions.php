@@ -170,6 +170,35 @@ add_action( 'wp_head', 'famma_child_open_graph', 3 );
 add_action( 'wp_head', 'famma_child_head_icons', 2 );
 
 /**
+ * Rend une liste de réassurance bilingue.
+ *
+ * Un seul rendu pour la fiche produit et le checkout : deux copies du même
+ * balisage dériveraient l'une de l'autre à la première retouche.
+ *
+ * Inscrite dans la liste blanche de `phpcs.xml.dist` : PHPCompatibility
+ * signale tout appel dont le nom commence par `fam` comme un reste de
+ * l'extension `fam`, supprimée en PHP 5.1. Faux positif inévitable avec le
+ * préfixe du projet.
+ *
+ * @param array<int, array<string, string>> $items Entrées { fr, ar }.
+ * @param string                            $extra Classe de variante facultative.
+ * @return void
+ */
+function famma_child_reassurance_list( array $items, string $extra = '' ): void {
+	printf( '<ul class="famma-reassure %s">', esc_attr( $extra ) );
+
+	foreach ( $items as $item ) {
+		echo '<li class="famma-reassure__item"><span>' . esc_html( $item['fr'] ) . '</span>';
+		if ( '' !== $item['ar'] ) {
+			echo '<span class="famma-reassure__ar" lang="ar" dir="rtl">' . esc_html( $item['ar'] ) . '</span>';
+		}
+		echo '</li>';
+	}
+
+	echo '</ul>';
+}
+
+/**
  * Bloc de réassurance sous le bouton d'achat (§30, §48).
  *
  * Ne contient que des faits établis : paiement à la livraison, 0 TND de
@@ -194,20 +223,43 @@ function famma_child_product_reassurance(): void {
 		),
 	);
 
-	echo '<ul class="famma-reassure">';
-	foreach ( $items as $item ) {
-		echo '<li class="famma-reassure__item"><span>' . esc_html( $item['fr'] ) . '</span>';
-		if ( '' !== $item['ar'] ) {
-			echo '<span class="famma-reassure__ar" lang="ar" dir="rtl">' . esc_html( $item['ar'] ) . '</span>';
-		}
-		echo '</li>';
-	}
-	echo '</ul>';
+	famma_child_reassurance_list( $items );
 
 	// Rend une invitation WhatsApp, ou rien du tout si aucun numéro n'existe.
 	echo do_shortcode( '[famma_whatsapp text="' . esc_attr__( 'Une question sur ce produit ?', 'famma-child' ) . '"]' );
 }
 add_action( 'woocommerce_single_product_summary', 'famma_child_product_reassurance', 35 );
+
+/**
+ * Rappelle les conditions juste avant de valider la commande (§19 du brief UX).
+ *
+ * Placé au-dessus du bouton, et non dans le pied de page : le client doit
+ * savoir comment il paie et qui le livre au moment précis où il s'engage,
+ * sans avoir à faire défiler ni à quitter la page.
+ *
+ * Rien qui ne soit établi : aucun délai promis, aucune garantie de retour —
+ * le §60 les interdit tant que le propriétaire ne les a pas fournis.
+ *
+ * @return void
+ */
+function famma_child_checkout_trust(): void {
+	famma_child_reassurance_list(
+		array(
+			array(
+				'fr' => __( 'Paiement à la livraison, en espèces', 'famma-child' ),
+				'ar' => 'الدفع عند التوصيل',
+			),
+			array(
+				'fr' => __( 'Livraison offerte, partout en Tunisie', 'famma-child' ),
+				'ar' => 'التوصيل للدار',
+			),
+		),
+		'famma-reassure--checkout'
+	);
+
+	echo do_shortcode( '[famma_whatsapp text="' . esc_attr__( 'Un doute ? Écrivez-nous', 'famma-child' ) . '"]' );
+}
+add_action( 'woocommerce_review_order_before_submit', 'famma_child_checkout_trust' );
 
 /**
  * Remplace le badge « Promo ! » par la remise réelle (§25 du brief UX).
