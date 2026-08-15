@@ -130,12 +130,26 @@ de la ligne de flottaison (400 / 700), `font-display: swap`.
 Replis assumés : *Inter + Noto Sans Arabic* (deux familles, métriques non harmonisées) ou
 *Cairo* (arabe-first, latin plus faible). — **Décision propriétaire D-9.**
 
-### D-4 — Le design system n'existe pas dans l'éditeur (P0)
+### D-4 — Le design system n'existe pas dans l'éditeur (P0) — **résolu le 2026-08-15**
 
 Sans `theme.json`, la palette proposée par Gutenberg est celle de Kadence. Le propriétaire
-composera ses pages avec des couleurs hors marque, et aucun garde-fou ne l'en empêchera. Un
-`theme.json` qui déclare palette, échelle typographique et espacements **verrouille le système à
-la source** — c'est le meilleur rapport effort/effet de tout ce plan.
+composerait ses pages avec des couleurs hors marque, sans garde-fou.
+
+**Écrire le fichier ne suffisait pas.** Kadence branche `edit_theme_json` en priorité 10 et
+**remplace l'intégralité** des données theme.json par un tableau PHP figé, tant que le réglage
+`theme_json_mode` reste désactivé — son défaut
+(`kadence/inc/components/editor/component.php:219`). Le fichier du parent comme celui de l'enfant
+étaient donc pure décoration. Constaté à l'exécution : le résolveur ne renvoyait que les 15
+entrées codées en dur par Kadence, alors que le fichier enfant en déclarait 27 et décodait sans
+erreur.
+
+Deux conséquences pour la suite : **tout `theme.json` d'enfant de Kadence est inerte par défaut**
+— il faut un filtre en priorité 20 (`famma_child_theme_json`) qui relit le fichier ; et la palette
+enfant devait **reprendre les 15 emplacements `theme-palette1..15`** avant d'ajouter les couleurs
+FAMMA, faute de quoi les blocs déjà composés sur l'accueil, qui les référencent par leur slug,
+auraient perdu leur couleur.
+
+Vérifié : palette 27 entrées (15 Kadence + 12 FAMMA), `fontSizes` 14, `spacingSizes` 5.
 
 ### D-5 — Le CTA collant recouvre le bas de page (P1)
 
@@ -295,21 +309,17 @@ indicatives, un seul développeur.
 | 2 | Corriger **D-1** (contrastes) et **D-2** (focus) dans `style.css` **et** dans le CSS en ligne de `famma-core` | ✔ livré |
 | 3 | Purger les valeurs littérales de `style.css` (tailles, ombres, durées, z-index) | ✔ livré |
 | 4 | Corriger **D-5** (réserve de hauteur du CTA collant) et tokeniser le décalage WhatsApp | ✔ livré |
-| 5 | Créer `theme.json` | **bloqué** — voir ci-dessous |
+| 5 | Créer `theme.json` + filtre de réapplication | ✔ livré — voir D-4 |
 | 6 | Couple typographique auto-hébergé | **bloqué** — décision D-9 + fichiers `woff2` absents |
 | 7 | Sélecteur de langue dans l'en-tête (D-6) | reporté au Lot 4 — exige le balisage réel de TranslatePress |
 
-**Blocage `theme.json`** : le fichier ne peut pas être écrit à l'aveugle. Un `theme.json`
-enfant **remplace** le tableau `settings.color.palette` du parent au lieu de le compléter. Les
-pages déjà composées utilisent les emplacements de palette de Kadence
-(`theme-palette1` … `theme-palette9`) : publier une palette FAMMA sans reprendre ces
-emplacements **effacerait la couleur des blocs existants** de l'accueil. Il faut d'abord lire
-`wp-content/themes/kadence/theme.json` — donc démarrer Docker. C'est la première action à la
-reprise. *(Comportement de fusion parent/enfant non vérifié en ligne : Context7 indisponible.)*
+**Vérifié à l'exécution le 2026-08-15** : palette 27 entrées dans l'éditeur (15 Kadence + 12
+FAMMA) ; jeton d'accent contextuel correct au navigateur (`rgb(255,122,0)` sur le héros sombre,
+`rgb(184,83,0)` sur fond clair) ; `phpcs` sans erreur sur `functions.php` ; `debug.log` sans
+nouvelle entrée ; accueil en HTTP 200.
 
-**Sortie attendue (reste à prouver à l'exécution)** : 0 échec AA sur les couples texte/fond ;
-palette FAMMA dans l'éditeur de blocs ; navigation clavier avec anneau visible sur fond clair
-**et** sur le CTA orange.
+**Reste à prouver** : navigation clavier avec anneau visible sur le CTA orange, et rendu du CTA
+principal — le catalogue est vide, donc aucune fiche produit n'existe encore pour l'observer.
 
 ### Lot 1 — Le chemin d'achat *(5-7 j)*
 1. **Product card** (§B13) : image 1:1, titre 2 lignes max, bénéfice, bloc prix, badge, CTA.
