@@ -417,6 +417,93 @@ summary:focus-visible,
 	text-decoration: none;
 }
 
+/* ============================================================
+   Bloc prix, remise et quantité (§13, §25 du brief UX)
+
+   Le prix ne prend PAS l'orange : #FF7A00 en texte sur blanc vaut
+   2,61:1. La hiérarchie se fait par la graisse et la taille, pas
+   par la couleur — l'orange reste au CTA.
+   ============================================================ */
+
+.woocommerce div.product p.price,
+.woocommerce div.product span.price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--sp-2);
+	margin-block-end: var(--sp-2);
+	color: var(--famma-blue);
+	font-size: var(--fs-price);
+	font-weight: var(--fw-bold);
+	line-height: var(--lh-tight);
+}
+
+.woocommerce div.product p.price del,
+.woocommerce div.product span.price del {
+	color: var(--famma-muted);
+	font-size: var(--fs-price-old);
+	font-weight: var(--fw-regular);
+	opacity: 1;
+}
+
+/* WooCommerce souligne `ins` par défaut : le prix courant se lit
+   comme un lien, ce qu'il n'est pas. */
+.woocommerce div.product p.price ins,
+.woocommerce div.product span.price ins {
+	background: none;
+	text-decoration: none;
+	font-weight: var(--fw-bold);
+}
+
+/* Économie réelle, calculée depuis les deux prix — jamais saisie. */
+.famma-saving {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--sp-2);
+	margin-block: 0 var(--sp-3);
+	color: var(--famma-success-700);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-saving__ar {
+	font-weight: var(--fw-regular);
+	line-height: var(--lh-ar);
+}
+
+/* Badge de remise — orange de surface, texte bleu (6,31:1). */
+.woocommerce span.onsale,
+.famma-badge {
+	inset-block-start: var(--sp-3);
+	inset-inline-start: var(--sp-3);
+	min-block-size: auto;
+	min-inline-size: auto;
+	padding: var(--sp-1) var(--sp-3);
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-orange);
+	color: var(--famma-blue);
+	font-size: var(--fs-badge);
+	font-weight: var(--fw-bold);
+	line-height: 1.6;
+}
+
+/* Cible tactile : le champ quantité tombait à 40px (§10, §44). */
+.woocommerce div.product form.cart .quantity {
+	display: inline-flex;
+	align-items: stretch;
+}
+
+.woocommerce div.product form.cart .quantity input.qty {
+	min-block-size: var(--sp-12);
+	min-inline-size: var(--sp-12);
+	padding-inline: var(--sp-2);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius-sm);
+	font-size: var(--fs-input);
+	text-align: center;
+}
+
 /* --- Réassurance sous le bouton d'achat (§30, §48) --- */
 .famma-reassure {
 	list-style: none;

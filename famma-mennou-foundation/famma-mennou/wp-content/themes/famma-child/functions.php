@@ -210,6 +210,77 @@ function famma_child_product_reassurance(): void {
 add_action( 'woocommerce_single_product_summary', 'famma_child_product_reassurance', 35 );
 
 /**
+ * Remplace le badge « Promo ! » par la remise réelle (§25 du brief UX).
+ *
+ * Le pourcentage est calculé à partir du prix barré et du prix promo du
+ * produit — jamais saisi à la main. Un produit sans promo réelle ne porte
+ * aucun badge : le §60 interdit la remise décorative.
+ *
+ * Les produits variables renvoient un prix régulier vide : on laisse alors
+ * le badge d'origine plutôt que d'afficher une remise fausse.
+ *
+ * @param string      $html    Badge produit par WooCommerce.
+ * @param \WP_Post    $post    Publication du produit.
+ * @param \WC_Product $product Produit concerné.
+ * @return string
+ */
+function famma_child_sale_badge( $html, $post, $product ) {
+	if ( ! $product instanceof WC_Product ) {
+		return $html;
+	}
+
+	$regular = (float) $product->get_regular_price();
+	$sale    = (float) $product->get_sale_price();
+
+	if ( $regular <= 0 || $sale <= 0 || $sale >= $regular ) {
+		return $html;
+	}
+
+	return sprintf(
+		'<span class="onsale famma-badge">%s</span>',
+		esc_html( sprintf( '-%d %%', (int) round( ( ( $regular - $sale ) / $regular ) * 100 ) ) )
+	);
+}
+add_filter( 'woocommerce_sale_flash', 'famma_child_sale_badge', 10, 3 );
+
+/**
+ * Affiche l'économie réalisée sous le prix (§25 du brief UX).
+ *
+ * Le montant vient de la différence entre prix barré et prix promo. Aucun
+ * compte à rebours n'accompagne cette ligne : le §60 et le brief interdisent
+ * l'urgence fabriquée, et une offre n'est datée que si elle l'est vraiment.
+ *
+ * @return void
+ */
+function famma_child_price_savings(): void {
+	$product = wc_get_product();
+
+	if ( ! $product instanceof WC_Product || ! $product->is_on_sale() ) {
+		return;
+	}
+
+	$regular = (float) $product->get_regular_price();
+	$sale    = (float) $product->get_sale_price();
+
+	if ( $regular <= 0 || $sale <= 0 || $sale >= $regular ) {
+		return;
+	}
+
+	printf(
+		'<p class="famma-saving">%1$s <span class="famma-saving__ar" lang="ar" dir="rtl">%2$s</span></p>',
+		wp_kses_post(
+			sprintf(
+				/* translators: %s : montant économisé, déjà formaté par WooCommerce. */
+				esc_html__( 'Vous économisez %s', 'famma-child' ),
+				wc_price( $regular - $sale )
+			)
+		),
+		esc_html( 'توفّر' )
+	);
+}
+add_action( 'woocommerce_single_product_summary', 'famma_child_price_savings', 11 );
+
+/**
  * Barre d'achat collante sur mobile (§13, §30).
  *
  * Le bouton ne réimplémente pas l'ajout au panier : il déclenche le
