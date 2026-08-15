@@ -27,30 +27,44 @@ Tags:         e-commerce, rtl-language-support, translation-ready
 button,
 input[type="submit"],
 .button {
-	min-block-size: 48px;
-	min-inline-size: 48px;
+	min-block-size: var(--sp-12);
+	min-inline-size: var(--sp-12);
 }
 
-/* --- CTA principal « Commander / أطلب توا » (§13, §49) --- */
+/* --- CTA principal « Commander / أطلب توا » (§13, §49) ------
+   Texte BLEU sur orange, et non blanc : blanc sur #FF7A00 tombe
+   à 2,61:1, sous le seuil AA même en grand texte (§44). Le bleu
+   monte à 6,31:1 sans rien retirer à la vibration de la marque.
+   ---------------------------------------------------------- */
 .famma-cta,
 .woocommerce .single_add_to_cart_button,
 .woocommerce #place_order {
 	background-color: var(--famma-orange);
-	color: var(--famma-white);
+	color: var(--famma-blue);
 	border-radius: var(--famma-radius);
-	font-weight: 700;
+	font-size: var(--fs-button);
+	font-weight: var(--fw-bold);
 	padding-block: var(--sp-3);
 	padding-inline: var(--sp-6);
 }
 
-/* --- Focus visible : jamais supprimé (§44) --- */
+/* --- Focus visible : jamais supprimé (§44) ------------------
+   L'anneau était orange : invisible sur le CTA orange, et sous
+   3:1 sur blanc. Bleu + halo blanc reste lisible sur fond clair,
+   sur orange et sur le héros sombre.
+   ---------------------------------------------------------- */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible {
-	outline: 3px solid var(--famma-orange);
+textarea:focus-visible,
+summary:focus-visible,
+/* Exclut les conteneurs focalisés par script (tabindex="-1") : ils
+   ne sont pas des cibles clavier et n'ont pas à porter d'anneau. */
+[tabindex]:not([tabindex="-1"]):focus-visible {
+	outline: var(--focus-ring-width) solid var(--focus-ring-color);
 	outline-offset: 2px;
+	box-shadow: var(--focus-halo);
 }
 
 /* ============================================================
@@ -82,8 +96,8 @@ textarea:focus-visible {
 
 .famma-lockup__word {
 	font-family: var(--famma-font);
-	font-weight: 700;
-	font-size: 1.55rem;
+	font-weight: var(--fw-bold);
+	font-size: var(--fs-brand-word);
 	letter-spacing: 0.01em;
 }
 
@@ -106,14 +120,26 @@ textarea:focus-visible {
 }
 
 .famma-lockup__tagline {
-	font-size: 0.72rem;
-	font-weight: 500;
+	font-size: var(--fs-brand-tagline);
+	font-weight: var(--fw-medium);
+	/* Jamais d'interlettrage sur de l'arabe : cela brise les ligatures. */
 	letter-spacing: 0;
 }
 
 .famma-lockup__ar {
-	color: var(--famma-orange);
-	font-weight: 700;
+	color: var(--famma-accent-text);
+	font-weight: var(--fw-bold);
+}
+
+/* ============================================================
+   Contextes sombres — l'accent textuel bascule sur l'orange vif.
+   Un seul jeton redéfini suffit : les composants imbriqués
+   suivent sans surcharge de couleur en cascade.
+   ============================================================ */
+.famma-hero,
+.famma-legal,
+.famma-on-dark {
+	--famma-accent-text: var(--famma-orange);
 }
 
 /* Le lockup porte déjà le mot FAMMA : le titre de site du thème le
@@ -156,15 +182,15 @@ textarea:focus-visible {
 .famma-legal__list a {
 	display: inline-flex;
 	align-items: center;
-	min-block-size: 44px;
+	min-block-size: var(--sp-12);
 	color: var(--famma-line);
-	font-size: 0.85rem;
+	font-size: var(--fs-small);
 	text-decoration: none;
 }
 
 .famma-legal__list a:hover,
 .famma-legal__list a:focus-visible {
-	color: var(--famma-orange);
+	color: var(--famma-accent-text);
 	text-decoration: underline;
 }
 
@@ -178,10 +204,10 @@ textarea:focus-visible {
 	padding: var(--sp-4);
 	border: 1px dashed var(--famma-warning);
 	border-radius: var(--famma-radius);
-	background: #FFF8E6;
-	color: #6B5200;
-	font-size: 0.95rem;
-	line-height: 1.6;
+	background: var(--famma-warning-bg);
+	color: var(--famma-warning-700);
+	font-size: var(--fs-body);
+	line-height: var(--lh-base);
 }
 
 /* --- Sceau circulaire (planche 2b) --- */
@@ -215,15 +241,15 @@ textarea:focus-visible {
 
 .famma-hero__kicker {
 	margin-block-end: var(--sp-2);
-	font-size: 1.5rem;
-	font-weight: 700;
-	color: var(--famma-orange);
+	font-size: var(--fs-h3);
+	font-weight: var(--fw-bold);
+	color: var(--famma-accent-text);
 }
 
 .famma-hero__title {
 	margin-block: 0 var(--sp-3);
-	font-size: clamp(1.75rem, 6vw, 2.75rem);
-	line-height: 1.15;
+	font-size: var(--fs-h1);
+	line-height: var(--lh-tight);
 	color: var(--famma-white);
 }
 
@@ -277,13 +303,15 @@ textarea:focus-visible {
 .famma-section__title {
 	margin-block-end: var(--sp-3);
 	color: var(--famma-blue);
-	font-size: clamp(1.35rem, 4.5vw, 1.9rem);
+	font-size: var(--fs-h2);
+	line-height: var(--lh-tight);
 }
 
 .famma-soon__ar {
-	font-size: 1.25rem;
-	font-weight: 700;
-	color: var(--famma-orange);
+	font-size: var(--fs-h4);
+	font-weight: var(--fw-bold);
+	color: var(--famma-accent-text);
+	line-height: var(--lh-ar);
 }
 
 .famma-steps {
@@ -326,16 +354,19 @@ textarea:focus-visible {
 }
 
 /* --- CTA WhatsApp rendu par le raccourci famma-core --- */
+/* Fond vert -700 : le vert de marque avec du texte blanc plafonne à
+   3,16:1, sous le seuil AA pour du texte de cette taille (§44). */
 .famma-wa-cta {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	min-block-size: 48px;
+	min-block-size: var(--sp-12);
 	padding-inline: var(--sp-6);
 	border-radius: var(--famma-radius);
-	background: var(--famma-success);
+	background: var(--famma-success-700);
 	color: var(--famma-white);
-	font-weight: 700;
+	font-size: var(--fs-button);
+	font-weight: var(--fw-bold);
 	text-decoration: none;
 }
 
@@ -357,7 +388,8 @@ textarea:focus-visible {
 	flex-wrap: wrap;
 	align-items: baseline;
 	gap: var(--sp-2);
-	font-size: 0.95rem;
+	font-size: var(--fs-body);
+	line-height: var(--lh-base);
 }
 
 .famma-reassure__item::before {
@@ -371,7 +403,8 @@ textarea:focus-visible {
 
 .famma-reassure__ar {
 	color: var(--famma-muted);
-	font-size: 0.9rem;
+	font-size: var(--fs-small);
+	line-height: var(--lh-ar);
 }
 
 /* --- CTA collant mobile (§13, §30) -------------------------
@@ -391,18 +424,28 @@ textarea:focus-visible {
 		position: fixed;
 		inset-inline: 0;
 		inset-block-end: 0;
-		z-index: 998;
+		z-index: var(--z-sticky-cta);
 		display: flex;
 		gap: var(--sp-3);
 		align-items: center;
 		justify-content: space-between;
+		min-block-size: var(--sticky-cta-h);
 		padding: var(--sp-2) var(--sp-4);
 		padding-block-end: calc(var(--sp-2) + env(safe-area-inset-bottom));
 		background: var(--famma-white);
 		border-block-start: 1px solid var(--famma-line);
-		box-shadow: 0 -4px 14px rgba(11, 31, 58, 0.10);
+		box-shadow: var(--elev-up);
 		transform: translateY(0);
-		transition: transform 0.18s ease-out;
+		transition: transform var(--dur-base) var(--ease-out);
+	}
+
+	/* La barre est en position fixe : sans cette réserve, elle
+	   recouvrait définitivement la fin de la page — donc le dernier
+	   paragraphe de la fiche et le premier lien du pied de page.
+	   La réserve reste posée même quand la barre est rangée : la
+	   reprendre et la rendre ferait sauter la mise en page (CLS). */
+	body:has(.famma-sticky-cta) {
+		padding-block-end: calc(var(--sticky-cta-h) + env(safe-area-inset-bottom));
 	}
 
 	.famma-sticky-cta.is-hidden {
@@ -416,40 +459,41 @@ textarea:focus-visible {
 	}
 
 	.famma-sticky-cta__price {
-		font-weight: 700;
+		font-weight: var(--fw-bold);
 		color: var(--famma-blue);
 		white-space: nowrap;
 	}
 
+	/* Texte bleu sur orange — même raison que le CTA principal. */
 	.famma-sticky-cta__button {
 		display: inline-flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		min-block-size: 48px;
+		min-block-size: var(--sp-12);
 		flex: 1;
 		max-inline-size: 62%;
 		padding-inline: var(--sp-4);
 		border: 0;
 		border-radius: var(--famma-radius);
 		background: var(--famma-orange);
-		color: var(--famma-white);
+		color: var(--famma-blue);
 		font-family: inherit;
-		font-size: 1rem;
-		font-weight: 700;
-		line-height: 1.15;
+		font-size: var(--fs-button);
+		font-weight: var(--fw-bold);
+		line-height: var(--lh-tight);
 		cursor: pointer;
 	}
 
 	.famma-sticky-cta__ar {
-		font-size: 0.78rem;
-		font-weight: 500;
-		opacity: 0.9;
+		font-size: var(--fs-caption);
+		font-weight: var(--fw-medium);
+		/* Pas d'opacité : elle dégraderait un contraste déjà calculé. */
 	}
 
 	/* Le bouton WhatsApp flottant de famma-core ne doit pas
 	   recouvrir le CTA collant. */
 	body:has(.famma-sticky-cta:not(.is-hidden)) .famma-wa {
-		inset-block-end: 84px;
+		inset-block-end: calc(var(--sticky-cta-h) + var(--sp-4));
 	}
 }

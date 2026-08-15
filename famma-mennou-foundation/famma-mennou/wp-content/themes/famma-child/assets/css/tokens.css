@@ -3,30 +3,84 @@
    Source de vérité : docs/DESIGN-SYSTEM.md
    Toute couleur, espacement ou rayon utilisé ailleurs doit venir
    d'ici. Aucune valeur littérale en dur dans les autres feuilles.
+
+   Contraste (WCAG 2.1) : chaque couleur porte son usage autorisé.
+   Une couleur de SURFACE n'est pas une couleur de TEXTE — l'orange
+   de marque échoue à 2,61:1 sur blanc, d'où les variantes -700.
+   Tableau complet : docs/DESIGN-SYSTEM.md.
    ============================================================ */
 
 :root {
 	/* --- Marque --- */
-	--famma-blue: #0B1F3A;      /* primaire — bleu tech sombre */
+	--famma-blue: #0B1F3A;      /* primaire — bleu tech sombre · 16,5:1 sur blanc */
 	--famma-blue-600: #12315C;
-	--famma-orange: #FF7A00;    /* accent uniquement — CTA, mises en avant */
+	--famma-orange: #FF7A00;    /* SURFACE uniquement — fond de CTA, badges */
+	--famma-orange-700: #B85300; /* TEXTE/icône orange sur fond clair · 4,91:1 */
 	--famma-white: #FFFFFF;
+
+	/* Accent textuel contextuel. Aucune des deux nuances n'est lisible
+	   partout : #B85300 vaut 4,91:1 sur blanc mais 3,36:1 sur le bleu,
+	   #FF7A00 l'inverse (2,61:1 / 6,31:1). Les conteneurs sombres
+	   redéfinissent ce jeton — voir .famma-on-dark dans style.css. */
+	--famma-accent-text: var(--famma-orange-700);
 
 	/* --- Neutres --- */
 	--famma-ink: #12161C;
-	--famma-muted: #5B6470;
+	--famma-muted: #5B6470;     /* 6,0:1 sur blanc, 5,6:1 sur --famma-bg */
 	--famma-line: #E6E9EE;
 	--famma-bg: #F7F8FA;
 
-	/* --- Retour d'information --- */
-	--famma-success: #1FA65A;   /* COD / livré */
-	--famma-warning: #E6A700;
-	--famma-danger: #D64545;
+	/* --- Retour d'information ---
+	   Variante nue = surface (pastille, bordure, remplissage).
+	   Variante -700 = texte sur fond clair. */
+	--famma-success: #1FA65A;   /* COD / livré — surface */
+	--famma-success-700: #157A45; /* texte · 5,39:1 */
+	--famma-warning: #E6A700;   /* surface / bordure uniquement — 2,12:1 en texte */
+	--famma-warning-700: #6B5200; /* texte · 7,4:1 */
+	--famma-warning-bg: #FFF8E6;
+	--famma-danger: #D64545;    /* surface — 4,38:1 en texte, sous le seuil */
+	--famma-danger-700: #C13333; /* texte d'erreur · 5,54:1 */
 
-	/* --- Typographie --- */
+	/* --- Typographie ---
+	   Le couple FR/AR définitif reste à trancher (D-9, docs/UX-PLAN.md).
+	   Tant qu'aucun fichier woff2 n'est déposé dans assets/fonts/, la
+	   pile système s'applique : elle rend correctement le latin, et
+	   l'arabe dépend encore de l'appareil. */
 	--famma-font: system-ui, "Segoe UI", Tahoma, "Noto Sans Arabic", sans-serif;
-	--famma-radius: 12px;
-	--famma-shadow: 0 4px 14px rgba(11, 31, 58, 0.10);
+
+	/* Échelle — mobile-first, fluide là où le titre doit respirer. */
+	--fs-caption: 0.75rem;
+	--fs-small: 0.875rem;
+	--fs-body: 1rem;
+	--fs-lead: 1.125rem;
+	--fs-h4: 1.25rem;
+	--fs-h3: clamp(1.25rem, 3.5vw, 1.5rem);
+	--fs-h2: clamp(1.35rem, 4.5vw, 1.9rem);
+	--fs-h1: clamp(1.75rem, 6vw, 2.75rem);
+
+	/* Commerce — le prix est un composant typographique à part entière. */
+	--fs-price: clamp(1.375rem, 5vw, 1.75rem);
+	--fs-price-old: 1rem;
+	--fs-badge: 0.75rem;
+	--fs-button: 1rem;
+
+	/* Jamais sous 16px : en dessous, Safari iOS zoome au focus du champ
+	   et casse la mise en page du checkout sur mobile. */
+	--fs-input: 1rem;
+
+	/* Géométrie du logo — hors échelle : c'est du dessin de marque,
+	   pas de la hiérarchie de texte (§7). */
+	--fs-brand-word: 1.55rem;
+	--fs-brand-tagline: 0.72rem;
+
+	--lh-tight: 1.15;           /* titres */
+	--lh-base: 1.5;             /* corps latin */
+	--lh-ar: 1.7;               /* corps arabe — les diacritiques ont besoin d'air */
+
+	--fw-regular: 400;
+	--fw-medium: 500;
+	--fw-semibold: 600;
+	--fw-bold: 700;
 
 	/* --- Échelle d'espacement --- */
 	--sp-1: 4px;
@@ -35,4 +89,50 @@
 	--sp-4: 16px;
 	--sp-6: 24px;
 	--sp-8: 32px;
+	--sp-10: 40px;
+	--sp-12: 48px;
+
+	/* --- Rayons --- */
+	--famma-radius-sm: 8px;
+	--famma-radius: 12px;
+	--famma-radius-lg: 20px;
+	--famma-radius-pill: 999px;
+
+	/* --- Élévation --- */
+	--elev-1: 0 4px 14px rgba(11, 31, 58, 0.10);    /* cartes */
+	--elev-2: 0 8px 24px rgba(11, 31, 58, 0.14);    /* menus, drawers */
+	--elev-3: 0 16px 40px rgba(11, 31, 58, 0.18);   /* modales */
+	--elev-up: 0 -4px 14px rgba(11, 31, 58, 0.10);  /* barres collantes en bas d'écran */
+	--famma-shadow: var(--elev-1);                  /* alias historique */
+
+	/* --- Mouvement — toujours sous garde prefers-reduced-motion --- */
+	--dur-fast: 120ms;
+	--dur-base: 180ms;
+	--ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+	/* --- Profondeur ---
+	   Une seule échelle : un z-index écrit en dur ailleurs est un bug.
+	   Le CTA d'achat passe DEVANT le bouton flottant WhatsApp — c'est
+	   lui qui fait la vente. */
+	--z-float: 290;
+	--z-sticky-cta: 300;
+	--z-header: 400;
+	--z-drawer: 500;
+	--z-modal: 600;
+	--z-toast: 700;
+
+	/* --- Gabarit --- */
+	--container-max: 1200px;
+	--gutter: var(--sp-4);
+
+	/* Hauteur réservée à la barre d'achat collante. Sert deux fois : à
+	   dégager le bas de page, et à remonter le bouton WhatsApp. */
+	--sticky-cta-h: 64px;
+
+	/* --- Focus ---
+	   Bleu, jamais orange : l'anneau doit rester visible SUR le CTA
+	   orange. Le halo blanc le détache aussi des fonds sombres. */
+	--focus-ring-color: var(--famma-blue);
+	--focus-ring-width: 3px;
+	--focus-halo: 0 0 0 5px var(--famma-white);
 }

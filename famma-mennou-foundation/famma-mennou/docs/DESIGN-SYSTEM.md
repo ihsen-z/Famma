@@ -3,35 +3,57 @@
 Premium · modern · Tunisian · mobile-first. Not AliExpress-generic. Orange is an
 accent, never the dominant colour.
 
-## Design tokens (CSS variables)
-```css
-:root{
-  /* Brand */
-  --famma-blue:      #0B1F3A;  /* primary — dark tech blue */
-  --famma-blue-600:  #12315C;
-  --famma-orange:    #FF7A00;  /* accent only — CTAs, highlights */
-  --famma-white:     #FFFFFF;
+## Jetons
 
-  /* Neutrals */
-  --famma-ink:       #12161C;
-  --famma-muted:     #5B6470;
-  --famma-line:      #E6E9EE;
-  --famma-bg:        #F7F8FA;
+**Source unique : `famma-child/assets/css/tokens.css`.** Ce document explique les
+choix ; le fichier fait foi. Aucune valeur littérale ne doit apparaître ailleurs.
 
-  /* Feedback */
-  --famma-success:   #1FA65A;  /* COD / delivered */
-  --famma-warning:   #E6A700;
-  --famma-danger:    #D64545;
+| Groupe | Jetons |
+|---|---|
+| Marque | `--famma-blue` (+`-600`), `--famma-orange` (+`-700`), `--famma-accent-text`, `--famma-white` |
+| Neutres | `--famma-ink`, `--famma-muted`, `--famma-line`, `--famma-bg` |
+| Retour | `--famma-success` (+`-700`), `--famma-warning` (+`-700`, `-bg`), `--famma-danger` (+`-700`) |
+| Typo | `--famma-font`, `--fs-caption` → `--fs-h1`, `--fs-price`, `--fs-price-old`, `--fs-badge`, `--fs-button`, `--fs-input`, `--fs-brand-*`, `--lh-*`, `--fw-*` |
+| Espacement | `--sp-1` … `--sp-12` |
+| Rayons | `--famma-radius-sm`, `--famma-radius`, `--famma-radius-lg`, `--famma-radius-pill` |
+| Élévation | `--elev-1`, `--elev-2`, `--elev-3`, `--elev-up`, alias `--famma-shadow` |
+| Mouvement | `--dur-fast`, `--dur-base`, `--ease-out` |
+| Profondeur | `--z-float`, `--z-sticky-cta`, `--z-header`, `--z-drawer`, `--z-modal`, `--z-toast` |
+| Gabarit | `--container-max`, `--gutter`, `--sticky-cta-h` |
+| Focus | `--focus-ring-color`, `--focus-ring-width`, `--focus-halo` |
 
-  /* Type */
-  --famma-font: system-ui, "Segoe UI", Tahoma, "Noto Sans Arabic", sans-serif;
-  --famma-radius: 12px;
-  --famma-shadow: 0 4px 14px rgba(11,31,58,.10);
+### Surface ≠ texte
 
-  /* Spacing scale */
-  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-6:24px; --sp-8:32px;
-}
-```
+L'orange de marque est une couleur de **remplissage**. En texte sur fond clair il
+tombe à 2,61:1 — sous le seuil AA, y compris pour du grand texte. Chaque couleur de
+retour existe donc en deux nuances : la nue pour les surfaces, la `-700` pour le
+texte. Contrastes calculés (WCAG 2.1) :
+
+| Couple | Ratio | Usage |
+|---|---|---|
+| `#0B1F3A` sur blanc | 16,5:1 | texte courant, titres |
+| `#0B1F3A` sur `#FF7A00` | **6,31:1** | **texte du CTA principal** |
+| blanc sur `#FF7A00` | 2,61:1 | ❌ interdit |
+| `#FF7A00` texte sur blanc | 2,61:1 | ❌ interdit — utiliser `-700` |
+| `#B85300` sur blanc | 4,91:1 | accent textuel sur fond clair |
+| `#B85300` sur `#0B1F3A` | 3,36:1 | ❌ sur fond sombre — reprendre `#FF7A00` |
+| `#5B6470` sur blanc | 6,0:1 | texte secondaire |
+| blanc sur `#1FA65A` | 3,16:1 | ❌ pour du texte — surface seulement |
+| blanc sur `#157A45` | 5,39:1 | CTA WhatsApp |
+| `#D64545` sur blanc | 4,38:1 | ❌ juste sous le seuil — utiliser `#C13333` (5,54:1) |
+| `#E6A700` sur blanc | 2,12:1 | ❌ bordure/surface uniquement |
+
+Aucune des deux nuances d'orange n'est lisible partout : `--famma-accent-text` est
+donc **contextuel**. Il vaut `-700` par défaut et bascule sur l'orange vif dans les
+conteneurs sombres (`.famma-hero`, `.famma-legal`, `.famma-on-dark`). Un composant
+posé sur fond sombre hérite du bon ton sans surcharge de couleur.
+
+### Focus
+
+Anneau **bleu**, jamais orange : un anneau orange sur un CTA orange n'existe pas.
+Le halo blanc (`--focus-halo`) le détache aussi bien d'un fond clair que du héros
+sombre ou d'une image. Le bouton WhatsApp de `famma-core` applique la même règle,
+avec des valeurs de repli en dur pour rester autonome sans le thème enfant.
 
 ## Logo et identité (§6, §7)
 
@@ -65,10 +87,32 @@ SVG, et aucune rastérisation n'est possible ici : l'extension Imagick du
 conteneur n'a pas de délégué SVG. Il faut un PNG 1200×630 exporté depuis
 l'outil de design avant d'activer les balises Open Graph (§16).
 
-## Primary CTA
-Background `--famma-orange`, white text, `--famma-radius`, min touch target
-48×48px. Label: FR **"Commander"** / Derja **"أطلب توا"**. On product + checkout,
-sticky at the bottom on mobile (§13, §30).
+## CTA principal
+Fond `--famma-orange`, texte `--famma-blue` (voir « Surface ≠ texte »),
+`--famma-radius`, cible tactile 48×48 px minimum. Libellé : FR **« Commander »** /
+Derja **« أطلب توا »**. Sur la fiche produit et le checkout, barre collante en bas
+d'écran sur mobile (§13, §30).
+
+La barre collante réserve sa hauteur (`--sticky-cta-h`) en bas de `body` : sans
+cette réserve elle recouvre la fin de la page. La réserve reste posée même quand la
+barre est rangée, pour ne pas provoquer de saut de mise en page.
+
+## Typographie bilingue
+
+Le couple FR/AR définitif n'est **pas tranché** (décision D-9, voir `UX-PLAN.md`).
+Tant qu'aucun `woff2` n'est déposé, la pile système s'applique et le rendu arabe
+dépend de l'appareil — c'est une dette identifiée, pas un choix.
+
+Règles valables quel que soit le couple retenu :
+
+| Règle | Raison |
+|---|---|
+| `letter-spacing: 0` sur tout l'arabe | l'interlettrage brise les ligatures |
+| jamais `text-transform: uppercase` sur de l'arabe | sans effet — signale un composant non testé |
+| `line-height: var(--lh-ar)` (1.7) pour le corps arabe | les diacritiques ont besoin d'air |
+| chiffres occidentaux (0-9) pour tous les prix | cohérence des montants dans les deux langues |
+| `lang` + `dir` sur chaque fragment de langue mixte | lecteurs d'écran et rendu correct |
+| `--fs-input` jamais sous 16 px | en dessous, Safari iOS zoome au focus et casse le checkout |
 
 ## Trust chips (reused across pages) — §48
 - 🚚 FR "Livraison en Tunisie" / Derja "التوصيل للدار"
