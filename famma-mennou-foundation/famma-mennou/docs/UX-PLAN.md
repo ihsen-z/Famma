@@ -93,6 +93,7 @@ au navigateur avant tout commit.
 | E-33 | La boutique entière était masquée : `woocommerce_coming_soon = yes` (défaut WooCommerce sur installation neuve, jamais un choix) | — | ✔ **tranché** — le propriétaire veut la boutique ouverte. Posé explicitement dans `setup.sh` : le catalogue vide se traite par l'accueil dédié (§9), pas en masquant le site |
 | E-34 | Titres de page en anglais dans le **contenu** : « Shop », « Checkout » (pas une question de traduction) | P2 | partiel — la confirmation est corrigée par filtre ; les pages Boutique et Checkout restent à renommer |
 | E-38 | Sous HPOS, `wp post delete` **ne supprime pas** une commande : elle ne vit pas dans `posts`. Passer par `$order->delete( true )` | P2 | consigné — piège de maintenance, pas un défaut UX |
+| E-39 | Kadence neutralise le fond des boutons de grille via un sélecteur à **(0,5,2)** et sa feuille charge **après** celle de l'enfant. Toute surcharge de bouton Woo doit monter en spécificité, jamais recourir à `!important` | P2 | consigné — règle à appliquer aux prochains composants |
 | E-37 | Slugs en anglais sur un site français : `/shop/`, `/cart/`, `/checkout/`. `/boutique/` et `/panier/` renvoient 404 | P1 | ouvert — compte pour le SEO Tunisie (§22) et pour la lisibilité d'une URL partagée sur WhatsApp |
 | E-35 | Prix rendu `120,000 د.ت` : symbole de devise en arabe sous locale française | P1 | ouvert — Lot 4, position et format de devise par langue |
 | E-36 | Produit `teste11` publié, non marqué comme donnée de test (règle 12) | P1 | ouvert — à supprimer avant mise en production |
@@ -344,7 +345,7 @@ principal — le catalogue est vide, donc aucune fiche produit n'existe encore p
 
 | # | Tâche | État |
 |---|---|---|
-| 1 | **Product card** (§B13) : image 1:1, titre 2 lignes, bénéfice, bloc prix, badge, CTA | à faire |
+| 1 | **Product card** (§B13) : image 1:1, titre 2 lignes, bénéfice, bloc prix, badge, CTA | ✔ livré |
 | 2 | **Bloc prix** : prix courant, ancien prix barré, économie calculée, badge de remise réelle | ✔ livré |
 | 3 | **Fiche produit** (§B14-15) : accordéons, bénéfice principal en une ligne | partiel — quantité et prix faits, accordéons à faire |
 | 4 | **Checkout** (§B18-19) : champs à 48px, réassurance avant validation, erreurs en `-700` | ✔ livré |
