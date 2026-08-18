@@ -23,7 +23,7 @@ const FAMMA_CHILD_VERSION = '0.1.0';
  * Chaque fichier est testé avant d'être inclus : un thème dont un fichier
  * manque doit dégrader, pas produire une erreur fatale sur toutes les pages.
  */
-foreach ( array( 'icons', 'header-parts', 'footer-parts', 'shop', 'shop-widgets', 'product', 'home', 'assets' ) as $famma_child_part ) {
+foreach ( array( 'icons', 'header-parts', 'footer-parts', 'shop', 'shop-widgets', 'product', 'home', 'editorial-guards', 'assets' ) as $famma_child_part ) {
 	$famma_child_file = get_stylesheet_directory() . '/inc/' . $famma_child_part . '.php';
 
 	if ( file_exists( $famma_child_file ) ) {
