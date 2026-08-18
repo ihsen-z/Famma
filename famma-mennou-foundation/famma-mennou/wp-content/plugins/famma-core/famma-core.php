@@ -1024,7 +1024,16 @@ final class WhatsApp {
 		if ( '' === Config::instance()->whatsapp_number() ) {
 			return;
 		}
-		$css = '.famma-wa{position:fixed;inset-inline-end:16px;inset-block-end:16px;z-index:9999;display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;background:#25D366;box-shadow:0 4px 14px rgba(0,0,0,.25);text-decoration:none}.famma-wa svg{width:30px;height:30px;fill:#fff}.famma-wa:focus-visible{outline:3px solid #ff7a00;outline-offset:2px}';
+
+		/*
+		 * L'anneau de focus était orange sur un bouton vert : 1,32:1,
+		 * autrement dit invisible (§44). Bleu + halo blanc reste lisible
+		 * quel que soit le contenu qui défile sous le bouton flottant.
+		 *
+		 * Les var() portent une valeur de repli : le plugin doit rester
+		 * autonome si le thème enfant est remplacé (règle 6).
+		 */
+		$css = '.famma-wa{position:fixed;inset-inline-end:16px;inset-block-end:16px;z-index:var(--z-float,290);display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;background:#25D366;box-shadow:0 4px 14px rgba(0,0,0,.25);text-decoration:none}.famma-wa svg{width:30px;height:30px;fill:#fff}.famma-wa:focus-visible{outline:3px solid var(--famma-blue,#0B1F3A);outline-offset:2px;box-shadow:0 0 0 5px #fff,0 4px 14px rgba(0,0,0,.25)}';
 		wp_register_style( 'famma-wa', false, array(), FAMMA_CORE_VERSION );
 		wp_enqueue_style( 'famma-wa' );
 		wp_add_inline_style( 'famma-wa', $css );
@@ -1086,6 +1095,7 @@ final class Tracking {
 		add_action( 'wp_head', array( $this, 'site_verification' ), 5 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_tracking' ) );
 		add_action( 'woocommerce_checkout_create_order', array( $this, 'stamp_utm_on_order' ), 30 );
+		add_action( 'woocommerce_checkout_create_order', array( $this, 'stamp_capi_signals' ), 31 );
 		add_action( 'woocommerce_order_status_delivered', array( $this, 'fire_purchase_on_delivery' ) );
 	}
 
@@ -1188,6 +1198,42 @@ final class Tracking {
 	}
 
 	/**
+	 * Stores the signals the Conversions API needs, at order creation (§17).
+	 *
+	 * The Purchase event is sent days later, at delivery — long after the
+	 * browser is gone. Adresse IP, agent utilisateur et cookies Meta doivent
+	 * donc être capturés maintenant, sinon l'événement serveur partira sans
+	 * rien pour être rapproché de la visite qui l'a produit.
+	 *
+	 * @param \WC_Order $order Order being created.
+	 * @return void
+	 */
+	public function stamp_capi_signals( \WC_Order $order ): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- lecture seule d'un contexte de visite, pas une action.
+		$cookie_map = array(
+			'_fbp' => '_famma_fbp',
+			'_fbc' => '_famma_fbc',
+		);
+		foreach ( $cookie_map as $cookie => $meta ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- idem.
+			if ( ! empty( $_COOKIE[ $cookie ] ) ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- idem.
+				$order->update_meta_data( $meta, substr( sanitize_text_field( wp_unslash( $_COOKIE[ $cookie ] ) ), 0, 255 ) );
+			}
+		}
+
+		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		if ( '' !== $ip && filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+			$order->update_meta_data( '_famma_client_ip', $ip );
+		}
+
+		$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+		if ( '' !== $ua ) {
+			$order->update_meta_data( '_famma_client_ua', substr( $ua, 0, 400 ) );
+		}
+	}
+
+	/**
 	 * Fires the real Purchase event once, when the order is actually delivered (§17).
 	 *
 	 * A COD order is only revenue at delivery, so this is the only place a
@@ -1203,21 +1249,306 @@ final class Tracking {
 			return;
 		}
 
+		/*
+		 * L'identifiant d'événement est posé maintenant, mais le marqueur
+		 * `_famma_purchase_sent` ne l'est PAS : il n'appartient qu'à
+		 * l'émetteur, qui l'écrit après un envoi réellement réussi. Le poser
+		 * ici consommerait définitivement le droit d'émettre sur un simple
+		 * incident réseau, sans aucune trace côté Meta.
+		 */
 		$event_id = 'famma_purchase_' . $order_id;
 		$order->update_meta_data( '_famma_purchase_event_id', $event_id );
-		$order->update_meta_data( '_famma_purchase_sent', current_time( 'mysql' ) );
 		$order->save();
 
 		/**
 		 * Fires when a delivered COD order should be reported as a Purchase.
 		 *
-		 * No listener yet: the Conversions API client is Phase 4. Until then
-		 * no Purchase actually reaches Meta.
-		 *
 		 * @param \WC_Order $order    The delivered order.
 		 * @param string    $event_id Deduplication identifier.
 		 */
 		do_action( 'famma_capi_purchase', $order, $event_id );
+	}
+}
+
+/**
+ * Meta Conversions API client (§17).
+ *
+ * Écoute `famma_capi_purchase`, déclenché à la livraison uniquement — une
+ * commande COD n'est du chiffre d'affaires qu'une fois l'espèce encaissée.
+ *
+ * Trois règles tenues sans exception :
+ *
+ *  1. Le token n'est jamais journalisé, jamais renvoyé, jamais imprimé. Les
+ *     messages d'erreur ne citent que le code HTTP et le message de Meta.
+ *  2. Rien n'est envoyé tant que l'identifiant de pixel ET le token ne sont
+ *     pas configurés. Sans eux, la classe est inerte.
+ *  3. `_famma_purchase_sent` n'est écrit qu'après un envoi réellement
+ *     accepté. Un incident réseau laisse donc la commande rejouable.
+ */
+final class Capi {
+
+	/**
+	 * Singleton instance.
+	 *
+	 * @var Capi|null
+	 */
+	private static ?Capi $i = null;
+
+	/**
+	 * Version de l'API Graph visée.
+	 *
+	 * Filtrable par `famma_capi_graph_version` pour pouvoir la faire monter
+	 * sans toucher au code le jour où Meta retire celle-ci.
+	 */
+	private const GRAPH_VERSION = 'v21.0';
+
+	/**
+	 * Nombre d'échecs au-delà duquel on cesse de réessayer.
+	 */
+	private const MAX_ATTEMPTS = 5;
+
+	/**
+	 * Returns the shared instance, registering hooks on first call.
+	 *
+	 * @return Capi
+	 */
+	public static function instance(): Capi {
+		if ( null === self::$i ) {
+			self::$i = new self();
+			self::$i->hooks();
+		}
+		return self::$i;
+	}
+
+	/**
+	 * Registers hooks.
+	 *
+	 * @return void
+	 */
+	private function hooks(): void {
+		add_action( 'famma_capi_purchase', array( $this, 'send_purchase' ), 10, 2 );
+	}
+
+	/**
+	 * Hashes a value the way Meta expects: normalised, then SHA-256.
+	 *
+	 * @param string $value Raw value.
+	 * @return string Empty string when there is nothing to hash.
+	 */
+	private function hash( string $value ): string {
+		$value = trim( strtolower( $value ) );
+		return '' === $value ? '' : hash( 'sha256', $value );
+	}
+
+	/**
+	 * Normalises a Tunisian phone number to digits with country code.
+	 *
+	 * @param string $phone Raw phone as typed by the customer.
+	 * @return string
+	 */
+	private function normalise_phone( string $phone ): string {
+		$digits = preg_replace( '/\D+/', '', $phone );
+
+		if ( '' === $digits ) {
+			return '';
+		}
+
+		// Un numéro local à 8 chiffres est tunisien : on préfixe l'indicatif.
+		if ( 8 === strlen( $digits ) ) {
+			$digits = '216' . $digits;
+		}
+
+		return $digits;
+	}
+
+	/**
+	 * Builds the user_data block, with every identifier hashed.
+	 *
+	 * @param \WC_Order $order Delivered order.
+	 * @return array<string,string>
+	 */
+	private function user_data( \WC_Order $order ): array {
+		$data = array_filter(
+			array(
+				'em'      => $this->hash( (string) $order->get_billing_email() ),
+				'ph'      => $this->hash( $this->normalise_phone( (string) $order->get_billing_phone() ) ),
+				'fn'      => $this->hash( (string) $order->get_billing_first_name() ),
+				'ln'      => $this->hash( (string) $order->get_billing_last_name() ),
+				'ct'      => $this->hash( preg_replace( '/[^a-z]/', '', strtolower( (string) $order->get_billing_city() ) ) ),
+				'st'      => $this->hash( (string) $order->get_billing_state() ),
+				'country' => $this->hash( (string) $order->get_billing_country() ),
+			)
+		);
+
+		// Ces trois-là ne sont PAS hachés : Meta les attend en clair.
+		$raw_meta_map = array(
+			'fbp' => '_famma_fbp',
+			'fbc' => '_famma_fbc',
+		);
+		foreach ( $raw_meta_map as $key => $meta ) {
+			$value = (string) $order->get_meta( $meta );
+			if ( '' !== $value ) {
+				$data[ $key ] = $value;
+			}
+		}
+
+		$ip = (string) $order->get_meta( '_famma_client_ip' );
+		if ( '' !== $ip ) {
+			$data['client_ip_address'] = $ip;
+		}
+
+		$ua = (string) $order->get_meta( '_famma_client_ua' );
+		if ( '' !== $ua ) {
+			$data['client_user_agent'] = $ua;
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Builds the contents block from the order lines.
+	 *
+	 * @param \WC_Order $order Delivered order.
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function contents( \WC_Order $order ): array {
+		$contents = array();
+
+		foreach ( $order->get_items() as $item ) {
+			$product = $item->get_product();
+			if ( ! $product instanceof \WC_Product ) {
+				continue;
+			}
+
+			$sku = (string) $product->get_sku();
+
+			$contents[] = array(
+				'id'         => '' !== $sku ? $sku : (string) $product->get_id(),
+				'quantity'   => (int) $item->get_quantity(),
+				'item_price' => round( (float) $order->get_line_subtotal( $item, false, false ) / max( 1, (int) $item->get_quantity() ), 3 ),
+			);
+		}
+
+		return $contents;
+	}
+
+	/**
+	 * Sends the Purchase event, and records the outcome on the order.
+	 *
+	 * @param \WC_Order $order    Delivered order.
+	 * @param string    $event_id Deduplication identifier shared with the pixel.
+	 * @return void
+	 */
+	public function send_purchase( \WC_Order $order, string $event_id ): void {
+		$cfg   = Config::instance();
+		$pixel = $cfg->meta_pixel_id();
+		$token = $cfg->meta_access_token();
+
+		// Fonctionnalité non configurée : on ne fait rien, silencieusement.
+		if ( '' === $pixel || '' === $token ) {
+			return;
+		}
+
+		if ( $order->get_meta( '_famma_purchase_sent' ) ) {
+			return;
+		}
+
+		$attempts = (int) $order->get_meta( '_famma_capi_attempts' );
+		if ( $attempts >= self::MAX_ATTEMPTS ) {
+			return;
+		}
+
+		$event = array(
+			'event_name'       => 'Purchase',
+			'event_time'       => $order->get_date_created() ? $order->get_date_created()->getTimestamp() : time(),
+			'event_id'         => $event_id,
+			'action_source'    => 'website',
+			'event_source_url' => $order->get_checkout_order_received_url(),
+			'user_data'        => $this->user_data( $order ),
+			'custom_data'      => array(
+				'currency'     => $order->get_currency(),
+				'value'        => round( (float) $order->get_total(), 3 ),
+				'order_id'     => (string) $order->get_id(),
+				'contents'     => $this->contents( $order ),
+				'content_type' => 'product',
+			),
+		);
+
+		$payload = array( 'data' => array( $event ) );
+
+		$test_code = $cfg->meta_test_event_code();
+		if ( '' !== $test_code ) {
+			$payload['test_event_code'] = $test_code;
+		}
+
+		$version = (string) apply_filters( 'famma_capi_graph_version', self::GRAPH_VERSION );
+		$url     = 'https://graph.facebook.com/' . rawurlencode( $version ) . '/' . rawurlencode( $pixel ) . '/events';
+
+		$response = wp_remote_post(
+			$url,
+			array(
+				'timeout'     => 8,
+				'redirection' => 0,
+				'headers'     => array( 'Content-Type' => 'application/json' ),
+
+				/*
+				 * Le token voyage dans le corps, jamais dans l'URL : une URL
+				 * finit dans les journaux d'accès, un corps de requête non.
+				 */
+				'body'        => wp_json_encode( $payload + array( 'access_token' => $token ) ),
+			)
+		);
+
+		++$attempts;
+		$order->update_meta_data( '_famma_capi_attempts', $attempts );
+
+		if ( is_wp_error( $response ) ) {
+			$this->record_failure( $order, $response->get_error_message(), $attempts );
+			return;
+		}
+
+		$code = (int) wp_remote_retrieve_response_code( $response );
+
+		if ( $code < 200 || $code >= 300 ) {
+			$body    = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+			$message = is_array( $body ) && isset( $body['error']['message'] )
+				? (string) $body['error']['message']
+				: 'HTTP ' . $code;
+
+			$this->record_failure( $order, $message, $attempts );
+			return;
+		}
+
+		$order->update_meta_data( '_famma_purchase_sent', current_time( 'mysql' ) );
+		$order->add_order_note(
+			sprintf(
+				/* translators: %s: deduplication event identifier. */
+				__( 'Purchase event sent to Meta (event id %s).', 'famma-core' ),
+				$event_id
+			)
+		);
+		$order->save();
+	}
+
+	/**
+	 * Records a failed attempt on the order, without ever exposing the token.
+	 *
+	 * @param \WC_Order $order    Order concerned.
+	 * @param string    $message  Message returned by Meta or by the HTTP layer.
+	 * @param int       $attempts Attempts made so far.
+	 * @return void
+	 */
+	private function record_failure( \WC_Order $order, string $message, int $attempts ): void {
+		$order->add_order_note(
+			sprintf(
+				/* translators: 1: error message, 2: attempts made, 3: maximum attempts. */
+				__( 'Meta Purchase event failed: %1$s (attempt %2$d of %3$d).', 'famma-core' ),
+				$message,
+				$attempts,
+				self::MAX_ATTEMPTS
+			)
+		);
+		$order->save();
 	}
 }
 
@@ -1611,6 +1942,7 @@ function boot(): void {
 	Shipping::instance();
 	Tunisia::instance();
 	Tracking::instance();
+	Capi::instance();
 	WhatsApp::instance();
 
 	// Le tableau de bord ne sert qu'à l'administration : rien de tout cela
