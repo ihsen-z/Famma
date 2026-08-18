@@ -639,6 +639,210 @@ final class Product_Financials {
 }
 
 /**
+ * Per-product FAQ, written by the owner.
+ *
+ * La FAQ vit dans le plugin et non dans le thème : c'est une donnée métier,
+ * elle doit survivre à un changement de thème (règle 6). Le thème ne fait que
+ * la présenter.
+ *
+ * Aucune question n'est fournie par défaut. §60 interdit le contenu inventé,
+ * et une FAQ est précisément le texte qui engage la boutique : « puis-je
+ * échanger ? », « en combien de temps ? ». Une réponse approximative écrite
+ * ici deviendrait une promesse non tenue à la porte du client.
+ */
+final class Product_Faq {
+
+	/**
+	 * Meta key holding the parsed question/answer pairs.
+	 *
+	 * @var string
+	 */
+	public const META = '_famma_faq';
+
+	/**
+	 * Singleton instance.
+	 *
+	 * @var Product_Faq|null
+	 */
+	private static ?Product_Faq $i = null;
+
+	/**
+	 * Returns the shared instance.
+	 *
+	 * @return Product_Faq
+	 */
+	public static function instance(): Product_Faq {
+		if ( null === self::$i ) {
+			self::$i = new self();
+			self::$i->hooks();
+		}
+		return self::$i;
+	}
+
+	/**
+	 * Registers admin hooks.
+	 *
+	 * @return void
+	 */
+	private function hooks(): void {
+		add_action( 'woocommerce_product_options_advanced', array( $this, 'render_field' ) );
+		add_action( 'woocommerce_admin_process_product_object', array( $this, 'save_field' ) );
+	}
+
+	/**
+	 * Renders the FAQ textarea on the product screen.
+	 *
+	 * Un seul champ texte plutôt qu'un répéteur en JavaScript : le format est
+	 * lisible tel quel, se relit sans interface, et ne casse pas si le script
+	 * d'administration ne se charge pas.
+	 *
+	 * @return void
+	 */
+	public function render_field(): void {
+		global $product_object;
+
+		$value = '';
+
+		if ( $product_object instanceof \WC_Product ) {
+			$value = $this->to_text( $this->pairs( $product_object ) );
+		}
+
+		echo '<div class="options_group">';
+		woocommerce_wp_textarea_input(
+			array(
+				'id'          => self::META,
+				'value'       => $value,
+				'label'       => __( 'Product FAQ', 'famma-core' ),
+				'desc_tip'    => false,
+				'description' => __( 'One entry per block: the question on the first line, the answer on the following lines. Separate entries with a blank line. Leave empty to hide the FAQ tab.', 'famma-core' ),
+				'rows'        => 10,
+			)
+		);
+		echo '</div>';
+	}
+
+	/**
+	 * Persists the FAQ pairs.
+	 *
+	 * Séquence complète de la règle 4 — nonce, capacité, assainissement —
+	 * refaite sur place comme dans Product_Financials.
+	 *
+	 * @param \WC_Product $product Product being saved.
+	 * @return void
+	 */
+	public function save_field( \WC_Product $product ): void {
+		$nonce = isset( $_POST['woocommerce_meta_nonce'] )
+			? sanitize_key( wp_unslash( $_POST['woocommerce_meta_nonce'] ) )
+			: '';
+
+		if ( '' === $nonce || ! wp_verify_nonce( $nonce, 'woocommerce_save_data' ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_product', $product->get_id() ) ) {
+			return;
+		}
+
+		if ( ! isset( $_POST[ self::META ] ) ) {
+			return;
+		}
+
+		$raw = sanitize_textarea_field( wp_unslash( $_POST[ self::META ] ) );
+
+		$product->update_meta_data( self::META, $this->parse( $raw ) );
+	}
+
+	/**
+	 * Returns the stored pairs for a product, always as a clean list.
+	 *
+	 * @param \WC_Product $product Product to read.
+	 * @return array<int, array<string, string>>
+	 */
+	public function pairs( \WC_Product $product ): array {
+		$stored = $product->get_meta( self::META );
+
+		if ( ! is_array( $stored ) ) {
+			return array();
+		}
+
+		$pairs = array();
+
+		foreach ( $stored as $entry ) {
+			if ( ! is_array( $entry ) || ! isset( $entry['q'], $entry['a'] ) ) {
+				continue;
+			}
+
+			$question = trim( (string) $entry['q'] );
+			$answer   = trim( (string) $entry['a'] );
+
+			if ( '' === $question || '' === $answer ) {
+				continue;
+			}
+
+			$pairs[] = array(
+				'q' => $question,
+				'a' => $answer,
+			);
+		}
+
+		return $pairs;
+	}
+
+	/**
+	 * Parses the textarea into question/answer pairs.
+	 *
+	 * Une entrée sans réponse est ignorée, pas stockée à moitié : un accordéon
+	 * qui s'ouvre sur du vide est un défaut visible par le client.
+	 *
+	 * @param string $raw Sanitised textarea content.
+	 * @return array<int, array<string, string>>
+	 */
+	private function parse( string $raw ): array {
+		$blocks = preg_split( '/\R{2,}/', trim( $raw ) );
+		$pairs  = array();
+
+		foreach ( (array) $blocks as $block ) {
+			$lines = preg_split( '/\R/', trim( (string) $block ) );
+			$lines = array_values( array_filter( array_map( 'trim', (array) $lines ), 'strlen' ) );
+
+			if ( count( $lines ) < 2 ) {
+				continue;
+			}
+
+			$question = sanitize_text_field( (string) array_shift( $lines ) );
+			$answer   = sanitize_textarea_field( implode( "\n", $lines ) );
+
+			if ( '' === $question || '' === $answer ) {
+				continue;
+			}
+
+			$pairs[] = array(
+				'q' => $question,
+				'a' => $answer,
+			);
+		}
+
+		return $pairs;
+	}
+
+	/**
+	 * Rebuilds the editable text from stored pairs.
+	 *
+	 * @param array<int, array<string, string>> $pairs Stored pairs.
+	 * @return string
+	 */
+	private function to_text( array $pairs ): string {
+		$blocks = array();
+
+		foreach ( $pairs as $pair ) {
+			$blocks[] = $pair['q'] . "\n" . $pair['a'];
+		}
+
+		return implode( "\n\n", $blocks );
+	}
+}
+
+/**
  * Shipping economics: 0 TND charged, 7 TND tracked internally (§3, §4).
  */
 final class Shipping {
@@ -1948,6 +2152,7 @@ function boot(): void {
 	// Le tableau de bord ne sert qu'à l'administration : rien de tout cela
 	// n'est chargé sur le front (règle 10).
 	if ( is_admin() ) {
+		Product_Faq::instance();
 		Dashboard::instance();
 	}
 }
