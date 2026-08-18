@@ -35,6 +35,51 @@
 
 		$added = 0;
 		foreach ( $slugs as $slug ) {
+			/*
+			 * Une entree peut etre un slug de page, ou un lien personnalise
+			 * decrit par { label, url, children } — la boutique, les
+			 * promotions et les nouveautes n'ont pas de page dediee, elles
+			 * pointent vers des URL reelles de WooCommerce.
+			 */
+			if ( is_array( $slug ) ) {
+				if ( empty( $slug['url'] ) ) {
+					echo '  destination absente, entree ignoree : ' . $slug['label'] . "\n";
+					continue;
+				}
+
+				$parent_id = wp_update_nav_menu_item(
+					$menu_id,
+					0,
+					array(
+						'menu-item-title'  => $slug['label'],
+						'menu-item-url'    => $slug['url'],
+						'menu-item-type'   => 'custom',
+						'menu-item-status' => 'publish',
+					)
+				);
+				++$added;
+
+				foreach ( (array) ( $slug['children'] ?? array() ) as $child ) {
+					if ( empty( $child['url'] ) || is_wp_error( $parent_id ) ) {
+						continue;
+					}
+					wp_update_nav_menu_item(
+						$menu_id,
+						0,
+						array(
+							'menu-item-title'     => $child['label'],
+							'menu-item-url'       => $child['url'],
+							'menu-item-type'      => 'custom',
+							'menu-item-parent-id' => (int) $parent_id,
+							'menu-item-status'    => 'publish',
+						)
+					);
+					++$added;
+				}
+
+				continue;
+			}
+
 			if ( 'front' === $slug ) {
 				$page_id = (int) get_option( 'page_on_front' );
 			} else {
@@ -69,20 +114,95 @@
 
 	echo "Menus :\n";
 
-	// Le menu principal sert aussi le menu mobile : une boutique COD
-	// mobile-first n'a aucune raison d'avoir deux navigations divergentes.
+	/*
+	 * Menu principal — les sept entrees de la maquette.
+	 *
+	 * Le menu sert aussi le menu mobile : une boutique COD mobile-first n'a
+	 * aucune raison d'avoir deux navigations divergentes.
+	 *
+	 * Chaque entree pointe vers une destination reelle. « Categories » vise la
+	 * boutique et recoit les vraies categories produit en sous-menu ;
+	 * « Nouveautes » est la boutique triee par date ; « Promotions » utilise le
+	 * filtre `?on_sale=1` servi par inc/shop.php. Aucun lien mort (§60).
+	 */
+	$shop_id  = function_exists( 'wc_get_page_id' ) ? (int) wc_get_page_id( 'shop' ) : 0;
+	$shop_url = $shop_id > 0 ? (string) get_permalink( $shop_id ) : '';
+
+	$primary = array( 'front' );
+
+	if ( '' !== $shop_url ) {
+		$primary[] = array(
+			'label'    => 'Boutique',
+			'url'      => $shop_url,
+			'children' => array(),
+		);
+
+		$cats = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => true,
+				'number'     => 8,
+			)
+		);
+
+		$children = array();
+		if ( ! is_wp_error( $cats ) ) {
+			foreach ( $cats as $cat ) {
+				$children[] = array(
+					'label' => $cat->name,
+					'url'   => (string) get_term_link( $cat ),
+				);
+			}
+		}
+
+		$primary[] = array(
+			'label'    => 'Categories',
+			'url'      => $shop_url,
+			'children' => $children,
+		);
+
+		$primary[] = array(
+			'label'    => 'Promotions',
+			'url'      => add_query_arg( 'on_sale', '1', $shop_url ),
+			'children' => array(),
+		);
+
+		$primary[] = array(
+			'label'    => 'Nouveautes',
+			'url'      => add_query_arg( 'orderby', 'date', $shop_url ),
+			'children' => array(),
+		);
+	}
+
+	$primary[] = 'a-propos';
+	$primary[] = 'contact';
+
+	$build( 'Principal', $primary, array( 'primary', 'mobile' ) );
+
+	/*
+	 * Colonne « Informations » du pied de page (emplacement famma_footer_info).
+	 * Reprend les six entrees de la maquette : ce que le client cherche AVANT
+	 * de commander — livraison, retours, questions frequentes — puis les
+	 * textes contractuels.
+	 */
 	$build(
-		'Principal',
-		array( 'front', 'a-propos', 'faq', 'contact' ),
-		array( 'primary', 'mobile' )
+		'Pied de page — Informations',
+		array( 'livraison', 'retours', 'faq', 'conditions-generales', 'confidentialite', 'cookies' ),
+		array( 'famma_footer_info' )
 	);
 
+	/*
+	 * Barre legale de bas de page (emplacement footer). Volontairement plus
+	 * courte que la colonne ci-dessus : elle ne porte que les textes qui
+	 * engagent juridiquement la boutique. « Mentions legales » n'y figure pas
+	 * tant que la page n'existe pas — pas de lien mort (§60).
+	 */
 	$build(
 		'Pied de page',
-		array( 'livraison', 'retours', 'conditions-generales', 'confidentialite', 'cookies' ),
+		array( 'conditions-generales', 'confidentialite', 'cookies' ),
 		array( 'footer' )
 	);
 
-	echo "  La boutique n'est pas au menu : le catalogue est vide (§58).\n";
-	echo "  L'ajouter des la mise en ligne du premier produit reel.\n";
+	echo "  Le sous-menu Categories reprend les vraies categories produit :\n";
+	echo "  il grandit tout seul a mesure que le catalogue se remplit.\n";
 } )();

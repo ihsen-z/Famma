@@ -1,0 +1,226 @@
+/* ============================================================
+   FAMMA — carte produit.
+
+   Feuille partagée, chargée partout où une carte apparaît : accueil,
+   boutique, archives de catégorie, produits liés d'une fiche.
+
+   Pourquoi elle existe. Ces règles vivaient dans `shop.css`, chargée sur
+   la seule boutique. Résultat constaté au rendu : sur l'accueil, l'icône
+   du bouton s'affichait à sa taille naturelle — un chariot de 200px de
+   haut — les badges s'étiraient sur toute la largeur et les boutons ne
+   s'alignaient pas. Trois copies des mêmes règles auraient fini par
+   diverger ; il n'y en a plus qu'une.
+
+   Portée : `ul.products.famma-cards`. La classe est ajoutée par
+   `inc/shop.php` sur les listes de WooCommerce et par `inc/home.php` sur
+   celle de l'accueil — un seul crochet pour un seul dessin.
+
+   Spécificité : `style.css` pose la carte de base avec
+   `.woocommerce ul.products li.product a.button:not(.kb-button)`, soit
+   (0,5,3). Les sélecteurs ci-dessous atteignent le même poids et gagnent
+   par ordre de chargement, sans un seul `!important`.
+   ============================================================ */
+
+/* --- Structure : la carte est une colonne, le bouton se cale en bas --- */
+
+/*
+ * Constaté au rendu : les cartes faisaient toutes la même hauteur — la
+ * grille les étire — mais les boutons se trouvaient à quatre hauteurs
+ * différentes. `li.product` est en `display: list-item`, donc le panneau de
+ * texte garde sa hauteur naturelle et le `margin-block-start: auto` du
+ * bouton n'a rien à repousser.
+ */
+ul.products.famma-cards li.product {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	inline-size: auto;
+	margin: 0;
+	float: none;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	overflow: hidden;
+	background: var(--famma-white);
+	transition: box-shadow var(--dur-base) var(--ease-out);
+}
+
+/* La maquette ne pose qu'une ombre au survol. Le soulèvement d'origine
+   faisait sauter la grille entière sur un survol accidentel. */
+ul.products.famma-cards li.product:hover,
+ul.products.famma-cards li.product:focus-within {
+	transform: none;
+	box-shadow: 0 10px 24px rgba(11, 31, 58, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	ul.products.famma-cards li.product {
+		transition: none;
+	}
+}
+
+ul.products.famma-cards li.product .product-details {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 9px;
+	padding: 14px 14px 16px;
+}
+
+/* --- Visuel --- */
+
+ul.products.famma-cards li.product a img {
+	display: block;
+	inline-size: 100%;
+	block-size: 178px;
+	margin: 0;
+	background: var(--famma-surface-media);
+	object-fit: cover;
+}
+
+/* --- Badges --- */
+
+/*
+ * `inset-inline-end: auto` est la correction décisive : Kadence pose
+ * `right: 6px` en plus du `left`. Les deux côtés ancrés, le badge s'étirait
+ * sur toute la largeur de la carte — 200px pour un libellé de quatre
+ * caractères.
+ */
+ul.products.famma-cards li.product .onsale {
+	position: absolute;
+	inset-block-start: 10px;
+	inset-inline-start: 10px;
+	inset-inline-end: auto;
+	inline-size: auto;
+	z-index: 1;
+	margin: 0;
+	padding: 4px 9px;
+	border-radius: var(--radius-badge);
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+	font-size: var(--fs-card-badge);
+	font-weight: var(--fw-semibold);
+	line-height: 1.4;
+}
+
+/* Le vert exact de la maquette. Sélecteur aussi spécifique que celui du
+   badge orange ci-dessus, sinon ce dernier gagne par ordre de cascade et
+   « Nouveau » sort orange. */
+ul.products.famma-cards li.product .onsale.famma-badge--new {
+	background: var(--famma-new);
+	color: var(--famma-white);
+}
+
+/* --- Nom, résumé --- */
+
+ul.products.famma-cards li.product .woocommerce-loop-product__title {
+	min-block-size: 2.4375rem;
+	font-size: var(--fs-card-name);
+	font-weight: var(--fw-medium);
+	line-height: 1.4;
+}
+
+ul.products.famma-cards li.product .famma-card__benefit {
+	font-size: var(--fs-chrome-body);
+	line-height: 1.55;
+}
+
+/* --- Note et nombre d'avis --- */
+
+.famma-card__rating {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	margin: 0;
+}
+
+.famma-card__rating .star-rating {
+	margin: 0;
+	color: var(--famma-orange);
+	font-size: var(--fs-chrome-body);
+	letter-spacing: 1px;
+}
+
+.famma-card__reviews {
+	color: var(--famma-text-3);
+	font-size: var(--fs-chrome-caption);
+}
+
+/* --- Prix --- */
+
+ul.products.famma-cards li.product .price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 9px;
+	margin: 0;
+	font-size: var(--fs-card-price);
+}
+
+ul.products.famma-cards li.product .price del {
+	color: var(--famma-price-old);
+	font-size: var(--fs-chrome-body);
+}
+
+/* --- Bouton « Commander » --- */
+
+ul.products.famma-cards li.product .product-action-wrap {
+	position: static;
+	opacity: 1;
+	margin-block-start: auto;
+}
+
+/* Aucun glissement du bloc de texte au survol : il recouvrait le prix. */
+ul.products.famma-cards li.product:hover .entry-content-wrap,
+ul.products.famma-cards li.product:focus-within .entry-content-wrap {
+	transform: none;
+}
+
+ul.products.famma-cards li.product a.button:not(.kb-button) {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	margin-block-start: auto;
+	padding: 11px 16px;
+	min-block-size: 0;
+	border-radius: var(--radius-card-button);
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+	font-size: var(--fs-chrome-field);
+	/* Gras demandé par le propriétaire, et conforme au rendu de référence :
+	   la maquette écrit 500, l'image livrée montre un libellé nettement plus
+	   appuyé. 600 tient les deux à 13,5px. */
+	font-weight: var(--fw-semibold);
+	/* Kadence met le libellé en capitales : le bouton passait sur deux lignes
+	   et doublait de hauteur. */
+	text-transform: none;
+	line-height: 1.35;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+}
+
+ul.products.famma-cards li.product a.button:not(.kb-button):hover,
+ul.products.famma-cards li.product a.button:not(.kb-button):focus-visible {
+	background: var(--famma-orange-600);
+	color: var(--famma-on-orange);
+}
+
+/*
+ * Les pictogrammes de Kadence sont masqués : son icône est une FLÈCHE, posée
+ * APRÈS le libellé, là où la maquette met un chariot AVANT le mot. Les deux
+ * autres ne portent que les états AJAX.
+ */
+ul.products.famma-cards li.product a.button .kadence-svg-iconset {
+	display: none;
+}
+
+/*
+ * Taille imposée au chariot. Sans elle — cas constaté sur l'accueil, où
+ * cette feuille n'était pas chargée — le SVG prend sa taille naturelle et
+ * remplit le bouton sur toute sa hauteur.
+ */
+.famma-card__cart {
+	flex: none;
+	inline-size: 15px;
+	block-size: 15px;
+}

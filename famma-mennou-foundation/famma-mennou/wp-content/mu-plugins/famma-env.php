@@ -43,6 +43,20 @@ function famma_env_define_constants(): void {
 		'FAMMA_TIKTOK_PIXEL_ID',
 		'FAMMA_GA4_MEASUREMENT_ID',
 		'FAMMA_GOOGLE_SITE_VERIFICATION',
+
+		/*
+		 * Coordonnees et reseaux affiches par le pied de page du theme.
+		 * Vides par defaut : une ligne non configuree n'est pas rendue, ce
+		 * qui vaut mieux qu'un numero ou un compte social invente (§60).
+		 */
+		'FAMMA_CONTACT_PHONE',
+		'FAMMA_CONTACT_EMAIL',
+		'FAMMA_CONTACT_ADDRESS',
+		'FAMMA_SOCIAL_FACEBOOK',
+		'FAMMA_SOCIAL_INSTAGRAM',
+		'FAMMA_SOCIAL_TIKTOK',
+		'FAMMA_SOCIAL_YOUTUBE',
+		'FAMMA_COD_ILLUSTRATION',
 	);
 
 	foreach ( $names as $name ) {

@@ -1,0 +1,807 @@
+/* ============================================================
+   FAMMA — gabarit partagé : barre supérieure, en-tête, pied de page.
+   Reprend la maquette `docs/design-refs/` au jeton près.
+
+   Deux règles tenues de bout en bout :
+
+   1. Aucune valeur littérale. Toute couleur, tout espacement et tout
+      rayon vient de `tokens.css`. Une valeur en dur ici serait une
+      valeur que personne ne retrouve le jour où la marque bouge.
+
+   2. Aucune propriété directionnelle. `inset-inline`, `margin-inline`,
+      `padding-inline`, `text-align: start` — jamais `left` / `right`.
+      C'est ce qui permet à `/ar/` de se retourner sans une seule ligne
+      de CSS dupliquée.
+
+   Point de rupture unique : 1000px, celui de la maquette. Il est ici en
+   CSS et non en JavaScript, comme le recommande le handoff lui-même.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Socle partagé
+   ------------------------------------------------------------ */
+
+.famma-container {
+	inline-size: 100%;
+	max-inline-size: var(--container-max);
+	margin-inline: auto;
+	padding-inline: var(--gutter);
+}
+
+/* Le lien d'évitement n'est visible qu'au clavier. Il doit passer devant
+   l'en-tête collant, sinon il s'affiche derrière et devient inutilisable
+   au moment précis où il sert.
+
+   Sélecteur volontairement plus spécifique que `.famma-site
+   .screen-reader-text` plus bas : à spécificité égale, c'est la règle la
+   plus tardive qui gagnerait, et le lien resterait masqué **même au focus**
+   — soit exactement la panne qu'il est censé éviter. */
+.famma-site .famma-skip-link:focus {
+	position: fixed;
+	inset-block-start: var(--sp-2);
+	inset-inline-start: var(--sp-2);
+	z-index: var(--z-toast);
+	clip-path: none;
+	inline-size: auto;
+	block-size: auto;
+	padding: var(--sp-3) var(--sp-4);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-white);
+	color: var(--famma-blue);
+	font-weight: var(--fw-semibold);
+	box-shadow: var(--elev-2);
+}
+
+/* Kadence fournit `.screen-reader-text`, mais le gabarit ne doit pas en
+   dépendre : si sa feuille est retirée un jour, le texte réservé aux
+   lecteurs d'écran réapparaîtrait au milieu de l'en-tête. */
+.famma-site .screen-reader-text {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+.famma-icon {
+	inline-size: 1.25rem;
+	block-size: 1.25rem;
+	flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------
+   Barre supérieure
+   ------------------------------------------------------------ */
+
+.famma-topbar {
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	font-size: var(--fs-chrome-body);
+}
+
+.famma-topbar__inner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-3) var(--sp-4);
+	padding-block: var(--chrome-topbar-pad);
+	/* La maquette dessine la barre à 41px : 11px de marge de part et d'autre
+	   d'une ligne de 19px. L'interlignage par défaut la porterait à 43. */
+	line-height: 1.45;
+}
+
+.famma-topbar__promises {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--sp-3) var(--sp-6);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-topbar__promise {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--chrome-promise-gap);
+}
+
+.famma-topbar__promise .famma-icon {
+	inline-size: 1.0625rem;
+	block-size: 1.0625rem;
+}
+
+/* Sous 700px la barre n'a la place que d'une promesse : le paiement à la
+   livraison, qui est l'argument de vente. Entre 700 et 1000px elles passent
+   à la ligne comme dans la maquette, au lieu de disparaître. */
+@media (max-width: 699px) {
+	.famma-topbar__promise:not(:first-child) {
+		display: none;
+	}
+}
+
+@media (min-width: 1000px) {
+	.famma-topbar__promises {
+		gap: var(--sp-10);
+	}
+}
+
+/* --- Bascule de langue --- */
+
+.famma-lang {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--sp-2);
+}
+
+.famma-lang__sep {
+	opacity: 0.4;
+}
+
+/* Cible tactile de 44px minimum sans grossir la barre : le padding
+   vertical déborde de la ligne sans la pousser. */
+.famma-lang__link {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: 2.75rem;
+	padding-inline: var(--sp-1);
+	color: var(--famma-white);
+	font-size: var(--fs-chrome-body);
+	text-decoration: none;
+}
+
+/* L'orange sur le marine vaut 6,32:1 — il passe AA ici, contrairement au
+   même orange sur blanc. C'est pourquoi il reste tel quel dans les
+   conteneurs sombres et bascule sur --famma-orange-700 ailleurs. */
+.famma-lang__link.is-current {
+	color: var(--famma-orange);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-lang__link:hover {
+	color: var(--famma-orange);
+}
+
+/* ------------------------------------------------------------
+   En-tête
+   ------------------------------------------------------------ */
+
+.famma-header {
+	position: sticky;
+	inset-block-start: 0;
+	z-index: var(--z-header);
+	border-block-end: 1px solid var(--famma-line-header);
+	background: var(--famma-white);
+}
+
+.famma-header__inner {
+	display: flex;
+	align-items: center;
+	gap: var(--chrome-header-gap);
+	padding-block: var(--chrome-header-pad);
+}
+
+.famma-header__spacer {
+	flex: 1;
+}
+
+.famma-header__brand {
+	display: inline-flex;
+	flex-shrink: 0;
+	color: var(--famma-blue);
+	text-decoration: none;
+}
+
+/* Baseline arabe du lockup : gris moyen dans l'en-tete (valeur de la
+   maquette, 7,9:1 sur blanc), gris clair sur le marine du pied de page. */
+.famma-header__brand .famma-lockup__tagline {
+	color: var(--famma-tagline);
+}
+
+.famma-footer__brand .famma-lockup__tagline {
+	color: var(--famma-on-dark-2);
+}
+
+/* --- Navigation --- */
+
+.famma-nav__list {
+	display: flex;
+	align-items: center;
+	gap: var(--chrome-nav-gap);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: var(--fs-chrome-nav);
+	font-weight: var(--fw-medium);
+}
+
+.famma-nav__list a {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--sp-1);
+	padding-block: var(--sp-2);
+	border-block-end: 2px solid transparent;
+	color: var(--famma-blue);
+	text-decoration: none;
+}
+
+/* L'entrée active de la maquette est orange souligné d'orange. Le trait
+   garde l'orange de marque (c'est une surface) ; le mot passe en
+   --famma-orange-700, qui vaut 4,91:1 là où #FF7A00 tombait à 2,61:1. */
+.famma-nav__list .current-menu-item > a,
+.famma-nav__list .current-menu-ancestor > a,
+.famma-nav__list .current_page_item > a {
+	border-block-end-color: var(--famma-orange);
+	color: var(--famma-accent-text);
+}
+
+.famma-nav__list a:hover {
+	color: var(--famma-accent-text);
+}
+
+/* --- Sous-menus : au survol ET au focus, donc utilisables au clavier
+   sans une ligne de JavaScript. --- */
+
+.famma-nav--desktop .famma-nav__list .sub-menu {
+	position: absolute;
+	z-index: var(--z-drawer);
+	display: grid;
+	gap: var(--sp-1);
+	min-inline-size: 12rem;
+	margin: 0;
+	padding: var(--sp-2);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+	list-style: none;
+	box-shadow: var(--elev-2);
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity var(--dur-base) var(--ease-out);
+}
+
+.famma-nav--desktop .famma-nav__list > li {
+	position: relative;
+}
+
+.famma-nav--desktop .famma-nav__list > li:hover > .sub-menu,
+.famma-nav--desktop .famma-nav__list > li:focus-within > .sub-menu {
+	opacity: 1;
+	visibility: visible;
+}
+
+/* Sur mobile, le panneau est déjà un dépliant : imbriquer un second niveau
+   masqué obligerait à un bouton de plus. Les sous-menus s'affichent donc
+   en retrait, toujours atteignables. */
+.famma-nav--mobile .sub-menu {
+	display: grid;
+	gap: var(--sp-1);
+	margin: 0;
+	padding: 0;
+	padding-inline-start: var(--sp-4);
+	list-style: none;
+}
+
+/* --- Recherche --- */
+
+.famma-search {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: var(--chrome-promise-gap);
+	padding: var(--chrome-field-pad-block) var(--chrome-field-pad-inline);
+	border: 1px solid var(--famma-line-field);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-surface-field);
+}
+
+.famma-search__icon {
+	inline-size: 0.9375rem;
+	block-size: 0.9375rem;
+	color: var(--famma-text-3);
+}
+
+/* Sélecteur à deux classes, et non une seule : Kadence style les champs par
+   `input[type="search"], …`, dont la spécificité (0,1,1) l'emportait sur
+   `.famma-search__input` (0,1,0). Son remplissage de 0.4em et sa bordure
+   poussaient la barre à 52px là où la maquette la dessine à 38. On gagne par
+   précision de sélecteur, sans `!important`. */
+.famma-search .famma-search__input {
+	inline-size: 100%;
+	min-inline-size: 0;
+	padding: 0;
+	border: 0;
+	line-height: 1.45;
+	background: none;
+	color: var(--famma-blue);
+	/* 16px : sous cette taille, Safari iOS zoome à la mise au point et
+	   décale toute la page. Le desktop peut se permettre plus petit. */
+	font-size: var(--fs-input);
+}
+
+.famma-search__input::placeholder {
+	color: var(--famma-text-3);
+	opacity: 1;
+}
+
+/* Le bouton d'envoi n'est là que pour le clavier et les lecteurs d'écran :
+   la maquette valide à la touche Entrée. Il redevient visible au focus,
+   sinon il n'existerait pour personne. */
+.famma-search__submit {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+}
+
+.famma-search__submit:focus-visible {
+	position: static;
+	inline-size: auto;
+	block-size: auto;
+	clip-path: none;
+	padding: var(--sp-1) var(--sp-2);
+	border: 0;
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+	font-size: var(--fs-caption);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-search--desktop {
+	display: none;
+	inline-size: 15.625rem;
+	flex-shrink: 0;
+}
+
+.famma-search--mobile {
+	margin-block-start: var(--sp-3);
+}
+
+/* --- Actions : compte, panier, burger --- */
+
+.famma-header__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--sp-4);
+}
+
+.famma-header__action,
+.famma-burger {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	/* 48px : la cible tactile minimale du projet (§9). L'icône reste à sa
+	   taille de maquette, c'est la zone cliquable qui grandit. */
+	inline-size: var(--sp-12);
+	block-size: var(--sp-12);
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--famma-blue);
+	cursor: pointer;
+}
+
+.famma-header__action .famma-icon {
+	inline-size: 1.375rem;
+	block-size: 1.375rem;
+}
+
+.famma-cart {
+	position: relative;
+}
+
+.famma-cart__badge {
+	position: absolute;
+	inset-block-start: var(--sp-1);
+	inset-inline-end: var(--sp-1);
+	pointer-events: none;
+}
+
+.famma-cart__count {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-inline-size: 1.0625rem;
+	block-size: 1.0625rem;
+	padding-inline: var(--sp-1);
+	border-radius: 9px;
+	background: var(--famma-orange);
+	/* Bleu sur orange : 6,32:1. Le blanc de la maquette valait 2,61:1 et un
+	   compteur illisible ne compte rien. */
+	color: var(--famma-on-orange);
+	font-size: var(--fs-chrome-badge);
+	font-weight: var(--fw-semibold);
+	line-height: 1;
+}
+
+/* Un badge à zéro n'apprend rien et ajoute du bruit dans un en-tête déjà
+   dense. Masqué, pas supprimé : le fragment AJAX le retrouve. */
+.famma-cart__count.is-empty {
+	display: none;
+}
+
+.famma-burger__close {
+	display: none;
+}
+
+.famma-burger[aria-expanded="true"] .famma-burger__open {
+	display: none;
+}
+
+.famma-burger[aria-expanded="true"] .famma-burger__close {
+	display: block;
+}
+
+/* --- Panneau mobile --- */
+
+.famma-header__panel {
+	border-block-start: 1px solid var(--famma-line-header);
+	padding-block: var(--sp-3) var(--sp-4);
+	background: var(--famma-white);
+}
+
+.famma-header__panel .famma-nav__list {
+	display: grid;
+	gap: 0;
+	font-size: var(--fs-body);
+}
+
+.famma-header__panel .famma-nav__list > li + li {
+	border-block-start: 1px solid var(--famma-line-soft);
+}
+
+.famma-header__panel .famma-nav__list a {
+	min-block-size: var(--sp-12);
+	padding-block: var(--sp-2);
+	border-block-end: 0;
+}
+
+/* --- Bascule desktop / mobile --- */
+
+.famma-nav--desktop {
+	display: none;
+}
+
+@media (min-width: 1000px) {
+	.famma-nav--desktop,
+	.famma-search--desktop {
+		display: flex;
+	}
+
+	.famma-burger,
+	.famma-header__panel {
+		display: none;
+	}
+}
+
+/* ------------------------------------------------------------
+   Pied de page
+   ------------------------------------------------------------ */
+
+.famma-footer {
+	/* Redéfinit l'accent textuel pour tout ce qui est imbriqué : sur le
+	   marine, c'est l'orange vif qui est lisible (6,32:1), pas le -700. */
+	--famma-accent-text: var(--famma-orange);
+
+	margin-block-start: var(--sp-12);
+	background: var(--famma-blue);
+	color: var(--famma-on-dark);
+	font-size: var(--fs-chrome-body);
+}
+
+.famma-footer__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(11.875rem, 1fr));
+	gap: var(--sp-8);
+	padding-block: var(--chrome-foot-pad-block);
+}
+
+.famma-footer__col {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-3);
+	min-inline-size: 0;
+}
+
+.famma-footer__col--brand {
+	gap: var(--sp-4);
+	min-inline-size: 13rem;
+}
+
+/*
+ * Le lockup fixe `color: var(--famma-blue)` sur lui-même (style.css) : cette
+ * couleur l'emporte sur celle héritée du lien parent. Posé tel quel sur le
+ * marine du pied de page, le logo était **invisible** — marine sur marine,
+ * ratio 1:1, l'icône comprise puisqu'elle suit `currentColor`.
+ *
+ * Détecté par l'audit de contraste automatisé sur la page rendue, pas à la
+ * lecture du code : c'est le genre de défaut qu'une capture d'écran seule ne
+ * signale pas non plus, l'œil ne cherchant pas un logo là où il n'y a rien.
+ */
+.famma-footer__brand,
+.famma-footer__brand .famma-lockup {
+	display: inline-flex;
+	color: var(--famma-white);
+	text-decoration: none;
+}
+
+.famma-footer__about {
+	max-inline-size: 15rem;
+	margin: 0;
+	line-height: 1.65;
+}
+
+.famma-footer__title {
+	margin: 0 0 3px;
+	color: var(--famma-white);
+	font-size: var(--fs-chrome-title);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-footer__list {
+	display: grid;
+	gap: var(--chrome-foot-link-gap);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-footer__list a {
+	display: inline-flex;
+	align-items: center;
+	/* Les liens de pied de page sont les plus souvent ratés au doigt :
+	   44px de hauteur utile, même si le texte n'en fait que 18. */
+	min-block-size: 2.75rem;
+	color: var(--famma-on-dark);
+	text-decoration: none;
+}
+
+.famma-footer__list a:hover,
+.famma-footer__list a:focus-visible {
+	color: var(--famma-accent-text);
+}
+
+.famma-footer__help {
+	display: flex;
+	align-items: center;
+	gap: var(--sp-2);
+}
+
+.famma-footer__help .famma-icon {
+	inline-size: 0.875rem;
+	block-size: 0.875rem;
+}
+
+.famma-footer__help.is-whatsapp .famma-icon {
+	color: var(--famma-whatsapp);
+}
+
+.famma-footer__col--cod {
+	align-items: center;
+	text-align: center;
+}
+
+.famma-footer__cod-image {
+	max-inline-size: 100%;
+	block-size: auto;
+	border-radius: var(--famma-radius);
+}
+
+.famma-footer__cod-text {
+	margin: 0;
+	font-size: var(--fs-caption);
+	line-height: var(--lh-base);
+}
+
+.famma-footer__cod-ar {
+	display: block;
+	margin-block-start: var(--sp-1);
+	color: var(--famma-accent-text);
+	line-height: var(--lh-ar);
+}
+
+/* --- Réseaux sociaux --- */
+
+.famma-socials {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--sp-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-socials__link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 2.75rem;
+	block-size: 2.75rem;
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-overlay-soft);
+	color: var(--famma-white);
+	text-decoration: none;
+	transition: background-color var(--dur-base) var(--ease-out);
+}
+
+.famma-socials__link:hover,
+.famma-socials__link:focus-visible {
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+}
+
+.famma-socials__link .famma-icon {
+	inline-size: 0.9375rem;
+	block-size: 0.9375rem;
+}
+
+/* --- Barre basse --- */
+
+.famma-footer__bottom {
+	border-block-start: 1px solid var(--famma-overlay-line);
+}
+
+.famma-footer__bottom-inner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-3) var(--sp-4);
+	padding-block: var(--sp-4);
+}
+
+.famma-footer__copyright {
+	margin: 0;
+	color: var(--famma-on-dark-muted);
+	font-size: var(--fs-chrome-caption);
+}
+
+/* `.famma-legal` était une bande autonome accrochée à wp_footer : elle
+   portait son propre fond marine et son propre padding. Intégrée dans la
+   barre basse, elle doit les rendre, sinon on empile deux fonds identiques
+   et un double interlignage. */
+.famma-footer__bottom .famma-legal {
+	padding: 0;
+	background: none;
+}
+
+.famma-footer__bottom .famma-legal__list {
+	justify-content: flex-end;
+	gap: var(--sp-2) var(--chrome-legal-gap);
+}
+
+.famma-footer__bottom .famma-legal__list a {
+	color: var(--famma-on-dark-muted);
+	font-size: var(--fs-chrome-caption);
+}
+
+/* ------------------------------------------------------------
+   Densite de l'habillage : tactile sous 1000px, dessin de la
+   maquette au-dessus.
+
+   La maquette compose des cibles de 29 a 38px ; le projet impose 48px
+   minimum (regle 9). Les deux ont raison, mais pas pour le meme
+   appareil : 48px protegent le doigt, 38px tiennent la barre a la
+   hauteur dessinee. La regle tactile s'applique donc la ou l'on
+   touche, le dessin la ou l'on pointe.
+   ------------------------------------------------------------ */
+
+@media (min-width: 1000px) {
+	/* La barre supérieure de la maquette fait 41px : 11px de marge haute et
+	   basse autour d'une ligne de 19px. Le bouton de langue est ce qui la
+	   fait grandir s'il garde sa cible tactile — il la rend ici. */
+	.famma-lang__link {
+		min-block-size: 0;
+		padding-block: 0;
+		line-height: 1.45;
+	}
+
+	.famma-header__action {
+		inline-size: 2.375rem;
+		block-size: 2.375rem;
+	}
+
+	.famma-search--desktop .famma-search__input {
+		font-size: var(--fs-chrome-field);
+	}
+
+	.famma-footer__list a,
+	.famma-legal__list a {
+		min-block-size: 0;
+	}
+
+	.famma-socials__link {
+		inline-size: 2rem;
+		block-size: 2rem;
+	}
+}
+
+/* ------------------------------------------------------------
+   Bouton favori des cartes produit
+
+   Posé ici plutôt que dans shop.css : la même carte apparaît sur
+   l'accueil, dans la boutique et dans les produits liés d'une fiche.
+   Trois copies de ces règles finiraient par diverger.
+   ------------------------------------------------------------ */
+
+.famma-fav {
+	position: absolute;
+	inset-block-start: var(--sp-2);
+	inset-inline-end: var(--sp-2);
+	/* Au-dessus du lien de la carte, sous l'en-tête collant. */
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 1.875rem;
+	block-size: 1.875rem;
+	padding: 0;
+	border: 0;
+	border-radius: var(--famma-radius-pill);
+	background: rgba(255, 255, 255, 0.92);
+	color: var(--famma-text-2);
+	cursor: pointer;
+}
+
+.famma-fav__icon {
+	inline-size: 0.9375rem;
+	block-size: 0.9375rem;
+}
+
+/* Actif : cœur plein, en orange FONCÉ.
+   L'état favori porte du sens, donc le pictogramme relève du contraste des
+   éléments non textuels (WCAG 1.4.11, seuil 3:1) contre le blanc de la
+   pastille. Vérifié : `#FF7A00` n'y vaut que 2,61:1 et échoue ; `#B85300`
+   vaut 4,91:1. L'état ne repose de toute façon pas sur la seule couleur —
+   le cœur passe de contour à plein. */
+.famma-fav.is-active {
+	color: var(--famma-accent-text);
+}
+
+.famma-fav.is-active .famma-fav__icon {
+	fill: currentColor;
+}
+
+/*
+ * Cible tactile.
+ *
+ * `style.css` impose un plancher de 48px à TOUT `button` (règle 10/44) : il
+ * protège le doigt et doit rester, mais il écrasait la pastille de 30px de la
+ * maquette. Au-dessus de 1000px — là où l'on pointe au lieu de toucher — le
+ * plancher est levé pour ce seul bouton. En dessous, la pastille garde son
+ * dessin et c'est sa zone cliquable qui s'étend, sans rien déplacer.
+ */
+@media (max-width: 999px) {
+	.famma-fav::after {
+		content: "";
+		position: absolute;
+		inset: -0.5625rem;
+	}
+}
+
+@media (min-width: 1000px) {
+	.famma-fav {
+		inline-size: 1.875rem;
+		block-size: 1.875rem;
+		min-inline-size: 0;
+		min-block-size: 0;
+	}
+}
+
+/* ------------------------------------------------------------
+   Mouvement
+   ------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-nav--desktop .famma-nav__list .sub-menu,
+	.famma-socials__link {
+		transition: none;
+	}
+}

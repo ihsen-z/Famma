@@ -1,0 +1,703 @@
+/* ============================================================
+   FAMMA — boutique (archive produit). Lot D3.
+
+   Mêmes règles que layout.css : aucune valeur littérale hors jetons,
+   aucune propriété directionnelle, point de rupture unique à 1000px.
+
+   Sur la carte produit, l'ordre des feuilles compte : `style.css` pose
+   la carte de base (lot précédent), cette feuille applique le dessin de
+   la maquette par-dessus. Elle est donc chargée après.
+   ============================================================ */
+
+.famma-shop {
+	padding-block: var(--sp-4) var(--sp-12);
+}
+
+/* --- Fil d'Ariane --- */
+
+.famma-shop .woocommerce-breadcrumb {
+	margin-block-end: var(--sp-4);
+	color: var(--famma-text-3);
+	font-size: var(--fs-chrome-body);
+}
+
+.famma-shop .woocommerce-breadcrumb a {
+	color: var(--famma-text-3);
+	text-decoration: none;
+}
+
+.famma-shop .woocommerce-breadcrumb a:hover {
+	color: var(--famma-accent-text);
+}
+
+/* --- Titre et barre d'outils --- */
+
+.famma-shop__head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 18px;
+	margin-block-end: var(--sp-6);
+}
+
+.famma-shop__titles {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-1);
+}
+
+.famma-shop__title {
+	margin: 0;
+	color: var(--famma-blue);
+	font-size: clamp(1.75rem, 3.4vw, 2.25rem);
+	font-weight: var(--fw-bold);
+	line-height: var(--lh-tight);
+	letter-spacing: -0.01em;
+}
+
+.famma-shop__titles .term-description,
+.famma-shop__titles p {
+	margin: 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-card-name);
+}
+
+.famma-shop__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--sp-3);
+}
+
+.famma-shop__toolbar .woocommerce-ordering {
+	margin: 0;
+}
+
+.famma-shop__toolbar select {
+	min-inline-size: 9.375rem;
+	min-block-size: var(--sp-12);
+	padding: var(--chrome-field-pad-block) var(--chrome-field-pad-inline);
+	border: 1px solid var(--famma-line-field);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-white);
+	color: var(--famma-blue);
+	/* 16px sur mobile : en dessous, Safari iOS zoome a l'ouverture du menu
+	   deroulant et decale la page. La taille de la maquette (13,5px) est
+	   reprise au-dessus de 1000px, ou le zoom n'existe pas. */
+	font-size: var(--fs-input);
+}
+
+@media (min-width: 1000px) {
+	.famma-shop__toolbar select {
+		min-block-size: 0;
+		font-size: var(--fs-chrome-field);
+	}
+}
+
+/* --- Bascule grille / liste --- */
+
+.famma-viewswitch {
+	display: flex;
+	gap: var(--sp-2);
+}
+
+.famma-viewswitch__button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 2.375rem;
+	block-size: 2.375rem;
+	padding: 0;
+	border: 1px solid var(--famma-line-field);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-white);
+	color: var(--famma-text-2);
+	cursor: pointer;
+}
+
+.famma-viewswitch__button.is-active {
+	border-color: var(--famma-orange);
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+}
+
+/* La bascule n'a de sens qu'avec la place d'afficher une liste large. */
+@media (max-width: 999px) {
+	.famma-viewswitch {
+		display: none;
+	}
+}
+
+/* --- Gabarit à deux colonnes --- */
+
+.famma-shop__layout {
+	display: grid;
+	gap: var(--sp-6);
+	align-items: start;
+}
+
+@media (min-width: 1000px) {
+	.famma-shop__layout {
+		grid-template-columns: 16.25rem minmax(0, 1fr);
+	}
+}
+
+/* Gouttière de 18px : celle de la maquette entre le bandeau de promesses,
+   le compte de résultats, la grille et la pagination. */
+.famma-shop__results {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	min-inline-size: 0;
+}
+
+/* --- Colonne de filtres --- */
+
+.famma-shop__filters-toggle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--sp-2);
+	inline-size: 100%;
+	min-block-size: var(--sp-12);
+	border: 1px solid var(--famma-line-field);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+	color: var(--famma-blue);
+	font-size: var(--fs-body);
+	font-weight: var(--fw-medium);
+	cursor: pointer;
+}
+
+.famma-shop__aside {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-4);
+	min-inline-size: 0;
+}
+
+/* Sous 1000px, la colonne est repliée par défaut : elle pousserait sinon la
+   grille sous la ligne de flottaison, et le visiteur mobile ne verrait aucun
+   produit au chargement. Le bouton la déplie. */
+@media (max-width: 999px) {
+	.famma-shop__aside[hidden] {
+		display: none;
+	}
+}
+
+@media (min-width: 1000px) {
+	.famma-shop__filters-toggle {
+		display: none;
+	}
+
+	/* En desktop la colonne est toujours visible, même si le script a laissé
+	   l'attribut `hidden` en place. Sans cette règle, un passage mobile puis
+	   desktop la ferait disparaître pour de bon. */
+	.famma-shop__aside[hidden] {
+		display: flex;
+	}
+}
+
+/* --- Colonne de filtres : UNE carte, des sections separees par un filet ---
+   La maquette ne pose qu'une carte. Six cartes empilees donneraient six
+   bordures la ou le dessin n'en veut qu'une. */
+
+.famma-filters {
+	/* 20px : la marge exacte de la maquette, identique sur les quatre cotes. */
+	padding: 20px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+}
+
+.famma-filters__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-3);
+}
+
+.famma-filters__title {
+	margin: 0;
+	color: var(--famma-blue);
+	font-size: var(--fs-body);
+	font-weight: var(--fw-semibold);
+}
+
+/* Orange textuel : la maquette pose #FF7A00, qui vaut 2,61:1 sur blanc.
+   La nuance -700 en garde la lecture a distance et passe AA (4,91:1) —
+   c'est l'arbitrage C-1, deja rendu par le proprietaire. */
+.famma-filters__reset {
+	color: var(--famma-accent-text);
+	font-size: var(--fs-chrome-body);
+	text-decoration: none;
+}
+
+.famma-filters__reset:hover,
+.famma-filters__reset:focus-visible {
+	text-decoration: underline;
+}
+
+/* Chaque widget est une section de la carte. */
+.famma-filter {
+	margin-block-start: var(--sp-4);
+	padding-block-start: var(--sp-4);
+	border-block-start: 1px solid var(--famma-line-soft);
+}
+
+.famma-filter:first-of-type {
+	margin-block-start: 18px;
+}
+
+.famma-filter__title {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-3);
+	margin: 0;
+	color: var(--famma-blue);
+	font-size: var(--fs-chrome-nav);
+	font-weight: var(--fw-semibold);
+}
+
+/*
+ * Le chevron n'est pose QUE lorsque le repliage existe vraiment :
+ * `shop-view.js` transforme le titre en bouton et ajoute `is-collapsible`.
+ * Une fleche qui ne replie rien est une promesse d'interface non tenue.
+ */
+.famma-filter__title.is-collapsible {
+	inline-size: 100%;
+	min-block-size: 2.75rem;
+	padding: 0;
+	border: 0;
+	background: none;
+	font-family: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+
+.famma-filter__title.is-collapsible::after {
+	content: "";
+	flex: none;
+	inline-size: 0.875rem;
+	block-size: 0.875rem;
+	background: var(--famma-text-3);
+	transition: transform var(--dur-base) var(--ease-out);
+	/* Chevron dessine en masque : une icone de plus sans requete de plus. */
+	mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>') center / contain no-repeat;
+}
+
+.famma-filter__title.is-collapsible[aria-expanded="false"]::after {
+	transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-filter__title.is-collapsible::after {
+		transition: none;
+	}
+}
+
+/* --- Lignes de filtre : un seul dessin pour les cinq sections --- */
+
+.famma-filter__list {
+	display: grid;
+	gap: 2px;
+	margin: var(--sp-3) 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-filter__link {
+	display: flex;
+	align-items: center;
+	gap: var(--sp-3);
+	padding-block: 7px;
+	color: var(--famma-blue);
+	font-size: var(--fs-chrome-field);
+	text-decoration: none;
+}
+
+.famma-filter__label {
+	flex: 1;
+	text-align: start;
+}
+
+.famma-filter__count {
+	color: var(--famma-text-3);
+	font-size: var(--fs-card-meta);
+}
+
+.famma-filter__link.is-active {
+	color: var(--famma-accent-text);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-filter__link:hover .famma-filter__label,
+.famma-filter__link:focus-visible .famma-filter__label {
+	color: var(--famma-accent-text);
+}
+
+/* Cases a cocher */
+
+.famma-filter__box {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	inline-size: 17px;
+	block-size: 17px;
+	border: 1.5px solid var(--famma-line-field);
+	border-radius: 4px;
+}
+
+.famma-filter__link--check.is-checked .famma-filter__box {
+	border-color: var(--famma-orange);
+	background: var(--famma-orange);
+	/* La coche est bleue sur l'orange : 6,32:1. Blanche, elle tombait a 2,61. */
+	color: var(--famma-on-orange);
+}
+
+.famma-filter__box svg {
+	inline-size: 11px;
+	block-size: 11px;
+}
+
+/* Notes */
+
+.famma-filter__link--rating {
+	padding-block: 6px;
+	font-size: var(--fs-chrome-body);
+}
+
+.famma-filter__stars {
+	flex: none;
+	color: var(--famma-orange);
+	font-size: var(--fs-chrome-body);
+	letter-spacing: 1.5px;
+}
+
+/* --- Curseur de prix --- */
+
+.famma-price {
+	margin: 0;
+}
+
+.famma-price__range {
+	inline-size: 100%;
+	margin-block-start: var(--sp-4);
+	/* Poignee et portion remplie a l'orange de marque : c'est une surface. */
+	accent-color: var(--famma-orange);
+	cursor: pointer;
+}
+
+.famma-price__bounds {
+	display: flex;
+	justify-content: space-between;
+	margin-block-start: 6px;
+	color: var(--famma-text-2);
+	font-size: var(--fs-card-meta);
+}
+
+/* Le bouton n'existe que pour le clavier et les navigateurs sans script :
+   `shop-view.js` envoie le formulaire au relachement du curseur. */
+.famma-price__submit {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+}
+
+.famma-price__submit:focus-visible {
+	position: static;
+	inline-size: auto;
+	block-size: auto;
+	clip-path: none;
+	min-block-size: 0;
+	min-inline-size: 0;
+	margin-block-start: var(--sp-2);
+	padding: var(--sp-1) var(--sp-3);
+	border: 0;
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+	font-size: var(--fs-card-meta);
+	font-weight: var(--fw-semibold);
+}
+
+/* --- Carte d'aide WhatsApp --- */
+
+.famma-help-card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--sp-3);
+	padding: var(--sp-4);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	text-align: center;
+}
+
+.famma-help-card__mark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 2.875rem;
+	block-size: 2.875rem;
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-whatsapp);
+	color: var(--famma-white);
+}
+
+.famma-help-card__title {
+	margin: 0;
+	color: var(--famma-blue);
+	font-size: var(--fs-body);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-help-card__text {
+	margin: 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+	line-height: var(--lh-base);
+}
+
+.famma-help-card__cta {
+	inline-size: 100%;
+	min-block-size: var(--sp-12);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid var(--famma-line-field);
+	border-radius: var(--famma-radius-sm);
+	color: var(--famma-blue);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-medium);
+	text-decoration: none;
+}
+
+.famma-help-card__cta:hover,
+.famma-help-card__cta:focus-visible {
+	border-color: var(--famma-whatsapp);
+	color: var(--famma-success-700);
+}
+
+/* --- Bandeau de promesses --- */
+
+.famma-promises {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(13.75rem, 1fr));
+	gap: var(--sp-4);
+	margin: 0;
+	padding: var(--sp-4) 18px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	list-style: none;
+}
+
+.famma-promises__item {
+	display: flex;
+	align-items: center;
+	gap: var(--sp-3);
+	color: var(--famma-blue);
+	font-size: var(--fs-chrome-field);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-promises__item .famma-icon {
+	inline-size: 1.5rem;
+	block-size: 1.5rem;
+	color: var(--famma-blue);
+}
+
+/* --- Compte de résultats et filtres actifs --- */
+
+.famma-shop__results .woocommerce-result-count {
+	margin: 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-chrome-field);
+}
+
+/* --- Grille produits --- */
+
+.famma-shop__results ul.products {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(12.25rem, 1fr));
+	gap: 18px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* WooCommerce pose ses propres largeurs par classe `columns-N` et un flottant
+   hérité. La grille les annule : sans cela les cartes se chevauchent. */
+.famma-shop__results ul.products li.product {
+	inline-size: auto;
+	margin: 0;
+	float: none;
+	clear: none;
+}
+
+/* Badge de promotion, posé sur l'image comme dans la maquette. */
+/* --- Affichage en liste --- */
+
+@media (min-width: 1000px) {
+	.famma-shop.is-list .famma-shop__results ul.products {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.famma-shop.is-list .famma-shop__results ul.products li.product {
+		display: grid;
+		grid-template-columns: 13.75rem minmax(0, 1fr);
+		align-items: center;
+		gap: var(--sp-4);
+	}
+
+	.famma-shop.is-list .famma-shop__results ul.products li.product a.button:not(.kb-button) {
+		inline-size: auto;
+		min-inline-size: 14rem;
+	}
+}
+
+/* --- Pagination --- */
+
+.famma-shop__results .woocommerce-pagination ul.page-numbers {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--sp-2);
+	margin: var(--sp-4) 0 0;
+	padding: 0;
+	border: 0;
+	list-style: none;
+}
+
+.famma-shop__results .woocommerce-pagination .page-numbers {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-inline-size: var(--sp-12);
+	min-block-size: var(--sp-12);
+	padding-inline: var(--sp-2);
+	border: 1px solid var(--famma-line-field);
+	border-radius: var(--famma-radius-sm);
+	color: var(--famma-blue);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-medium);
+	text-decoration: none;
+}
+
+.famma-shop__results .woocommerce-pagination .page-numbers.current {
+	border-color: var(--famma-orange);
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+}
+
+/* --- État vide --- */
+
+.famma-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--sp-3);
+	padding: var(--sp-12) var(--sp-6);
+	border: 1px dashed var(--famma-line-field);
+	border-radius: var(--famma-radius);
+	text-align: center;
+}
+
+.famma-empty__mark {
+	inline-size: 2.625rem;
+	block-size: 2.625rem;
+	color: var(--famma-text-3);
+}
+
+.famma-empty__title {
+	margin: 0;
+	color: var(--famma-blue);
+	font-size: var(--fs-h4);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-empty__text {
+	max-inline-size: 26rem;
+	margin: 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+	line-height: var(--lh-base);
+}
+
+.famma-empty__text[lang="ar"] {
+	color: var(--famma-blue);
+	font-family: var(--famma-font-ar);
+	font-size: var(--fs-lead);
+	line-height: var(--lh-ar);
+}
+
+.famma-empty__cta {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: var(--sp-12);
+	padding-inline: var(--sp-6);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+	text-decoration: none;
+}
+
+.famma-empty__cta:hover,
+.famma-empty__cta:focus-visible {
+	background: var(--famma-orange-600);
+	color: var(--famma-on-orange);
+}
+
+/* --- Bande WhatsApp de bas de boutique --- */
+
+.famma-band {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-6);
+	margin-block-start: var(--sp-10);
+	padding: var(--sp-6);
+	border-radius: var(--famma-radius);
+	background: var(--famma-surface-icon);
+}
+
+.famma-band__title {
+	margin: 0;
+	color: var(--famma-blue);
+	font-size: var(--fs-h4);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-band__sub {
+	max-inline-size: 26rem;
+	margin: var(--sp-1) 0 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+	line-height: var(--lh-base);
+}
+
+.famma-band__cta {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--sp-2);
+	min-block-size: var(--sp-12);
+	padding-inline: var(--sp-6);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-whatsapp);
+	/* Blanc sur le vert WhatsApp vaut 1,98:1 et echoue AA. Le bleu y vaut
+	   8,33:1 : c'est lui qui porte le libelle. Le glyphe blanc du rond
+	   ci-dessus reste blanc, lui : il est decoratif, le texte voisin dit deja
+	   de quoi il s'agit. */
+	color: var(--famma-blue);
+	font-size: var(--fs-body);
+	font-weight: var(--fw-semibold);
+	text-decoration: none;
+}

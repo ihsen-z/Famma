@@ -15,20 +15,67 @@
 	--famma-blue: #0B1F3A;      /* primaire — bleu tech sombre · 16,5:1 sur blanc */
 	--famma-blue-600: #12315C;
 	--famma-orange: #FF7A00;    /* SURFACE uniquement — fond de CTA, badges */
+	--famma-orange-600: #E86E00; /* survol des surfaces orange (maquette) */
 	--famma-orange-700: #B85300; /* TEXTE/icône orange sur fond clair · 4,91:1 */
 	--famma-white: #FFFFFF;
 
-	/* Accent textuel contextuel. Aucune des deux nuances n'est lisible
-	   partout : #B85300 vaut 4,91:1 sur blanc mais 3,36:1 sur le bleu,
-	   #FF7A00 l'inverse (2,61:1 / 6,31:1). Les conteneurs sombres
-	   redéfinissent ce jeton — voir .famma-on-dark dans style.css. */
-	--famma-accent-text: var(--famma-orange-700);
+	/* Texte posé SUR l'orange.
+	   ⚠ Le propriétaire a demandé la fidélité stricte à la maquette
+	   (16/08/2026), qui renverse l'arbitrage C-1 : le blanc revient.
+	   Contraste mesuré : blanc sur #FF7A00 = 2,61:1, sous le seuil AA de
+	   4,5:1 ; le bleu valait 6,32:1 sur le même aplat. Repasser en
+	   `var(--famma-blue)` sur cette seule ligne rétablit la conformité.
+	   Voir docs/DESIGN-INTEGRATION-PLAN.md, section C-1. */
+	--famma-on-orange: var(--famma-white);
+
+	/* Accent textuel contextuel.
+	   ⚠ Fidélité stricte demandée (16/08/2026) : l'orange vif de la maquette
+	   remplace la nuance -700. Sur fond clair il vaut 2,61:1 et échoue AA ;
+	   sur le marine du pied de page il vaut 6,32:1 et reste conforme.
+	   Revenir à `var(--famma-orange-700)` rétablit la conformité partout. */
+	--famma-accent-text: var(--famma-orange);
 
 	/* --- Neutres --- */
 	--famma-ink: #12161C;
 	--famma-muted: #5B6470;     /* 6,0:1 sur blanc, 5,6:1 sur --famma-bg */
-	--famma-line: #E6E9EE;
+	--famma-line: #E7EAF0;      /* bordure de carte — valeur de la maquette */
 	--famma-bg: #F7F8FA;
+
+	/* --- Nuances de la maquette (§ docs/design-refs) ---
+	   Les SURFACES reprennent les valeurs exactes du design. Les TEXTES
+	   sont assombris d'un cran quand la valeur d'origine échoue AA : le
+	   dessin ne bouge pas, seul le glyphe devient lisible (C-1). */
+	--famma-line-header: #EDEFF3;   /* filet sous l'en-tête */
+	--famma-line-soft: #EEF1F5;     /* séparateurs internes de carte */
+	--famma-line-field: #DFE3EA;    /* bordure de champ et de bouton neutre */
+	--famma-surface-field: #FBFCFD; /* fond de champ de recherche */
+	--famma-surface-media: #F4F6F9; /* fond derrière une image produit */
+	--famma-surface-icon: #F1F4F9;  /* pastille d'icône, bande claire */
+
+	/* Texte secondaire — #56617A de la maquette vaut 6,20:1, conservé. */
+	--famma-text-2: #56617A;
+	/* Baseline arabe du lockup dans l'en-tête — 7,75:1, conservé tel quel. */
+	--famma-tagline: #46536B;
+	/* Texte tertiaire — la maquette pose #8A94A6 (3,06:1). Assombri. */
+	--famma-text-3: #5B6470;        /* 6,0:1 */
+	/* Prix barré — la maquette pose #98A2B3 (2,58:1). Assombri.
+	   #6B7383 valait 4,77:1 sur blanc en théorie, mais l'audit du rendu
+	   mesurait 4,49:1 sur la fiche produit : WooCommerce y pose une légère
+	   transparence sur le prix barré. On prend donc une marge — le seuil ne
+	   doit pas dépendre d'un `opacity` qu'une mise à jour peut changer. */
+	--famma-price-old: #626976;     /* 5,52:1 sur blanc */
+
+	/* --- Sur fond marine — toutes ces valeurs passent AA telles quelles --- */
+	--famma-on-dark: #C4CEDD;       /* 10,40:1 */
+	--famma-on-dark-2: #B9C4D6;     /* 9,38:1 */
+	--famma-on-dark-3: #A9B6CA;     /* 8,05:1 */
+	--famma-on-dark-4: #C9D3E2;     /* 10,93:1 */
+	--famma-on-dark-muted: #93A0B5; /* 6,24:1 */
+
+	/* Voiles blancs posés sur le marine. Exprimés en alpha et non en teinte
+	   fixe : ils restent justes si le fond marine change un jour. */
+	--famma-overlay-soft: rgba(255, 255, 255, 0.1);  /* pastille sociale */
+	--famma-overlay-line: rgba(255, 255, 255, 0.12); /* filet de la barre basse */
 
 	/* --- Retour d'information ---
 	   Variante nue = surface (pastille, bordure, remplissage).
@@ -41,12 +88,28 @@
 	--famma-danger: #D64545;    /* surface — 4,38:1 en texte, sous le seuil */
 	--famma-danger-700: #C13333; /* texte d'erreur · 5,54:1 */
 
+	/* Badge « Nouveau » et coche de filtre : SURFACE, valeur de la maquette.
+	   En texte (« En stock », « Achat vérifié ») elle vaut 3,30:1 — utiliser
+	   --famma-success-700 à la place. */
+	--famma-new: #16A34A;
+	--famma-whatsapp: #25D366;
+
+	/* Pastille « vous économisez » — la maquette pose #C25E00 sur #FFF1E3
+	   (3,87:1). Le fond est conservé, le texte assombri. */
+	--famma-saving-bg: #FFF1E3;
+	--famma-saving-text: #9A4A00; /* 5,65:1 sur --famma-saving-bg */
+
 	/* --- Typographie ---
-	   Le couple FR/AR définitif reste à trancher (D-9, docs/UX-PLAN.md).
-	   Tant qu'aucun fichier woff2 n'est déposé dans assets/fonts/, la
-	   pile système s'applique : elle rend correctement le latin, et
-	   l'arabe dépend encore de l'appareil. */
-	--famma-font: system-ui, "Segoe UI", Tahoma, "Noto Sans Arabic", sans-serif;
+	   D-9 est tranché : Poppins pour le latin, Noto Kufi Arabic pour l'arabe
+	   (couple de la maquette), AUTO-HÉBERGÉS — jamais servis depuis
+	   fonts.googleapis.com : deux requêtes bloquantes sur mobile tunisien, et
+	   l'adresse IP du visiteur partirait chez un tiers.
+
+	   La pile système reste en repli derrière chaque famille : tant que les
+	   woff2 ne sont pas déposés dans assets/fonts/ (voir le README de ce
+	   dossier), le site rend en système sans une seule requête perdue. */
+	--famma-font: "Poppins", system-ui, "Segoe UI", Tahoma, sans-serif;
+	--famma-font-ar: "Noto Kufi Arabic", "Segoe UI", Tahoma, "Noto Sans Arabic", sans-serif;
 
 	/* Échelle — mobile-first, fluide là où le titre doit respirer. */
 	--fs-caption: 0.75rem;
@@ -69,9 +132,37 @@
 	--fs-input: 1rem;
 
 	/* Géométrie du logo — hors échelle : c'est du dessin de marque,
-	   pas de la hiérarchie de texte (§7). */
-	--fs-brand-word: 1.55rem;
-	--fs-brand-tagline: 0.72rem;
+	   pas de la hiérarchie de texte (§7). Valeurs de la maquette :
+	   mot-symbole 25px, baseline arabe 9px. */
+	--fs-brand-word: 1.5625rem;
+	--fs-brand-tagline: 0.5625rem;
+
+	/* --- Échelle du gabarit (barre supérieure, navigation, pied de page) ---
+	   La maquette compose l'habillage sur une demi-échelle (13 · 13,5 · 14,5 ·
+	   15 px) qui ne coïncide pas avec l'échelle éditoriale ci-dessus. Plutôt
+	   que de tordre l'une ou d'approximer l'autre, l'habillage a ses propres
+	   jetons : il est dessiné, pas rédigé, et sa fidélité au design compte
+	   davantage que son alignement sur la hiérarchie de titres. */
+	--fs-chrome-badge: 0.65625rem;  /* 10,5px — compteur du panier */
+	--fs-chrome-caption: 0.75rem;   /* 12px — barre basse du pied de page */
+	--fs-chrome-body: 0.8125rem;    /* 13px — barre supérieure, liens de pied */
+	--fs-chrome-field: 0.84375rem;  /* 13,5px — champ de recherche */
+	--fs-chrome-nav: 0.90625rem;    /* 14,5px — navigation principale */
+	--fs-chrome-title: 0.9375rem;   /* 15px — titres de colonne du pied */
+
+	/* --- Échelle de la carte produit ---
+	   Même raison que ci-dessus : la maquette compose la carte sur 11,5 ·
+	   12,5 · 13,5 · 14 · 19 px. La carte est un objet dessiné, répété des
+	   dizaines de fois dans une grille ; un demi-pixel d'écart s'y voit à la
+	   répétition, là où il passerait inaperçu dans un paragraphe. */
+	--fs-card-badge: 0.71875rem;    /* 11,5px — badge « -20% », « Nouveau » */
+	--fs-card-meta: 0.78125rem;     /* 12,5px — compteurs, sous-textes */
+	--fs-card-name: 0.875rem;       /* 14px — nom du produit */
+	--fs-card-price: 1.1875rem;     /* 19px — prix de la carte */
+
+	/* Rayons propres à la carte, hors échelle générale. */
+	--radius-badge: 5px;
+	--radius-card-button: 7px;
 
 	--lh-tight: 1.15;           /* titres */
 	--lh-base: 1.5;             /* corps latin */
@@ -121,9 +212,33 @@
 	--z-modal: 600;
 	--z-toast: 700;
 
-	/* --- Gabarit --- */
-	--container-max: 1200px;
-	--gutter: var(--sp-4);
+	/* --- Gabarit ---
+	   1240px : la largeur du conteneur de la maquette. Une seule valeur pour
+	   tout le site, gouttière comprise (20px de chaque côté). */
+	--container-max: 1240px;
+	--gutter: 20px;
+
+	/* Hauteurs de l'en-tête. Servent au décalage du scroll d'ancre et à la
+	   réserve du menu mobile — jamais mesurées en JS. */
+	--topbar-h: 40px;
+	--header-h: 70px;
+
+	/* --- Espacements du gabarit ---
+	   Comme pour l'échelle typographique de l'habillage, la maquette compose
+	   la barre supérieure, l'en-tête et le pied de page sur des valeurs qui ne
+	   tombent pas sur l'échelle 4/8/12/16 (11 · 14 · 22 · 9 · 44 · 30). Elles
+	   sont nommées par rôle, et non par taille : c'est ce qui permet de les
+	   relire sans compter les pixels. */
+	--chrome-topbar-pad: 11px;
+	--chrome-promise-gap: 9px;
+	--chrome-header-pad: 14px;
+	--chrome-header-gap: 22px;
+	--chrome-nav-gap: 22px;
+	--chrome-field-pad-block: 9px;
+	--chrome-field-pad-inline: 14px;
+	--chrome-foot-pad-block: 44px 30px;
+	--chrome-foot-link-gap: 11px;
+	--chrome-legal-gap: 22px;
 
 	/* Hauteur réservée à la barre d'achat collante. Sert deux fois : à
 	   dégager le bas de page, et à remonter le bouton WhatsApp. */

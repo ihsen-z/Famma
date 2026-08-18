@@ -128,9 +128,11 @@ summary:focus-visible,
 	text-decoration: none;
 }
 
+/* 42×41 : la taille exacte de la maquette. C'est elle qui fixe la hauteur de
+   l'en-tête, le lockup étant son élément le plus haut. */
 .famma-lockup__mark {
-	inline-size: 44px;
-	block-size: 43px;
+	inline-size: 42px;
+	block-size: 41px;
 	flex: none;
 }
 
@@ -166,16 +168,35 @@ summary:focus-visible,
 	background: var(--famma-blue);
 }
 
+/* La baseline de la maquette est encadrée de deux traits orange de 12×2px.
+   Rendus en pseudo-éléments : c'est du dessin, il n'a rien à faire dans le
+   balisage, et il suit ainsi le lockup partout où il est réutilisé. */
 .famma-lockup__tagline {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	direction: rtl;
 	font-size: var(--fs-brand-tagline);
 	font-weight: var(--fw-medium);
 	/* Jamais d'interlettrage sur de l'arabe : cela brise les ligatures. */
 	letter-spacing: 0;
 }
 
+.famma-lockup__tagline::before,
+.famma-lockup__tagline::after {
+	content: "";
+	flex: none;
+	inline-size: 12px;
+	block-size: 2px;
+	background: var(--famma-orange);
+}
+
+/* Dans le lockup, la baseline est d'une seule couleur — la maquette ne met
+   « فمّا » en orange que dans le héros, où le mot est trois fois plus grand.
+   Le reprendre ici hacherait une ligne de 9px. */
 .famma-lockup__ar {
-	color: var(--famma-accent-text);
-	font-weight: var(--fw-bold);
+	color: inherit;
+	font-weight: inherit;
 }
 
 /* ============================================================

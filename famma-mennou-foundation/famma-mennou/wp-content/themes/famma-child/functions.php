@@ -14,6 +14,25 @@ defined( 'ABSPATH' ) || exit;
 const FAMMA_CHILD_VERSION = '0.1.0';
 
 /**
+ * Briques du gabarit partagé.
+ *
+ * Chargées depuis `inc/` par responsabilité : icônes, en-tête, pied de page,
+ * ressources. Ce fichier reste la table des matières du thème ; le rendu du
+ * gabarit vit à côté (§6 — un fichier, une responsabilité).
+ *
+ * Chaque fichier est testé avant d'être inclus : un thème dont un fichier
+ * manque doit dégrader, pas produire une erreur fatale sur toutes les pages.
+ */
+foreach ( array( 'icons', 'header-parts', 'footer-parts', 'shop', 'shop-widgets', 'product', 'home', 'assets' ) as $famma_child_part ) {
+	$famma_child_file = get_stylesheet_directory() . '/inc/' . $famma_child_part . '.php';
+
+	if ( file_exists( $famma_child_file ) ) {
+		require_once $famma_child_file;
+	}
+}
+unset( $famma_child_part, $famma_child_file );
+
+/**
  * Charge la feuille du parent, les jetons du design system, puis la feuille enfant.
  *
  * La version de chaque feuille utilise filemtime() pour invalider le cache
@@ -120,7 +139,13 @@ function famma_child_legal_bar(): void {
 	);
 	echo '</nav>';
 }
-add_action( 'wp_footer', 'famma_child_legal_bar', 5 );
+
+/*
+ * Plus accrochée à `wp_footer` : depuis que le thème enfant fournit son
+ * propre `footer.php`, la barre légale a sa vraie place dans la barre basse
+ * du pied de page, appelée par `famma_child_footer_bottom()`. La laisser
+ * aussi sur `wp_footer` la rendrait deux fois.
+ */
 
 /**
  * Déclare l'icône du site (§7).
@@ -225,8 +250,12 @@ function famma_child_product_reassurance(): void {
 
 	famma_child_reassurance_list( $items );
 
-	// Rend une invitation WhatsApp, ou rien du tout si aucun numéro n'existe.
-	echo do_shortcode( '[famma_whatsapp text="' . esc_attr__( 'Une question sur ce produit ?', 'famma-child' ) . '"]' );
+	/*
+	 * L'invitation WhatsApp a quitté cette fonction : depuis le lot D4, la
+	 * réassurance est remontée AU-DESSUS du bouton d'achat (priorité 25) et la
+	 * carte WhatsApp reste en dessous (priorité 36, dans inc/product.php). Deux
+	 * emplacements différents ne peuvent plus partager une seule fonction.
+	 */
 }
 add_action( 'woocommerce_single_product_summary', 'famma_child_product_reassurance', 35 );
 
@@ -319,9 +348,15 @@ function famma_child_sale_badge( $html, $post, $product ) {
 		return $html;
 	}
 
+	/*
+	 * « -18% » sans espace : c'est la forme de la maquette, et celle que
+	 * lisent les visiteurs habitués aux étiquettes de promotion. L'espace
+	 * insécable de la typographie française allongerait le badge d'un tiers
+	 * dans un coin d'image déjà étroit.
+	 */
 	return sprintf(
 		'<span class="onsale famma-badge">%s</span>',
-		esc_html( sprintf( '-%d %%', (int) round( ( ( $regular - $sale ) / $regular ) * 100 ) ) )
+		esc_html( sprintf( '-%d%%', (int) round( ( ( $regular - $sale ) / $regular ) * 100 ) ) )
 	);
 }
 add_filter( 'woocommerce_sale_flash', 'famma_child_sale_badge', 10, 3 );
@@ -712,5 +747,18 @@ function famma_child_setup(): void {
 	add_theme_support( 'wc-product-gallery-zoom' );
 	add_theme_support( 'wc-product-gallery-lightbox' );
 	add_theme_support( 'wc-product-gallery-slider' );
+
+	/*
+	 * Colonne « Informations » du pied de page.
+	 *
+	 * Un emplacement à part, et non le menu `footer` existant : celui-ci sert
+	 * la barre légale de bas de page, qui n'a ni le même contenu ni la même
+	 * place. Les confondre obligerait à afficher les CGV deux fois.
+	 */
+	register_nav_menus(
+		array(
+			'famma_footer_info' => __( 'Pied de page — Informations', 'famma-child' ),
+		)
+	);
 }
 add_action( 'after_setup_theme', 'famma_child_setup' );

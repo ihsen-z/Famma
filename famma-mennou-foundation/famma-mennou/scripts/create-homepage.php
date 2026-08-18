@@ -18,43 +18,12 @@
 ( static function (): void {
 
 	$blocks = <<<'HTML'
-<!-- wp:group {"tagName":"section","align":"full","className":"famma-hero","layout":{"type":"constrained"}} -->
-<section class="wp-block-group alignfull famma-hero">
-<!-- wp:paragraph {"className":"famma-hero__kicker"} -->
-<p class="famma-hero__kicker" lang="ar" dir="rtl">فمّا ديما حاجة جديدة</p>
-<!-- /wp:paragraph -->
-<!-- wp:heading {"level":1,"className":"famma-hero__title"} -->
-<h1 class="wp-block-heading famma-hero__title">Il y a toujours quelque chose de nouveau.</h1>
-<!-- /wp:heading -->
-<!-- wp:paragraph {"className":"famma-hero__lead"} -->
-<p class="famma-hero__lead">FAMMA choisit des produits pratiques et utiles, livrés partout en Tunisie et payés à la livraison.</p>
-<!-- /wp:paragraph -->
-</section>
-<!-- /wp:group -->
-
-<!-- wp:group {"tagName":"section","align":"full","className":"famma-chips","layout":{"type":"constrained"}} -->
-<section class="wp-block-group alignfull famma-chips">
-<!-- wp:columns {"className":"famma-chips__row"} -->
-<div class="wp-block-columns famma-chips__row">
-<!-- wp:column -->
-<div class="wp-block-column"><!-- wp:paragraph {"className":"famma-chip"} -->
-<p class="famma-chip"><strong>Livraison en Tunisie</strong><br><span lang="ar" dir="rtl">التوصيل للدار</span></p>
-<!-- /wp:paragraph --></div>
-<!-- /wp:column -->
-<!-- wp:column -->
-<div class="wp-block-column"><!-- wp:paragraph {"className":"famma-chip"} -->
-<p class="famma-chip"><strong>Paiement à la livraison</strong><br><span lang="ar" dir="rtl">الدفع عند التوصيل</span></p>
-<!-- /wp:paragraph --></div>
-<!-- /wp:column -->
-<!-- wp:column -->
-<div class="wp-block-column"><!-- wp:paragraph {"className":"famma-chip"} -->
-<p class="famma-chip"><strong>Livraison offerte</strong><br>0 TND</p>
-<!-- /wp:paragraph --></div>
-<!-- /wp:column -->
-</div>
-<!-- /wp:columns -->
-</section>
-<!-- /wp:group -->
+<!--
+  Le heros et la bande de promesses ne sont plus ici : depuis le lot D5,
+  c'est front-page.php qui les rend, avec le carrousel, les avantages et
+  le CTA de la maquette. Les laisser dans le contenu de la page en
+  produirait deux, dont un sans carrousel.
+-->
 
 <!-- wp:group {"tagName":"section","className":"famma-soon","layout":{"type":"constrained"}} -->
 <section class="wp-block-group famma-soon">

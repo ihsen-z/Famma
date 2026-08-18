@@ -1,0 +1,554 @@
+/* ============================================================
+   FAMMA — fiche produit. Lot D4.
+
+   Mêmes règles que layout.css et shop.css : aucune valeur littérale
+   hors jetons, aucune propriété directionnelle, rupture unique à
+   1000px.
+
+   La galerie, le formulaire d'achat et les onglets restent ceux de
+   WooCommerce. Cette feuille ne fait que les habiller.
+   ============================================================ */
+
+.famma-product {
+	padding-block: var(--sp-4) var(--sp-12);
+}
+
+.famma-product .woocommerce-breadcrumb {
+	margin-block-end: var(--sp-4);
+	color: var(--famma-text-3);
+	font-size: var(--fs-chrome-body);
+}
+
+.famma-product .woocommerce-breadcrumb a {
+	color: var(--famma-text-3);
+	text-decoration: none;
+}
+
+.famma-product .woocommerce-breadcrumb a:hover {
+	color: var(--famma-accent-text);
+}
+
+/* --- Deux colonnes : galerie / résumé --- */
+
+.famma-product div.product {
+	display: grid;
+	gap: 34px;
+	align-items: start;
+}
+
+@media (min-width: 1000px) {
+	.famma-product div.product {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	}
+
+	/* Les blocs pleine largeur (onglets, avis, produits liés) traversent
+	   les deux colonnes au lieu de se tasser sous la galerie. */
+	.famma-product div.product > .woocommerce-tabs,
+	.famma-product div.product > .famma-benefits,
+	.famma-product div.product > .famma-reviews,
+	.famma-product div.product > .related,
+	.famma-product div.product > .upsells {
+		grid-column: 1 / -1;
+	}
+}
+
+/* --- Galerie --- */
+
+.famma-product div.product .woocommerce-product-gallery {
+	inline-size: 100%;
+	margin: 0;
+	float: none;
+}
+
+.famma-product .woocommerce-product-gallery__wrapper {
+	border-radius: 14px;
+	overflow: hidden;
+	background: var(--famma-surface-media);
+}
+
+.famma-product .woocommerce-product-gallery__image img {
+	inline-size: 100%;
+	block-size: auto;
+	aspect-ratio: 1 / 1;
+	object-fit: cover;
+}
+
+/* Vignettes : cinq par rangée comme dans la maquette, carrées, la vignette
+   active soulignée d'orange. */
+.famma-product .flex-control-thumbs {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: var(--sp-2);
+	margin: var(--sp-3) 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-product .flex-control-thumbs li {
+	inline-size: auto;
+	margin: 0;
+	float: none;
+}
+
+.famma-product .flex-control-thumbs img {
+	inline-size: 100%;
+	aspect-ratio: 1 / 1;
+	border: 2px solid transparent;
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-surface-media);
+	object-fit: cover;
+	opacity: 1;
+	cursor: pointer;
+}
+
+.famma-product .flex-control-thumbs img.flex-active {
+	border-color: var(--famma-orange);
+}
+
+/* Badge de promotion posé sur l'image. */
+.famma-product div.product .onsale {
+	position: absolute;
+	inset-block-start: 16px;
+	inset-inline-start: 16px;
+	inset-inline-end: auto;
+	inline-size: auto;
+	z-index: 2;
+	margin: 0;
+	padding: 7px 14px;
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+	font-size: var(--fs-chrome-title);
+	font-weight: var(--fw-semibold);
+	line-height: 1.3;
+}
+
+/* Le bouton de zoom natif de WooCommerce se place sur l'image ; il doit
+   passer devant le badge sans le recouvrir. */
+.famma-product .woocommerce-product-gallery__trigger {
+	inset-inline-end: var(--sp-4);
+	inset-inline-start: auto;
+	z-index: 3;
+}
+
+/* --- Résumé --- */
+
+.famma-product div.product .summary {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-4);
+	inline-size: 100%;
+	margin: 0;
+	float: none;
+}
+
+.famma-product div.product .summary .product_title {
+	margin: 0;
+	color: var(--famma-blue);
+	font-size: clamp(1.625rem, 3.2vw, 2.125rem);
+	font-weight: var(--fw-bold);
+	line-height: 1.22;
+	letter-spacing: -0.01em;
+}
+
+.famma-product div.product .summary .woocommerce-product-rating {
+	display: flex;
+	align-items: center;
+	gap: var(--sp-3);
+	margin: 0;
+}
+
+/* Étoiles : l'orange est ici une surface de pictogramme, pas du texte. */
+.famma-product .star-rating {
+	color: var(--famma-orange);
+}
+
+.famma-product div.product .summary .star-rating {
+	font-size: 1.0625rem;
+	letter-spacing: 2px;
+}
+
+.famma-product .woocommerce-review-link {
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+}
+
+.famma-product div.product .summary .woocommerce-product-details__short-description {
+	max-inline-size: 32.5rem;
+	color: #46536B;
+	font-size: var(--fs-chrome-nav);
+	line-height: 1.65;
+}
+
+.famma-product div.product .summary .woocommerce-product-details__short-description p {
+	margin: 0;
+}
+
+/*
+ * Prix : orange de la maquette.
+ *
+ * ⚠ `#FF7A00` sur blanc vaut 2,61:1 et échoue **même** le seuil « grand
+ * texte » de 3:1 (WCAG 1.4.3), alors que le prix est l'information la plus lue
+ * de la page. La fidélité stricte l'a emporté (demande du 16/08/2026, C-1
+ * renversé) ; repasser sur `var(--famma-blue)` ici rétablit la lisibilité.
+ */
+.famma-product div.product .summary p.price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 14px;
+	margin: 0;
+	color: var(--famma-orange);
+	font-size: clamp(1.875rem, 3.6vw, 2.375rem);
+	font-weight: var(--fw-bold);
+}
+
+.famma-product div.product .summary p.price del {
+	color: var(--famma-price-old);
+	font-size: 1.1875rem;
+	font-weight: var(--fw-regular);
+	opacity: 1;
+}
+
+.famma-product div.product .summary p.price ins {
+	background: none;
+	text-decoration: none;
+}
+
+/* --- Achat --- */
+
+.famma-product div.product form.cart {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--sp-3);
+	margin: 0;
+}
+
+.famma-product div.product form.cart .quantity input.qty {
+	inline-size: 5rem;
+	min-block-size: var(--sp-12);
+	padding: var(--sp-2);
+	border: 1px solid var(--famma-line-field);
+	border-radius: var(--famma-radius-sm);
+	text-align: center;
+	/* 16px : en dessous, Safari iOS zoome au focus et casse la mise en page. */
+	font-size: var(--fs-input);
+}
+
+.famma-product div.product form.cart button.single_add_to_cart_button {
+	flex: 1 1 17.5rem;
+	min-block-size: var(--sp-12);
+	padding: 16px 24px;
+	border: 0;
+	border-radius: 9px;
+	background: var(--famma-orange);
+	/* Bleu sur orange : 6,32:1. Le blanc de la maquette valait 2,61:1. */
+	color: var(--famma-on-orange);
+	font-size: var(--fs-button);
+	font-weight: var(--fw-bold);
+	cursor: pointer;
+}
+
+.famma-product div.product form.cart button.single_add_to_cart_button:hover,
+.famma-product div.product form.cart button.single_add_to_cart_button:focus-visible {
+	background: var(--famma-orange-600);
+	color: var(--famma-on-orange);
+}
+
+.famma-product .famma-product__whatsapp {
+	margin: 0;
+}
+
+/* --- Bandeau de bénéfices --- */
+
+.famma-benefits {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(14.375rem, 1fr));
+	gap: 22px;
+	margin: 34px 0 0;
+	padding: 22px;
+	border: 1px solid var(--famma-line);
+	border-radius: 14px;
+	list-style: none;
+}
+
+.famma-benefits__item {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--sp-3);
+}
+
+.famma-benefits__mark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	inline-size: 3rem;
+	block-size: 3rem;
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-surface-icon);
+	color: var(--famma-blue);
+}
+
+.famma-benefits__text {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-1);
+}
+
+.famma-benefits__title {
+	color: var(--famma-blue);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+	line-height: var(--lh-tight);
+}
+
+.famma-benefits__sub {
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+	line-height: var(--lh-base);
+}
+
+/* --- Onglets --- */
+
+.famma-product .woocommerce-tabs {
+	margin-block-start: var(--sp-8);
+}
+
+.famma-product .woocommerce-tabs ul.tabs {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: var(--sp-1);
+	margin: 0;
+	padding: 0;
+	overflow-x: auto;
+	border-block-end: 1px solid var(--famma-line);
+	list-style: none;
+}
+
+.famma-product .woocommerce-tabs ul.tabs::before,
+.famma-product .woocommerce-tabs ul.tabs::after,
+.famma-product .woocommerce-tabs ul.tabs li::before,
+.famma-product .woocommerce-tabs ul.tabs li::after {
+	content: none;
+}
+
+.famma-product .woocommerce-tabs ul.tabs li {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+}
+
+.famma-product .woocommerce-tabs ul.tabs li a {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: var(--sp-12);
+	padding-inline: var(--sp-4);
+	border-block-end: 2px solid transparent;
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-medium);
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.famma-product .woocommerce-tabs ul.tabs li.active a {
+	border-block-end-color: var(--famma-orange);
+	color: var(--famma-blue);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-product div.product .woocommerce-tabs .woocommerce-Tabs-panel {
+	color: var(--famma-text-2);
+	font-size: var(--fs-chrome-field);
+	line-height: var(--lh-base);
+}
+
+.famma-product .woocommerce-tabs .woocommerce-Tabs-panel h2 {
+	color: var(--famma-blue);
+	font-size: var(--fs-h4);
+	font-weight: var(--fw-semibold);
+}
+
+/* --- Résumé des avis --- */
+
+.famma-reviews {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-4);
+	margin-block-start: var(--sp-8);
+	padding: var(--sp-6);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+}
+
+.famma-reviews__score {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--sp-1);
+}
+
+.famma-reviews__average {
+	display: flex;
+	align-items: baseline;
+	gap: var(--sp-1);
+	margin: 0;
+}
+
+.famma-reviews__value {
+	color: var(--famma-blue);
+	font-size: var(--fs-h1);
+	font-weight: var(--fw-bold);
+	line-height: 1;
+}
+
+.famma-reviews__max {
+	color: var(--famma-text-3);
+	font-size: var(--fs-lead);
+}
+
+.famma-reviews__count {
+	margin: 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+}
+
+.famma-reviews__link {
+	margin: 0;
+}
+
+.famma-reviews__link a {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: var(--sp-12);
+	color: var(--famma-accent-text);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+}
+
+/* --- Produits liés --- */
+
+.famma-product .related > h2,
+.famma-product .upsells > h2 {
+	margin: var(--sp-10) 0 var(--sp-4);
+	color: var(--famma-blue);
+	font-size: var(--fs-h2);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-product .related ul.products,
+.famma-product .upsells ul.products {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(12.25rem, 1fr));
+	gap: var(--sp-4);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* --- La barre d'achat collante existante garde sa place --- */
+
+.famma-product .famma-sticky-cta {
+	/* Rien à redéfinir ici : sa présentation vit dans style.css et sa
+	   profondeur dans les jetons. Ce sélecteur ne sert qu'à documenter
+	   qu'elle coexiste volontairement avec le CTA de la fiche. */
+	z-index: var(--z-sticky-cta);
+}
+
+/* ------------------------------------------------------------
+   Onglets et blocs de bas de fiche — valeurs de la maquette
+
+   Kadence dimensionne les onglets en `em`, ce qui donnait 7,65/15,3px
+   la ou la maquette pose 15/22px. Selecteurs a trois classes pour
+   passer devant, sans `!important`.
+   ------------------------------------------------------------ */
+
+/*
+ * `div.product` dans le selecteur, et ce n'est pas cosmetique.
+ *
+ * Kadence stylise les onglets avec `.woocommerce div.product .woocommerce-tabs
+ * ul.tabs li a`, soit exactement la meme specificite que la version sans
+ * `div.product` — et sa feuille est chargee APRES la notre. A egalite, la
+ * derniere gagne : nos 15/22px etaient ecrases par ses 0.5em/1em, soit
+ * 7,65/15,3px. Un cran de specificite en plus suffit, sans `!important`.
+ */
+.famma-product div.product .woocommerce-tabs ul.tabs li a {
+	padding: 15px 22px;
+}
+
+.famma-product div.product .woocommerce-tabs .woocommerce-Tabs-panel {
+	padding: 26px;
+	border: 1px solid var(--famma-line);
+	border-block-start: 0;
+	border-end-start-radius: 14px;
+	border-end-end-radius: 14px;
+}
+
+.famma-product div.product .woocommerce-tabs ul.tabs {
+	gap: 6px;
+}
+
+/* --- Ligne de disponibilite, a cote de la quantite --- */
+
+.famma-product .famma-stock {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--sp-2);
+	color: var(--famma-success-700);
+	font-size: var(--fs-chrome-field);
+}
+
+.famma-product .famma-stock .famma-icon {
+	inline-size: 1.0625rem;
+	block-size: 1.0625rem;
+}
+
+/* --- Badge « Nouveau » du resume --- */
+
+.famma-product .summary .famma-badge--new {
+	align-self: flex-start;
+	padding: 5px 12px;
+	border-radius: 6px;
+	background: var(--famma-new);
+	color: var(--famma-white);
+	font-size: var(--fs-chrome-caption);
+	font-weight: var(--fw-semibold);
+	line-height: 1.4;
+}
+
+/* --- Bouton favori, a cote du CTA --- */
+
+.famma-product .summary .famma-fav {
+	position: static;
+	inline-size: 3.5rem;
+	block-size: 3.5rem;
+	min-inline-size: 0;
+	min-block-size: 0;
+	flex: none;
+	border: 1px solid var(--famma-line-field);
+	border-radius: 9px;
+	background: var(--famma-white);
+}
+
+.famma-product .summary .famma-fav:hover {
+	border-color: var(--famma-orange);
+}
+
+.famma-product .summary .famma-fav .famma-fav__icon {
+	inline-size: 1.3125rem;
+	block-size: 1.3125rem;
+}
+
+/* --- Produits lies : titre et grille de la maquette --- */
+
+.famma-product .related ul.products,
+.famma-product .upsells ul.products {
+	grid-template-columns: repeat(auto-fill, minmax(12.25rem, 1fr));
+	gap: 18px;
+}

@@ -1,0 +1,474 @@
+/* ============================================================
+   FAMMA — page d'accueil. Lot D5.
+
+   Mêmes règles que les autres feuilles du lot : aucune valeur
+   littérale hors jetons, aucune propriété directionnelle, rupture
+   unique à 1000px.
+
+   Le héros porte la classe `famma-hero2` et non `famma-hero` :
+   cette dernière appartient déjà au bloc éditorial des lots
+   précédents (style.css). Deux composants distincts, deux noms —
+   les confondre ferait hériter au nouveau héros des règles de
+   l'ancien.
+   ============================================================ */
+
+.famma-home {
+	padding-block: var(--sp-6) var(--sp-12);
+}
+
+.famma-home__section {
+	margin-block-start: var(--sp-12);
+}
+
+.famma-home__editorial {
+	margin-block-start: var(--sp-12);
+}
+
+/* --- Titre de section : trait · titre · trait --- */
+
+.famma-sectitle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--sp-4);
+	margin-block-end: var(--sp-6);
+}
+
+.famma-sectitle__rule {
+	inline-size: 2.75rem;
+	block-size: 3px;
+	flex-shrink: 0;
+	border-radius: 2px;
+	background: var(--famma-orange);
+}
+
+.famma-sectitle__text {
+	margin: 0;
+	color: var(--famma-blue);
+	font-size: var(--fs-h2);
+	font-weight: var(--fw-semibold);
+	text-align: center;
+	text-wrap: balance;
+}
+
+/* --- Héros --- */
+
+.famma-hero2 {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--sp-8);
+	padding: var(--sp-10) clamp(var(--sp-6), 5vw, var(--sp-12));
+	border-radius: var(--famma-radius-lg);
+	background: var(--famma-blue);
+	color: var(--famma-white);
+}
+
+.famma-hero2__text {
+	display: flex;
+	flex: 1 1 21.25rem;
+	flex-direction: column;
+	gap: var(--sp-4);
+	min-inline-size: 0;
+}
+
+/*
+ * `color` explicite, et non hérité.
+ *
+ * Ce mot-symbole est devenu un `<h1>` (lot D5) : le thème et `theme.json`
+ * posent alors une couleur de titre marine, qui l'emporte sur le blanc hérité
+ * du héros. Résultat mesuré avant correction : marine sur marine, ratio 1,1 —
+ * le nom de la marque était invisible en haut de la page d'accueil. Détecté
+ * par l'audit de contraste sur le rendu, pas à la relecture.
+ */
+.famma-hero2__word {
+	margin: 0;
+	color: var(--famma-white);
+	font-size: clamp(2.875rem, 7vw, 4.875rem);
+	font-weight: var(--fw-bold);
+	line-height: 1;
+	letter-spacing: 0.01em;
+}
+
+/* Pas de règle attrape-tout `.famma-hero2 :is(h1,h2,p)` ici : à (0,1,1) elle
+   l'emporterait sur `.famma-hero2__lead` (0,1,0) et repeindrait en blanc le
+   gris volontairement plus doux de l'accroche. Chaque élément porte sa
+   couleur. */
+
+.famma-hero2__a {
+	color: var(--famma-orange);
+}
+
+.famma-hero2__slogan {
+	display: flex;
+	align-items: center;
+	gap: var(--sp-3);
+	margin: 0;
+	font-family: var(--famma-font-ar);
+	font-size: clamp(1.1875rem, 2.6vw, 1.6875rem);
+	font-weight: var(--fw-bold);
+	line-height: var(--lh-ar);
+}
+
+.famma-hero2__rule {
+	inline-size: 1.625rem;
+	block-size: 3px;
+	flex-shrink: 0;
+	border-radius: 2px;
+	background: var(--famma-orange);
+}
+
+.famma-hero2__ar {
+	color: var(--famma-orange);
+}
+
+.famma-hero2__lead {
+	max-inline-size: 27rem;
+	margin: 0;
+	/* 10,93:1 sur le marine — le gris clair de la maquette passe AA ici. */
+	color: var(--famma-on-dark-4);
+	font-size: var(--fs-lead);
+	line-height: var(--lh-base);
+	text-wrap: pretty;
+}
+
+.famma-hero2__perks {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--sp-6);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-hero2__perk {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--sp-2);
+	min-inline-size: 10.9375rem;
+}
+
+.famma-hero2__perk .famma-icon {
+	inline-size: 1.3125rem;
+	block-size: 1.3125rem;
+	margin-block-start: 2px;
+	color: var(--famma-orange);
+}
+
+.famma-hero2__perk-title,
+.famma-hero2__perk-sub {
+	display: block;
+}
+
+.famma-hero2__perk-title {
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+	line-height: var(--lh-tight);
+}
+
+.famma-hero2__perk-sub {
+	/* 8,05:1 sur le marine. */
+	color: var(--famma-on-dark-3);
+	font-size: var(--fs-caption);
+	line-height: var(--lh-base);
+}
+
+.famma-hero2__cta {
+	display: inline-flex;
+	align-self: flex-start;
+	align-items: center;
+	gap: var(--sp-4);
+	min-block-size: var(--sp-12);
+	padding-inline: var(--sp-6);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-orange);
+	/* Bleu sur orange : 6,32:1. Le blanc de la maquette valait 2,61:1. */
+	color: var(--famma-on-orange);
+	font-size: var(--fs-button);
+	font-weight: var(--fw-semibold);
+	text-decoration: none;
+}
+
+.famma-hero2__cta:hover,
+.famma-hero2__cta:focus-visible {
+	background: var(--famma-orange-600);
+	color: var(--famma-on-orange);
+}
+
+.famma-hero2__cta-sep {
+	inline-size: 1px;
+	block-size: 1.125rem;
+	background: currentColor;
+	opacity: 0.45;
+}
+
+/* --- Visuel du héros --- */
+
+.famma-hero2__media {
+	position: relative;
+	flex: 1 1 21.25rem;
+	min-inline-size: 18.125rem;
+	block-size: 20.625rem;
+}
+
+.famma-hero2__disc {
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-start: 50%;
+	transform: translate(-50%, -50%);
+	inline-size: 15.625rem;
+	block-size: 15.625rem;
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-orange);
+}
+
+.famma-hero2__base {
+	position: absolute;
+	inset-block-end: var(--sp-6);
+	inset-inline-start: 50%;
+	transform: translateX(-50%);
+	inline-size: 20.625rem;
+	max-inline-size: 100%;
+	block-size: 1.625rem;
+	border: 3px solid var(--famma-orange);
+	border-radius: var(--famma-radius-pill);
+	opacity: 0.65;
+}
+
+.famma-hero2__slides {
+	position: absolute;
+	inset: 0;
+}
+
+.famma-hero2__slide {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: opacity 500ms ease;
+	pointer-events: none;
+}
+
+.famma-hero2__slide.is-active {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.famma-hero2__slide img {
+	inline-size: 86%;
+	block-size: 92%;
+	object-fit: contain;
+}
+
+.famma-hero2__dots {
+	position: absolute;
+	inset-block-end: 0;
+	inset-inline: 0;
+	display: flex;
+	justify-content: center;
+	gap: var(--sp-2);
+}
+
+.famma-hero2__dot {
+	inline-size: 9px;
+	block-size: 9px;
+	padding: 0;
+	border: 0;
+	border-radius: 5px;
+	background: var(--famma-overlay-soft);
+	cursor: pointer;
+	transition: inline-size var(--dur-base) var(--ease-out);
+}
+
+.famma-hero2__dot.is-active {
+	inline-size: 1.625rem;
+	background: var(--famma-orange);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-hero2__slide,
+	.famma-hero2__dot {
+		transition: none;
+	}
+}
+
+/* --- Catégories --- */
+
+.famma-cats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9.25rem, 1fr));
+	gap: var(--sp-4);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-cats__card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--sp-3);
+	block-size: 100%;
+	padding: var(--sp-6) var(--sp-3);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+	color: var(--famma-blue);
+	text-decoration: none;
+	transition: border-color var(--dur-base) var(--ease-out),
+		box-shadow var(--dur-base) var(--ease-out);
+}
+
+.famma-cats__card:hover,
+.famma-cats__card:focus-visible {
+	border-color: var(--famma-orange);
+	box-shadow: var(--elev-1);
+}
+
+.famma-cats__media {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 3.875rem;
+	block-size: 3.875rem;
+}
+
+.famma-cats__media img {
+	inline-size: 100%;
+	block-size: 100%;
+	border-radius: var(--famma-radius-sm);
+	object-fit: contain;
+}
+
+/* Repli quand la catégorie n'a pas de vignette : le disque orange à étoile
+   de la maquette, plutôt qu'un cadre vide. */
+.famma-cats__mark {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 3.875rem;
+	block-size: 3.875rem;
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+}
+
+.famma-cats__mark svg {
+	inline-size: 1.75rem;
+	block-size: 1.75rem;
+}
+
+.famma-cats__name {
+	font-size: var(--fs-small);
+	font-weight: var(--fw-medium);
+	text-align: center;
+	text-wrap: balance;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-cats__card {
+		transition: none;
+	}
+}
+
+/* --- Grille « Nos nouveautés » ---
+   La carte elle-meme est dessinee par assets/css/product-card.css, feuille
+   partagee avec la boutique et les produits lies. Ici, seule la grille. */
+
+.famma-home__grid ul.products {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(12.25rem, 1fr));
+	gap: 18px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* --- « Pourquoi choisir FAMMA ? » --- */
+
+.famma-why {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+	gap: var(--sp-4);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-why__item {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--sp-3);
+	padding: var(--sp-4);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+}
+
+.famma-why__mark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	inline-size: 2.875rem;
+	block-size: 2.875rem;
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-surface-icon);
+	color: var(--famma-blue);
+}
+
+.famma-why__text {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-1);
+}
+
+.famma-why__title {
+	color: var(--famma-blue);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-why__sub {
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+	line-height: var(--lh-base);
+	text-wrap: pretty;
+}
+
+/* --- Avis --- */
+
+.famma-trust {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--sp-2);
+	padding: var(--sp-8) var(--sp-4);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	text-align: center;
+}
+
+.famma-trust__value {
+	margin: 0;
+	color: var(--famma-blue);
+	font-size: var(--fs-h1);
+	font-weight: var(--fw-bold);
+	line-height: 1;
+}
+
+.famma-trust__max {
+	color: var(--famma-text-3);
+	font-size: var(--fs-lead);
+}
+
+.famma-trust .star-rating {
+	color: var(--famma-orange);
+}
+
+.famma-trust__count {
+	margin: 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+}

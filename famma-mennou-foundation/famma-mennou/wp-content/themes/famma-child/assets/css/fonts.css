@@ -1,0 +1,87 @@
+/* ============================================================
+   FAMMA — polices auto-hébergées (D-9 tranché, arbitrage C-3)
+
+   Poppins (latin) + Noto Kufi Arabic (arabe), le couple de la maquette.
+   Servies depuis ce dossier, jamais depuis fonts.googleapis.com : deux
+   requêtes bloquantes de moins sur mobile, et l'adresse IP du visiteur
+   ne part pas chez un tiers.
+
+   Cette feuille n'est chargée que si les fichiers woff2 existent
+   réellement (voir famma_child_fonts_available() dans functions.php).
+   Sans eux, la pile système du jeton --famma-font s'applique seule et
+   aucune requête n'est perdue en 404.
+
+   `font-display: swap` : le texte s'affiche tout de suite dans la police
+   de repli puis bascule. Sur une connexion tunisienne, un titre lisible
+   en 200 ms vaut mieux qu'un titre parfait en 2 s.
+
+   Les plages `unicode-range` évitent de télécharger Poppins pour une
+   page en arabe, et l'inverse.
+   ============================================================ */
+
+/* --- Poppins — latin ------------------------------------- */
+
+@font-face {
+	font-family: "Poppins";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("../fonts/poppins-400.woff2") format("woff2");
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: "Poppins";
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url("../fonts/poppins-500.woff2") format("woff2");
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: "Poppins";
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url("../fonts/poppins-600.woff2") format("woff2");
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: "Poppins";
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url("../fonts/poppins-700.woff2") format("woff2");
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* --- Noto Kufi Arabic — arabe ----------------------------- */
+
+@font-face {
+	font-family: "Noto Kufi Arabic";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("../fonts/noto-kufi-arabic-400.woff2") format("woff2");
+	unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0898-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+
+@font-face {
+	font-family: "Noto Kufi Arabic";
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url("../fonts/noto-kufi-arabic-700.woff2") format("woff2");
+	unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0898-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+
+/* Tout ce qui est écrit en arabe passe par la famille arabe, quelle que
+   soit la règle héritée. `:lang()` couvre aussi les fragments arabes
+   posés dans une page française — le slogan du lockup, par exemple. */
+:lang(ar),
+[lang="ar"] {
+	font-family: var(--famma-font-ar);
+	line-height: var(--lh-ar);
+}
