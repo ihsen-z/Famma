@@ -1,18 +1,42 @@
 # Polices auto-hébergées
 
-Le thème attend six fichiers `woff2` dans ce dossier. Tant qu'ils ne sont
-pas là, rien ne casse : `famma_child_fonts_available()` détecte leur absence,
-`assets/css/fonts.css` n'est pas chargée, aucun `preload` n'est émis, et le
-site rend avec la pile système déclarée en repli dans `--famma-font`.
+Les fichiers sont présents et servis depuis ce dossier. `fonts.css` est donc
+chargée et `famma_child_preload_fonts()` émet les `preload`.
 
-| Fichier attendu | Famille | Graisse |
-|---|---|---|
-| `poppins-400.woff2` | Poppins | 400 |
-| `poppins-500.woff2` | Poppins | 500 |
-| `poppins-600.woff2` | Poppins | 600 |
-| `poppins-700.woff2` | Poppins | 700 |
-| `noto-kufi-arabic-400.woff2` | Noto Kufi Arabic | 400 |
-| `noto-kufi-arabic-700.woff2` | Noto Kufi Arabic | 700 |
+| Fichier | Famille | Graisse | Sous-jeu | Poids |
+|---|---|---|---|---|
+| `poppins-400.woff2` | Poppins | 400 | latin | 7,7 Ko |
+| `poppins-500.woff2` | Poppins | 500 | latin | 7,6 Ko |
+| `poppins-600.woff2` | Poppins | 600 | latin | 7,8 Ko |
+| `poppins-700.woff2` | Poppins | 700 | latin | 7,6 Ko |
+| `noto-kufi-arabic-var.woff2` | Noto Kufi Arabic | 400 → 700 | arabe | 121 Ko |
+
+Total : **152 Ko** pour les deux écritures, dont 31 Ko seulement sur une page
+française — l'arabe n'est téléchargé que si un caractère arabe est rendu, grâce
+aux `unicode-range` de `fonts.css`.
+
+## Un seul fichier pour l'arabe
+
+Google distribue Noto Kufi Arabic en police **variable** (axe `wght`, 100 à
+900). Deux `@font-face` pour 400 et 700 auraient pointé deux noms de fichier
+vers des octets identiques, soit 121 Ko téléchargés deux fois. La déclaration
+unique porte donc `font-weight: 400 700` et le navigateur interpole.
+
+Poppins, à l'inverse, est distribuée en instances **statiques** : un fichier
+par graisse est nécessaire, et chacun ne pèse que 7,7 Ko après sous-réglage
+latin.
+
+## Sous-jeux retenus
+
+- **Poppins → `latin`.** Couvre U+0000–00FF, donc tous les accents français
+  (é è à ç ù û ô î ï), plus €, les guillemets et les espaces typographiques.
+  `latin-ext` (langues d'Europe centrale) et `devanagari` sont écartés : la
+  boutique ne les affiche pas.
+- **Noto Kufi Arabic → `arabic`.** Couvre l'arabe, les formes de présentation
+  et les marques de direction nécessaires au RTL.
+
+Les `unicode-range` de `fonts.css` sont exactement celles de ces sous-jeux :
+elles ne sont pas approximatives, elles viennent de la même source.
 
 ## Pourquoi pas Google Fonts en direct
 
@@ -25,20 +49,29 @@ Deux raisons, tranchées à l'arbitrage C-3 de `docs/DESIGN-INTEGRATION-PLAN.md`
    son adresse IP et l'URL de la page. Servir les fichiers depuis le domaine de
    la boutique supprime la question.
 
-## Comment les obtenir
+## Licence
 
 Les deux familles sont sous **SIL Open Font License 1.1**, qui autorise
-l'auto-hébergement, y compris commercial. Sources officielles :
+l'auto-hébergement y compris commercial, à condition de redistribuer la
+licence. Elle est donc ici :
 
-- Poppins — <https://fonts.google.com/specimen/Poppins> (bouton « Get font », puis extraire les `woff2`)
-- Noto Kufi Arabic — <https://fonts.google.com/noto/specimen/Noto+Kufi+Arabic>
+- `OFL-Poppins.txt` — Copyright 2020 The Poppins Project Authors
+- `OFL-NotoKufiArabic.txt` — Copyright 2022 The Noto Project Authors
 
-Les archives Google livrent du `ttf`. Convertir en `woff2` (par exemple avec
-`woff2_compress` de `google/woff2`, ou `fonttools`), puis renommer selon le
-tableau ci-dessus. Sous-régler les jeux de caractères réduit encore le poids :
-latin + latin-ext pour Poppins, arabe pour Noto Kufi. Les plages
-`unicode-range` déclarées dans `fonts.css` correspondent déjà à ce découpage.
+Ne pas supprimer ces deux fichiers : un site public **redistribue** les
+polices, l'obligation s'applique.
 
-Déposer aussi la licence (`OFL.txt`) à côté des fichiers : c'est une obligation
-de la SIL OFL dès qu'on redistribue les polices, et un site public les
-redistribue.
+## Rafraîchir les fichiers
+
+Les sous-jeux viennent de l'API Google Fonts, qui renvoie un `@font-face` par
+couple (graisse, sous-jeu) avec l'URL du `woff2` correspondant :
+
+```
+https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap
+https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700&display=swap
+```
+
+Interroger avec un `User-Agent` de navigateur récent (sinon l'API renvoie du
+`woff`, pas du `woff2`), puis récupérer les URL des blocs `/* latin */` et
+`/* arabic */` et renommer selon le tableau ci-dessus. Vérifier que chaque
+fichier commence bien par la signature `wOF2`.

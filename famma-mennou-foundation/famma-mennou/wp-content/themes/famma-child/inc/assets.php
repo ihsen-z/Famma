@@ -24,20 +24,20 @@ function famma_child_font_files(): array {
 		'poppins-500.woff2',
 		'poppins-600.woff2',
 		'poppins-700.woff2',
-		'noto-kufi-arabic-400.woff2',
-		'noto-kufi-arabic-700.woff2',
+		// Police variable : un fichier couvre 400 à 700 (voir fonts.css).
+		'noto-kufi-arabic-var.woff2',
 	);
 }
 
 /**
  * Les polices auto-hébergées sont-elles réellement présentes ?
  *
- * Sans cette vérification, un thème fraîchement cloné émettrait six 404 par
+ * Sans cette vérification, un thème fraîchement cloné émettrait cinq 404 par
  * page et un `preload` dans le vide. Le repli système déclaré dans
  * `--famma-font` suffit alors parfaitement.
  *
  * Le résultat est mis en cache pour la durée de la requête : `file_exists()`
- * six fois par chargement de page ne coûte rien, mais autant ne le payer
+ * cinq fois par chargement de page ne coûte rien, mais autant ne le payer
  * qu'une fois.
  *
  * @return bool
@@ -110,7 +110,7 @@ function famma_child_preload_fonts(): void {
 	$files = array( 'poppins-400.woff2', 'poppins-600.woff2' );
 
 	if ( is_rtl() ) {
-		$files[] = 'noto-kufi-arabic-400.woff2';
+		$files[] = 'noto-kufi-arabic-var.woff2';
 	}
 
 	foreach ( $files as $file ) {
