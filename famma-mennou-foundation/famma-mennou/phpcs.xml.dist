@@ -123,6 +123,7 @@
 				<element value="famma_child_footer_help"/>
 				<element value="famma_child_footer_menu_col"/>
 				<element value="famma_child_footer_socials"/>
+				<element value="famma_child_gallery_carousel_options"/>
 				<element value="famma_child_head_icons"/>
 				<element value="famma_child_header_actions"/>
 				<element value="famma_child_home_categories"/>
@@ -156,6 +157,9 @@
 				<element value="famma_child_price_savings"/>
 				<element value="famma_child_primary_nav"/>
 				<element value="famma_child_product_benefits"/>
+				<element value="famma_child_product_faq_pairs"/>
+				<element value="famma_child_product_faq_panel"/>
+				<element value="famma_child_product_faq_tab"/>
 				<element value="famma_child_product_favourite"/>
 				<element value="famma_child_product_new_badge"/>
 				<element value="famma_child_product_reassurance"/>
@@ -164,7 +168,11 @@
 				<element value="famma_child_product_scripts"/>
 				<element value="famma_child_product_shipping_panel"/>
 				<element value="famma_child_product_shipping_tab"/>
+				<element value="famma_child_product_spec_rows"/>
+				<element value="famma_child_product_specs_panel"/>
+				<element value="famma_child_product_specs_tab"/>
 				<element value="famma_child_product_stock_line"/>
+				<element value="famma_child_product_tabs_order"/>
 				<element value="famma_child_product_whatsapp_card"/>
 				<element value="famma_child_reassurance_list"/>
 				<element value="famma_child_register_filter_widgets"/>
@@ -185,6 +193,7 @@
 				<element value="famma_child_shop_toolbar"/>
 				<element value="famma_child_shop_whatsapp_band"/>
 				<element value="famma_child_sticky_cta"/>
+				<element value="famma_child_strip_todo_notes"/>
 				<element value="famma_child_structured_data"/>
 				<element value="famma_child_svg_allowed_html"/>
 				<element value="famma_child_the_icon"/>

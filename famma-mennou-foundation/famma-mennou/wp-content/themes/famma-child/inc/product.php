@@ -348,3 +348,293 @@ function famma_child_product_review_summary(): void {
 	<?php
 }
 add_action( 'woocommerce_after_single_product_summary', 'famma_child_product_review_summary', 12 );
+
+/**
+ * Attributs affichables du produit, mis à plat pour le tableau de specs.
+ *
+ * Source unique : les attributs produit de WooCommerce. Rien n'est écrit en
+ * dur — §60 interdit la donnée d'exemple, et un tableau de caractéristiques
+ * inventé est exactement le genre de contenu qui se retourne contre la
+ * boutique à la livraison.
+ *
+ * Les attributs masqués sont ignorés : « masqué » est une décision du
+ * propriétaire dans l'administration, pas un accident à rattraper ici.
+ *
+ * @param \WC_Product $product Produit courant.
+ * @return array<int, array<string, string>> Lignes `label` / `value`.
+ */
+function famma_child_product_spec_rows( WC_Product $product ): array {
+	$rows = array();
+
+	foreach ( $product->get_attributes() as $attribute ) {
+		if ( ! $attribute instanceof WC_Product_Attribute || ! $attribute->get_visible() ) {
+			continue;
+		}
+
+		$label = wc_attribute_label( $attribute->get_name(), $product );
+
+		if ( $attribute->is_taxonomy() ) {
+			$terms  = wc_get_product_terms(
+				$product->get_id(),
+				$attribute->get_name(),
+				array( 'fields' => 'names' )
+			);
+			$values = is_array( $terms ) ? $terms : array();
+		} else {
+			$values = $attribute->get_options();
+		}
+
+		$values = array_filter(
+			array_map( 'trim', array_map( 'strval', (array) $values ) ),
+			'strlen'
+		);
+
+		if ( '' === trim( (string) $label ) || array() === $values ) {
+			continue;
+		}
+
+		$rows[] = array(
+			'label' => (string) $label,
+			'value' => implode( ', ', $values ),
+		);
+	}
+
+	return $rows;
+}
+
+/**
+ * Ajoute l'onglet « Spécifications ».
+ *
+ * Remplace l'onglet « Informations complémentaires » de WooCommerce plutôt
+ * que de s'ajouter à côté : les deux liraient les mêmes attributs, et le
+ * client verrait deux fois le même tableau sous deux noms différents.
+ *
+ * L'onglet n'existe pas si le produit n'a aucun attribut visible. Un onglet
+ * « Spécifications » vide est pire qu'absent : il promet une information
+ * précise et livre du blanc.
+ *
+ * @param array<string, array<string, mixed>> $tabs Onglets existants.
+ * @return array<string, array<string, mixed>>
+ */
+function famma_child_product_specs_tab( array $tabs ): array {
+	$product = wc_get_product();
+
+	if ( ! $product instanceof WC_Product ) {
+		return $tabs;
+	}
+
+	if ( array() === famma_child_product_spec_rows( $product ) ) {
+		return $tabs;
+	}
+
+	unset( $tabs['additional_information'] );
+
+	$tabs['famma_specs'] = array(
+		'title'    => __( 'Spécifications', 'famma-child' ),
+		'priority' => 15,
+		'callback' => 'famma_child_product_specs_panel',
+	);
+
+	return $tabs;
+}
+add_filter( 'woocommerce_product_tabs', 'famma_child_product_specs_tab' );
+
+/**
+ * Contenu de l'onglet « Spécifications ».
+ *
+ * Une liste de définitions plutôt qu'un `<table>` : ce sont des paires
+ * clé/valeur, pas un tableau de données à deux dimensions. La grille CSS leur
+ * donne l'apparence tabulaire de la maquette sans mentir sur la structure.
+ *
+ * @return void
+ */
+function famma_child_product_specs_panel(): void {
+	$product = wc_get_product();
+
+	if ( ! $product instanceof WC_Product ) {
+		return;
+	}
+
+	$rows = famma_child_product_spec_rows( $product );
+
+	if ( array() === $rows ) {
+		return;
+	}
+
+	echo '<dl class="famma-specs">';
+
+	foreach ( $rows as $row ) {
+		printf(
+			'<div class="famma-specs__row"><dt class="famma-specs__key">%1$s</dt><dd class="famma-specs__value">%2$s</dd></div>',
+			esc_html( $row['label'] ),
+			esc_html( $row['value'] )
+		);
+	}
+
+	echo '</dl>';
+}
+
+/**
+ * Impose l'ordre des onglets de la maquette.
+ *
+ * Description · Spécifications · Avis · FAQ · Livraison.
+ *
+ * Posé en un seul endroit et en fin de chaîne, après toutes les inscriptions :
+ * autrement chaque onglet porte sa priorité et l'ordre final devient le
+ * résultat d'un calcul réparti dans cinq fonctions. Les onglets absents sont
+ * ignorés — la fonction ne crée rien, elle ne fait que classer.
+ *
+ * @param array<string, array<string, mixed>> $tabs Onglets existants.
+ * @return array<string, array<string, mixed>>
+ */
+function famma_child_product_tabs_order( array $tabs ): array {
+	$order = array(
+		'description'    => 10,
+		'famma_specs'    => 15,
+		'reviews'        => 20,
+		'famma_faq'      => 25,
+		'famma_shipping' => 30,
+	);
+
+	foreach ( $order as $key => $priority ) {
+		if ( isset( $tabs[ $key ] ) ) {
+			$tabs[ $key ]['priority'] = $priority;
+		}
+	}
+
+	return $tabs;
+}
+add_filter( 'woocommerce_product_tabs', 'famma_child_product_tabs_order', 98 );
+
+/**
+ * Paires question/réponse de la FAQ du produit.
+ *
+ * La méta est écrite par `famma-core` (classe `Product_Faq`) : la donnée est
+ * métier, elle vit dans le plugin. Le thème la lit directement plutôt que
+ * d'appeler la classe, pour ne pas dépendre du plugin — si celui-ci est
+ * désactivé, la méta est simplement absente et l'onglet ne s'affiche pas,
+ * sans erreur fatale.
+ *
+ * @param \WC_Product $product Produit courant.
+ * @return array<int, array<string, string>> Paires `q` / `a`.
+ */
+function famma_child_product_faq_pairs( WC_Product $product ): array {
+	$stored = $product->get_meta( '_famma_faq' );
+
+	if ( ! is_array( $stored ) ) {
+		return array();
+	}
+
+	$pairs = array();
+
+	foreach ( $stored as $entry ) {
+		if ( ! is_array( $entry ) || ! isset( $entry['q'], $entry['a'] ) ) {
+			continue;
+		}
+
+		$question = trim( (string) $entry['q'] );
+		$answer   = trim( (string) $entry['a'] );
+
+		if ( '' === $question || '' === $answer ) {
+			continue;
+		}
+
+		$pairs[] = array(
+			'q' => $question,
+			'a' => $answer,
+		);
+	}
+
+	return $pairs;
+}
+
+/**
+ * Ajoute l'onglet « FAQ ».
+ *
+ * Absent tant que le propriétaire n'a saisi aucune paire : §60 interdit la
+ * question d'exemple, et un accordéon vide donne au client l'impression que
+ * la page est cassée.
+ *
+ * @param array<string, array<string, mixed>> $tabs Onglets existants.
+ * @return array<string, array<string, mixed>>
+ */
+function famma_child_product_faq_tab( array $tabs ): array {
+	$product = wc_get_product();
+
+	if ( ! $product instanceof WC_Product ) {
+		return $tabs;
+	}
+
+	if ( array() === famma_child_product_faq_pairs( $product ) ) {
+		return $tabs;
+	}
+
+	$tabs['famma_faq'] = array(
+		'title'    => __( 'FAQ', 'famma-child' ),
+		'priority' => 25,
+		'callback' => 'famma_child_product_faq_panel',
+	);
+
+	return $tabs;
+}
+add_filter( 'woocommerce_product_tabs', 'famma_child_product_faq_tab' );
+
+/**
+ * Contenu de l'onglet « FAQ ».
+ *
+ * `<details>` / `<summary>` du HTML natif : l'accordéon fonctionne sans une
+ * ligne de JavaScript, reste ouvrable au clavier, et le contenu est trouvable
+ * par la recherche du navigateur. Un accordéon maison aurait demandé un
+ * script, des attributs ARIA à tenir à jour, et se serait cassé si le script
+ * ne se chargeait pas — sur mobile tunisien, ce cas arrive.
+ *
+ * @return void
+ */
+function famma_child_product_faq_panel(): void {
+	$product = wc_get_product();
+
+	if ( ! $product instanceof WC_Product ) {
+		return;
+	}
+
+	$pairs = famma_child_product_faq_pairs( $product );
+
+	if ( array() === $pairs ) {
+		return;
+	}
+
+	echo '<div class="famma-faq">';
+
+	foreach ( $pairs as $pair ) {
+		printf(
+			'<details class="famma-faq__item"><summary class="famma-faq__question">%1$s</summary><div class="famma-faq__answer">%2$s</div></details>',
+			esc_html( $pair['q'] ),
+			esc_html( $pair['a'] )
+		);
+	}
+
+	echo '</div>';
+}
+
+/**
+ * Active les flèches de la galerie produit (P-3).
+ *
+ * WooCommerce livre flexslider avec `directionNav => false`. La maquette pose
+ * deux flèches rondes de 32px de part et d'autre de la rangée de vignettes ;
+ * elles ne peuvent pas être ajoutées en CSS seul, le balisage n'existe pas
+ * tant que l'option est fausse.
+ *
+ * `allowOneSlide` reste à `false` côté WooCommerce : un produit à une seule
+ * image n'initialise pas le carrousel, donc n'affiche ni vignette ni flèche.
+ * C'est le comportement voulu — pas de commande de navigation là où il n'y a
+ * rien à naviguer.
+ *
+ * @param array<string, mixed> $options Options flexslider.
+ * @return array<string, mixed>
+ */
+function famma_child_gallery_carousel_options( array $options ): array {
+	$options['directionNav'] = true;
+
+	return $options;
+}
+add_filter( 'woocommerce_single_product_carousel_options', 'famma_child_gallery_carousel_options' );

@@ -243,10 +243,10 @@
 	border: 0;
 	border-radius: 9px;
 	background: var(--famma-orange);
-	/* Bleu sur orange : 6,32:1. Le blanc de la maquette valait 2,61:1. */
+	/* Blanc de la maquette (fidélité stricte) : 2,61:1 sur l'orange. */
 	color: var(--famma-on-orange);
 	font-size: var(--fs-button);
-	font-weight: var(--fw-bold);
+	font-weight: var(--fw-semibold);
 	cursor: pointer;
 }
 
@@ -349,7 +349,6 @@
 	padding-inline: var(--sp-4);
 	border-block-end: 2px solid transparent;
 	color: var(--famma-text-2);
-	font-size: var(--fs-small);
 	font-weight: var(--fw-medium);
 	text-decoration: none;
 	white-space: nowrap;
@@ -403,14 +402,14 @@
 
 .famma-reviews__value {
 	color: var(--famma-blue);
-	font-size: var(--fs-h1);
+	font-size: var(--fs-review-score);
 	font-weight: var(--fw-bold);
 	line-height: 1;
 }
 
 .famma-reviews__max {
 	color: var(--famma-text-3);
-	font-size: var(--fs-lead);
+	font-size: var(--fs-review-max);
 }
 
 .famma-reviews__count {
@@ -480,6 +479,10 @@
  */
 .famma-product div.product .woocommerce-tabs ul.tabs li a {
 	padding: 15px 22px;
+	/* 14,5px de la maquette. La taille vit ICI et nulle part ailleurs : sur
+	   le selecteur sans `div.product` elle etait ecrasee par le 0.9em de
+	   Kadence, qui donnait 15,3px. Un seul declarateur, pas d'`!important`. */
+	font-size: var(--fs-chrome-nav);
 }
 
 .famma-product div.product .woocommerce-tabs .woocommerce-Tabs-panel {
@@ -551,4 +554,242 @@
 .famma-product .upsells ul.products {
 	grid-template-columns: repeat(auto-fill, minmax(12.25rem, 1fr));
 	gap: 18px;
+}
+
+/* ------------------------------------------------------------
+   Carte « Produits similaires » — variante compacte (P-4)
+
+   Même carte que la boutique, resserrée : la maquette de la fiche
+   descend l'image à 168px, le nom à 13,5px, le prix à 17px, et
+   remplace le bouton pleine largeur par un carré de 34px à icône
+   seule. La carte boutique est à 22/22 sur ses propres mesures —
+   d'où une portée stricte à `.related` / `.upsells` plutôt qu'une
+   retouche de product-card.css, qui les aurait décalées toutes.
+   ------------------------------------------------------------ */
+
+.famma-product .related ul.products.famma-cards li.product a img,
+.famma-product .upsells ul.products.famma-cards li.product a img {
+	block-size: 168px;
+}
+
+.famma-product .related ul.products.famma-cards li.product .woocommerce-loop-product__title,
+.famma-product .upsells ul.products.famma-cards li.product .woocommerce-loop-product__title {
+	min-block-size: 2.375rem; /* 38px */
+	font-size: var(--fs-card-name-sm);
+}
+
+.famma-product .related ul.products.famma-cards li.product .price,
+.famma-product .upsells ul.products.famma-cards li.product .price {
+	font-size: var(--fs-card-price-sm);
+}
+
+.famma-product .related ul.products.famma-cards li.product .price del,
+.famma-product .upsells ul.products.famma-cards li.product .price del {
+	font-size: var(--fs-card-meta);
+}
+
+/*
+ * Le bouton devient un carré à icône seule.
+ *
+ * `font-size: 0` efface le libellé, qui est un nœud de texte nu dans le
+ * balisage de WooCommerce : aucune classe à viser, donc rien à masquer
+ * proprement en CSS. Le texte RESTE dans le document — il continue de
+ * fournir le nom accessible du lien, lu par les lecteurs d'écran. Le
+ * chariot garde sa taille parce que `.famma-card__cart` la fixe en pixels.
+ *
+ * 34px est sous la cible tactile de 48px du §9. C'est assumé ici, et
+ * seulement ici : ce bouton est un raccourci sur une carte secondaire, le
+ * chemin d'achat principal reste le CTA pleine largeur de la fiche, à 48px.
+ */
+.famma-product .related ul.products.famma-cards li.product a.button:not(.kb-button),
+.famma-product .upsells ul.products.famma-cards li.product a.button:not(.kb-button) {
+	inline-size: 34px;
+	block-size: 34px;
+	min-block-size: 0;
+	padding: 0;
+	border-radius: var(--radius-card-button);
+	font-size: 0;
+	gap: 0;
+}
+
+.famma-product .related ul.products.famma-cards li.product .product-action-wrap,
+.famma-product .upsells ul.products.famma-cards li.product .product-action-wrap {
+	display: flex;
+	justify-content: flex-end;
+}
+
+/* ------------------------------------------------------------
+   Onglet « Spécifications » (P-2)
+
+   Grille de paires clé/valeur : deux colonnes dès que la largeur
+   le permet, une seule en dessous de 280px utiles. Aucune taille
+   de police n'est posée — la maquette laisse ces lignes hériter du
+   panneau, et fixer une valeur non mesurée serait de l'invention.
+   ------------------------------------------------------------ */
+
+.famma-product .famma-specs {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	column-gap: var(--sp-8);
+	margin: 0;
+}
+
+.famma-product .famma-specs__row {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--sp-4);
+	padding: 13px 0;
+	border-block-end: 1px solid var(--famma-line-soft);
+}
+
+.famma-product .famma-specs__key {
+	color: var(--famma-text-2);
+}
+
+/* Le `dd` porte une marge de départ par défaut dans tous les navigateurs. */
+.famma-product .famma-specs__value {
+	margin: 0;
+	color: var(--famma-blue);
+	font-weight: var(--fw-medium);
+	text-align: end;
+}
+
+/* ------------------------------------------------------------
+   Onglet « FAQ » — accordéon natif (P-2)
+
+   `<details>` / `<summary>` : aucun script, ouvrable au clavier,
+   et le texte replié reste trouvable par la recherche du
+   navigateur. Le marqueur natif est conservé — c'est la seule
+   affordance qui dit au client que la ligne s'ouvre, et la
+   maquette n'en spécifie pas d'autre.
+   ------------------------------------------------------------ */
+
+.famma-product .famma-faq__item {
+	border-block-end: 1px solid var(--famma-line-soft);
+}
+
+.famma-product .famma-faq__question {
+	/* 17px de part et d'autre d'une ligne de 14,5px donnent 54px, donc la
+	   cible tactile du §9 est tenue ; `min-block-size` la rend explicite
+	   plutôt que dérivée d'un calcul de padding. */
+	min-block-size: var(--sp-12);
+	padding-block: 17px;
+	color: var(--famma-blue);
+	font-size: var(--fs-chrome-nav);
+	font-weight: var(--fw-medium);
+	cursor: pointer;
+}
+
+.famma-product .famma-faq__answer {
+	max-inline-size: 760px;
+	padding-block-end: 17px;
+	color: var(--famma-text-prose);
+	font-size: var(--fs-chrome-field);
+	line-height: 1.65;
+	/* Le propriétaire saisit sa réponse en texte simple ; ses retours à la
+	   ligne sont conservés sans passer par du HTML qu'il faudrait filtrer. */
+	white-space: pre-line;
+}
+
+/* ------------------------------------------------------------
+   Flèches de galerie (P-3)
+
+   La maquette les place de part et d'autre de la RANGÉE DE
+   VIGNETTES, pas sur l'image principale. Or flexslider les
+   injecte comme dernier enfant de la galerie. La galerie passe
+   donc en grille et les deux occupent la même cellule que les
+   vignettes : image en ligne 1, vignettes + flèches en ligne 2.
+   ------------------------------------------------------------ */
+
+.famma-product div.product .woocommerce-product-gallery {
+	display: grid;
+	grid-template-columns: 1fr;
+}
+
+/* Avec le carrousel actif c'est `.flex-viewport` qui porte l'image ; sans lui
+   c'est le wrapper. Un seul des deux existe à la fois. */
+.famma-product .woocommerce-product-gallery > .flex-viewport,
+.famma-product .woocommerce-product-gallery > .woocommerce-product-gallery__wrapper {
+	grid-area: 1 / 1;
+}
+
+/* Les vignettes se resserrent pour laisser la place aux flèches. */
+.famma-product .flex-control-thumbs {
+	grid-area: 2 / 1;
+	padding-inline: 40px;
+}
+
+.famma-product .flex-direction-nav {
+	grid-area: 2 / 1;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin: var(--sp-3) 0 0;
+	padding: 0;
+	list-style: none;
+	/* Le vide entre les deux flèches ne doit pas intercepter les clics
+	   destinés aux vignettes, qui sont dans la même cellule de grille. */
+	pointer-events: none;
+}
+
+.famma-product .flex-direction-nav li {
+	margin: 0;
+}
+
+.famma-product .flex-direction-nav a {
+	pointer-events: auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 32px;
+	block-size: 32px;
+	border: 1px solid var(--famma-line-field);
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-white);
+	color: var(--famma-blue);
+	/* flexslider masque le libellé avec un `text-indent` négatif : il
+	   emporterait aussi le chevron dessiné ci-dessous. */
+	text-indent: 0;
+	font-size: 0;
+	opacity: 1;
+}
+
+/* L'icône de police de WooCommerce est retirée au profit d'un chevron dessiné :
+   pas de dépendance à une police qui peut ne pas être chargée. */
+.famma-product .flex-direction-nav a::before {
+	content: none;
+}
+
+.famma-product .flex-direction-nav a::after {
+	content: "";
+	inline-size: 8px;
+	block-size: 8px;
+	border-block-start: 2px solid currentColor;
+	border-inline-end: 2px solid currentColor;
+}
+
+.famma-product .flex-direction-nav .flex-prev::after {
+	transform: rotate(-135deg);
+	margin-inline-start: 3px;
+}
+
+.famma-product .flex-direction-nav .flex-next::after {
+	transform: rotate(45deg);
+	margin-inline-end: 3px;
+}
+
+/* En RTL flexslider inverse le sens de défilement (`rtl: is_rtl()`), les
+   chevrons doivent suivre. */
+[dir="rtl"] .famma-product .flex-direction-nav .flex-prev::after {
+	transform: rotate(45deg);
+	margin-inline-start: 0;
+	margin-inline-end: 3px;
+}
+
+[dir="rtl"] .famma-product .flex-direction-nav .flex-next::after {
+	transform: rotate(-135deg);
+	margin-inline-end: 0;
+	margin-inline-start: 3px;
 }
