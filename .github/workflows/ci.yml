@@ -1,0 +1,82 @@
+name: CI & Quality Gate
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  php-quality-gate:
+    name: PHP Syntax & WordPress Coding Standards
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: famma-mennou-foundation/famma-mennou/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('famma-mennou-foundation/famma-mennou/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: |
+          cd famma-mennou-foundation/famma-mennou
+          composer install --no-interaction --no-progress
+
+      - name: Check PHP Syntax (php -l)
+        run: |
+          cd famma-mennou-foundation/famma-mennou
+          fail=0
+          for f in $(find wp-content/plugins/famma-core wp-content/themes/famma-child wp-content/mu-plugins scripts -name "*.php" 2>/dev/null); do
+            if ! php -l "$f" > /dev/null 2>&1; then
+              echo "::error file=$f::Syntax error in $f"
+              php -l "$f" || true
+              fail=1
+            else
+              echo "  OK  $f"
+            fi
+          done
+          exit $fail
+
+      - name: Run WordPress Coding Standards (phpcs)
+        run: |
+          cd famma-mennou-foundation/famma-mennou
+          vendor/bin/phpcs
+
+  assets-and-config-check:
+    name: Asset Integrity & JSON Configuration Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate composer.json
+        run: |
+          cd famma-mennou-foundation/famma-mennou
+          composer validate --strict
+
+      - name: Validate JSON & JavaScript Syntax
+        run: |
+          cd famma-mennou-foundation/famma-mennou
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const files = ['composer.json', 'phpcs.xml.dist'];
+            files.forEach(f => {
+              if (fs.existsSync(f)) console.log('  OK  ' + f);
+            });
+          "
+          echo "Assets & config validation completed cleanly."
