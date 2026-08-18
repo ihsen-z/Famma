@@ -1,0 +1,590 @@
+<title>Audit e-commerce — FAMMA MENNOU</title>
+<style>
+  :root {
+    --bg: #fafaf8;
+    --surface: #ffffff;
+    --text: #1a1a1a;
+    --text-secondary: #5a5a56;
+    --accent: #b45309;
+    --accent-light: #fef3c7;
+    --border: #e5e5e0;
+    --red: #dc2626;
+    --red-bg: #fef2f2;
+    --orange: #ea580c;
+    --orange-bg: #fff7ed;
+    --green: #16a34a;
+    --green-bg: #f0fdf4;
+    --blue: #2563eb;
+    --blue-bg: #eff6ff;
+    --tag-critical-bg: #dc2626;
+    --tag-critical-text: #fff;
+    --tag-warning-bg: #ea580c;
+    --tag-warning-text: #fff;
+    --tag-ok-bg: #16a34a;
+    --tag-ok-text: #fff;
+    --tag-info-bg: #2563eb;
+    --tag-info-text: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #18181b;
+      --surface: #232326;
+      --text: #e8e8e4;
+      --text-secondary: #a1a19c;
+      --accent: #f59e0b;
+      --accent-light: #422006;
+      --border: #3a3a3c;
+      --red: #f87171;
+      --red-bg: #2a1515;
+      --orange: #fb923c;
+      --orange-bg: #2a1d10;
+      --green: #4ade80;
+      --green-bg: #0f2a18;
+      --blue: #60a5fa;
+      --blue-bg: #152040;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #18181b;
+    --surface: #232326;
+    --text: #e8e8e4;
+    --text-secondary: #a1a19c;
+    --accent: #f59e0b;
+    --accent-light: #422006;
+    --border: #3a3a3c;
+    --red: #f87171;
+    --red-bg: #2a1515;
+    --orange: #fb923c;
+    --orange-bg: #2a1d10;
+    --green: #4ade80;
+    --green-bg: #0f2a18;
+    --blue: #60a5fa;
+    --blue-bg: #152040;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 4rem;
+  }
+
+  .audit-header {
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+  .audit-header .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.25rem;
+  }
+  .audit-header h1 {
+    font-family: Georgia, serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .audit-header .meta {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .score-banner {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 2.5rem;
+  }
+  .score-cell {
+    background: var(--surface);
+    padding: 1rem 1.25rem;
+    text-align: center;
+  }
+  .score-cell .label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+  }
+  .score-cell .value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .score-cell .value.red { color: var(--red); }
+  .score-cell .value.orange { color: var(--orange); }
+  .score-cell .value.green { color: var(--green); }
+
+  .section { margin-bottom: 2.25rem; }
+  .section h2 {
+    font-family: Georgia, serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.4rem;
+    margin-bottom: 1rem;
+  }
+  .section h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 1.25rem 0 0.5rem;
+  }
+  p, li { color: var(--text); }
+  p + p { margin-top: 0.75rem; }
+
+  .finding {
+    border-left: 3px solid var(--border);
+    padding: 0.75rem 1rem;
+    margin: 0.75rem 0;
+    background: var(--surface);
+    border-radius: 0 6px 6px 0;
+  }
+  .finding.critical { border-left-color: var(--red); background: var(--red-bg); }
+  .finding.warning { border-left-color: var(--orange); background: var(--orange-bg); }
+  .finding.ok { border-left-color: var(--green); background: var(--green-bg); }
+  .finding.info { border-left-color: var(--blue); background: var(--blue-bg); }
+  .finding .finding-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .finding .finding-body {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .tag-critical { background: var(--tag-critical-bg); color: var(--tag-critical-text); }
+  .tag-warning { background: var(--tag-warning-bg); color: var(--tag-warning-text); }
+  .tag-ok { background: var(--tag-ok-bg); color: var(--tag-ok-text); }
+  .tag-info { background: var(--tag-info-bg); color: var(--tag-info-text); }
+
+  .table-wrap { overflow-x: auto; margin: 0.75rem 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    background: var(--surface);
+  }
+  td { color: var(--text); }
+
+  ul, ol { padding-left: 1.25rem; margin: 0.5rem 0; }
+  li { margin-bottom: 0.3rem; font-size: 14px; }
+  li::marker { color: var(--text-secondary); }
+
+  .summary-box {
+    background: var(--accent-light);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin: 2rem 0;
+  }
+  .summary-box p { font-size: 14px; }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+  }
+  .toc .toc-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+  }
+  .toc ol { padding-left: 1.25rem; margin: 0; }
+  .toc li { font-size: 13.5px; margin-bottom: 0.2rem; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+</style>
+
+<div class="audit-header">
+  <div class="eyebrow">Audit e-commerce expert</div>
+  <h1>FAMMA MENNOU — Rapport d'audit complet</h1>
+  <div class="meta">14 aout 2026 &middot; Environnement local (localhost:8080) &middot; WordPress 7.0.4 + WooCommerce 11.0.1</div>
+</div>
+
+<div class="score-banner">
+  <div class="score-cell">
+    <div class="label">Infrastructure</div>
+    <div class="value green">8/10</div>
+  </div>
+  <div class="score-cell">
+    <div class="label">Front-end</div>
+    <div class="value green">7/10</div>
+  </div>
+  <div class="score-cell">
+    <div class="label">Tunnel d'achat</div>
+    <div class="value orange">5/10</div>
+  </div>
+  <div class="score-cell">
+    <div class="label">Contenu</div>
+    <div class="value orange">4/10</div>
+  </div>
+  <div class="score-cell">
+    <div class="label">Pret au lancement</div>
+    <div class="value red">3/10</div>
+  </div>
+</div>
+
+<div class="toc">
+  <div class="toc-title">Sommaire</div>
+  <ol>
+    <li><a href="#verdict">Verdict executif</a></li>
+    <li><a href="#infra">Infrastructure et back-office</a></li>
+    <li><a href="#front">Front-end et experience client</a></li>
+    <li><a href="#tunnel">Tunnel d'achat</a></li>
+    <li><a href="#contenu">Contenu et pages legales</a></li>
+    <li><a href="#seo">SEO et tracking</a></li>
+    <li><a href="#securite">Securite</a></li>
+    <li><a href="#bloquants">Recapitulatif des bloquants</a></li>
+    <li><a href="#roadmap">Roadmap recommandee</a></li>
+  </ol>
+</div>
+
+<div class="section" id="verdict">
+  <h2>1. Verdict executif</h2>
+  <div class="summary-box">
+    <p><strong>Le socle technique est solide et bien pense.</strong> L'architecture (Docker, plugin unique FAMMA Core, HPOS, statuts COD personnalises, dashboard metier) est le travail d'un developpeur qui connait WooCommerce. Le code est propre, le debug.log est vide, et les bonnes pratiques de securite sont respectees.</p>
+    <p style="margin-top:0.5rem"><strong>Mais le site n'est pas vendable en l'etat.</strong> Aucun vrai produit, aucune page legale redigee, aucun moyen de paiement en ligne configure, pas de WhatsApp, pas de tracking, pas de SSL. La boutique est une coquille technique parfaitement construite — il manque tout ce qui genere du chiffre d'affaires.</p>
+  </div>
+</div>
+
+<div class="section" id="infra">
+  <h2>2. Infrastructure et back-office</h2>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> Stack Docker bien orchestree</div>
+    <div class="finding-body">4 conteneurs (WordPress 7.0 / PHP 8.3, MariaDB 11.4, WP-CLI, Mailpit) tous UP et healthy. Le compose est versionne, reproductible, avec healthchecks sur la DB. Les mu-plugins (pont env, routage mail local) sont une bonne pratique.</div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> Plugin FAMMA Core v0.2.0</div>
+    <div class="finding-body">Actif, fichier unique consolide, namespace Famma\Core. Dashboard metier avec suivi CA sur les commandes livrees uniquement (bonne logique COD), pertes, marge, acquisition. HPOS active.</div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> Zero erreur PHP</div>
+    <div class="finding-body">WP_DEBUG active, debug.log vide. Aucun warning, notice ou deprecated detecte.</div>
+  </div>
+
+  <div class="finding warning">
+    <div class="finding-title"><span class="tag tag-warning">Attention</span> 34 actions planifiees en retard (Action Scheduler)</div>
+    <div class="finding-body">Le bandeau &laquo;&nbsp;34 past-due actions found&nbsp;&raquo; s'affiche sur toutes les pages admin. Probablement des taches WooCommerce en queue qui n'ont pas pu s'executer (cron WP non declenche regulierement en local). A nettoyer via <code>Outils &gt; Scheduled Actions</code> ou en configurant un vrai cron systeme.</div>
+  </div>
+
+  <div class="finding warning">
+    <div class="finding-title"><span class="tag tag-warning">Attention</span> TranslatePress — erreurs SQL</div>
+    <div class="finding-body">Le bandeau &laquo;&nbsp;TranslatePress a rencontre des erreurs SQL&nbsp;&raquo; s'affiche partout dans l'admin. A investiguer : potentielle migration de tables incomplete ou conflit avec la version de MariaDB.</div>
+  </div>
+
+  <div class="finding info">
+    <div class="finding-title"><span class="tag tag-info">Info</span> 4 mises a jour disponibles</div>
+    <div class="finding-body">Incluant Akismet (5.5 &rarr; 5.7). En dev local c'est tolerable, mais en production il faudra un processus de MAJ regulier.</div>
+  </div>
+
+  <div class="finding info">
+    <div class="finding-title"><span class="tag tag-info">Info</span> WooCommerce General — adresse boutique non renseignee</div>
+    <div class="finding-body">L'adresse, la ville et le pays/region dans Settings &gt; General sont vides. Le pays est bien sur Tunisie dans les Payments, mais le formulaire General doit aussi etre rempli (affecte taxes, shipping, factures).</div>
+  </div>
+
+  <div class="finding info">
+    <div class="finding-title"><span class="tag tag-info">Info</span> SoapClient absente sur le serveur</div>
+    <div class="finding-body">Signalee dans WooCommerce Status. N'affecte pas le COD ni la livraison gratuite, mais pourrait bloquer certaines passerelles de paiement a l'avenir.</div>
+  </div>
+
+  <h3>Plugins actifs</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Plugin</th><th>Version</th><th>Etat</th><th>Commentaire</th></tr></thead>
+      <tbody>
+        <tr><td>FAMMA Core</td><td>0.2.0</td><td><span class="tag tag-ok">Actif</span></td><td>Plugin metier — coeur du projet</td></tr>
+        <tr><td>WooCommerce</td><td>11.0.1</td><td><span class="tag tag-ok">Actif</span></td><td>A jour</td></tr>
+        <tr><td>TranslatePress</td><td>3.3.2</td><td><span class="tag tag-warning">Erreur SQL</span></td><td>Version gratuite — erreurs SQL a resoudre</td></tr>
+        <tr><td>Akismet</td><td>5.5</td><td><span class="tag tag-info">Inactif</span></td><td>MAJ dispo (5.7) — inutile si pas de blog</td></tr>
+        <tr><td>Hello Dolly</td><td>1.7.2</td><td><span class="tag tag-info">Inactif</span></td><td>A supprimer</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section" id="front">
+  <h2>3. Front-end et experience client</h2>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> Page d'accueil bien structuree</div>
+    <div class="finding-body">Hero bilingue (FR + Derja), badges de reassurance (livraison gratuite, COD, 24 gouvernorats), FAQ integree, section WhatsApp. La proposition de valeur est claire en 3 secondes. Bonne hierarchie visuelle.</div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> Theme Kadence + child theme FAMMA</div>
+    <div class="finding-body">Theme parent Kadence (performant, bien maintenu) + child theme avec tokens CSS et style.css separes. Aucun asset en 404 sur la homepage (toutes les requetes reseau en 200).</div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> Navigation claire et coherente</div>
+    <div class="finding-body">Menu principal : Accueil, A propos, FAQ, Contact. Footer legal : Livraison, Retours, CGV, Confidentialite, Cookies. Switcher de langue FR/AR present.</div>
+  </div>
+
+  <div class="finding warning">
+    <div class="finding-title"><span class="tag tag-warning">Attention</span> /boutique/ renvoie un 404</div>
+    <div class="finding-body">L'URL <code>/boutique/</code> donne une erreur 404. La page WooCommerce est sur <code>/shop/</code>. Si un client cherche &laquo;&nbsp;boutique&nbsp;&raquo; (mot naturel en francais), il atterrit sur une erreur. Renommer le slug ou ajouter une redirection 301.</div>
+  </div>
+
+  <div class="finding warning">
+    <div class="finding-title"><span class="tag tag-warning">Attention</span> Page /shop/ en anglais non traduite</div>
+    <div class="finding-body">Le titre affiche &laquo;&nbsp;Shop&nbsp;&raquo;, le tri affiche &laquo;&nbsp;Default sorting / Sort by...&nbsp;&raquo; en anglais, et &laquo;&nbsp;ADD TO CART&nbsp;&raquo; aussi. La page WooCommerce n'a pas ete traduite. Impact direct sur la confiance client.</div>
+  </div>
+
+  <div class="finding warning">
+    <div class="finding-title"><span class="tag tag-warning">Attention</span> Version arabe (/ar/) non traduite</div>
+    <div class="finding-body">La page <code>/ar/</code> affiche exactement le meme contenu qu'en francais — aucune traduction arabe n'est en place. Le switcher de langue existe mais ne sert a rien. Soit on traduit, soit on desactive le switcher.</div>
+  </div>
+
+  <div class="finding info">
+    <div class="finding-title"><span class="tag tag-info">Info</span> Pas de lien Boutique dans le menu principal</div>
+    <div class="finding-body">La navigation ne contient pas de lien vers la boutique. C'est voulu tant que le catalogue est vide, mais a ajouter des le premier vrai produit.</div>
+  </div>
+
+  <div class="finding info">
+    <div class="finding-title"><span class="tag tag-info">Info</span> Pas de bouton WhatsApp visible</div>
+    <div class="finding-body">La section &laquo;&nbsp;Une question ?&nbsp;&raquo; mentionne WhatsApp mais aucun bouton n'apparait — <code>FAMMA_WHATSAPP_NUMBER</code> est vide dans .env.</div>
+  </div>
+</div>
+
+<div class="section" id="tunnel">
+  <h2>4. Tunnel d'achat (checkout)</h2>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> Checkout tunisien bien personnalise</div>
+    <div class="finding-body">Les 24 gouvernorats sont presents dans le dropdown, les champs sont bilingues (FR + Derja), le telephone est requis, l'email est facultatif. Le texte COD est clair. C'est du bon travail.</div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> Livraison gratuite configuree</div>
+    <div class="finding-body">Le checkout affiche bien 0 TND. Coherent avec la promesse du site.</div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> Guest checkout active</div>
+    <div class="finding-body">Le checkout sans compte est actif. Coherent avec la promesse &laquo;&nbsp;Commandez sans creer de compte&nbsp;&raquo;.</div>
+  </div>
+
+  <div class="finding critical">
+    <div class="finding-title"><span class="tag tag-critical">Critique</span> Produit de test visible en boutique</div>
+    <div class="finding-body">Un produit &laquo;&nbsp;teste11&nbsp;&raquo; est publie a 60 TND (prix barre 120 TND), sans image, sans description, categorie &laquo;&nbsp;Uncategorized&nbsp;&raquo;. Contredit la regle n&deg;1 du projet (aucune donnee inventee) et la homepage qui dit &laquo;&nbsp;Le catalogue n'est pas encore ouvert&nbsp;&raquo;. A supprimer immediatement.</div>
+  </div>
+
+  <div class="finding warning">
+    <div class="finding-title"><span class="tag tag-warning">Attention</span> Mode &laquo;&nbsp;Coming soon&nbsp;&raquo; actif sur les pages store</div>
+    <div class="finding-body">Les visiteurs non connectes voient une page de maintenance sur /shop/, /cart/, /checkout/. Bien pour le dev, mais a desactiver au lancement.</div>
+  </div>
+
+  <div class="finding warning">
+    <div class="finding-title"><span class="tag tag-warning">Attention</span> Textes checkout partiellement en anglais</div>
+    <div class="finding-body">&laquo;&nbsp;Billing details&nbsp;&raquo;, &laquo;&nbsp;First name&nbsp;&raquo;, &laquo;&nbsp;Last name&nbsp;&raquo;, &laquo;&nbsp;Ship to a different address?&nbsp;&raquo;, &laquo;&nbsp;Order notes&nbsp;&raquo;, &laquo;&nbsp;Product / Subtotal&nbsp;&raquo;, &laquo;&nbsp;Place order&nbsp;&raquo; — tout le squelette WooCommerce est en anglais. Seuls les champs FAMMA sont bilingues. Pour un client tunisien, c'est un signal d'alarme qui casse la confiance.</div>
+  </div>
+
+  <div class="finding warning">
+    <div class="finding-title"><span class="tag tag-warning">Attention</span> Zone de livraison trop large</div>
+    <div class="finding-body">La zone est &laquo;&nbsp;Rest of the world&nbsp;&raquo; avec livraison gratuite. Quelqu'un au Japon pourrait commander. Creer une zone &laquo;&nbsp;Tunisie&nbsp;&raquo; limitee au pays TN.</div>
+  </div>
+</div>
+
+<div class="section" id="contenu">
+  <h2>5. Contenu et pages legales</h2>
+
+  <div class="finding critical">
+    <div class="finding-title"><span class="tag tag-critical">Critique</span> Aucune page legale redigee</div>
+    <div class="finding-body">Les 5 pages legales (CGV, Confidentialite, Cookies, Retours, Livraison) contiennent toutes la mention &laquo;&nbsp;A completer par le proprietaire&nbsp;&raquo;. Elles sont publiees et accessibles, mais vides de substance. En Tunisie comme ailleurs, vendre sans CGV expose a des litiges. C'est le bloquant n&deg;1 avant tout lancement.</div>
+  </div>
+
+  <div class="finding warning">
+    <div class="finding-title"><span class="tag tag-warning">Attention</span> Pages structurees correctement mais creuses</div>
+    <div class="finding-body">A propos, Contact, FAQ — toutes ont un bon squelette mais finissent par &laquo;&nbsp;A completer par le proprietaire&nbsp;&raquo;. La FAQ repond aux 4 questions essentielles mais manque les delais, les retours, les produits abimes.</div>
+  </div>
+
+  <div class="finding warning">
+    <div class="finding-title"><span class="tag tag-warning">Attention</span> Page &laquo;&nbsp;Refund and Returns Policy&nbsp;&raquo; en doublon</div>
+    <div class="finding-body">Il existe un brouillon WooCommerce en anglais + une page publiee en francais. Le brouillon devrait etre supprime.</div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> Politique de confidentialite honnete et transparente</div>
+    <div class="finding-body">Decrit fidelement les donnees collectees (nom, tel, adresse, cookies UTM, outils de mesure conditionnels). Il manque l'identite du responsable de traitement et les durees de conservation.</div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> Politique de cookies transparente</div>
+    <div class="finding-body">Detaille les 4 categories de cookies avec des explications claires. Mentionne que les scripts de mesure ne sont charges que s'ils sont configures.</div>
+  </div>
+</div>
+
+<div class="section" id="seo">
+  <h2>6. SEO et tracking</h2>
+
+  <div class="finding warning">
+    <div class="finding-title"><span class="tag tag-warning">Attention</span> Aucun tracking configure</div>
+    <div class="finding-body">Variables .env toutes vides : <code>META_PIXEL_ID</code>, <code>GA4_MEASUREMENT_ID</code>, <code>TIKTOK_PIXEL_ID</code>. Aucune mesure d'audience en place. Le jour du lancement, vous piloterez a l'aveugle.</div>
+  </div>
+
+  <div class="finding warning">
+    <div class="finding-title"><span class="tag tag-warning">Attention</span> Pas de Google Site Verification</div>
+    <div class="finding-body">Sans verification, pas de Search Console, pas de visibilite sur l'indexation.</div>
+  </div>
+
+  <div class="finding info">
+    <div class="finding-title"><span class="tag tag-info">Info</span> Pas de plugin SEO</div>
+    <div class="finding-body">Aucun plugin SEO installe. Pas de sitemap XML, pas de meta descriptions, pas d'Open Graph. A installer avant le lancement.</div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> Capture UTM implementee</div>
+    <div class="finding-body">Le cookie <code>famma_utm</code> est documente et le plugin FAMMA Core rattache les parametres de campagne aux commandes. L'infrastructure de tracking d'acquisition est prete.</div>
+  </div>
+</div>
+
+<div class="section" id="securite">
+  <h2>7. Securite</h2>
+
+  <div class="finding critical">
+    <div class="finding-title"><span class="tag tag-critical">Critique</span> Pas de HTTPS</div>
+    <div class="finding-body">Le site tourne en HTTP. En production : les navigateurs marqueront &laquo;&nbsp;Non securise&nbsp;&raquo;, Google penalise le classement, les donnees transitent en clair. Un certificat SSL (Let's Encrypt) est obligatoire avant le premier visiteur.</div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> Secrets hors du code</div>
+    <div class="finding-body">Tous les secrets dans .env, .gitignore les exclut, token Meta cote serveur uniquement.</div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> DISALLOW_FILE_EDIT actif</div>
+    <div class="finding-body">L'edition de fichiers depuis l'admin est desactivee.</div>
+  </div>
+
+  <div class="finding ok">
+    <div class="finding-title"><span class="tag tag-ok">OK</span> Emails achemines via Mailpit (local)</div>
+    <div class="finding-body">Pas de risque d'envoyer des emails de test a de vrais clients.</div>
+  </div>
+</div>
+
+<div class="section" id="bloquants">
+  <h2>8. Recapitulatif des bloquants</h2>
+  <p>Ce qui doit etre resolu <strong>avant tout lancement</strong>, par priorite :</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Bloquant</th><th>Severite</th><th>Effort</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Rediger et faire valider les CGV + pages legales</td><td><span class="tag tag-critical">Critique</span></td><td>Proprietaire + juriste</td></tr>
+        <tr><td>2</td><td>Configurer HTTPS / SSL</td><td><span class="tag tag-critical">Critique</span></td><td>1 h</td></tr>
+        <tr><td>3</td><td>Supprimer le produit test &laquo;&nbsp;teste11&nbsp;&raquo;</td><td><span class="tag tag-critical">Critique</span></td><td>2 min</td></tr>
+        <tr><td>4</td><td>Ajouter les vrais produits avec photos et descriptions</td><td><span class="tag tag-critical">Critique</span></td><td>Proprietaire</td></tr>
+        <tr><td>5</td><td>Traduire les textes WooCommerce en francais</td><td><span class="tag tag-warning">Important</span></td><td>2-3 h</td></tr>
+        <tr><td>6</td><td>Configurer les pixels (Meta, GA4) + Search Console</td><td><span class="tag tag-warning">Important</span></td><td>1 h</td></tr>
+        <tr><td>7</td><td>Renseigner le numero WhatsApp</td><td><span class="tag tag-warning">Important</span></td><td>5 min</td></tr>
+        <tr><td>8</td><td>Resoudre les erreurs SQL TranslatePress</td><td><span class="tag tag-warning">Important</span></td><td>1-2 h</td></tr>
+        <tr><td>9</td><td>Restreindre la zone de livraison a la Tunisie</td><td><span class="tag tag-warning">Important</span></td><td>15 min</td></tr>
+        <tr><td>10</td><td>Nettoyer les 34 actions planifiees en retard</td><td><span class="tag tag-info">Mineur</span></td><td>15 min</td></tr>
+        <tr><td>11</td><td>Supprimer Hello Dolly + brouillon Refund/Returns</td><td><span class="tag tag-info">Mineur</span></td><td>5 min</td></tr>
+        <tr><td>12</td><td>Installer un plugin SEO (sitemap, meta, OG)</td><td><span class="tag tag-info">Mineur</span></td><td>30 min</td></tr>
+        <tr><td>13</td><td>Decider du sort de la version arabe</td><td><span class="tag tag-info">Mineur</span></td><td>Decision proprietaire</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section" id="roadmap">
+  <h2>9. Roadmap recommandee</h2>
+
+  <h3>Phase 1 — Nettoyage immediat (1 jour)</h3>
+  <ul>
+    <li>Supprimer le produit &laquo;&nbsp;teste11&nbsp;&raquo; et le brouillon &laquo;&nbsp;Refund and Returns Policy&nbsp;&raquo;</li>
+    <li>Supprimer Hello Dolly</li>
+    <li>Renseigner l'adresse boutique dans WooCommerce &gt; Settings &gt; General (Tunisie)</li>
+    <li>Restreindre la zone de livraison a la Tunisie</li>
+    <li>Nettoyer les actions planifiees en retard</li>
+    <li>Investiguer et corriger les erreurs SQL TranslatePress</li>
+  </ul>
+
+  <h3>Phase 2 — Contenu proprietaire (1-2 semaines)</h3>
+  <ul>
+    <li>Fournir le numero WhatsApp, les IDs pixels, le Google Site Verification</li>
+    <li>Rediger les CGV, politique de retours, completer les pages legales avec un juriste</li>
+    <li>Creer les 3 premiers vrais produits avec photos, descriptions, et couts reels</li>
+    <li>Decider : version arabe oui/non ? Si oui, traduire. Si non, desactiver le switcher</li>
+    <li>Completer les pages A propos, Contact, FAQ</li>
+  </ul>
+
+  <h3>Phase 3 — Pre-lancement technique (2-3 jours)</h3>
+  <ul>
+    <li>Configurer le domaine reel + HTTPS (Let's Encrypt)</li>
+    <li>Traduire tous les textes WooCommerce en francais</li>
+    <li>Installer un plugin SEO, generer le sitemap, configurer les meta</li>
+    <li>Relier la Search Console</li>
+    <li>Tester le tunnel complet de bout en bout</li>
+    <li>Desactiver le mode &laquo;&nbsp;Coming soon&nbsp;&raquo;</li>
+  </ul>
+
+  <h3>Phase 4 — Lancement</h3>
+  <ul>
+    <li>Passer en production (<code>WP_ENV=production</code>, <code>WP_DEBUG=0</code>)</li>
+    <li>Verifier les pixels (Meta Events Manager, GA4 Realtime)</li>
+    <li>Premiere commande test reelle de bout en bout</li>
+    <li>Lancer les premieres publicites</li>
+  </ul>
+
+  <div class="summary-box" style="margin-top: 2rem">
+    <p><strong>En resume :</strong> l'ossature technique est au-dessus de la moyenne pour un projet WooCommerce COD en Tunisie. Le plugin FAMMA Core, le dashboard metier, les statuts personnalises et la capture UTM sont des vrais atouts. Ce qui manque, c'est tout ce qui vient du proprietaire : produits, textes legaux, identifiants de tracking, et le numero WhatsApp. Le jour ou ces elements sont fournis, le site peut etre en ligne en 3-4 jours de travail technique.</p>
+  </div>
+</div>

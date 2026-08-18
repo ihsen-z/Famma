@@ -10,17 +10,40 @@ choix ; le fichier fait foi. Aucune valeur littérale ne doit apparaître ailleu
 
 | Groupe | Jetons |
 |---|---|
-| Marque | `--famma-blue` (+`-600`), `--famma-orange` (+`-700`), `--famma-accent-text`, `--famma-white` |
+| Marque | `--famma-blue` (+`-600`), `--famma-orange` (+`-600`, `-700`), `--famma-on-orange`, `--famma-accent-text`, `--famma-white` |
 | Neutres | `--famma-ink`, `--famma-muted`, `--famma-line`, `--famma-bg` |
-| Retour | `--famma-success` (+`-700`), `--famma-warning` (+`-700`, `-bg`), `--famma-danger` (+`-700`) |
-| Typo | `--famma-font`, `--fs-caption` → `--fs-h1`, `--fs-price`, `--fs-price-old`, `--fs-badge`, `--fs-button`, `--fs-input`, `--fs-brand-*`, `--lh-*`, `--fw-*` |
+| Surfaces maquette | `--famma-line-header`, `--famma-line-soft`, `--famma-line-field`, `--famma-surface-field`, `--famma-surface-media`, `--famma-surface-icon` |
+| Textes maquette | `--famma-text-2`, `--famma-text-3`, `--famma-price-old` |
+| Sur fond marine | `--famma-on-dark` (+`-2`, `-3`, `-4`, `-muted`), `--famma-overlay-soft`, `--famma-overlay-line` |
+| Retour | `--famma-success` (+`-700`), `--famma-warning` (+`-700`, `-bg`), `--famma-danger` (+`-700`), `--famma-new`, `--famma-whatsapp`, `--famma-saving-bg` / `-text` |
+| Typo | `--famma-font`, `--famma-font-ar`, `--fs-caption` → `--fs-h1`, `--fs-price`, `--fs-price-old`, `--fs-badge`, `--fs-button`, `--fs-input`, `--fs-brand-*`, `--lh-*`, `--fw-*` |
 | Espacement | `--sp-1` … `--sp-12` |
 | Rayons | `--famma-radius-sm`, `--famma-radius`, `--famma-radius-lg`, `--famma-radius-pill` |
 | Élévation | `--elev-1`, `--elev-2`, `--elev-3`, `--elev-up`, alias `--famma-shadow` |
 | Mouvement | `--dur-fast`, `--dur-base`, `--ease-out` |
 | Profondeur | `--z-float`, `--z-sticky-cta`, `--z-header`, `--z-drawer`, `--z-modal`, `--z-toast` |
-| Gabarit | `--container-max`, `--gutter`, `--sticky-cta-h` |
+| Gabarit | `--container-max`, `--gutter`, `--sticky-cta-h`, `--topbar-h`, `--header-h` |
 | Focus | `--focus-ring-color`, `--focus-ring-width`, `--focus-halo` |
+
+### Nuances reprises de la maquette (lot D1)
+
+L'import du design (`docs/design-refs/`, plan dans `DESIGN-INTEGRATION-PLAN.md`) a
+ajouté les valeurs ci-dessus. Principe appliqué sans exception : **la surface garde
+la valeur exacte du design, le texte est assombri quand cette valeur échoue AA.**
+Le dessin ne change pas ; seul le glyphe devient lisible.
+
+| Rôle | Maquette | Retenu | Ratio |
+|---|---|---|---|
+| Texte sur CTA orange | `#FFFFFF` (2,61:1) | `--famma-on-orange` = `#0B1F3A` | 6,32:1 |
+| Texte tertiaire (avis, fil d'Ariane, placeholder) | `#8A94A6` (3,06:1) | `--famma-text-3` = `#5B6470` | 6,0:1 |
+| Prix barré | `#98A2B3` (2,58:1) | `--famma-price-old` = `#6B7383` | 4,77:1 |
+| « En stock », « Achat vérifié » | `#16A34A` (3,30:1) | `--famma-success-700` = `#157A45` | 5,38:1 |
+| Pastille « vous économisez » | `#C25E00` sur `#FFF1E3` (3,87:1) | `--famma-saving-text` = `#9A4A00` | 5,65:1 |
+| Badge « Nouveau » (surface) | `#16A34A` | `--famma-new`, inchangé | n/a — surface |
+| Liens de pied de page | `#C4CEDD` sur marine | `--famma-on-dark`, inchangé | 10,40:1 |
+
+Le conteneur passe de 1200 à **1240px** et la gouttière à **20px** : ce sont les
+valeurs de la maquette, et une seule largeur vaut mieux que deux approchantes.
 
 ### Surface ≠ texte
 
@@ -127,9 +150,22 @@ barre est rangée, pour ne pas provoquer de saut de mise en page.
 
 ## Typographie bilingue
 
-Le couple FR/AR définitif n'est **pas tranché** (décision D-9, voir `UX-PLAN.md`).
-Tant qu'aucun `woff2` n'est déposé, la pile système s'applique et le rendu arabe
-dépend de l'appareil — c'est une dette identifiée, pas un choix.
+**D-9 est tranché** (arbitrage C-3 du 15/08/2026) : **Poppins** pour le latin,
+**Noto Kufi Arabic** pour l'arabe — le couple de la maquette — servis en
+**auto-hébergement**, jamais depuis `fonts.googleapis.com`. Deux raisons : une
+feuille tierce bloquante de moins sur mobile, et l'adresse IP du visiteur qui ne
+part pas chez Google.
+
+Mise en œuvre : `assets/css/fonts.css` (déclarations `@font-face`, `font-display:
+swap`, `unicode-range` séparant latin et arabe) et `assets/fonts/` pour les six
+`woff2` attendus. `famma_child_fonts_available()` vérifie leur présence : tant
+qu'ils ne sont pas déposés, ni la feuille ni les `preload` ne sont émis et la pile
+système déclarée en repli s'applique — aucune requête perdue en 404. La liste des
+fichiers et leur provenance sont dans `assets/fonts/README.md`.
+
+Deux graisses seulement sont préchargées — Poppins 400 et 600 — plus la graisse
+arabe sur une page RTL. Précharger les six ferait descendre en priorité haute des
+fichiers dont la page n'a pas besoin.
 
 Règles valables quel que soit le couple retenu :
 
@@ -146,6 +182,52 @@ Règles valables quel que soit le couple retenu :
 - 🚚 FR "Livraison en Tunisie" / Derja "التوصيل للدار"
 - 💵 FR "Paiement à la livraison" / Derja "الدفع عند التوصيل"
 - 💬 WhatsApp support
+
+## Gabarit partagé — en-tête et pied de page (lot D2)
+
+Depuis l'import du design, `famma-child` fournit ses propres `header.php` et
+`footer.php`. `locate_template()` interroge le thème enfant avant Kadence, et
+Kadence appelle `get_header()` / `get_footer()` dans tous ses gabarits, y compris
+ceux de WooCommerce : **toutes** les pages partagent donc le même en-tête et le
+même pied de page, sans exception à maintenir page par page.
+
+Le constructeur d'en-tête de Kadence n'est pas utilisé : sa configuration vit en
+base de données, donc hors de Git, invisible en revue et non reproductible par
+`git clone` + `setup.sh`.
+
+| Fichier | Rôle |
+|---|---|
+| `header.php` | barre supérieure, en-tête collant, panneau mobile |
+| `footer.php` | pied de page 5 colonnes, barre légale |
+| `inc/icons.php` | jeu d'icônes SVG en ligne (`currentColor`) + liste blanche `wp_kses` |
+| `inc/header-parts.php` | promesses, sélecteur de langue, marque, nav, recherche, panier |
+| `inc/footer-parts.php` | colonnes marque / navigation / informations / aide / COD |
+| `inc/assets.php` | polices, feuilles, script, dépilage du CSS d'en-tête parent, fragment panier |
+| `assets/css/layout.css` | toute la présentation du gabarit |
+| `assets/js/navigation.js` | ouverture / fermeture du panneau mobile, rien d'autre |
+
+Règles de composition tenues dans `layout.css` :
+
+- **Aucune valeur littérale** — tout vient de `tokens.css`, voiles blancs compris
+  (`--famma-overlay-soft`, `--famma-overlay-line`).
+- **Aucune propriété directionnelle** — `inset-inline`, `margin-inline`,
+  `text-align: start`. C'est ce qui fait tenir `/ar/` sans feuille dupliquée.
+- **Point de rupture unique à 1000px, en CSS** — pas de mesure de `window` en JS,
+  comme le recommande le handoff lui-même.
+- **Cibles tactiles à 48px** (`--sp-12`) sur toutes les actions d'en-tête, 44px sur
+  les liens de pied de page : la zone cliquable grandit, l'icône garde sa taille de
+  maquette.
+- Le panneau mobile est fermé par l'attribut `hidden`. Si le script ne se charge
+  pas, il reste fermé et la navigation du pied de page prend le relais — aucune
+  page ne devient inatteignable à cause d'un JavaScript en échec.
+- Le bouton WhatsApp flottant reste celui de `famma-core` (`--z-float`), sous le
+  CTA d'achat (`--z-sticky-cta`) et sous l'en-tête (`--z-header`). La maquette le
+  posait au-dessus de l'en-tête ; l'échelle du projet l'emporte (D-6, E-27).
+
+Rien n'est inventé dans le pied de page : téléphone, email, adresse, réseaux
+sociaux et illustration COD viennent de `.env` (`FAMMA_CONTACT_*`,
+`FAMMA_SOCIAL_*`, `FAMMA_COD_ILLUSTRATION`). Une valeur absente supprime la ligne,
+et une colonne vide disparaît de la grille `auto-fit`.
 
 ## RTL
 Arabic renders RTL; keep layout logical-property based (`margin-inline`,

@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+  body { margin: 0; background: #FFFFFF; }
+  a { color: #0B1F3A; text-decoration: none; }
+  a:hover { color: #FF7A00; }
+  input, button, select { font-family: inherit; }
+  input:focus, select:focus { outline: 2px solid #FF7A00; outline-offset: 1px; }
+  input[type="range"] { accent-color: #FF7A00; }
+</style>
+</helmet>
+
+<div dir="{{ dir }}" style="font-family: Poppins, Helvetica, sans-serif; color: #0B1F3A; background: #FFFFFF; min-height: 100vh;">
+
+  <div style="background: #0B1F3A; color: #FFFFFF; font-size: 13px;">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 11px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 40px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 9px;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h13v13H1z"></path><path d="M14 8h4l3 3v5h-7z"></path><circle cx="6" cy="19" r="2"></circle><circle cx="17" cy="19" r="2"></circle></svg>
+          <span>{{ t.tbDelivery }}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 9px;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><path d="M2 10h20"></path></svg>
+          <span>{{ t.tbCod }}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 9px;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 21l2.2-5.5A8.4 8.4 0 1 1 21 11.5z"></path></svg>
+          <span>{{ t.tbSupport }}</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button onClick="{{ setFr }}" style="background: none; border: none; cursor: pointer; font-size: 13px; padding: 2px 4px; color: {{ frColor }};">FR</button>
+        <span style="opacity: 0.4;">|</span>
+        <button onClick="{{ setAr }}" style="background: none; border: none; cursor: pointer; font-size: 13px; padding: 2px 4px; font-family: 'Noto Kufi Arabic', sans-serif; color: {{ arColor }};">عربي</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="border-bottom: 1px solid #EDEFF3; background: #FFFFFF; position: sticky; top: 0; z-index: 40;">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; gap: 22px;">
+      <a href="./FAMMA Accueil.dc.html" style="display: flex; align-items: center; gap: 11px; flex-shrink: 0;">
+        <svg viewBox="0 0 124 122" width="42" height="41" aria-label="FAMMA">
+          <path d="M34 28 H74 A20 20 0 0 1 94 48 V76 A20 20 0 0 1 74 96 H60 L50 114 L42 96 H34 A20 20 0 0 1 14 76 V48 A20 20 0 0 1 34 28 Z" fill="none" stroke="#0B1F3A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"></path>
+          <path d="M54 28 V17" stroke="#FF7A00" stroke-width="7" stroke-linecap="round"></path>
+          <circle cx="54" cy="10" r="8" fill="#FF7A00"></circle>
+          <rect x="36" y="50" width="10" height="20" rx="5" fill="#FF7A00"></rect>
+          <path d="M74 52 L64 61 L74 70" fill="none" stroke="#0B1F3A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path>
+          <path d="M44 76 Q54 87 64 76" fill="none" stroke="#0B1F3A" stroke-width="7" stroke-linecap="round"></path>
+          <g stroke="#FF7A00" stroke-width="6.5" stroke-linecap="round"><path d="M104 22 L114 12"></path><path d="M110 36 L122 32"></path><path d="M100 11 L104 2"></path></g>
+        </svg>
+        <div style="display: flex; flex-direction: column; gap: 1px;">
+          <div style="font-weight: 700; font-size: 25px; line-height: 1; letter-spacing: 0.01em;">FAMM<span style="color: #FF7A00;">A</span></div>
+          <div style="display: flex; align-items: center; gap: 5px; direction: rtl;">
+            <span style="width: 12px; height: 2px; background: #FF7A00;"></span>
+            <span style="font-family: 'Noto Kufi Arabic', sans-serif; font-size: 9px; color: #46536B;">فمّا ديما حاجة جديدة</span>
+            <span style="width: 12px; height: 2px; background: #FF7A00;"></span>
+          </div>
+        </div>
+      </a>
+
+      <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+        <nav style="display: flex; align-items: center; gap: 22px; font-size: 14.5px; font-weight: 500;">
+          <a href="./FAMMA Accueil.dc.html" style="padding: 6px 0;">{{ t.navHome }}</a>
+          <a href="#" style="color: #FF7A00; padding: 6px 0; border-bottom: 2px solid #FF7A00;">{{ t.navShop }}</a>
+          <a href="#" style="padding: 6px 0; display: inline-flex; align-items: center; gap: 5px;">{{ t.navCats }}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></a>
+          <a href="#" style="padding: 6px 0;">{{ t.navPromos }}</a>
+          <a href="#" style="padding: 6px 0;">{{ t.navNew }}</a>
+          <a href="#" style="padding: 6px 0;">{{ t.navAbout }}</a>
+          <a href="#" style="padding: 6px 0;">{{ t.navContact }}</a>
+        </nav>
+      </sc-if>
+
+      <div style="flex: 1;"></div>
+
+      <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; align-items: center; gap: 9px; border: 1px solid #DFE3EA; border-radius: 8px; padding: 9px 14px; width: 250px; background: #FBFCFD;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A94A6" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <input type="text" value="{{ query }}" onChange="{{ onQuery }}" placeholder="{{ t.search }}" style="border: none; background: none; font-size: 13.5px; width: 100%; color: #0B1F3A;">
+        </div>
+      </sc-if>
+
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <button style="background: none; border: none; cursor: pointer; padding: 4px; display: flex;">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"></path></svg>
+        </button>
+        <button style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; position: relative;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h3l2.6 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21.5 7H6"></path><circle cx="10" cy="21" r="1.4"></circle><circle cx="18" cy="21" r="1.4"></circle></svg>
+          <span style="position: absolute; top: -4px; inset-inline-end: -6px; background: #FF7A00; color: #FFFFFF; font-size: 10.5px; font-weight: 600; min-width: 17px; height: 17px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 4px;">{{ cart }}</span>
+        </button>
+        <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ toggleMenu }}" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex;">
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+          </button>
+        </sc-if>
+      </div>
+    </div>
+
+    <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="border-top: 1px solid #EDEFF3; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 4px; font-size: 15px; font-weight: 500;">
+        <a href="./FAMMA Accueil.dc.html" style="padding: 9px 0;">{{ t.navHome }}</a>
+        <a href="#" style="color: #FF7A00; padding: 9px 0; border-top: 1px solid #F3F5F8;">{{ t.navShop }}</a>
+        <a href="#" style="padding: 9px 0; border-top: 1px solid #F3F5F8;">{{ t.navCats }}</a>
+        <a href="#" style="padding: 9px 0; border-top: 1px solid #F3F5F8;">{{ t.navPromos }}</a>
+        <a href="#" style="padding: 9px 0; border-top: 1px solid #F3F5F8;">{{ t.navNew }}</a>
+        <a href="#" style="padding: 9px 0; border-top: 1px solid #F3F5F8;">{{ t.navAbout }}</a>
+        <a href="#" style="padding: 9px 0; border-top: 1px solid #F3F5F8;">{{ t.navContact }}</a>
+        <div style="display: flex; align-items: center; gap: 9px; border: 1px solid #DFE3EA; border-radius: 8px; padding: 10px 14px; margin-top: 10px; background: #FBFCFD;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A94A6" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <input type="text" value="{{ query }}" onChange="{{ onQuery }}" placeholder="{{ t.search }}" style="border: none; background: none; font-size: 14px; width: 100%; color: #0B1F3A;">
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <div style="max-width: 1240px; margin: 0 auto; padding: 18px 20px 0; display: flex; align-items: center; gap: 9px; font-size: 13px; color: #8A94A6;">
+    <a href="./FAMMA Accueil.dc.html" style="color: #8A94A6;">{{ t.navHome }}</a>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C0C7D3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform: scaleX({{ chevronFlip }});"><path d="M9 6l6 6-6 6"></path></svg>
+    <span style="color: #0B1F3A;">{{ t.navShop }}</span>
+  </div>
+
+  <div style="max-width: 1240px; margin: 0 auto; padding: 16px 20px 0; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 18px; justify-content: space-between;">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <h1 style="margin: 0; font-size: clamp(28px, 3.4vw, 36px); font-weight: 700; letter-spacing: -0.01em;">{{ t.shopTitle }}</h1>
+      <div style="font-size: 14px; color: #56617A;">{{ t.shopSub }}</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 13.5px; color: #56617A;">{{ t.sortBy }}</span>
+      <select value="{{ sort }}" onChange="{{ onSort }}" style="border: 1px solid #DFE3EA; border-radius: 8px; padding: 10px 14px; font-size: 13.5px; color: #0B1F3A; background: #FFFFFF; min-width: 150px; cursor: pointer;">
+        <sc-for list="{{ sortOptions }}" as="o" hint-placeholder-count="4">
+          <option value="{{ o.value }}">{{ o.label }}</option>
+        </sc-for>
+      </select>
+      <div style="display: flex; gap: 8px;">
+        <button onClick="{{ setGrid }}" aria-label="grille" style="width: 38px; height: 38px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 1px solid {{ gridBorder }}; background: {{ gridBg }};">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="{{ gridIcon }}"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="8" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect><rect x="13" y="13" width="8" height="8" rx="1.5"></rect></svg>
+        </button>
+        <button onClick="{{ setList }}" aria-label="liste" style="width: 38px; height: 38px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 1px solid {{ listBorder }}; background: {{ listBg }};">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{ listIcon }}" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width: 1240px; margin: 0 auto; padding: 22px 20px 0; display: grid; grid-template-columns: {{ shellCols }}; gap: 24px; align-items: start;">
+
+    <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ toggleFilters }}" style="width: 100%; border: 1px solid #DFE3EA; background: #FFFFFF; border-radius: 10px; padding: 13px 16px; font-size: 14.5px; font-weight: 500; color: #0B1F3A; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+        <span>{{ t.filters }}</span>
+      </button>
+    </sc-if>
+
+    <sc-if value="{{ showFilters }}" hint-placeholder-val="{{ true }}">
+      <aside style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="border: 1px solid #E7EAF0; border-radius: 12px; padding: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div style="font-size: 16px; font-weight: 600;">{{ t.filters }}</div>
+            <button onClick="{{ resetFilters }}" style="background: none; border: none; cursor: pointer; font-size: 13px; color: #FF7A00; padding: 0;">{{ t.reset }}</button>
+          </div>
+
+          <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid #EEF1F5;">
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14.5px; font-weight: 600;">
+              <span>{{ t.fCats }}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A94A6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"></path></svg>
+            </div>
+            <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 2px;">
+              <sc-for list="{{ catFilters }}" as="c" hint-placeholder-count="7">
+                <button onClick="{{ c.pick }}" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: none; border: none; cursor: pointer; padding: 7px 0; font-size: 13.5px; text-align: start; color: {{ c.color }}; font-weight: {{ c.weight }};">
+                  <span>{{ c.label }}</span>
+                  <span style="color: #98A2B3; font-size: 12.5px;">{{ c.count }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #EEF1F5;">
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14.5px; font-weight: 600;">
+              <span>{{ t.fPrice }}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A94A6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"></path></svg>
+            </div>
+            <input type="range" min="0" max="200" step="10" value="{{ maxPrice }}" onChange="{{ onPrice }}" style="width: 100%; margin-top: 16px; cursor: pointer;">
+            <div style="display: flex; justify-content: space-between; font-size: 12.5px; color: #56617A; margin-top: 6px;">
+              <span>0 DT</span>
+              <span>{{ priceLabel }}</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #EEF1F5;">
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14.5px; font-weight: 600;">
+              <span>{{ t.fStock }}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A94A6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"></path></svg>
+            </div>
+            <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+              <sc-for list="{{ stockFilters }}" as="s" hint-placeholder-count="2">
+                <button onClick="{{ s.toggle }}" style="display: flex; align-items: center; gap: 10px; background: none; border: none; cursor: pointer; padding: 0; font-size: 13.5px; color: #0B1F3A;">
+                  <span style="width: 17px; height: 17px; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1.5px solid {{ s.border }}; background: {{ s.bg }};">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" style="opacity: {{ s.tick }};"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+                  </span>
+                  <span style="flex: 1; text-align: start;">{{ s.label }}</span>
+                  <span style="color: #98A2B3; font-size: 12.5px;">{{ s.count }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #EEF1F5;">
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14.5px; font-weight: 600;">
+              <span>{{ t.fRating }}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A94A6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"></path></svg>
+            </div>
+            <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 2px;">
+              <sc-for list="{{ ratingFilters }}" as="r" hint-placeholder-count="5">
+                <button onClick="{{ r.pick }}" style="display: flex; align-items: center; gap: 10px; background: none; border: none; cursor: pointer; padding: 6px 0; font-size: 13px; color: {{ r.color }};">
+                  <span style="color: #FF7A00; font-size: 13px; letter-spacing: 1.5px;">{{ r.stars }}</span>
+                  <span style="flex: 1; text-align: start;">{{ t.andUp }}</span>
+                  <span style="color: #98A2B3; font-size: 12.5px;">{{ r.count }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #EEF1F5;">
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14.5px; font-weight: 600;">
+              <span>{{ t.fPromo }}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A94A6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"></path></svg>
+            </div>
+            <button onClick="{{ togglePromo }}" style="margin-top: 12px; display: flex; align-items: center; gap: 10px; background: none; border: none; cursor: pointer; padding: 0; font-size: 13.5px; color: #0B1F3A; width: 100%;">
+              <span style="width: 17px; height: 17px; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1.5px solid {{ promoBorder }}; background: {{ promoBg }};">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" style="opacity: {{ promoTick }};"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+              </span>
+              <span style="flex: 1; text-align: start;">{{ t.onSale }}</span>
+              <span style="color: #98A2B3; font-size: 12.5px;">{{ promoCount }}</span>
+            </button>
+          </div>
+
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #EEF1F5;">
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14.5px; font-weight: 600;">
+              <span>{{ t.fBrand }}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A94A6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"></path></svg>
+            </div>
+            <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+              <sc-for list="{{ brandFilters }}" as="b" hint-placeholder-count="2">
+                <button onClick="{{ b.toggle }}" style="display: flex; align-items: center; gap: 10px; background: none; border: none; cursor: pointer; padding: 0; font-size: 13.5px; color: #0B1F3A;">
+                  <span style="width: 17px; height: 17px; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1.5px solid {{ b.border }}; background: {{ b.bg }};">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" style="opacity: {{ b.tick }};"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+                  </span>
+                  <span style="flex: 1; text-align: start;">{{ b.label }}</span>
+                  <span style="color: #98A2B3; font-size: 12.5px;">{{ b.count }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="border: 1px solid #E7EAF0; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;">
+          <div style="width: 46px; height: 46px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center;">
+            <svg width="25" height="25" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2zm0 2a8 8 0 1 1-4.1 14.9l-.3-.2-2.5.6.7-2.4-.2-.3A8 8 0 0 1 12 4zm-3.3 4c-.2 0-.5 0-.7.4-.3.4-.9 1-.9 2.3s1 2.6 1.1 2.8c.1.2 1.8 3 4.5 4 1.9.7 2.3.6 2.7.5.4 0 1.3-.5 1.5-1.1.2-.6.2-1 .1-1.1l-.5-.3-1.7-.8c-.2-.1-.4-.1-.6.1l-.8 1c-.2.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5l-.7-1.7c-.2-.4-.4-.4-.6-.4z"></path></svg>
+          </div>
+          <div style="font-size: 14.5px; font-weight: 600;">{{ t.helpTitle }}</div>
+          <div style="font-size: 13px; color: #56617A; line-height: 1.5;">{{ t.helpSub }}</div>
+          <a href="#" style="width: 100%; border: 1px solid #DFE3EA; border-radius: 8px; padding: 11px; font-size: 13.5px; font-weight: 500; color: #0B1F3A;" style-hover="border-color: #25D366; color: #25D366;">{{ t.helpCta }}</a>
+        </div>
+      </aside>
+    </sc-if>
+
+    <div style="display: flex; flex-direction: column; gap: 18px; min-width: 0;">
+      <div style="border: 1px solid #E7EAF0; border-radius: 12px; padding: 16px 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+        <sc-for list="{{ promises }}" as="p" hint-placeholder-count="3">
+          <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><path d="{{ p.icon }}"></path></svg>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-size: 13.5px; font-weight: 600; line-height: 1.35;">{{ p.title }}</span>
+              <span style="font-size: 12.5px; color: #56617A; line-height: 1.4;">{{ p.sub }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="font-size: 13.5px; color: #56617A;">{{ countLabel }}</div>
+
+      <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+        <div style="display: grid; grid-template-columns: {{ resultCols }}; gap: 18px;">
+          <sc-for list="{{ shown }}" as="p" hint-placeholder-count="8">
+            <div style="border: 1px solid #E7EAF0; border-radius: 12px; overflow: hidden; background: #FFFFFF; display: flex; flex-direction: {{ p.dir }}; transition: box-shadow 200ms ease;" style-hover="box-shadow: 0 10px 24px rgba(11,31,58,0.1);">
+              <div style="position: relative; background: #F4F6F9; flex-shrink: 0; height: {{ p.imgH }}; width: {{ p.imgW }};">
+                <image-slot id="{{ p.slot }}" shape="rect" fit="cover" placeholder="{{ p.name }}"></image-slot>
+                <sc-if value="{{ p.badge }}" hint-placeholder-val="{{ true }}">
+                  <span style="position: absolute; top: 10px; inset-inline-start: 10px; font-size: 11.5px; font-weight: 600; color: #FFFFFF; padding: 4px 9px; border-radius: 5px; pointer-events: none; background: {{ p.badgeBg }};">{{ p.badge }}</span>
+                </sc-if>
+                <button onClick="{{ p.fav }}" aria-label="favori" style="position: absolute; top: 8px; inset-inline-end: 8px; width: 30px; height: 30px; border-radius: 50%; border: none; background: rgba(255,255,255,0.92); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="{{ p.favFill }}" stroke="{{ p.favStroke }}" stroke-width="1.9" stroke-linejoin="round"><path d="M12 20.3l-1.4-1.3C5.4 14.4 2 11.3 2 7.6 2 4.9 4.1 3 6.8 3c1.6 0 3.2.8 4.2 2 1-1.2 2.6-2 4.2-2C18.9 3 21 4.9 21 7.6c0 3.7-3.4 6.8-8.6 11.4z"></path></svg>
+                </button>
+              </div>
+              <div style="padding: 14px 14px 16px; display: flex; flex-direction: column; gap: 9px; flex: 1; min-width: 0;">
+                <div style="font-size: 14px; font-weight: 500; line-height: 1.4; min-height: {{ p.nameH }}; text-wrap: pretty;">{{ p.name }}</div>
+                <sc-if value="{{ p.desc }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size: 13px; color: #56617A; line-height: 1.55; text-wrap: pretty;">{{ p.desc }}</div>
+                </sc-if>
+                <div style="display: flex; align-items: center; gap: 7px;">
+                  <span style="color: #FF7A00; font-size: 13px; letter-spacing: 1px;">{{ p.stars }}</span>
+                  <span style="font-size: 12px; color: #8A94A6;">{{ p.reviews }}</span>
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 9px;">
+                  <span style="font-size: 19px; font-weight: 700;">{{ p.price }}</span>
+                  <sc-if value="{{ p.old }}" hint-placeholder-val="{{ true }}">
+                    <span style="font-size: 13px; color: #98A2B3; text-decoration: line-through;">{{ p.old }}</span>
+                  </sc-if>
+                </div>
+                <button onClick="{{ addToCart }}" style="margin-top: auto; align-self: {{ p.btnAlign }}; background: #FF7A00; color: #FFFFFF; border: none; border-radius: 7px; padding: 11px 16px; font-size: 13.5px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; width: {{ p.btnW }};" style-hover="background: #E86E00;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h3l2.6 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21.5 7H6"></path><circle cx="10" cy="21" r="1.4"></circle><circle cx="18" cy="21" r="1.4"></circle></svg>
+                  <span>{{ t.addCart }}</span>
+                </button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+        <div style="border: 1px dashed #DFE3EA; border-radius: 12px; padding: 54px 24px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#C0C7D3" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <div style="font-size: 16px; font-weight: 600;">{{ t.emptyTitle }}</div>
+          <div style="font-size: 13.5px; color: #56617A; max-width: 320px; line-height: 1.55;">{{ t.emptySub }}</div>
+          <button onClick="{{ resetFilters }}" style="background: #FF7A00; color: #FFFFFF; border: none; border-radius: 8px; padding: 11px 22px; font-size: 13.5px; font-weight: 500; cursor: pointer;" style-hover="background: #E86E00;">{{ t.reset }}</button>
+        </div>
+      </sc-if>
+
+      <div style="display: flex; justify-content: center; align-items: center; gap: 8px; padding-top: 6px;">
+        <button onClick="{{ prevPage }}" aria-label="précédent" style="width: 36px; height: 36px; border-radius: 8px; border: 1px solid #DFE3EA; background: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#56617A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform: scaleX({{ chevronFlip }});"><path d="M15 6l-6 6 6 6"></path></svg>
+        </button>
+        <sc-for list="{{ pages }}" as="pg" hint-placeholder-count="6">
+          <button onClick="{{ pg.go }}" style="min-width: 36px; height: 36px; border-radius: 8px; cursor: {{ pg.cursor }}; font-size: 13.5px; font-weight: 500; padding: 0 10px; border: 1px solid {{ pg.border }}; background: {{ pg.bg }}; color: {{ pg.color }};">{{ pg.label }}</button>
+        </sc-for>
+        <button onClick="{{ nextPage }}" aria-label="suivant" style="width: 36px; height: 36px; border-radius: 8px; border: 1px solid #DFE3EA; background: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#56617A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform: scaleX({{ chevronFlip }});"><path d="M9 6l6 6-6 6"></path></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width: 1240px; margin: 0 auto; padding: 38px 20px 0;">
+    <div style="background: #F1F4F9; border-radius: 14px; padding: 26px clamp(20px, 4vw, 38px); display: flex; flex-wrap: wrap; align-items: center; gap: 24px; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 18px; flex: 1 1 330px;">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#FF7A00" stroke-width="1.6" stroke-linejoin="round" style="flex-shrink: 0;"><rect x="3" y="9" width="18" height="12" rx="1.5"></rect><path d="M2 9h20v4H2z" fill="#FF7A00" stroke="none"></path><path d="M12 9v12"></path><path d="M12 9C10 9 7 8.4 7 6.2A2.2 2.2 0 0 1 12 5.6 2.2 2.2 0 0 1 17 6.2C17 8.4 14 9 12 9z"></path></svg>
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+          <div style="font-size: clamp(17px, 2.2vw, 20px); font-weight: 600;">{{ t.nlTitle }}</div>
+          <div style="font-size: 13.5px; color: #56617A; line-height: 1.55; max-width: 380px; text-wrap: pretty;">{{ t.nlSub }}</div>
+        </div>
+      </div>
+      <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; border-radius: 8px; overflow: hidden; border: 1px solid #DFE3EA;">
+          <input type="email" placeholder="{{ t.nlPlaceholder }}" style="flex: 1; border: none; padding: 13px 16px; font-size: 14px; min-width: 0; color: #0B1F3A;">
+          <button style="background: #FF7A00; color: #FFFFFF; border: none; padding: 13px 22px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;" style-hover="background: #E86E00;">{{ t.nlCta }}</button>
+        </div>
+        <div style="font-size: 11.5px; color: #8A94A6;">{{ t.nlNote }}</div>
+      </div>
+    </div>
+  </div>
+
+  <footer style="background: #0B1F3A; color: #C4CEDD; margin-top: 44px;">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 44px 20px 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 32px;">
+      <div style="display: flex; flex-direction: column; gap: 16px; min-width: 210px;">
+        <div style="display: flex; align-items: center; gap: 11px;">
+          <svg viewBox="0 0 124 122" width="40" height="39">
+            <path d="M34 28 H74 A20 20 0 0 1 94 48 V76 A20 20 0 0 1 74 96 H60 L50 114 L42 96 H34 A20 20 0 0 1 14 76 V48 A20 20 0 0 1 34 28 Z" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M54 28 V17" stroke="#FF7A00" stroke-width="7" stroke-linecap="round"></path>
+            <circle cx="54" cy="10" r="8" fill="#FF7A00"></circle>
+            <rect x="36" y="50" width="10" height="20" rx="5" fill="#FF7A00"></rect>
+            <path d="M74 52 L64 61 L74 70" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M44 76 Q54 87 64 76" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"></path>
+            <g stroke="#FF7A00" stroke-width="6.5" stroke-linecap="round"><path d="M104 22 L114 12"></path><path d="M110 36 L122 32"></path><path d="M100 11 L104 2"></path></g>
+          </svg>
+          <div style="display: flex; flex-direction: column; gap: 1px;">
+            <div style="font-weight: 700; font-size: 24px; line-height: 1; color: #FFFFFF;">FAMM<span style="color: #FF7A00;">A</span></div>
+            <div style="display: flex; align-items: center; gap: 5px; direction: rtl;">
+              <span style="width: 12px; height: 2px; background: #FF7A00;"></span>
+              <span style="font-family: 'Noto Kufi Arabic', sans-serif; font-size: 9px; color: #B9C4D6;">فمّا ديما حاجة جديدة</span>
+              <span style="width: 12px; height: 2px; background: #FF7A00;"></span>
+            </div>
+          </div>
+        </div>
+        <div style="font-size: 13px; line-height: 1.65; max-width: 240px; text-wrap: pretty;">{{ t.footAbout }}</div>
+        <div style="display: flex; gap: 10px;">
+          <sc-for list="{{ socials }}" as="s" hint-placeholder-count="4">
+            <a href="#" aria-label="{{ s.name }}" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;" style-hover="background: #FF7A00;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ s.icon }}"></path></svg>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 11px;">
+        <div style="font-size: 15px; font-weight: 600; color: #FFFFFF; margin-bottom: 3px;">{{ t.footNav }}</div>
+        <sc-for list="{{ footNav }}" as="l" hint-placeholder-count="7">
+          <a href="#" style="font-size: 13px; color: #C4CEDD;" style-hover="color: #FF7A00;">{{ l.label }}</a>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 11px;">
+        <div style="font-size: 15px; font-weight: 600; color: #FFFFFF; margin-bottom: 3px;">{{ t.footInfo }}</div>
+        <sc-for list="{{ footInfo }}" as="l" hint-placeholder-count="6">
+          <a href="#" style="font-size: 13px; color: #C4CEDD;" style-hover="color: #FF7A00;">{{ l.label }}</a>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 11px;">
+        <div style="font-size: 15px; font-weight: 600; color: #FFFFFF; margin-bottom: 3px;">{{ t.footHelp }}</div>
+        <sc-for list="{{ footHelp }}" as="l" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 9px; font-size: 13px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ l.color }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ l.icon }}"></path></svg>
+            <span>{{ l.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;">
+        <div style="font-size: 15px; font-weight: 600; color: #FFFFFF;">{{ t.footCod }}</div>
+        <image-slot id="famma-cod" shape="rounded" radius="10" fit="contain" placeholder="Illustration paiement à la livraison" style="width: 150px; height: 96px;"></image-slot>
+        <div style="font-size: 12.5px; line-height: 1.6; text-wrap: pretty;">{{ t.footCodSub }}</div>
+      </div>
+    </div>
+    <div style="border-top: 1px solid rgba(255,255,255,0.12);">
+      <div style="max-width: 1240px; margin: 0 auto; padding: 16px 20px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; font-size: 12px; color: #93A0B5;">
+        <span>{{ t.copyright }}</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 22px;">
+          <sc-for list="{{ legal }}" as="l" hint-placeholder-count="4">
+            <a href="#" style="font-size: 12px; color: #93A0B5;" style-hover="color: #FF7A00;">{{ l.label }}</a>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#" aria-label="WhatsApp" style="position: fixed; bottom: 24px; inset-inline-end: 24px; width: 56px; height: 56px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(37,211,102,0.4); z-index: 50;">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2zm0 2a8 8 0 1 1-4.1 14.9l-.3-.2-2.5.6.7-2.4-.2-.3A8 8 0 0 1 12 4zm-3.3 4c-.2 0-.5 0-.7.4-.3.4-.9 1-.9 2.3s1 2.6 1.1 2.8c.1.2 1.8 3 4.5 4 1.9.7 2.3.6 2.7.5.4 0 1.3-.5 1.5-1.1.2-.6.2-1 .1-1.1l-.5-.3-1.7-.8c-.2-.1-.4-.1-.6.1l-.8 1c-.2.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5l-.7-1.7c-.2-.4-.4-.4-.6-.4z"></path></svg>
+  </a>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 1280, &quot;height&quot;: 2200}}">
+class Component extends DCLogic {
+  state = {
+    lang: 'fr', cart: 2, w: typeof window !== 'undefined' ? window.innerWidth : 1280,
+    menuOpen: false, filtersOpen: false, view: 'grid', sort: 'pop',
+    cat: 'all', maxPrice: 200, stock: { in: true, out: false }, minRating: 0,
+    promo: false, brands: {}, page: 1, query: '', favs: {}
+  };
+
+  componentDidMount() {
+    this._r = () => this.setState({ w: window.innerWidth });
+    window.addEventListener('resize', this._r);
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this._r); }
+
+  dict = {
+    fr: {
+      tbDelivery: 'Livraison partout en Tunisie', tbCod: 'Paiement à la livraison', tbSupport: 'Support WhatsApp 24/7',
+      navHome: 'Accueil', navShop: 'Boutique', navCats: 'Catégories', navPromos: 'Promotions', navNew: 'Nouveautés', navAbout: 'À propos', navContact: 'Contact',
+      search: 'Rechercher un produit...', addCart: 'Ajouter au panier',
+      shopTitle: 'Boutique', shopSub: 'Découvrez notre sélection de produits innovants et pratiques.',
+      sortBy: 'Trier par :',
+      sorts: [['pop', 'Populaires'], ['new', 'Nouveautés'], ['asc', 'Prix croissant'], ['desc', 'Prix décroissant'], ['rate', 'Mieux notés']],
+      filters: 'Filtres', reset: 'Réinitialiser',
+      fCats: 'Catégories', fPrice: 'Prix', fStock: 'Disponibilité', fRating: 'Note moyenne', fPromo: 'Promotions', fBrand: 'Marque',
+      allCats: 'Toutes les catégories', andUp: 'et plus', inStock: 'En stock', outStock: 'Rupture de stock', onSale: 'En promotion',
+      brandFamma: 'FAMMA', brandPartners: 'Partenaires',
+      helpTitle: "Besoin d'aide ?", helpSub: 'Contactez-nous sur WhatsApp', helpCta: 'Ouvrir WhatsApp',
+      promises: [
+        { title: 'Livraison rapide partout en Tunisie', sub: 'Entre 24h et 72h selon votre localité' },
+        { title: 'Paiement à la livraison', sub: 'Payez uniquement à la réception' },
+        { title: 'Satisfait ou remboursé', sub: 'Retour facile sous 7 jours' }
+      ],
+      found: n => n + ' produits trouvés',
+      emptyTitle: 'Aucun produit trouvé', emptySub: 'Essayez d’élargir vos filtres ou de modifier votre recherche.',
+      nlTitle: 'Ne manquez aucune nouveauté !', nlSub: 'Abonnez-vous à notre newsletter et soyez les premiers informés de nos nouvelles arrivées et promotions.',
+      nlPlaceholder: 'Votre email', nlCta: "S'abonner", nlNote: 'Pas de spam, désabonnement en 1 clic.',
+      footAbout: 'Votre boutique en ligne spécialisée dans les produits innovants et pratiques pour le quotidien.',
+      footNav: 'Navigation', footInfo: 'Informations', footHelp: 'Aide & support', footCod: 'Paiement à la livraison',
+      footCodSub: 'Vous payez uniquement à la réception de votre commande.',
+      copyright: '© 2024 FAMMA MENNOU. Tous droits réservés.',
+      cats: ['Maison & Cuisine', 'Électronique', 'Auto & Moto', 'Beauté & Santé', 'Accessoires', 'Nouveautés'],
+      navLinks: ['Accueil', 'Boutique', 'Catégories', 'Promotions', 'Nouveautés', 'À propos', 'Contact'],
+      infoLinks: ['Livraison', 'Retours & échanges', 'FAQ', 'Conditions générales', 'Politique de confidentialité', 'Politique des cookies'],
+      helpLinks: ['WhatsApp', '+216 XX XXX XXX', 'contact@famma-mennou.tn', 'Tunis, Tunisie'],
+      legal: ['Mentions légales', 'CGV', 'Confidentialité', 'Cookies'],
+      badgeNew: 'Nouveau'
+    },
+    ar: {
+      tbDelivery: 'توصيل في كامل تونس', tbCod: 'الخلاص عند التوصيل', tbSupport: 'دعم واتساب 24/7',
+      navHome: 'الرئيسية', navShop: 'المتجر', navCats: 'الأقسام', navPromos: 'التخفيضات', navNew: 'الجديد', navAbout: 'من نحن', navContact: 'اتصل بنا',
+      search: 'ابحث عن منتج...', addCart: 'أضف للسلة',
+      shopTitle: 'المتجر', shopSub: 'اكتشف تشكيلتنا من المنتجات المبتكرة والعملية.',
+      sortBy: 'ترتيب حسب :',
+      sorts: [['pop', 'الأكثر رواجاً'], ['new', 'الجديد'], ['asc', 'السعر تصاعدياً'], ['desc', 'السعر تنازلياً'], ['rate', 'الأعلى تقييماً']],
+      filters: 'الفلاتر', reset: 'إعادة الضبط',
+      fCats: 'الأقسام', fPrice: 'السعر', fStock: 'التوفر', fRating: 'معدل التقييم', fPromo: 'التخفيضات', fBrand: 'العلامة',
+      allCats: 'كل الأقسام', andUp: 'فما فوق', inStock: 'متوفر', outStock: 'غير متوفر', onSale: 'في التخفيض',
+      brandFamma: 'فمّا', brandPartners: 'شركاء',
+      helpTitle: 'تحتاج مساعدة ؟', helpSub: 'اتصل بنا على واتساب', helpCta: 'افتح واتساب',
+      promises: [
+        { title: 'توصيل سريع في كامل تونس', sub: 'بين 24 و72 ساعة حسب منطقتك' },
+        { title: 'الخلاص عند التوصيل', sub: 'تخلص فقط عند الاستلام' },
+        { title: 'راضي وإلا نرجعولك فلوسك', sub: 'إرجاع سهل في ظرف 7 أيام' }
+      ],
+      found: n => 'وجدنا ' + n + ' منتج',
+      emptyTitle: 'ما لقيناش منتجات', emptySub: 'جرّب توسّع الفلاتر ولا تبدّل كلمة البحث.',
+      nlTitle: 'ما تفوّتش الجديد !', nlSub: 'اشترك في نشرتنا وكن أول من يعرف بالوصولات الجديدة والتخفيضات.',
+      nlPlaceholder: 'بريدك الإلكتروني', nlCta: 'اشترك', nlNote: 'بدون إزعاج، يمكنك إلغاء الاشتراك بنقرة واحدة.',
+      footAbout: 'متجرك على الإنترنت المختص في المنتجات المبتكرة والعملية لكل يوم.',
+      footNav: 'التصفح', footInfo: 'معلومات', footHelp: 'المساعدة والدعم', footCod: 'الخلاص عند التوصيل',
+      footCodSub: 'تخلص فقط عند استلام طلبيتك.',
+      copyright: '© 2024 فمّا منّو. كل الحقوق محفوظة.',
+      cats: ['البيت والمطبخ', 'إلكترونيك', 'سيارات ودراجات', 'جمال وصحة', 'إكسسوارات', 'وصل حديثاً'],
+      navLinks: ['الرئيسية', 'المتجر', 'الأقسام', 'التخفيضات', 'الجديد', 'من نحن', 'اتصل بنا'],
+      infoLinks: ['التوصيل', 'الإرجاع والتبديل', 'أسئلة شائعة', 'الشروط العامة', 'سياسة الخصوصية', 'سياسة الكوكيز'],
+      helpLinks: ['واتساب', '+216 XX XXX XXX', 'contact@famma-mennou.tn', 'تونس، تونس'],
+      legal: ['معلومات قانونية', 'شروط البيع', 'الخصوصية', 'الكوكيز'],
+      badgeNew: 'جديد'
+    }
+  };
+
+  items = [
+    { id: 'p1', slot: 'famma-p1', fr: 'Pommeau de douche haute pression filtrant', ar: 'رأس دوش ضغط عالي مع فلتر', dfr: 'Jet puissant, filtre minéral remplaçable, installation sans outil.', dar: 'ضغط قوي، فلتر معدني قابل للتبديل، تركيب بلا أدوات.', price: 89, old: 109, rate: 4.5, reviews: 128, cat: 3, stock: true, brand: 'famma', new: false, pop: 98 },
+    { id: 'p2', slot: 'famma-p2', fr: 'Organisateur de coffre pliable', ar: 'منظم صندوق السيارة قابل للطي', dfr: 'Compartiments modulables, se replie à plat quand vous ne l’utilisez pas.', dar: 'خانات قابلة للتعديل، يتطوى مسطح كي ما تستعملوش.', price: 79, old: 0, rate: 4.5, reviews: 94, cat: 2, stock: true, brand: 'famma', new: true, pop: 91 },
+    { id: 'p3', slot: 'famma-p3', fr: 'Lampe LED détecteur de mouvement', ar: 'مصباح LED بحساس حركة', dfr: 'S’allume à votre passage, recharge USB, fixation magnétique.', dar: 'يضوي كي تعدّي، شحن USB، تثبيت مغناطيسي.', price: 69, old: 0, rate: 4.5, reviews: 156, cat: 0, stock: true, brand: 'famma', new: true, pop: 95 },
+    { id: 'p4', slot: 'famma-p4', fr: 'Brosse électrique de nettoyage', ar: 'فرشاة تنظيف كهربائية', dfr: 'Trois têtes interchangeables pour salle de bain et cuisine.', dar: 'ثلاث رؤوس متبادلة للحمام والمطبخ.', price: 109, old: 129, rate: 3.5, reviews: 87, cat: 0, stock: true, brand: 'partners', new: false, pop: 78 },
+    { id: 'p5', slot: 'famma-p5', fr: 'Distributeur automatique de savon', ar: 'موزع صابون أوتوماتيكي', dfr: 'Capteur infrarouge, réservoir 350 ml, étanche.', dar: 'حساس تحت الحمراء، خزان 350 مل، مقاوم للماء.', price: 89, old: 0, rate: 3.5, reviews: 73, cat: 0, stock: true, brand: 'famma', new: true, pop: 74 },
+    { id: 'p6', slot: 'famma-p6', fr: 'Station de charge sans fil 3-en-1', ar: 'محطة شحن لاسلكي 3 في 1', dfr: 'Téléphone, montre et écouteurs sur un seul socle.', dar: 'تلفون، ساعة وسماعات على قاعدة وحدة.', price: 119, old: 0, rate: 3.5, reviews: 65, cat: 1, stock: true, brand: 'partners', new: false, pop: 82 },
+    { id: 'p7', slot: 'famma-p7', fr: 'Blender portable rechargeable', ar: 'خلاط محمول قابل للشحن', dfr: 'Six lames en inox, batterie USB-C, bouteille 400 ml.', dar: 'ستة شفرات إينوكس، بطارية USB-C، قارورة 400 مل.', price: 99, old: 0, rate: 4.5, reviews: 112, cat: 0, stock: true, brand: 'famma', new: false, pop: 88 },
+    { id: 'p8', slot: 'famma-p8', fr: 'Support téléphone voiture 360°', ar: 'حامل تلفون للسيارة 360°', dfr: 'Rotation complète, pince renforcée, montage grille d’aération.', dar: 'دوران كامل، ملقط مقوّى، تركيب على فتحة التهوية.', price: 39, old: 0, rate: 3.5, reviews: 98, cat: 2, stock: true, brand: 'partners', new: false, pop: 70 },
+    { id: 'p9', slot: 'famma-p9', fr: 'Ruban LED RGB 5 mètres', ar: 'شريط LED RGB 5 أمتار', dfr: 'Seize couleurs, télécommande, adhésif renforcé.', dar: 'ستة عشر لون، ريموت، لاصق مقوّى.', price: 49, old: 55, rate: 4.5, reviews: 77, cat: 1, stock: true, brand: 'partners', new: false, pop: 85 },
+    { id: 'p10', slot: 'famma-p10', fr: 'Mini projecteur HD portable', ar: 'بروجكتور HD صغير محمول', dfr: 'Projection jusqu’à 100 pouces, HDMI et sans fil.', dar: 'عرض حتى 100 بوصة، HDMI ولاسلكي.', price: 199, old: 0, rate: 4, reviews: 61, cat: 1, stock: false, brand: 'partners', new: false, pop: 66 },
+    { id: 'p11', slot: 'famma-p11', fr: 'Montre connectée étanche', ar: 'ساعة ذكية مقاومة للماء', dfr: 'Suivi sommeil et fréquence cardiaque, autonomie 7 jours.', dar: 'متابعة النوم ونبضات القلب، بطارية 7 أيام.', price: 129, old: 0, rate: 4, reviews: 143, cat: 1, stock: true, brand: 'partners', new: false, pop: 90 },
+    { id: 'p12', slot: 'famma-p12', fr: 'Aspirateur à main sans fil', ar: 'مكنسة يدوية بلا سلك', dfr: 'Idéal voiture et canapé, filtre lavable, deux embouts.', dar: 'مثالي للسيارة والكنبة، فلتر يتغسل، زوز رؤوس.', price: 149, old: 0, rate: 5, reviews: 91, cat: 2, stock: true, brand: 'famma', new: false, pop: 93 }
+  ];
+
+  icons = {
+    truck: 'M1 4h13v11H1zM14 8h4l3 3v4h-7zM6 19a2 2 0 1 0 0-.1M17 19a2 2 0 1 0 0-.1',
+    wallet: 'M3 7h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7zm0 0l12-3v3M17 13h.01',
+    shield: 'M12 3l8 3v6c0 4.6-3.3 7.9-8 9-4.7-1.1-8-4.4-8-9V6zM9 12l2 2 4-4',
+    wa: 'M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 21l2.2-5.5A8.4 8.4 0 1 1 21 11.5z',
+    phone: 'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z',
+    mail: 'M3 5h18v14H3zM3 6l9 7 9-7',
+    pin: 'M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+    fb: 'M14 8h3V5h-3a4 4 0 0 0-4 4v2H8v3h2v7h3v-7h3l1-3h-4V9a1 1 0 0 1 1-1z',
+    ig: 'M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM17.5 6.5h.01',
+    tt: 'M15 3v10.5a3.5 3.5 0 1 1-3-3.46M15 3c.4 2.2 2 3.9 4.5 4.2',
+    yt: 'M2 8.5A3.5 3.5 0 0 1 5.5 5h13A3.5 3.5 0 0 1 22 8.5v7a3.5 3.5 0 0 1-3.5 3.5h-13A3.5 3.5 0 0 1 2 15.5zM10 9.5l5 2.5-5 2.5z'
+  };
+
+  stars(r) {
+    const full = Math.floor(r);
+    const half = r - full >= 0.5;
+    return '★'.repeat(full) + (half ? '⯨' : '') + '☆'.repeat(5 - full - (half ? 1 : 0));
+  }
+
+  filtered() {
+    const s = this.state;
+    const q = s.query.trim().toLowerCase();
+    return this.items.filter(p => {
+      if (s.cat !== 'all' && p.cat !== s.cat) return false;
+      if (p.price > s.maxPrice) return false;
+      if (!(s.stock.in && p.stock) && !(s.stock.out && !p.stock)) return false;
+      if (s.minRating && p.rate < s.minRating) return false;
+      if (s.promo && !p.old) return false;
+      const anyBrand = Object.keys(s.brands).some(k => s.brands[k]);
+      if (anyBrand && !s.brands[p.brand]) return false;
+      if (q && !(p.fr + ' ' + p.ar).toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+
+  sorted(list) {
+    const c = list.slice();
+    const s = this.state.sort;
+    if (s === 'asc') c.sort((a, b) => a.price - b.price);
+    else if (s === 'desc') c.sort((a, b) => b.price - a.price);
+    else if (s === 'rate') c.sort((a, b) => b.rate - a.rate || b.reviews - a.reviews);
+    else if (s === 'new') c.sort((a, b) => (b.new ? 1 : 0) - (a.new ? 1 : 0));
+    else c.sort((a, b) => b.pop - a.pop);
+    return c;
+  }
+
+  set(patch, resetPage) {
+    this.setState(Object.assign({}, patch, resetPage === false ? {} : { page: 1 }));
+  }
+
+  renderVals() {
+    const s = this.state;
+    const t = this.dict[s.lang];
+    const ic = this.icons;
+    const isAr = s.lang === 'ar';
+    const isDesktop = s.w >= 1000;
+    const list = this.sorted(this.filtered());
+    const perPage = 8;
+    const totalPages = Math.max(1, Math.ceil(list.length / perPage));
+    const page = Math.min(s.page, totalPages);
+    const shownItems = list.slice((page - 1) * perPage, page * perPage);
+    const isList = s.view === 'list';
+    const catCounts = i => this.items.filter(p => p.cat === i).length;
+
+    const box = on => ({
+      border: on ? '#FF7A00' : '#CBD3DF',
+      bg: on ? '#FF7A00' : '#FFFFFF',
+      tick: on ? 1 : 0
+    });
+
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push({
+        label: String(i),
+        cursor: 'pointer',
+        border: i === page ? '#FF7A00' : '#DFE3EA',
+        bg: i === page ? '#FF7A00' : '#FFFFFF',
+        color: i === page ? '#FFFFFF' : '#56617A',
+        go: () => this.setState({ page: i })
+      });
+    }
+
+    const stockDefs = [
+      { key: 'in', label: t.inStock, count: this.items.filter(p => p.stock).length },
+      { key: 'out', label: t.outStock, count: this.items.filter(p => !p.stock).length }
+    ];
+    const brandDefs = [
+      { key: 'famma', label: t.brandFamma, count: this.items.filter(p => p.brand === 'famma').length },
+      { key: 'partners', label: t.brandPartners, count: this.items.filter(p => p.brand === 'partners').length }
+    ];
+    const promiseIcons = [ic.truck, ic.wallet, ic.shield];
+    const helpIcons = [ic.wa, ic.phone, ic.mail, ic.pin];
+    const helpColors = ['#25D366', '#C4CEDD', '#C4CEDD', '#C4CEDD'];
+
+    return {
+      t,
+      dir: isAr ? 'rtl' : 'ltr',
+      chevronFlip: isAr ? -1 : 1,
+      isDesktop, isMobile: !isDesktop,
+      menuOpen: s.menuOpen, cart: s.cart, query: s.query, sort: s.sort,
+      frColor: isAr ? '#FFFFFF' : '#FF7A00',
+      arColor: isAr ? '#FF7A00' : '#FFFFFF',
+      shellCols: isDesktop ? '260px minmax(0, 1fr)' : 'minmax(0, 1fr)',
+      resultCols: isList ? 'minmax(0, 1fr)' : 'repeat(auto-fill, minmax(200px, 1fr))',
+      showFilters: isDesktop || s.filtersOpen,
+      sortOptions: t.sorts.map(o => ({ value: o[0], label: o[1] })),
+      gridBg: s.view === 'grid' ? '#FF7A00' : '#FFFFFF',
+      gridBorder: s.view === 'grid' ? '#FF7A00' : '#DFE3EA',
+      gridIcon: s.view === 'grid' ? '#FFFFFF' : '#8A94A6',
+      listBg: isList ? '#FF7A00' : '#FFFFFF',
+      listBorder: isList ? '#FF7A00' : '#DFE3EA',
+      listIcon: isList ? '#FFFFFF' : '#8A94A6',
+      catFilters: [{ label: t.allCats, count: '(' + this.items.length + ')', active: s.cat === 'all', pick: () => this.set({ cat: 'all' }) }]
+        .concat(t.cats.map((label, i) => ({ label, count: '(' + catCounts(i) + ')', active: s.cat === i, pick: () => this.set({ cat: i }) })))
+        .map(c => ({ label: c.label, count: c.count, pick: c.pick, color: c.active ? '#FF7A00' : '#34405A', weight: c.active ? 600 : 400 })),
+      maxPrice: s.maxPrice,
+      priceLabel: s.maxPrice >= 200 ? '200 DT+' : s.maxPrice + ' DT',
+      onPrice: e => this.set({ maxPrice: Number(e.target.value) }),
+      stockFilters: stockDefs.map(d => Object.assign({
+        label: d.label, count: '(' + d.count + ')',
+        toggle: () => this.set({ stock: Object.assign({}, s.stock, { [d.key]: !s.stock[d.key] }) })
+      }, box(s.stock[d.key]))),
+      ratingFilters: [5, 4, 3, 2, 1].map(n => ({
+        stars: this.stars(n),
+        count: '(' + this.items.filter(p => p.rate >= n).length + ')',
+        color: s.minRating === n ? '#FF7A00' : '#34405A',
+        pick: () => this.set({ minRating: s.minRating === n ? 0 : n })
+      })),
+      promoCount: '(' + this.items.filter(p => p.old).length + ')',
+      promoBorder: box(s.promo).border, promoBg: box(s.promo).bg, promoTick: box(s.promo).tick,
+      togglePromo: () => this.set({ promo: !s.promo }),
+      brandFilters: brandDefs.map(d => Object.assign({
+        label: d.label, count: '(' + d.count + ')',
+        toggle: () => this.set({ brands: Object.assign({}, s.brands, { [d.key]: !s.brands[d.key] }) })
+      }, box(!!s.brands[d.key]))),
+      promises: t.promises.map((p, i) => Object.assign({}, p, { icon: promiseIcons[i] })),
+      countLabel: t.found(list.length),
+      hasResults: list.length > 0,
+      noResults: list.length === 0,
+      shown: shownItems.map(p => ({
+        slot: p.slot,
+        name: isAr ? p.ar : p.fr,
+        desc: isList ? (isAr ? p.dar : p.dfr) : '',
+        price: p.price + ' DT',
+        old: p.old ? p.old + ' DT' : '',
+        stars: this.stars(p.rate),
+        reviews: '(' + p.reviews + ')',
+        badge: p.old ? '-' + Math.round((1 - p.price / p.old) * 100) + '%' : (p.new ? t.badgeNew : ''),
+        badgeBg: p.old ? '#FF7A00' : '#16A34A',
+        dir: isList ? 'row' : 'column',
+        imgH: isList ? '160px' : '178px',
+        imgW: isList ? '200px' : 'auto',
+        nameH: isList ? '0px' : '39px',
+        btnAlign: isList ? 'flex-start' : 'stretch',
+        btnW: isList ? 'auto' : '100%',
+        favFill: s.favs[p.id] ? '#FF7A00' : 'none',
+        favStroke: s.favs[p.id] ? '#FF7A00' : '#8A94A6',
+        fav: () => this.setState({ favs: Object.assign({}, s.favs, { [p.id]: !s.favs[p.id] }) })
+      })),
+      pages,
+      prevPage: () => this.setState({ page: Math.max(1, page - 1) }),
+      nextPage: () => this.setState({ page: Math.min(totalPages, page + 1) }),
+      socials: [
+        { name: 'Facebook', icon: ic.fb }, { name: 'Instagram', icon: ic.ig },
+        { name: 'TikTok', icon: ic.tt }, { name: 'YouTube', icon: ic.yt }
+      ],
+      footNav: t.navLinks.map(label => ({ label })),
+      footInfo: t.infoLinks.map(label => ({ label })),
+      footHelp: t.helpLinks.map((label, i) => ({ label, icon: helpIcons[i], color: helpColors[i] })),
+      legal: t.legal.map(label => ({ label })),
+      setFr: () => this.setState({ lang: 'fr' }),
+      setAr: () => this.setState({ lang: 'ar' }),
+      toggleMenu: () => this.setState({ menuOpen: !s.menuOpen }),
+      toggleFilters: () => this.setState({ filtersOpen: !s.filtersOpen }),
+      setGrid: () => this.setState({ view: 'grid' }),
+      setList: () => this.setState({ view: 'list' }),
+      onSort: e => this.set({ sort: e.target.value }),
+      onQuery: e => this.set({ query: e.target.value }),
+      resetFilters: () => this.setState({ cat: 'all', maxPrice: 200, stock: { in: true, out: false }, minRating: 0, promo: false, brands: {}, query: '', page: 1 }),
+      addToCart: () => this.setState({ cart: s.cart + 1 })
+    };
+  }
+}
+</script>
+</body>
+</html>

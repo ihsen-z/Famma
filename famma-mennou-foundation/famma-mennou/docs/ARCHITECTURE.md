@@ -30,6 +30,46 @@ browser (only the pixel *ID* is). Verified by grepping the rendered HTML.
 `WP_ENVIRONMENT_TYPE` needs no constant at all — WordPress core reads that
 environment variable directly.
 
+## Thème enfant — gabarits partagés (lot D2)
+
+Le thème `famma-child` n'était qu'un jeu de hooks : aucun gabarit, l'en-tête et le
+pied de page venaient du constructeur de Kadence, donc **de la base de données**.
+Depuis l'import du design (`docs/DESIGN-INTEGRATION-PLAN.md`), il fournit ses
+propres `header.php` et `footer.php`.
+
+Mécanique : `get_header()` passe par `locate_template()`, qui regarde le thème
+enfant avant le parent. Kadence appelant `get_header()` / `get_footer()` dans
+chacun de ses gabarits — WooCommerce compris — le remplacement couvre **toutes**
+les pages en une fois : accueil, boutique, fiche produit, panier, commande,
+confirmation, pages légales, 404.
+
+```
+famma-child/
+├── header.php            barre supérieure + en-tête collant + panneau mobile
+├── footer.php            pied de page 5 colonnes + barre légale
+├── inc/
+│   ├── icons.php         SVG en ligne + liste blanche wp_kses
+│   ├── header-parts.php  promesses, langue, marque, nav, recherche, panier
+│   ├── footer-parts.php  colonnes du pied de page
+│   └── assets.php        polices, feuilles, script, dépilage Kadence, fragment panier
+└── assets/
+    ├── css/  tokens.css · fonts.css · layout.css · (style.css à la racine)
+    ├── fonts/ six woff2 attendus (voir son README)
+    └── js/   navigation.js · sticky-cta.js
+```
+
+Le thème parent n'est jamais modifié (§27). Ses feuilles d'en-tête et de pied de
+page, devenues sans objet, sont retirées par `wp_dequeue_style()` sur une liste
+filtrable — chaque poignée est testée avant, donc une poignée absente d'une autre
+version de Kadence est simplement ignorée.
+
+**Contrainte WooCommerce à ne pas oublier** : ne jamais créer
+`famma-child/woocommerce.php`. Un `woocommerce.php` à la racine d'un thème prend
+le pas sur `woocommerce/archive-product.php` et neutralise toutes les surcharges de
+gabarit du dossier `woocommerce/` (documentation WooCommerce, « Template
+structure »). Le thème hérité `famma-mennou-woocommerce-theme-v1` en contient un —
+raison de plus pour ne pas le réactiver.
+
 ## Local mail
 The WordPress image ships no mail transport, so every transactional email
 failed with `sendmail: can't connect`. `wp-content/mu-plugins/famma-local-mail.php`
