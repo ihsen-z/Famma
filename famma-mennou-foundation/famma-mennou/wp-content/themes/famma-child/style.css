@@ -331,12 +331,12 @@ summary:focus-visible,
 .famma-chips {
 	padding-block: var(--sp-6);
 	padding-inline: var(--sp-4);
-	background: var(--famma-bg);
+	background: var(--famma-surface-band);
 }
 
 .famma-contact {
 	padding-inline: var(--sp-4);
-	background: var(--famma-bg);
+	background: var(--famma-surface-band);
 	text-align: center;
 }
 
@@ -593,15 +593,23 @@ summary:focus-visible,
 }
 
 /* Économie réelle, calculée depuis les deux prix — jamais saisie. */
+/* Pastille « Vous économisez » (P-1).
+   La maquette en fait un objet posé — fond ambré, texte cuivré, coins
+   arrondis — et non un paragraphe vert. Le vert disait « validé » ;
+   l'ambre dit « avantage », ce qui est le message réel. Les jetons
+   --famma-saving-bg / --famma-saving-text portent le couple exact. */
 .famma-saving {
-	display: flex;
+	display: inline-flex;
 	flex-wrap: wrap;
 	align-items: baseline;
 	gap: var(--sp-2);
 	margin-block: 0 var(--sp-3);
-	color: var(--famma-success-700);
-	font-size: var(--fs-small);
-	font-weight: var(--fw-semibold);
+	padding: 7px 14px;
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-saving-bg);
+	color: var(--famma-saving-text);
+	font-size: var(--fs-chrome-field);
+	font-weight: var(--fw-medium);
 }
 
 .famma-saving__ar {
@@ -648,7 +656,7 @@ summary:focus-visible,
 	padding: var(--sp-3) var(--sp-4);
 	border: 1px solid var(--famma-line);
 	border-radius: var(--famma-radius);
-	background: var(--famma-bg);
+	background: var(--famma-surface-field);
 	display: flex;
 	flex-direction: column;
 	gap: var(--sp-2);
@@ -764,7 +772,7 @@ summary:focus-visible,
 	padding: var(--sp-6) var(--sp-4);
 	border: 1px solid var(--famma-line);
 	border-radius: var(--famma-radius);
-	background: var(--famma-bg);
+	background: var(--famma-surface-field);
 }
 
 .famma-confirm__title {

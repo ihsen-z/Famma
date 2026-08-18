@@ -35,35 +35,45 @@
 	   Revenir à `var(--famma-orange-700)` rétablit la conformité partout. */
 	--famma-accent-text: var(--famma-orange);
 
-	/* --- Neutres --- */
-	--famma-ink: #12161C;
-	--famma-muted: #5B6470;     /* 6,0:1 sur blanc, 5,6:1 sur --famma-bg */
+	/* --- Neutres ---
+	   Fidélité stricte demandée (18/08/2026) : l'encre de base, le texte
+	   moyen et le fond de page reprennent les valeurs exactes de la
+	   maquette. #12161C et #F7F8FA, qui n'existaient dans aucun écran du
+	   design, ont été retirés. */
+	--famma-ink: var(--famma-blue);     /* encre de base — 16,5:1 sur blanc */
+	--famma-muted: var(--famma-text-2); /* texte moyen — 6,20:1 sur blanc */
 	--famma-line: #E7EAF0;      /* bordure de carte — valeur de la maquette */
-	--famma-bg: #F7F8FA;
+	--famma-bg: var(--famma-white);     /* fond de page de la maquette */
 
 	/* --- Nuances de la maquette (§ docs/design-refs) ---
-	   Les SURFACES reprennent les valeurs exactes du design. Les TEXTES
-	   sont assombris d'un cran quand la valeur d'origine échoue AA : le
-	   dessin ne bouge pas, seul le glyphe devient lisible (C-1). */
+	   SURFACES et TEXTES reprennent les valeurs exactes du design : la
+	   fidélité stricte a été demandée le 18/08/2026, l'assombrissement C-1
+	   est donc levé. Chaque jeton concerné porte son contraste réel et la
+	   valeur conforme à restaurer si la décision est réouverte. */
 	--famma-line-header: #EDEFF3;   /* filet sous l'en-tête */
 	--famma-line-soft: #EEF1F5;     /* séparateurs internes de carte */
 	--famma-line-field: #DFE3EA;    /* bordure de champ et de bouton neutre */
 	--famma-surface-field: #FBFCFD; /* fond de champ de recherche */
 	--famma-surface-media: #F4F6F9; /* fond derrière une image produit */
 	--famma-surface-icon: #F1F4F9;  /* pastille d'icône, bande claire */
+	--famma-surface-band: var(--famma-surface-icon); /* bande de section claire */
 
 	/* Texte secondaire — #56617A de la maquette vaut 6,20:1, conservé. */
 	--famma-text-2: #56617A;
-	/* Baseline arabe du lockup dans l'en-tête — 7,75:1, conservé tel quel. */
-	--famma-tagline: #46536B;
-	/* Texte tertiaire — la maquette pose #8A94A6 (3,06:1). Assombri. */
-	--famma-text-3: #5B6470;        /* 6,0:1 */
-	/* Prix barré — la maquette pose #98A2B3 (2,58:1). Assombri.
-	   #6B7383 valait 4,77:1 sur blanc en théorie, mais l'audit du rendu
-	   mesurait 4,49:1 sur la fiche produit : WooCommerce y pose une légère
-	   transparence sur le prix barré. On prend donc une marge — le seuil ne
-	   doit pas dépendre d'un `opacity` qu'une mise à jour peut changer. */
-	--famma-price-old: #626976;     /* 5,52:1 sur blanc */
+	/* Prose secondaire — la maquette pose la même valeur sur la baseline arabe
+	   du lockup et sur le corps de texte long (intro produit, réponses de FAQ).
+	   Une seule couleur, deux rôles nommés : 7,75:1, conservé tel quel. */
+	--famma-text-prose: #46536B;
+	--famma-tagline: var(--famma-text-prose);
+	/* Texte tertiaire — valeur exacte de la maquette.
+	   ⚠ Fidélité stricte (18/08/2026) : 3,06:1 sur blanc, sous le seuil AA
+	   de 4,5:1. Repasser à #5B6470 sur cette seule ligne rétablit 6,0:1. */
+	--famma-text-3: #8A94A6;
+	/* Prix barré — valeur exacte de la maquette.
+	   ⚠ Fidélité stricte (18/08/2026) : 2,58:1 sur blanc, et plus bas encore
+	   au rendu réel — WooCommerce pose une légère transparence sur le prix
+	   barré. Repasser à #626976 rétablit 5,52:1. */
+	--famma-price-old: #98A2B3;
 
 	/* --- Sur fond marine — toutes ces valeurs passent AA telles quelles --- */
 	--famma-on-dark: #C4CEDD;       /* 10,40:1 */
@@ -94,10 +104,11 @@
 	--famma-new: #16A34A;
 	--famma-whatsapp: #25D366;
 
-	/* Pastille « vous économisez » — la maquette pose #C25E00 sur #FFF1E3
-	   (3,87:1). Le fond est conservé, le texte assombri. */
+	/* Pastille « vous économisez » — couple exact de la maquette.
+	   ⚠ Fidélité stricte (18/08/2026) : #C25E00 sur #FFF1E3 vaut 3,87:1,
+	   sous le seuil AA. Repasser à #9A4A00 rétablit 5,65:1. */
 	--famma-saving-bg: #FFF1E3;
-	--famma-saving-text: #9A4A00; /* 5,65:1 sur --famma-saving-bg */
+	--famma-saving-text: #C25E00;
 
 	/* --- Typographie ---
 	   D-9 est tranché : Poppins pour le latin, Noto Kufi Arabic pour l'arabe
@@ -125,6 +136,14 @@
 	--fs-price: clamp(1.375rem, 5vw, 1.75rem);
 	--fs-price-old: 1rem;
 	--fs-badge: 0.75rem;
+
+	/* --- Échelle du bloc d'avis de la fiche produit ---
+	   La maquette compose le score sur 44 · 17px. --fs-h1 ne peut pas servir :
+	   il est fluide et retombe à 28px sur mobile, soit la valeur du score de
+	   l'ACCUEIL, pas celle de la fiche. Un score est un chiffre dessiné, pas
+	   un titre — il a donc son propre jeton, comme l'habillage. */
+	--fs-review-score: 2.75rem;   /* 44px — note moyenne */
+	--fs-review-max: 1.0625rem;   /* 17px — le « /5 » qui suit */
 	--fs-button: 1rem;
 
 	/* Jamais sous 16px : en dessous, Safari iOS zoome au focus du champ
@@ -159,6 +178,13 @@
 	--fs-card-meta: 0.78125rem;     /* 12,5px — compteurs, sous-textes */
 	--fs-card-name: 0.875rem;       /* 14px — nom du produit */
 	--fs-card-price: 1.1875rem;     /* 19px — prix de la carte */
+
+	/* La fiche produit reprend la même carte en plus compact : la maquette y
+	   descend le nom à 13,5px et le prix à 17px pour que quatre cartes tiennent
+	   sous la fiche sans écraser le CTA principal. Le barré retombe sur
+	   --fs-card-meta (12,5px), déjà juste. */
+	--fs-card-name-sm: 0.84375rem;  /* 13,5px — nom, variante « Produits similaires » */
+	--fs-card-price-sm: 1.0625rem;  /* 17px — prix, même variante */
 
 	/* Rayons propres à la carte, hors échelle générale. */
 	--radius-badge: 5px;
