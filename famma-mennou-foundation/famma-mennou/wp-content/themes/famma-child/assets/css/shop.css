@@ -170,6 +170,16 @@
 	cursor: pointer;
 }
 
+/* Meme neutralisation que pour les en-tetes de filtre : sans elle, Kadence
+   blanchit le libelle du bouton au survol sur son fond blanc. */
+.famma-shop__filters-toggle:hover,
+.famma-shop__filters-toggle:focus,
+.famma-shop__filters-toggle:focus-visible,
+.famma-shop__filters-toggle:active {
+	background: var(--famma-white);
+	color: var(--famma-blue);
+}
+
 .famma-shop__aside {
 	display: flex;
 	flex-direction: column;
@@ -290,6 +300,22 @@
 
 .famma-filter__title.is-collapsible[aria-expanded="false"]::after {
 	transform: rotate(180deg);
+}
+
+/*
+ * Kadence peint le texte de tout `button:hover` en blanc. Sa regle
+ * `button:hover` (0,1,1) l'emporte sur notre `.famma-filter__title` (0,1,0),
+ * donc le libelle disparaissait au survol pendant que le chevron — colore par
+ * `background` sur ::after — restait visible. L'en-tete de filtre n'est pas un
+ * bouton d'action : le curseur suffit a signaler l'affordance, le libelle
+ * garde sa couleur normale dans tous les etats.
+ */
+.famma-filter__title.is-collapsible:hover,
+.famma-filter__title.is-collapsible:focus,
+.famma-filter__title.is-collapsible:focus-visible,
+.famma-filter__title.is-collapsible:active {
+	background: none;
+	color: var(--famma-blue);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -522,9 +548,18 @@
 
 /* --- Grille produits --- */
 
+/*
+ * `auto-fill`, jamais `auto-fit`.
+ *
+ * `auto-fit` effondre les colonnes restees vides : une categorie qui ne rend
+ * qu'un produit etirait sa carte sur toute la largeur des resultats — 1145px
+ * de large, et depuis que le visuel suit une proportion, presque 1000px de
+ * haut. `auto-fill` garde les pistes vides, donc la carte conserve la largeur
+ * d'une colonne et se cale a gauche, exactement comme la maquette.
+ */
 .famma-shop__results ul.products {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(12.25rem, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(12.25rem, 1fr));
 	gap: 18px;
 	margin: 0;
 	padding: 0;
@@ -553,6 +588,19 @@
 		grid-template-columns: 13.75rem minmax(0, 1fr);
 		align-items: center;
 		gap: var(--sp-4);
+	}
+
+	/*
+	 * Le bouton doit se resserrer en liste : sur une rangee de 916px, un CTA
+	 * pleine largeur n'est plus un bouton, c'est une bande. `inline-size: auto`
+	 * ne suffisait pas — le bouton est le seul enfant d'un `.product-action-wrap`
+	 * de type bloc, donc il en prenait toute la largeur (mesure : 633px, soit
+	 * exactement la colonne de texte). En passant l'enveloppe en flex, `auto`
+	 * redevient « la largeur du contenu » et le plancher de 14rem s'applique.
+	 */
+	.famma-shop.is-list .famma-shop__results ul.products li.product .product-action-wrap {
+		display: flex;
+		justify-content: flex-start;
 	}
 
 	.famma-shop.is-list .famma-shop__results ul.products li.product a.button:not(.kb-button) {

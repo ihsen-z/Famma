@@ -272,6 +272,16 @@ function famma_child_enqueue_home(): void {
 			true
 		);
 	}
+
+	if ( file_exists( $dir . '/assets/js/carousel.js' ) ) {
+		wp_enqueue_script(
+			'famma-carousel',
+			$uri . '/assets/js/carousel.js',
+			array(),
+			(string) filemtime( $dir . '/assets/js/carousel.js' ),
+			true
+		);
+	}
 }
 add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_home', 22 );
 

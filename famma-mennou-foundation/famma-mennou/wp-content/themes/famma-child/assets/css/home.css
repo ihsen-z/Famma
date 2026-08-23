@@ -204,10 +204,20 @@
 
 /* --- Visuel du héros --- */
 
+/*
+ * Mobile d'abord : aucun plancher de largeur.
+ *
+ * `min-inline-size: 18.125rem` (290px) etait un plancher de maquette bureau.
+ * Dans un heros de 232px utiles a 320px de large, il debordait de la fenetre
+ * de 14px et faisait defiler toute la page horizontalement. Le plancher est
+ * restitue a partir de 1000px, la ou il y a la place. Le visuel garde sa
+ * hauteur : le disque et les vignettes sont positionnes en absolu par rapport
+ * a lui, ils suivent la largeur sans se deformer.
+ */
 .famma-hero2__media {
 	position: relative;
 	flex: 1 1 21.25rem;
-	min-inline-size: 18.125rem;
+	min-inline-size: 0;
 	block-size: 20.625rem;
 }
 
@@ -296,13 +306,142 @@
 
 /* --- Catégories --- */
 
+/*
+ * Carrousel des rayons.
+ *
+ * Le defilement est natif : `overflow-x: auto` sur la piste, accroche au rayon
+ * avec `scroll-snap`. Au doigt cela fonctionne sans une ligne de JavaScript, et
+ * `carousel.js` ne fait qu'ajouter les fleches quand la piste depasse.
+ *
+ * `flex: 1 0 auto` : les rayons S'ETIRENT pour remplir la largeur quand ils
+ * sont peu nombreux — cinq rayons sur un ecran large gardent la rangee pleine
+ * de la maquette, sans carrousel visible — et ne se COMPRESSENT jamais sous
+ * 9,25rem. Passe ce seuil, la piste depasse et le carrousel prend le relais.
+ * Le nombre de rayons n'est donc ecrit nulle part.
+ */
 .famma-cats {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(9.25rem, 1fr));
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: var(--sp-2);
+}
+
+.famma-cats__track {
+	display: flex;
+	flex: 1;
 	gap: var(--sp-4);
 	margin: 0;
 	padding: 0;
+	overflow-x: auto;
+	/* Le glissement lateral ne doit pas declencher le retour arriere du
+	   navigateur, ni entrainer la page. */
+	overscroll-behavior-x: contain;
+	scroll-snap-type: x proximity;
+	scroll-behavior: smooth;
 	list-style: none;
+	/* La barre de defilement est masquee : les fleches et l'accroche disent
+	   deja qu'il y a une suite, et une barre sous les cartes hachait la
+	   rangee. Le clavier et le doigt gardent l'acces complet. */
+	scrollbar-width: none;
+}
+
+.famma-cats__track::-webkit-scrollbar {
+	display: none;
+}
+
+.famma-cats__item {
+	flex: 1 0 auto;
+	inline-size: 9.25rem;
+	min-inline-size: 9.25rem;
+	scroll-snap-align: start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-cats__track {
+		scroll-behavior: auto;
+	}
+}
+
+/*
+ * Fleches — bureau seulement, et seulement si la piste deborde vraiment.
+ *
+ * Mobile d'abord : PAS de fleches. Mesure a 375px, deux cibles de 48px et
+ * leurs gouttieres prenaient 112px des 335px utiles, et il ne restait que 1,4
+ * carte visible. Au doigt, le glissement natif fait deja le travail — la
+ * fleche ne serait qu'un bouton qui vole la place du contenu qu'il sert.
+ *
+ * Posees dans le flux et non au-dessus des cartes : superposees, elles
+ * masqueraient un rayon. `hidden` reste pose par le script tant qu'il n'a pas
+ * mesure de debordement : une commande qui ne commande rien est pire que pas
+ * de commande.
+ */
+.famma-cats__nav {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	inline-size: var(--sp-12);
+	block-size: var(--sp-12);
+	padding: 0;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-white);
+	color: var(--famma-blue);
+	cursor: pointer;
+	transition: border-color var(--dur-base) var(--ease-out),
+		color var(--dur-base) var(--ease-out);
+}
+
+@media (min-width: 1000px) {
+	.famma-cats__nav {
+		display: inline-flex;
+	}
+
+	/* Apres la regle ci-dessus, sinon l'affichage bureau ressusciterait les
+	   fleches que le script a masquees faute de debordement. */
+	.famma-cats__nav[hidden] {
+		display: none;
+	}
+}
+
+.famma-cats__nav:hover:not(:disabled),
+.famma-cats__nav:focus-visible {
+	border-color: var(--famma-orange);
+	color: var(--famma-accent-text);
+}
+
+/* Bout de piste atteint : la fleche reste en place pour ne pas decaler la
+   rangee, mais dit qu'elle ne mene plus nulle part. */
+.famma-cats__nav:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+/*
+ * Un seul chevron dans le jeu d'icones, oriente vers le bas : il est pivote
+ * ici, comme partout ailleurs dans le theme. Le sens depend de la direction
+ * d'ecriture, donc les deux rotations sont inversees en RTL — une fleche
+ * « suivant » qui pointe a droite en arabe montrerait le passe.
+ */
+.famma-cats__nav-icon {
+	inline-size: 1.125rem;
+	block-size: 1.125rem;
+}
+
+.famma-cats__nav--prev .famma-cats__nav-icon {
+	transform: rotate(90deg);
+}
+
+.famma-cats__nav--next .famma-cats__nav-icon {
+	transform: rotate(-90deg);
+}
+
+[dir="rtl"] .famma-cats__nav--prev .famma-cats__nav-icon {
+	transform: rotate(-90deg);
+}
+
+[dir="rtl"] .famma-cats__nav--next .famma-cats__nav-icon {
+	transform: rotate(90deg);
 }
 
 .famma-cats__card {
@@ -377,9 +516,11 @@
    La carte elle-meme est dessinee par assets/css/product-card.css, feuille
    partagee avec la boutique et les produits lies. Ici, seule la grille. */
 
+/* `auto-fill` pour la meme raison que la boutique : avec une seule mise en
+   avant, `auto-fit` etirerait la carte sur toute la largeur de la section. */
 .famma-home__grid ul.products {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(12.25rem, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(12.25rem, 1fr));
 	gap: 18px;
 	margin: 0;
 	padding: 0;
@@ -471,4 +612,18 @@
 	margin: 0;
 	color: var(--famma-text-2);
 	font-size: var(--fs-small);
+}
+
+/* ------------------------------------------------------------
+   Bureau : restitution des planchers de maquette
+
+   La maquette de l'accueil est une maquette de bureau. Les largeurs
+   minimales qu'elle pose ne tiennent pas dans 320px ; elles sont
+   reposees ici, a partir de 1000px, ou la place existe.
+   ------------------------------------------------------------ */
+
+@media (min-width: 1000px) {
+	.famma-hero2__media {
+		min-inline-size: 18.125rem;
+	}
 }

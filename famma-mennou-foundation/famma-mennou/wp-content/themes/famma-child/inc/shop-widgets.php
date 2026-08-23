@@ -343,19 +343,14 @@ class Famma_Child_Category_Filter_Widget extends Famma_Child_Filter_Widget {
 	 * @return array<int, array<string, mixed>>
 	 */
 	protected function rows(): array {
-		$terms = get_terms(
-			array(
-				'taxonomy'   => 'product_cat',
-				'hide_empty' => false,
-				'orderby'    => 'meta_value_num',
-				'meta_key'   => 'order', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- tri des rayons, quelques termes au plus.
-				'order'      => 'ASC',
-			)
-		);
-
-		if ( is_wp_error( $terms ) ) {
-			return array();
-		}
+		/*
+		 * Meme source que le sous-menu « Categories » de l'en-tete, dans le
+		 * meme ordre : voir `inc/catalog.php`. Deux requetes separees pour la
+		 * meme liste finissent toujours par diverger — c'est arrive ici, ou le
+		 * menu affichait « Uncategorized » quand la colonne affichait cinq
+		 * rayons.
+		 */
+		$terms = famma_child_product_categories();
 
 		$active = famma_child_filter_active( 'product_cat' );
 

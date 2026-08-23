@@ -30,8 +30,19 @@
 
 /* --- Deux colonnes : galerie / résumé --- */
 
+/*
+ * `minmax(0, 1fr)` des le mobile, pas seulement en deux colonnes.
+ *
+ * Sans piste declaree, la grille en cree une en `auto` : sa largeur est celle
+ * du contenu le plus large, et l'image de galerie y impose sa taille
+ * intrinseque. Mesure a 320px : une piste de 602px dans un conteneur de 232px,
+ * soit 327px de defilement horizontal sur toute la fiche. Le plancher a 0
+ * autorise la piste a descendre sous la taille naturelle de l'image, que
+ * `inline-size: 100%` ramene ensuite a la largeur disponible.
+ */
 .famma-product div.product {
 	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	gap: 34px;
 	align-items: start;
 }
@@ -316,13 +327,25 @@
 	margin-block-start: var(--sp-8);
 }
 
-.famma-product .woocommerce-tabs ul.tabs {
+/*
+ * `.woocommerce` et `div.product` en tete : Kadence pose
+ * `overflow: hidden` sur cette liste avec une specificite de (0,4,3), que
+ * `.famma-product .woocommerce-tabs ul.tabs` (0,3,2) n'atteignait pas. Notre
+ * `overflow-x: auto` etait donc mort, et sur un telephone de 320px les trois
+ * derniers onglets — informations, avis, livraison — etaient coupes sans aucun
+ * moyen de les atteindre : 601px de contenu dans 230px de large.
+ *
+ * `overscroll-behavior-x: contain` empeche le glissement lateral de la barre
+ * de declencher la navigation arriere du navigateur.
+ */
+.woocommerce .famma-product div.product .woocommerce-tabs ul.tabs {
 	display: flex;
 	flex-wrap: nowrap;
 	gap: var(--sp-1);
 	margin: 0;
 	padding: 0;
 	overflow-x: auto;
+	overscroll-behavior-x: contain;
 	border-block-end: 1px solid var(--famma-line);
 	list-style: none;
 }
@@ -560,21 +583,42 @@
    Carte « Produits similaires » — variante compacte (P-4)
 
    Même carte que la boutique, resserrée : la maquette de la fiche
-   descend l'image à 168px, le nom à 13,5px, le prix à 17px, et
-   remplace le bouton pleine largeur par un carré de 34px à icône
-   seule. La carte boutique est à 22/22 sur ses propres mesures —
+   descend le nom à 13,5px, le prix à 17px, et remplace le bouton
+   pleine largeur par un carré de 34px à icône seule. Elle posait
+   aussi l'image à 168px ; cette hauteur est retirée plus bas, elle
+   était la source d'un cadrage différent de celui de la boutique.
+   La carte boutique est à 22/22 sur ses propres mesures —
    d'où une portée stricte à `.related` / `.upsells` plutôt qu'une
    retouche de product-card.css, qui les aurait décalées toutes.
    ------------------------------------------------------------ */
 
-.famma-product .related ul.products.famma-cards li.product a img,
-.famma-product .upsells ul.products.famma-cards li.product a img {
-	block-size: 168px;
+
+/*
+ * Les lignes reservees de la carte sont calculees depuis les tailles de texte
+ * (voir `product-card.css`). La variante compacte descend le nom et le prix :
+ * ses lignes doivent descendre avec, sinon elle reserve la hauteur de la carte
+ * boutique et gagne deux bandes vides.
+ */
+.famma-product .related ul.products.famma-cards li.product .product-details,
+.famma-product .upsells ul.products.famma-cards li.product .product-details {
+	--card-row-title: 2.375rem;
+	--card-row-price: calc(2 * 1.6 * var(--fs-card-price-sm));
 }
+
+/*
+ * Le visuel ne repose PLUS de hauteur ici. Les 168px de la maquette valaient
+ * une proportion de 1,306 pour une colonne de 219px, alors que la carte
+ * boutique en montre 1,2 : la meme vignette carree etait recadree deux fois
+ * differemment selon la page. La carte compacte garde ce qui la distingue —
+ * nom, prix et bouton plus petits — et partage desormais la proportion de
+ * visuel de toutes les autres (`--card-media-ratio`), donc le meme cadrage.
+ * Consequence a valider : le visuel passe de 168px a 183px de haut ici.
+ */
 
 .famma-product .related ul.products.famma-cards li.product .woocommerce-loop-product__title,
 .famma-product .upsells ul.products.famma-cards li.product .woocommerce-loop-product__title {
-	min-block-size: 2.375rem; /* 38px */
+	/* La hauteur est fermee par `--card-row-title`, redefini ci-dessus : rien a
+	   reposer ici, seule la taille du texte change. */
 	font-size: var(--fs-card-name-sm);
 }
 

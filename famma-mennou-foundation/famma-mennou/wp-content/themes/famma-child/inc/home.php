@@ -235,11 +235,20 @@ function famma_child_home_hero(): void {
 }
 
 /**
- * Grille des catégories réelles.
+ * Carrousel des rayons du catalogue.
  *
- * Termes `product_cat` non vides. Aucune catégorie n'est créée ni suggérée :
- * la maquette en montrait six, la boutique en affiche exactement autant
- * qu'elle en possède, et la section disparaît si elle n'en a aucune.
+ * Source : `famma_child_product_categories()`, la meme que la colonne de
+ * filtres et que le sous-menu « Categories » de l'en-tete. La section listait
+ * auparavant les termes non vides tries par nombre de produits : elle affichait
+ * donc « Sans rayon » — le fourre-tout de WooCommerce — et cachait les rayons
+ * encore sans produit, alors que ce sont justement ceux qu'un catalogue jeune a
+ * besoin de montrer. Aucune categorie n'est creee ni suggeree ; la section
+ * disparait si le catalogue n'en a aucune.
+ *
+ * Le carrousel est un defilement natif : la piste glisse au doigt sans
+ * JavaScript, et `carousel.js` n'ajoute que les fleches, uniquement quand la
+ * piste depasse vraiment. Les fleches sont donc `hidden` cote serveur — une
+ * commande qui ne commande rien est pire que pas de commande.
  *
  * @return void
  */
@@ -248,44 +257,58 @@ function famma_child_home_categories(): void {
 		return;
 	}
 
-	$terms = get_terms(
-		array(
-			'taxonomy'   => 'product_cat',
-			'hide_empty' => true,
-			'number'     => 6,
-			'orderby'    => 'count',
-			'order'      => 'DESC',
-		)
-	);
+	$terms = famma_child_product_categories();
 
-	if ( is_wp_error( $terms ) || array() === $terms ) {
+	if ( array() === $terms ) {
 		return;
 	}
 	?>
 	<section class="famma-home__section">
 		<?php famma_child_home_title( __( 'Parcourez nos catégories', 'famma-child' ) ); ?>
 
-		<ul class="famma-cats">
-			<?php
-			foreach ( $terms as $term ) :
-				$thumb_id = (int) get_term_meta( $term->term_id, 'thumbnail_id', true );
-				?>
-				<li>
-					<a class="famma-cats__card" href="<?php echo esc_url( (string) get_term_link( $term ) ); ?>">
-						<span class="famma-cats__media">
-							<?php if ( $thumb_id ) : ?>
-								<?php echo wp_get_attachment_image( $thumb_id, 'thumbnail', false, array( 'alt' => '' ) ); ?>
-							<?php else : ?>
-								<span class="famma-cats__mark" aria-hidden="true">
-									<svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.4L12 17.4 6.2 20.4l1.1-6.4L2.6 9.4l6.5-.9z"/></svg>
-								</span>
-							<?php endif; ?>
-						</span>
-						<span class="famma-cats__name"><?php echo esc_html( $term->name ); ?></span>
-					</a>
-				</li>
-			<?php endforeach; ?>
-		</ul>
+		<div class="famma-cats" data-famma-carousel>
+			<button
+				class="famma-cats__nav famma-cats__nav--prev"
+				type="button"
+				data-famma-carousel-prev
+				hidden
+			>
+				<?php famma_child_the_icon( 'chevron', 'famma-cats__nav-icon' ); ?>
+				<span class="screen-reader-text"><?php esc_html_e( 'Catégories précédentes', 'famma-child' ); ?></span>
+			</button>
+
+			<ul class="famma-cats__track" data-famma-carousel-track>
+				<?php
+				foreach ( $terms as $term ) :
+					$thumb_id = (int) get_term_meta( $term->term_id, 'thumbnail_id', true );
+					?>
+					<li class="famma-cats__item">
+						<a class="famma-cats__card" href="<?php echo esc_url( famma_child_product_category_url( $term->slug ) ); ?>">
+							<span class="famma-cats__media">
+								<?php if ( $thumb_id ) : ?>
+									<?php echo wp_get_attachment_image( $thumb_id, 'thumbnail', false, array( 'alt' => '' ) ); ?>
+								<?php else : ?>
+									<span class="famma-cats__mark" aria-hidden="true">
+										<svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.4L12 17.4 6.2 20.4l1.1-6.4L2.6 9.4l6.5-.9z"/></svg>
+									</span>
+								<?php endif; ?>
+							</span>
+							<span class="famma-cats__name"><?php echo esc_html( $term->name ); ?></span>
+						</a>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+
+			<button
+				class="famma-cats__nav famma-cats__nav--next"
+				type="button"
+				data-famma-carousel-next
+				hidden
+			>
+				<?php famma_child_the_icon( 'chevron', 'famma-cats__nav-icon' ); ?>
+				<span class="screen-reader-text"><?php esc_html_e( 'Catégories suivantes', 'famma-child' ); ?></span>
+			</button>
+		</div>
 	</section>
 	<?php
 }
