@@ -85,6 +85,22 @@ function famma_child_content_tag(): string {
  */
 function famma_child_topbar_promises(): array {
 	/*
+	 * Le contenu appartient au propriétaire, pas au thème : le plugin sert les
+	 * promesses telles qu'elles sont éditées dans « FAMMA → Pages ». Il porte
+	 * aussi les deux règles de la maquette — un seul accent, et la garde qui
+	 * masque le support WhatsApp tant qu'aucun numéro n'existe.
+	 */
+	if ( class_exists( '\Famma\Core\Topbar_Content' ) ) {
+		$promises = \Famma\Core\Topbar_Content::promises();
+
+		/** This filter is documented at the end of this function. */
+		return (array) apply_filters( 'famma_child_topbar_promises', $promises );
+	}
+
+	/*
+	 * Repli sans le plugin : le thème doit rester utilisable seul. Les valeurs
+	 * ci-dessous sont celles que le plugin propose par défaut.
+	 *
 	 * La livraison offerte ouvre la liste. C'est le §4 du brief, pas un
 	 * argument inventé : le coût de 7 TND est interne, le client voit 0 TND.
 	 * La promesse est donc vérifiable, et c'est la seule qui porte un accent

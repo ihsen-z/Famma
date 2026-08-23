@@ -40,13 +40,17 @@ final class Pages_Content {
 
 	/**
 	 * Groupe de réglages, au sens de la Settings API.
+	 *
+	 * Public : les autres blocs de contenu éditable s'enregistrent dans le même
+	 * groupe et sur le même écran, pour que le propriétaire n'ait qu'un seul
+	 * endroit à connaître.
 	 */
-	private const GROUP = 'famma_pages';
+	public const GROUP = 'famma_pages';
 
 	/**
 	 * Identifiant de la page d'administration.
 	 */
-	private const SLUG = 'famma-pages';
+	public const SLUG = 'famma-pages';
 
 	/**
 	 * Coordonnées, lues par le thème via `famma_child_setting()`.
