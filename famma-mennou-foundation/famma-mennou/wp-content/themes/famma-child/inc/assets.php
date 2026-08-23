@@ -420,3 +420,41 @@ function famma_child_cart_fragment( array $fragments ): array {
 	return $fragments;
 }
 add_filter( 'woocommerce_add_to_cart_fragments', 'famma_child_cart_fragment' );
+
+/**
+ * Charge la feuille des pages institutionnelles.
+ *
+ * Seules « À propos » et « Contact » en ont besoin : la charger partout
+ * ajouterait une requête à chaque page pour du style que personne ne lit.
+ *
+ * Les identifiants sont filtrables parce qu'ils dépendent des permaliens du
+ * site, pas du thème : renommer une page ne doit pas exiger de toucher au code.
+ *
+ * @return void
+ */
+function famma_child_enqueue_pages(): void {
+	/**
+	 * Filtre les pages qui reçoivent la feuille institutionnelle.
+	 *
+	 * @param array<int, string> $slugs Identifiants de page.
+	 */
+	$slugs = (array) apply_filters( 'famma_child_content_page_slugs', array( 'a-propos', 'contact' ) );
+
+	if ( ! is_page( $slugs ) ) {
+		return;
+	}
+
+	$path = get_stylesheet_directory() . '/assets/css/pages.css';
+
+	if ( ! file_exists( $path ) ) {
+		return;
+	}
+
+	wp_enqueue_style(
+		'famma-pages',
+		get_stylesheet_directory_uri() . '/assets/css/pages.css',
+		array( 'famma-layout' ),
+		(string) filemtime( $path )
+	);
+}
+add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_pages', 22 );

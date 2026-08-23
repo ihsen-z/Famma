@@ -115,6 +115,7 @@
 				<element value="famma_child_enqueue_home"/>
 				<element value="famma_child_enqueue_layout"/>
 				<element value="famma_child_enqueue_navigation"/>
+				<element value="famma_child_enqueue_pages"/>
 				<element value="famma_child_enqueue_product"/>
 				<element value="famma_child_enqueue_product_card"/>
 				<element value="famma_child_enqueue_shop"/>
@@ -169,6 +170,12 @@
 				<element value="famma_child_order_received_text"/>
 				<element value="famma_child_order_received_title"/>
 				<element value="famma_child_panel_account"/>
+				<element value="famma_child_page_editorial"/>
+				<element value="famma_child_page_lines"/>
+				<element value="famma_child_page_text"/>
+				<element value="famma_child_page_todo"/>
+				<element value="famma_child_page_whatsapp_url"/>
+				<element value="famma_child_pages_available"/>
 				<element value="famma_child_preload_fonts"/>
 				<element value="famma_child_price_savings"/>
 				<element value="famma_child_primary_nav"/>

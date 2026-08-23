@@ -125,3 +125,30 @@ Chaque décision est datée, argumentée, et déclarée **réversible ou non**. 
 - **`setup.sh` est devenu portable** (`FAMMA_WP_CLI`, `FAMMA_SCRIPTS_DIR`, `FAMMA_LANG_DIR`, `FAMMA_URL`, `FAMMA_ADMIN`, `FAMMA_REWRITE_HARD`, `FAMMA_SKIP_OG`) plutôt que dupliqué. Un seul script, donc une seule vérité.
 - **Écart de version assumé** : Local sert MySQL 8.0.35 là où Docker sert MariaDB 11.4. Sans import de base, la différence est sans effet ; elle redeviendrait un sujet le jour où l'on importera un dump.
 - Toute validation destinée à la production reste à rejouer sous Docker, seul environnement aligné sur les versions épinglées.
+
+---
+
+## ADR-007 — Contenu des pages institutionnelles : tout paramétrable, rien en dur
+**Date** : 2026-08-23 · **Statut** : ACTÉE (propriétaire : « tous doit etre parametrable ne pas utilisé le hard coding ») · **Réversible** : oui, coût faible
+
+**Décision** : le contenu des pages **À propos** et **Contact** vit dans des options WordPress éditables depuis **FAMMA → Pages**. Les gabarits du thème enfant ne portent aucun texte : ils lisent le plugin et se taisent quand un champ est vide. La règle vaut pour les pages à venir, pas seulement pour ces deux-là.
+
+**Options évaluées**
+
+| Option | Verdict |
+|---|---|
+| Textes en dur dans les gabarits, traduits par `__()` | **Rejeté** — changer une phrase exigerait un dev et un déploiement |
+| Contenu laissé à l'éditeur de blocs | **Rejeté** comme mécanisme principal — le design n'est plus verrouillé, et la structure FR/Derja n'est pas garantie |
+| **Champs d'options dans `famma-core`, gabarit en présentation seule** | **CHOISI** |
+
+**Justification** : le propriétaire doit rester autonome sur son contenu. Un texte qu'il ne peut pas corriger seul finit périmé.
+
+**Conséquences**
+
+- **Un schéma unique** décrit les champs ; l'écran d'administration, l'assainissement et la lecture côté thème en découlent tous les trois. Ajouter un bloc = ajouter une ligne au schéma.
+- **Bilingue par champ** : chaque bloc existe en français et en derja. L'arabe n'est servi qu'en contexte RTL, et retombe sur le français s'il est vide.
+- **Exception au « fichier unique »** (règle 7) : la classe vit dans `famma-core/includes/pages-content.php`. `famma-core.php` passait 2 100 lignes, ce que la règle 6 signale comme un appel à scinder. L'exception préserve les deux garanties du fichier unique — un `require_once` explicite plutôt qu'un autoloader, et une seule classe par fichier inclus.
+- **Les coordonnées deviennent éditables**, y compris le **numéro WhatsApp** qui n'était lisible que depuis une constante. La précédence reste celle du pied de page : constante `.env` du serveur d'abord, champ d'administration en repli. Un champ neutralisé par une constante le dit à l'écran.
+- **Aucune donnée inventée** (§58) : les seuls faits affirmés sont ceux que le checkout applique — paiement à la livraison, livraison offerte, 24 gouvernorats. Les **horaires n'ont aucune valeur par défaut** : les inventer promettrait une disponibilité que personne n'a confirmée.
+- **Pas de formulaire de contact** : WhatsApp porte l'appel à l'action, le téléphone et l'e-mail suivent. Un formulaire aurait ajouté une dépendance, une surface de spam et une attente de réponse par e-mail que personne ne surveille.
+- **Un bloc vide disparaît** côté client, mais laisse un rappel visible du seul propriétaire (`manage_options`) : masquer en silence ferait qu'un champ oublié ne se remarque jamais.

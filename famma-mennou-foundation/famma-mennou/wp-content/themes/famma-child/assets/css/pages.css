@@ -1,0 +1,289 @@
+/*
+ * FAMMA — pages institutionnelles (À propos, Contact).
+ *
+ * Aucune valeur en dur : couleurs, espacements et typographie viennent des
+ * jetons de tokens.css, pour que ces deux pages suivent la charte sans la
+ * redéfinir. Le style est exprimé en propriétés logiques
+ * (margin-inline, padding-inline, border-inline-start) afin que la version
+ * arabe s'affiche correctement en RTL sans feuille dupliquée.
+ *
+ * Mobile-first : la mise en page part d'une colonne, et les grilles ne
+ * s'ouvrent qu'à partir de 48rem.
+ */
+
+/* --- Ossature commune aux deux pages --- */
+
+.famma-page {
+	padding-block: var(--sp-8) var(--sp-12);
+}
+
+.famma-page__hero {
+	margin-block-end: var(--sp-10);
+}
+
+.famma-page__title {
+	margin: 0 0 var(--sp-4);
+	color: var(--famma-blue);
+	font-size: var(--fs-h1);
+	font-weight: var(--fw-bold);
+	line-height: 1.15;
+}
+
+.famma-page__lead {
+	max-inline-size: 46rem;
+	margin: 0;
+	color: var(--famma-text-prose);
+	font-size: var(--fs-lead);
+	line-height: 1.6;
+}
+
+.famma-page__section {
+	margin-block-end: var(--sp-10);
+}
+
+.famma-page__heading {
+	margin: 0 0 var(--sp-4);
+	color: var(--famma-blue);
+	font-size: var(--fs-h2);
+	font-weight: var(--fw-semibold);
+	line-height: 1.25;
+}
+
+.famma-page__text {
+	max-inline-size: 46rem;
+	margin: 0;
+	color: var(--famma-text-prose);
+	font-size: var(--fs-body);
+	line-height: 1.7;
+}
+
+.famma-page__editorial {
+	margin-block-end: var(--sp-10);
+	color: var(--famma-text-prose);
+}
+
+/*
+ * Rappel réservé à l'administration. Volontairement sobre et jamais coloré en
+ * rouge : ce n'est pas une erreur, c'est un champ qui attend son texte.
+ */
+.famma-page__todo {
+	margin: 0 0 var(--sp-4);
+	padding: var(--sp-3) var(--sp-4);
+	border-inline-start: 3px solid var(--famma-warning);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-warning-bg);
+	color: var(--famma-warning-700);
+	font-size: var(--fs-small);
+}
+
+/* --- Bouton --- */
+
+.famma-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--sp-3);
+	/* 48px : cible tactile minimale du projet. */
+	min-block-size: var(--sp-12);
+	padding-inline: var(--sp-6);
+	border: 0;
+	border-radius: var(--famma-radius-sm);
+	font-size: var(--fs-button);
+	font-weight: var(--fw-semibold);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.famma-button--primary {
+	background: var(--famma-orange);
+	/* Bleu sur orange : le blanc de la maquette échouait en contraste AA. */
+	color: var(--famma-on-orange);
+}
+
+.famma-button--primary:hover,
+.famma-button--primary:focus-visible {
+	background: var(--famma-orange-600);
+	color: var(--famma-on-orange);
+}
+
+/* --- À propos : les trois piliers --- */
+
+.famma-pillars {
+	display: grid;
+	gap: var(--sp-4);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-pillars__item {
+	padding: var(--sp-6);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+}
+
+.famma-pillars__icon,
+.famma-contact-card__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: var(--sp-12);
+	block-size: var(--sp-12);
+	margin-block-end: var(--sp-4);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-surface-icon);
+	color: var(--famma-orange);
+}
+
+.famma-pillars__icon svg,
+.famma-contact-card__icon svg {
+	inline-size: 1.5rem;
+	block-size: 1.5rem;
+}
+
+.famma-pillars__title {
+	margin: 0 0 var(--sp-2);
+	color: var(--famma-blue);
+	font-size: var(--fs-h4);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-pillars__text {
+	margin: 0;
+	color: var(--famma-text-prose);
+	font-size: var(--fs-body);
+	line-height: 1.6;
+}
+
+/* --- À propos : engagements --- */
+
+.famma-commitments {
+	display: grid;
+	gap: var(--sp-3);
+	max-inline-size: 46rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-commitments__item {
+	position: relative;
+	padding-inline-start: var(--sp-8);
+	color: var(--famma-text-prose);
+	font-size: var(--fs-body);
+	line-height: 1.6;
+}
+
+/*
+ * La puce est dessinée en CSS plutôt qu'avec une icône : elle doit suivre le
+ * sens de lecture, et `inset-inline-start` s'inverse seule en arabe.
+ */
+.famma-commitments__item::before {
+	content: "";
+	position: absolute;
+	inset-inline-start: 0;
+	inset-block-start: 0.55em;
+	inline-size: var(--sp-3);
+	block-size: var(--sp-3);
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-orange);
+}
+
+/* --- Contact --- */
+
+.famma-contact-page__whatsapp,
+.famma-contact-page__hours,
+.famma-contact-page__coverage {
+	padding: var(--sp-6);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+}
+
+.famma-contact-page__whatsapp {
+	border-color: var(--famma-whatsapp);
+}
+
+.famma-contact-page__whatsapp .famma-contact-card__icon {
+	background: var(--famma-surface-icon);
+	color: var(--famma-whatsapp);
+}
+
+.famma-contact-page__cta {
+	margin-block-start: var(--sp-6);
+	/* Pleine largeur sur mobile : c'est l'action principale de la page. */
+	inline-size: 100%;
+}
+
+.famma-contact-cards {
+	display: grid;
+	gap: var(--sp-4);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-contact-card {
+	padding: var(--sp-6);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+}
+
+.famma-contact-card__title {
+	margin: 0 0 var(--sp-2);
+	color: var(--famma-blue);
+	font-size: var(--fs-h4);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-contact-card__value {
+	display: inline-block;
+	/* Le numéro et l'e-mail restent en LTR même en page arabe. */
+	direction: ltr;
+	color: var(--famma-text-prose);
+	font-size: var(--fs-body);
+	line-height: 1.6;
+	overflow-wrap: anywhere;
+}
+
+a.famma-contact-card__value {
+	/* Cible tactile : un numéro cliquable doit rester attrapable au pouce. */
+	min-block-size: var(--sp-10);
+	color: var(--famma-blue);
+	text-decoration: none;
+}
+
+a.famma-contact-card__value:hover,
+a.famma-contact-card__value:focus-visible {
+	text-decoration: underline;
+}
+
+.famma-hours {
+	display: grid;
+	gap: var(--sp-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-hours__item {
+	color: var(--famma-text-prose);
+	font-size: var(--fs-body);
+	line-height: 1.6;
+}
+
+/* --- Au-delà du mobile --- */
+
+@media (min-width: 48rem) {
+
+	.famma-pillars,
+	.famma-contact-cards {
+		grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+	}
+
+	.famma-contact-page__cta {
+		inline-size: auto;
+	}
+}

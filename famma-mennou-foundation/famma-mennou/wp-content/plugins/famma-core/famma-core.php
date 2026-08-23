@@ -15,6 +15,12 @@
  * to misfire, and no way to declare the same class twice. This is deliberate —
  * see ClaudeMemo.md rule 7 and docs/ARCHITECTURE.md. The phpcs ruleset excludes
  * the one-structure-per-file sniffs for this reason.
+ *
+ * One exception, in `includes/` : le contenu éditable des pages
+ * institutionnelles. Ce fichier avait franchi les 2 100 lignes, et la règle 6
+ * demande de scinder par responsabilité passé ce volume. L'exception reste
+ * étroite et préserve les deux garanties ci-dessus : un `require_once` explicite
+ * plutôt qu'un autoloader, et une seule classe par fichier inclus.
  */
 
 namespace Famma\Core;
@@ -23,6 +29,8 @@ defined( 'ABSPATH' ) || exit;
 
 define( 'FAMMA_CORE_VERSION', '0.2.0' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
+
+require_once __DIR__ . '/includes/pages-content.php';
 
 /**
  * Reads configuration from env-fed constants and WordPress options.
@@ -62,10 +70,21 @@ final class Config {
 	/**
 	 * WhatsApp number, digits only.
 	 *
+	 * La constante du serveur l'emporte, comme partout ailleurs, mais elle
+	 * n'est plus la seule source : le numéro se saisit aussi depuis
+	 * « FAMMA → Pages ». Sans ce repli, le propriétaire devrait éditer un
+	 * fichier sur le serveur pour changer un numéro de téléphone.
+	 *
 	 * @return string
 	 */
 	public function whatsapp_number(): string {
-		return preg_replace( '/\D+/', '', $this->c( 'FAMMA_WHATSAPP_NUMBER' ) );
+		$raw = $this->c( 'FAMMA_WHATSAPP_NUMBER' );
+
+		if ( '' === $raw ) {
+			$raw = (string) get_option( 'famma_whatsapp_number', '' );
+		}
+
+		return preg_replace( '/\D+/', '', $raw );
 	}
 
 	/**
@@ -2154,6 +2173,7 @@ function boot(): void {
 	if ( is_admin() ) {
 		Product_Faq::instance();
 		Dashboard::instance();
+		Pages_Content::instance();
 	}
 }
 
