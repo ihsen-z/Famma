@@ -258,7 +258,11 @@
 	--chrome-topbar-pad: 11px;
 	--chrome-promise-gap: 9px;
 	--chrome-header-pad: 14px;
-	--chrome-header-gap: 22px;
+	/* Mobile d'abord : 8px ici, la valeur de maquette (22px) est reposee a
+	   partir de 1000px, plus bas. Sur un telephone de 375px, la barre doit
+	   loger le lockup et trois cibles de 48px — 22px de gouttiere entre chaque
+	   bloc la faisaient deborder de la fenetre. */
+	--chrome-header-gap: var(--sp-2);
 	--chrome-nav-gap: 22px;
 	--chrome-field-pad-block: 9px;
 	--chrome-field-pad-inline: 14px;
@@ -276,4 +280,18 @@
 	--focus-ring-color: var(--famma-blue);
 	--focus-ring-width: 3px;
 	--focus-halo: 0 0 0 5px var(--famma-white);
+}
+
+/*
+ * Reprise des valeurs de maquette a partir du bureau.
+ *
+ * Le socle de ce fichier est mobile : les jetons redefinis ici sont ceux dont
+ * la valeur de maquette ne tient pas dans 375px de large. Ils ne sont pas
+ * « corriges » pour le bureau, ils y sont RESTITUES — la maquette est une
+ * maquette de bureau, et c'est le telephone qui a besoin d'une adaptation.
+ */
+@media (min-width: 1000px) {
+	:root {
+		--chrome-header-gap: 22px;
+	}
 }

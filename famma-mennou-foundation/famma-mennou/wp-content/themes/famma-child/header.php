@@ -57,6 +57,7 @@ defined( 'ABSPATH' ) || exit;
 		<div class="famma-container">
 			<?php famma_child_primary_nav( 'mobile' ); ?>
 			<?php famma_child_search_form( 'mobile' ); ?>
+			<?php famma_child_panel_account(); ?>
 		</div>
 	</div>
 </header>

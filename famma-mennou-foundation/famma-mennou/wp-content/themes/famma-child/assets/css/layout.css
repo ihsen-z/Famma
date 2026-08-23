@@ -116,9 +116,28 @@
 	block-size: 1.0625rem;
 }
 
-/* Sous 700px la barre n'a la place que d'une promesse : le paiement à la
-   livraison, qui est l'argument de vente. Entre 700 et 1000px elles passent
-   à la ligne comme dans la maquette, au lieu de disparaître. */
+/*
+ * La promesse accentuee : gras + orange vif.
+ *
+ * L'orange vif, pas le -700 des fonds blancs : sur le marine de la barre c'est
+ * lui qui passe (6,32:1), le -700 y tomberait sous le seuil. Meme arbitrage que
+ * le pied de page et le heros, qui redefinissent deja l'accent en contexte
+ * sombre.
+ *
+ * Le libelle est ecrit en capitales dans le contenu, pas impose par
+ * `text-transform` : c'est une decision editoriale du proprietaire, elle doit
+ * rester lisible et traduisible dans la chaine — l'arabe n'a pas de capitales,
+ * et une regle CSS la lui appliquerait sans effet ni sens.
+ */
+.famma-topbar__promise--accent {
+	color: var(--famma-orange);
+	font-weight: var(--fw-semibold);
+}
+
+/* Sous 700px la barre n'a la place que d'une promesse : la livraison offerte,
+   qui est l'argument de vente le plus fort — d'où sa place en tête du tableau
+   dans `famma_child_topbar_promises()`. Entre 700 et 1000px elles passent à la
+   ligne comme dans la maquette, au lieu de disparaître. */
 @media (max-width: 699px) {
 	.famma-topbar__promise:not(:first-child) {
 		display: none;
@@ -366,10 +385,13 @@
 
 /* --- Actions : compte, panier, burger --- */
 
+/* Mobile d'abord : 8px entre les cibles, 16px de la maquette a partir de
+   1000px (bloc plus bas). Trois cibles de 48px et deux gouttieres de 16px
+   coutent 176px, soit la moitie de la largeur utile d'un telephone. */
 .famma-header__actions {
 	display: flex;
 	align-items: center;
-	gap: var(--sp-4);
+	gap: var(--sp-2);
 }
 
 .famma-header__action,
@@ -463,6 +485,41 @@
 	border-block-end: 0;
 }
 
+
+/*
+ * Compte : dans le panneau sur telephone, dans la barre sur bureau.
+ *
+ * A 360px, lockup de maquette (173px) + trois cibles de 48px (160px) = 333px
+ * pour 320px utiles : la barre debordait de la fenetre et tout le site
+ * defilait horizontalement. Le compte est l'action la moins urgente des trois
+ * — le panier et le menu, eux, doivent rester sous le pouce — donc c'est lui
+ * qui descend dans le panneau, ou il gagne un libelle visible.
+ *
+ * Aucune fonction perdue : les deux moities de cette bascule sont exclusives,
+ * le lien existe toujours exactement une fois.
+ */
+.famma-header__action--account {
+	display: none;
+}
+
+.famma-header__panel-account {
+	display: flex;
+	align-items: center;
+	gap: var(--sp-3);
+	min-block-size: var(--sp-12);
+	margin-block-start: var(--sp-3);
+	padding-block: var(--sp-2);
+	border-block-start: 1px solid var(--famma-line-soft);
+	color: var(--famma-blue);
+	font-size: var(--fs-body);
+	text-decoration: none;
+}
+
+.famma-header__panel-account:hover,
+.famma-header__panel-account:focus-visible {
+	color: var(--famma-accent-text);
+}
+
 /* --- Bascule desktop / mobile --- */
 
 .famma-nav--desktop {
@@ -473,6 +530,12 @@
 	.famma-nav--desktop,
 	.famma-search--desktop {
 		display: flex;
+	}
+
+	/* Le compte remonte dans la barre : la largeur est la, et le pointeur
+	   n'a pas besoin de 48px. */
+	.famma-header__action--account {
+		display: inline-flex;
 	}
 
 	.famma-burger,
@@ -703,6 +766,10 @@
 		line-height: 1.45;
 	}
 
+	.famma-header__actions {
+		gap: var(--sp-4);
+	}
+
 	.famma-header__action {
 		inline-size: 2.375rem;
 		block-size: 2.375rem;
@@ -804,4 +871,22 @@
 	.famma-socials__link {
 		transition: none;
 	}
+}
+
+/*
+ * Largeur de fenetre pour les blocs pleine largeur du parent.
+ *
+ * Kadence dessine `.alignfull` / `.alignwide` avec `width: var(--global-vw,
+ * 100vw)` et definit ce jeton depuis son JavaScript. Ce theme ne charge pas les
+ * scripts d'habillage du parent : le jeton restait donc vide, la valeur de repli
+ * `100vw` s'appliquait, et `100vw` INCLUT la barre de defilement. Mesure a
+ * 1280px : le bandeau editorial de l'accueil sortait de 15px et faisait defiler
+ * toute la page lateralement.
+ *
+ * `--scrollbar-offset`, lui, est bien pose par le parent sur `html`. On
+ * reconstruit le jeton attendu a partir de cette mesure, plutot que de
+ * recharger un script entier pour une seule variable.
+ */
+:root {
+	--global-vw: calc(100vw - var(--scrollbar-offset, 0px));
 }

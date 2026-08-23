@@ -71,17 +71,34 @@ function famma_child_content_tag(): string {
 }
 
 /**
- * Les trois promesses de la barre supérieure.
+ * Les promesses de la barre supérieure.
  *
- * Ce sont des affirmations vérifiables, pas du remplissage : la livraison
- * couvre les 24 gouvernorats, le paiement à la livraison est le seul moyen
- * de paiement, et le support WhatsApp n'est annoncé que si un numéro existe
- * réellement.
+ * Ce sont des affirmations vérifiables, pas du remplissage : la livraison est
+ * offerte au client (§4), elle couvre les 24 gouvernorats, le paiement à la
+ * livraison est le seul moyen de paiement, et le support WhatsApp n'est annoncé
+ * que si un numéro existe réellement.
  *
- * @return array<int, array{icon: string, label: string}>
+ * `accent` met la promesse en gras et en orange. Une seule la porte : deux
+ * accents dans une barre de 40px n'accentuent plus rien.
+ *
+ * @return array<int, array{icon: string, label: string, accent?: bool}>
  */
 function famma_child_topbar_promises(): array {
+	/*
+	 * La livraison offerte ouvre la liste. C'est le §4 du brief, pas un
+	 * argument inventé : le coût de 7 TND est interne, le client voit 0 TND.
+	 * La promesse est donc vérifiable, et c'est la seule qui porte un accent
+	 * visuel — elle est la raison la plus forte de rester sur la page.
+	 *
+	 * Sa place en tête n'est pas décorative : sous 700px la barre n'affiche
+	 * que la première promesse.
+	 */
 	$promises = array(
+		array(
+			'icon'   => 'tag',
+			'label'  => __( 'LIVRAISON GRATUITE 100%', 'famma-child' ),
+			'accent' => true,
+		),
 		array(
 			'icon'  => 'truck',
 			'label' => __( 'Livraison partout en Tunisie', 'famma-child' ),
@@ -118,8 +135,11 @@ function famma_child_topbar(): void {
 	<div class="famma-topbar">
 		<div class="famma-container famma-topbar__inner">
 			<ul class="famma-topbar__promises">
-				<?php foreach ( $promises as $promise ) : ?>
-					<li class="famma-topbar__promise">
+				<?php
+				foreach ( $promises as $promise ) :
+					$accent = ! empty( $promise['accent'] ) ? ' famma-topbar__promise--accent' : '';
+					?>
+					<li class="famma-topbar__promise<?php echo esc_attr( $accent ); ?>">
 						<?php famma_child_the_icon( $promise['icon'] ); ?>
 						<span><?php echo esc_html( $promise['label'] ); ?></span>
 					</li>
@@ -391,7 +411,7 @@ function famma_child_header_actions(): void {
 	?>
 	<div class="famma-header__actions">
 		<?php if ( $account_url ) : ?>
-			<a class="famma-header__action" href="<?php echo esc_url( $account_url ); ?>">
+			<a class="famma-header__action famma-header__action--account" href="<?php echo esc_url( $account_url ); ?>">
 				<?php famma_child_the_icon( 'user' ); ?>
 				<span class="screen-reader-text"><?php esc_html_e( 'Mon compte', 'famma-child' ); ?></span>
 			</a>
@@ -425,4 +445,171 @@ function famma_child_header_actions(): void {
 		</button>
 	</div>
 	<?php
+}
+
+/**
+ * Lien « Mon compte » du panneau mobile.
+ *
+ * Sur un téléphone de 360px, la barre ne peut pas loger le lockup de la
+ * maquette ET trois cibles tactiles de 48px : elle débordait de la fenêtre,
+ * ce qui provoquait un défilement horizontal sur tout le site. Le compte
+ * descend donc dans le panneau, où il gagne un libellé visible au lieu d'une
+ * icône seule ; le panier et le menu restent dans la barre, à portée du pouce.
+ *
+ * Rien n'est retiré : à partir de 1000px, l'icône reprend sa place dans la
+ * barre et c'est ce lien-ci qui disparaît, le panneau n'existant plus.
+ *
+ * @return void
+ */
+function famma_child_panel_account(): void {
+	$account_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : '';
+
+	if ( ! $account_url ) {
+		return;
+	}
+	?>
+	<a class="famma-header__panel-account" href="<?php echo esc_url( $account_url ); ?>">
+		<?php famma_child_the_icon( 'user' ); ?>
+		<span><?php esc_html_e( 'Mon compte', 'famma-child' ); ?></span>
+	</a>
+	<?php
+}
+
+/**
+ * Remplit le sous-menu « Catégories » du menu principal avec les vrais rayons.
+ *
+ * Le menu livré portait un sous-menu écrit à la main : un seul enfant,
+ * « Uncategorized », vers une URL d'archive qui n'existe plus. Un catalogue
+ * vivant ne peut pas dépendre d'une liste recopiée dans l'admin — un rayon
+ * ajouté n'y apparaîtrait jamais, un rayon renommé y mentirait.
+ *
+ * L'entrée hôte est reconnue dans cet ordre :
+ *
+ * 1. la classe CSS `famma-menu-categories`, posée sur l'entrée dans l'admin —
+ *    c'est la désignation explicite, la seule qui survit à un changement de
+ *    libellé ou de langue ;
+ * 2. à défaut, une entrée dont le titre donne « categories » après
+ *    normalisation, ce qui couvre « Categories » comme « Catégories ».
+ *
+ * Les enfants de cette entrée sont ENTIÈREMENT gérés ici : ce qui aurait été
+ * ajouté à la main sous elle est remplacé au rendu.
+ *
+ * @param array<int, object> $items Entrées du menu, déjà triées.
+ * @param object             $args  Arguments de `wp_nav_menu()`.
+ * @return array<int, object>
+ */
+function famma_child_menu_categories( array $items, $args ): array {
+	if ( ! isset( $args->theme_location ) || 'primary' !== $args->theme_location ) {
+		return $items;
+	}
+
+	$host = famma_child_menu_categories_host( $items );
+
+	if ( null === $host ) {
+		return $items;
+	}
+
+	$terms = famma_child_product_categories();
+
+	if ( array() === $terms ) {
+		return $items;
+	}
+
+	// Les enfants recopiés à la main laissent la place à la liste réelle.
+	$items = array_values(
+		array_filter(
+			$items,
+			static function ( $item ) use ( $host ): bool {
+				return (int) $item->menu_item_parent !== (int) $host->ID;
+			}
+		)
+	);
+
+	$position = array_search( $host, $items, true );
+	$children = array();
+	$active   = famma_child_filter_active( 'product_cat' );
+
+	foreach ( $terms as $index => $term ) {
+		$children[] = famma_child_menu_category_item( $term, $host, $index, $active );
+	}
+
+	if ( false === $position ) {
+		return array_merge( $items, $children );
+	}
+
+	array_splice( $items, $position + 1, 0, $children );
+
+	return $items;
+}
+add_filter( 'wp_nav_menu_objects', 'famma_child_menu_categories', 10, 2 );
+
+/**
+ * Trouve l'entrée de menu qui doit porter les rayons.
+ *
+ * @param array<int, object> $items Entrées du menu.
+ * @return object|null
+ */
+function famma_child_menu_categories_host( array $items ) {
+	foreach ( $items as $item ) {
+		if ( in_array( 'famma-menu-categories', (array) $item->classes, true ) ) {
+			return $item;
+		}
+	}
+
+	foreach ( $items as $item ) {
+		if ( 'categories' === sanitize_title( $item->title ) ) {
+			return $item;
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Fabrique une entrée de menu pour un rayon.
+ *
+ * `wp_setup_nav_menu_item()` complète les propriétés que le walker attend
+ * (cible, description, xfn…) : les remplir à la main reviendrait à recopier le
+ * cœur, et un oubli sortirait en notice sur toutes les pages.
+ *
+ * L'identifiant est dérivé de celui de l'entrée hôte, dans une plage que les
+ * entrées réelles n'atteignent pas : il ne sert qu'à nommer la classe
+ * `menu-item-N` et doit seulement rester unique dans le menu.
+ *
+ * @param WP_Term $term   Rayon.
+ * @param object  $host   Entrée hôte.
+ * @param int     $index  Rang du rayon.
+ * @param string  $active Rayon actuellement filtré, s'il y en a un.
+ * @return object
+ */
+function famma_child_menu_category_item( WP_Term $term, $host, int $index, string $active ) {
+	$item = new stdClass();
+
+	$item->ID               = (int) $host->ID * 1000 + $index + 1;
+	$item->db_id            = 0;
+	$item->menu_item_parent = (int) $host->ID;
+	$item->object_id        = (int) $term->term_id;
+	$item->object           = 'custom';
+	$item->type             = 'custom';
+	$item->type_label       = __( 'Catégorie', 'famma-child' );
+	$item->title            = $term->name;
+	$item->url              = famma_child_product_category_url( $term->slug );
+	$item->classes          = array( 'famma-menu-category' );
+	$item->menu_order       = $index + 1;
+
+	/*
+	 * `_wp_menu_item_classes_by_context()` tourne AVANT `wp_nav_menu_objects` :
+	 * il n'a jamais vu ces entrées, donc c'est à nous de poser leur état. Sans
+	 * `current`, le walker émet une notice par rayon (constaté sous E_ALL) et
+	 * l'attribut `aria-current` du rayon actif n'est jamais écrit.
+	 */
+	$item->current               = '' !== $active && $active === $term->slug;
+	$item->current_item_parent   = false;
+	$item->current_item_ancestor = false;
+
+	if ( $item->current ) {
+		$item->classes[] = 'current-menu-item';
+	}
+
+	return wp_setup_nav_menu_item( $item );
 }
