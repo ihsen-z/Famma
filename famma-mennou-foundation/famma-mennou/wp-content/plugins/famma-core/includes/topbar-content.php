@@ -66,6 +66,86 @@ final class Topbar_Content {
 	 */
 	private function hooks(): void {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_media_picker' ) );
+	}
+
+	/**
+	 * Charge le sélecteur de médias, sur le seul écran qui l'utilise.
+	 *
+	 * @param string $hook Identifiant de l'écran courant.
+	 * @return void
+	 */
+	public function enqueue_media_picker( string $hook ): void {
+		if ( ! str_contains( $hook, Pages_Content::SLUG ) ) {
+			return;
+		}
+
+		wp_enqueue_media();
+		wp_add_inline_script( 'media-editor', $this->picker_script() );
+	}
+
+	/**
+	 * Script du sélecteur de médias.
+	 *
+	 * Écrit à la main plutôt que dans un fichier séparé : une trentaine de
+	 * lignes qui ne servent qu'à cet écran, et qui doivent rester lisibles à
+	 * côté du balisage qu'elles pilotent.
+	 *
+	 * @return string
+	 */
+	private function picker_script(): string {
+		$title = esc_js( __( 'Choisir une icône', 'famma-core' ) );
+		$use   = esc_js( __( 'Utiliser cette icône', 'famma-core' ) );
+
+		return <<<JS
+( function () {
+	document.addEventListener( 'click', function ( event ) {
+		var choose = event.target.closest( '.famma-icon-choose' );
+		var clear  = event.target.closest( '.famma-icon-clear' );
+		var row    = ( choose || clear ) && ( choose || clear ).closest( '.famma-icon-upload' );
+
+		if ( ! row ) {
+			return;
+		}
+
+		event.preventDefault();
+
+		var field   = row.querySelector( '.famma-icon-id' );
+		var preview = row.querySelector( '.famma-icon-preview' );
+
+		if ( clear ) {
+			field.value = '';
+			preview.innerHTML = '';
+			row.querySelector( '.famma-icon-clear' ).hidden = true;
+			return;
+		}
+
+		var frame = wp.media( {
+			title: '{$title}',
+			button: { text: '{$use}' },
+			library: { type: 'image' },
+			multiple: false
+		} );
+
+		frame.on( 'select', function () {
+			var image = frame.state().get( 'selection' ).first().toJSON();
+			var src   = ( image.sizes && image.sizes.thumbnail ) ? image.sizes.thumbnail.url : image.url;
+
+			field.value = image.id;
+			preview.innerHTML = '';
+			var img = document.createElement( 'img' );
+			img.src = src;
+			img.alt = '';
+			img.style.maxBlockSize = '32px';
+			img.style.maxInlineSize = '32px';
+			preview.appendChild( img );
+			row.querySelector( '.famma-icon-clear' ).hidden = false;
+		} );
+
+		frame.open();
+	} );
+}() );
+JS;
 	}
 
 	/**
@@ -79,14 +159,15 @@ final class Topbar_Content {
 	 */
 	public static function icons(): array {
 		return array(
-			'tag'   => __( 'Étiquette (prix, promotion)', 'famma-core' ),
-			'truck' => __( 'Camion (livraison)', 'famma-core' ),
-			'card'  => __( 'Carte (paiement)', 'famma-core' ),
-			'chat'  => __( 'Bulle (WhatsApp, support)', 'famma-core' ),
-			'phone' => __( 'Téléphone', 'famma-core' ),
-			'clock' => __( 'Horloge (délai, horaires)', 'famma-core' ),
-			'pin'   => __( 'Repère (zone, adresse)', 'famma-core' ),
-			'mail'  => __( 'Enveloppe (e-mail)', 'famma-core' ),
+			'tag'    => __( 'Étiquette (prix, promotion)', 'famma-core' ),
+			'truck'  => __( 'Camion (livraison)', 'famma-core' ),
+			'card'   => __( 'Carte (paiement)', 'famma-core' ),
+			'shield' => __( 'Bouclier (satisfait ou remboursé, garantie)', 'famma-core' ),
+			'chat'   => __( 'Bulle (WhatsApp, support)', 'famma-core' ),
+			'phone'  => __( 'Téléphone', 'famma-core' ),
+			'clock'  => __( 'Horloge (délai, horaires)', 'famma-core' ),
+			'pin'    => __( 'Repère (zone, adresse)', 'famma-core' ),
+			'mail'   => __( 'Enveloppe (e-mail)', 'famma-core' ),
 		);
 	}
 
@@ -105,6 +186,7 @@ final class Topbar_Content {
 				'label_fr' => 'LIVRAISON GRATUITE 100%',
 				'label_ar' => 'التوصيل فابور 100%',
 				'icon'     => 'tag',
+				'icon_id'  => 0,
 				'accent'   => true,
 				'whatsapp' => false,
 			),
@@ -112,6 +194,7 @@ final class Topbar_Content {
 				'label_fr' => 'Livraison partout en Tunisie',
 				'label_ar' => 'التوصيل في تونس الكل',
 				'icon'     => 'truck',
+				'icon_id'  => 0,
 				'accent'   => false,
 				'whatsapp' => false,
 			),
@@ -119,6 +202,7 @@ final class Topbar_Content {
 				'label_fr' => 'Paiement à la livraison',
 				'label_ar' => 'الدفع كي يوصلك',
 				'icon'     => 'card',
+				'icon_id'  => 0,
 				'accent'   => false,
 				'whatsapp' => false,
 			),
@@ -126,6 +210,7 @@ final class Topbar_Content {
 				'label_fr' => 'Support WhatsApp',
 				'label_ar' => 'مساعدة على الواتساب',
 				'icon'     => 'chat',
+				'icon_id'  => 0,
 				'accent'   => false,
 				'whatsapp' => true,
 			),
@@ -165,7 +250,7 @@ final class Topbar_Content {
 	 * tant qu'aucun numéro n'est configuré — sans cette garde, le site pourrait
 	 * annoncer un support qui n'existe pas.
 	 *
-	 * @return array<int, array{icon: string, label: string, accent: bool}>
+	 * @return array<int, array{icon: string, icon_url: string, label: string, accent: bool}>
 	 */
 	public static function promises(): array {
 		$lang     = is_rtl() ? 'ar' : 'fr';
@@ -199,10 +284,19 @@ final class Topbar_Content {
 				$accented = true;
 			}
 
+			/*
+			 * Une icône téléversée l'emporte sur l'icône dessinée : si le
+			 * propriétaire a pris la peine d'en envoyer une, c'est elle qu'il
+			 * veut voir. La liste déroulante reste le repli.
+			 */
+			$icon_id  = absint( $slot['icon_id'] ?? 0 );
+			$icon_url = $icon_id > 0 ? (string) wp_get_attachment_image_url( $icon_id, 'thumbnail' ) : '';
+
 			$promises[] = array(
-				'icon'   => isset( $icons[ $icon ] ) ? $icon : 'tag',
-				'label'  => $label,
-				'accent' => $accent,
+				'icon'     => isset( $icons[ $icon ] ) ? $icon : 'tag',
+				'icon_url' => $icon_url,
+				'label'    => $label,
+				'accent'   => $accent,
 			);
 		}
 
@@ -318,6 +412,36 @@ final class Topbar_Content {
 			<?php endforeach; ?>
 		</select>
 
+		<?php
+		$icon_id  = absint( $slot['icon_id'] ?? 0 );
+		$icon_src = $icon_id > 0 ? wp_get_attachment_image_url( $icon_id, 'thumbnail' ) : '';
+		?>
+		<p class="famma-field__lang">
+			<strong><?php esc_html_e( 'Ou téléverser votre propre icône', 'famma-core' ); ?></strong>
+		</p>
+		<div class="famma-icon-upload">
+			<input
+				type="hidden"
+				class="famma-icon-id"
+				name="<?php echo esc_attr( $name . '[icon_id]' ); ?>"
+				value="<?php echo esc_attr( (string) $icon_id ); ?>"
+			/>
+			<span class="famma-icon-preview">
+				<?php if ( '' !== $icon_src ) : ?>
+					<img src="<?php echo esc_url( $icon_src ); ?>" alt="" style="max-inline-size:32px;max-block-size:32px;" />
+				<?php endif; ?>
+			</span>
+			<button type="button" class="button famma-icon-choose">
+				<?php esc_html_e( 'Choisir une image', 'famma-core' ); ?>
+			</button>
+			<button type="button" class="button-link famma-icon-clear" <?php echo 0 === $icon_id ? 'hidden' : ''; ?>>
+				<?php esc_html_e( 'Retirer', 'famma-core' ); ?>
+			</button>
+		</div>
+		<p class="description">
+			<?php esc_html_e( 'Si une image est choisie, elle remplace l’icône de la liste ci-dessus. Prévoyez un carré d’au moins 48 px, sur fond transparent : la barre est bleu marine, une image à fond blanc y ferait une pastille.', 'famma-core' ); ?>
+		</p>
+
 		<p>
 			<label for="<?php echo esc_attr( $id . '_accent' ); ?>">
 				<input
@@ -329,9 +453,9 @@ final class Topbar_Content {
 				/>
 				<?php esc_html_e( 'Mettre en avant (gras orange)', 'famma-core' ); ?>
 			</label>
-			<span class="description">
-				<?php esc_html_e( 'Une seule promesse peut l’être : si plusieurs sont cochées, la première l’emporte.', 'famma-core' ); ?>
-			</span>
+		</p>
+		<p class="description">
+			<?php esc_html_e( 'Une seule promesse peut l’être : si plusieurs sont cochées, la première l’emporte.', 'famma-core' ); ?>
 		</p>
 
 		<p>
@@ -345,9 +469,9 @@ final class Topbar_Content {
 				/>
 				<?php esc_html_e( 'N’afficher que si un numéro WhatsApp est configuré', 'famma-core' ); ?>
 			</label>
-			<span class="description">
-				<?php esc_html_e( 'À cocher pour toute promesse qui annonce le support WhatsApp : sans numéro, elle promettrait un canal inexistant.', 'famma-core' ); ?>
-			</span>
+		</p>
+		<p class="description">
+			<?php esc_html_e( 'À cocher uniquement pour une promesse qui annonce le support WhatsApp : sans numéro, elle promettrait un canal inexistant. À laisser décoché pour toute autre promesse, sinon elle disparaîtrait sans raison.', 'famma-core' ); ?>
 		</p>
 		<?php
 	}
@@ -371,11 +495,33 @@ final class Topbar_Content {
 				'label_fr' => sanitize_text_field( wp_unslash( (string) ( $slot['label_fr'] ?? '' ) ) ),
 				'label_ar' => sanitize_text_field( wp_unslash( (string) ( $slot['label_ar'] ?? '' ) ) ),
 				'icon'     => isset( $icons[ $icon ] ) ? $icon : 'tag',
+				'icon_id'  => $this->clean_icon_id( $slot['icon_id'] ?? 0 ),
 				'accent'   => ! empty( $slot['accent'] ),
 				'whatsapp' => ! empty( $slot['whatsapp'] ),
 			);
 		}
 
 		return $clean;
+	}
+
+	/**
+	 * Valide un identifiant de média téléversé.
+	 *
+	 * On ne se contente pas d'un entier : un identifiant qui ne désigne pas une
+	 * image afficherait une icône cassée, et un PDF ou un ZIP passerait par la
+	 * même porte. La vérification se fait donc sur le type réel de la pièce
+	 * jointe, pas sur ce que le formulaire prétend.
+	 *
+	 * @param mixed $raw Valeur soumise.
+	 * @return int 0 si l'identifiant ne désigne pas une image.
+	 */
+	private function clean_icon_id( $raw ): int {
+		$id = absint( $raw );
+
+		if ( 0 === $id ) {
+			return 0;
+		}
+
+		return wp_attachment_is_image( $id ) ? $id : 0;
 	}
 }

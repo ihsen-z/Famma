@@ -111,9 +111,20 @@
 	gap: var(--chrome-promise-gap);
 }
 
-.famma-topbar__promise .famma-icon {
+.famma-topbar__promise .famma-icon,
+.famma-topbar__icon {
 	inline-size: 1.0625rem;
 	block-size: 1.0625rem;
+}
+
+/*
+ * Icone televersee depuis l'administration. `object-fit` la contient dans le
+ * meme carre que les traces du theme : sans cela, une image non carree
+ * deformerait la hauteur de la barre, qui ne fait que 40px.
+ */
+.famma-topbar__icon {
+	object-fit: contain;
+	flex: 0 0 auto;
 }
 
 /*

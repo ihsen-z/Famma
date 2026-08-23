@@ -156,7 +156,31 @@ function famma_child_topbar(): void {
 					$accent = ! empty( $promise['accent'] ) ? ' famma-topbar__promise--accent' : '';
 					?>
 					<li class="famma-topbar__promise<?php echo esc_attr( $accent ); ?>">
-						<?php famma_child_the_icon( $promise['icon'] ); ?>
+						<?php
+						/*
+						 * Une icône téléversée remplace le tracé du thème.
+						 * `alt` reste vide : le libellé juste à côté dit déjà
+						 * la même chose, et le répéter ferait entendre la
+						 * promesse deux fois à un lecteur d'écran.
+						 */
+						$icon_url = (string) ( $promise['icon_url'] ?? '' );
+
+						if ( '' !== $icon_url ) :
+							?>
+							<img
+								class="famma-topbar__icon"
+								src="<?php echo esc_url( $icon_url ); ?>"
+								alt=""
+								width="20"
+								height="20"
+								loading="lazy"
+								decoding="async"
+							/>
+							<?php
+						else :
+							famma_child_the_icon( $promise['icon'] );
+						endif;
+						?>
 						<span><?php echo esc_html( $promise['label'] ); ?></span>
 					</li>
 				<?php endforeach; ?>
