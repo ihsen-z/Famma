@@ -98,3 +98,30 @@ Chaque décision est datée, argumentée, et déclarée **réversible ou non**. 
 - Sélecteur de langue : dans l'en-tête, cible tactile ≥ 48 px (§10).
 
 **À inscrire dans `PLUGIN-REGISTER.md`** à l'installation (§26).
+
+---
+
+## ADR-006 — Environnement de développement local
+**Date** : 2026-08-22 · **Statut** : ACTÉE (propriétaire : « adapter et installer le site sur Local ») · **Réversible** : oui, coût faible
+
+**Décision** : le développement quotidien se fait sur **Local (Local by Flywheel)**, site `famma` / `famma.local`. La stack **Docker du dépôt est conservée**, inchangée, comme environnement de référence reproductible.
+
+**Options évaluées**
+
+| Option | Verdict |
+|---|---|
+| Docker seul (état antérieur) | **Rejeté** comme unique environnement — démarrage lourd, dépend de Docker Desktop |
+| Local seul, Docker supprimé | **Rejeté** — Local ne fige pas les versions dans le dépôt : plus rien ne garantirait la reproductibilité (§28, §54) |
+| **Local pour le quotidien + Docker conservé** | **CHOISI** |
+
+**Justification** : Local démarre en quelques secondes et fournit PHP 8.3.29 — la version visée en production (Oxahost, `DEPLOY-OXAHOST.md`). Docker reste la référence versionnée : `docker-compose.yml` épingle WordPress, MariaDB et PHP, ce que `sites.json` de Local ne fait pas.
+
+**Contraintes imposées par ce choix**
+
+- **Le code n'est pas copié.** `famma-core`, `famma-child` et `mu-plugins` sont montés dans le site Local par des **jonctions Windows** (`mklink /J`) vers le dépôt. Le dépôt reste la source unique ; une copie divergerait en silence.
+- **Aucune donnée migrée.** Produits, clients et commandes de la base Docker étaient des données de test : la base de Local est neuve, le catalogue vide (§58). Seuls le paramétrage, la structure et le design sont reproduits — par les scripts de `scripts/`, donc rejouables.
+- **Le pont `.env` → constantes change de forme.** Local n'a pas d'environnement de conteneur : les constantes `FAMMA_*` sont définies dans le `wp-config.php` du site Local, hors dépôt. Le mu-plugin `famma-env` ignore toute constante déjà définie, donc aucun code n'a été modifié pour cela.
+- **Mailpit est par site.** Le mu-plugin `famma-local-mail` visait `mailpit:1025` en dur ; il lit désormais `FAMMA_LOCAL_SMTP_HOST` / `FAMMA_LOCAL_SMTP_PORT`, avec les valeurs Docker par défaut.
+- **`setup.sh` est devenu portable** (`FAMMA_WP_CLI`, `FAMMA_SCRIPTS_DIR`, `FAMMA_LANG_DIR`, `FAMMA_URL`, `FAMMA_ADMIN`, `FAMMA_REWRITE_HARD`, `FAMMA_SKIP_OG`) plutôt que dupliqué. Un seul script, donc une seule vérité.
+- **Écart de version assumé** : Local sert MySQL 8.0.35 là où Docker sert MariaDB 11.4. Sans import de base, la différence est sans effet ; elle redeviendrait un sujet le jour où l'on importera un dump.
+- Toute validation destinée à la production reste à rejouer sous Docker, seul environnement aligné sur les versions épinglées.

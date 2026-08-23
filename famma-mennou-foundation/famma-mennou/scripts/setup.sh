@@ -32,8 +32,32 @@ set +a
 # Pas de --path : le répertoire de travail de l'image wordpress:cli est
 # déjà /var/www/html, et un argument de chemin serait une cible de plus
 # pour la réécriture MSYS.
-WP="docker compose exec -T wpcli wp"
-ADMIN="${WP_ADMIN_USER:-famma_admin}"
+# ------------------------------------------------------------
+# Portabilite de l'environnement d'execution.
+#
+# Par defaut, tout passe par la stack Docker de ce depot. Les quatre
+# variables ci-dessous permettent de rejouer EXACTEMENT le meme
+# provisionnement ailleurs — notamment sous Local (Local by Flywheel), ou il
+# n'y a ni conteneur ni chemin /var/www/html. Un seul script, donc une seule
+# verite : pas de copie divergente a maintenir.
+#
+#   FAMMA_WP_CLI      commande WP-CLI complete (ex. "php wp-cli.phar --path=...")
+#   FAMMA_SCRIPTS_DIR dossier contenant ces scripts, vu par WP-CLI
+#   FAMMA_LANG_DIR    dossier des traductions de famma-core, vu par WP-CLI
+#   FAMMA_URL         URL du site, si elle differe de WP_HOME du .env
+#   FAMMA_ADMIN       compte administrateur, s'il differe de WP_ADMIN_USER
+#   FAMMA_REWRITE_HARD  passer une valeur vide sous nginx : --hard ne
+#                     concerne qu'Apache et son .htaccess
+#   FAMMA_SKIP_OG=1   saute la generation de l'image de partage (GD + polices
+#                     URW absentes hors du conteneur ; le PNG est deja
+#                     versionne dans le theme)
+# ------------------------------------------------------------
+WP="${FAMMA_WP_CLI:-docker compose exec -T wpcli wp}"
+SCRIPTS_DIR="${FAMMA_SCRIPTS_DIR:-/scripts}"
+LANG_DIR="${FAMMA_LANG_DIR:-/var/www/html/wp-content/plugins/famma-core/languages}"
+WP_HOME="${FAMMA_URL:-${WP_HOME}}"
+ADMIN="${FAMMA_ADMIN:-${WP_ADMIN_USER:-famma_admin}}"
+REWRITE_HARD="${FAMMA_REWRITE_HARD---hard}"
 
 log()  { printf '\n==> %s\n' "$1"; }
 step() { printf '    - %s\n' "$1"; }
@@ -77,16 +101,29 @@ $WP language plugin install --all fr_FR >/dev/null 2>&1 || true
 $WP option update timezone_string "Africa/Tunis" >/dev/null
 $WP option update date_format "d/m/Y" >/dev/null
 $WP option update start_of_week 1 >/dev/null
-step "slogan de marque"
+step "titre et slogan de marque"
+# blogname n'est pose que par `core install`. Si WordPress a ete installe
+# ailleurs (Local, hebergeur, import), le titre reste celui de cette
+# installation — constate a l'execution : « famma » au lieu de « FAMMA MENNOU ».
+$WP option update blogname "${WP_TITLE:-FAMMA MENNOU}" >/dev/null
 $WP option update blogdescription "فمّا ديما حاجة جديدة" >/dev/null
 step "permaliens propres (§21)"
-$WP rewrite structure '/%postname%/' --hard >/dev/null
+$WP rewrite structure '/%postname%/' ${REWRITE_HARD} >/dev/null
 
 step "retrait du contenu de démonstration WordPress (§58)"
-HELLO="$($WP post list --post_type=post --name=hello-world --format=ids 2>/dev/null || true)"
-if [ -n "${HELLO}" ]; then $WP post delete ${HELLO} --force >/dev/null || true; fi
-SAMPLE="$($WP post list --post_type=page --name=sample-page --format=ids 2>/dev/null || true)"
-if [ -n "${SAMPLE}" ]; then $WP post delete ${SAMPLE} --force >/dev/null || true; fi
+# Les slugs dependent de la langue choisie A L'INSTALLATION, pas de la langue
+# reglee ensuite : une installation francaise cree « bonjour-tout-le-monde » et
+# « page-d-exemple ». Ne chercher que les slugs anglais laissait donc l'article
+# et la page de demonstration en ligne, sans que rien ne le signale — constate
+# a l'execution sur une installation fr_FR.
+for slug in hello-world bonjour-tout-le-monde; do
+	ID="$($WP post list --post_type=post --name="${slug}" --format=ids 2>/dev/null || true)"
+	if [ -n "${ID}" ]; then $WP post delete ${ID} --force >/dev/null || true; fi
+done
+for slug in sample-page page-d-exemple; do
+	ID="$($WP post list --post_type=page --name="${slug}" --format=ids 2>/dev/null || true)"
+	if [ -n "${ID}" ]; then $WP post delete ${ID} --force >/dev/null || true; fi
+done
 
 # ------------------------------------------------------------
 # 2. WooCommerce
@@ -145,6 +182,33 @@ step "masquage de l'assistant d'installation WooCommerce"
 $WP option update woocommerce_task_list_hidden "yes" >/dev/null 2>&1 || true
 $WP option update woocommerce_onboarding_profile '{"skipped":true}' --format=json >/dev/null 2>&1 || true
 
+log "Traductions et pages WooCommerce en français"
+# Le premier `language plugin install --all` de la section 1 ne pouvait rien
+# traduire : WooCommerce n'etait pas encore installe a ce moment-la. Sans ce
+# second passage, tout le checkout reste en anglais (E-28 du plan UX) et les
+# quatre pages creees a l'activation gardent leurs titres anglais.
+$WP language plugin install --all fr_FR >/dev/null 2>&1 || true
+step "paquets de langue des extensions installés"
+
+# Renomme une page WooCommerce si elle porte encore son titre anglais par
+# defaut. Une page deja renommee par le proprietaire n'est jamais ecrasee.
+rename_wc_page() {
+	page_option="$1"
+	page_english="$2"
+	page_french="$3"
+	page_id="$($WP option get "${page_option}" 2>/dev/null || echo 0)"
+	if [ "${page_id:-0}" -le 0 ] 2>/dev/null; then return 0; fi
+	page_title="$($WP post get "${page_id}" --field=post_title 2>/dev/null || true)"
+	if [ "${page_title}" = "${page_english}" ]; then
+		$WP post update "${page_id}" --post_title="${page_french}" >/dev/null
+		step "« ${page_english} » renommée en « ${page_french} »"
+	fi
+}
+rename_wc_page woocommerce_shop_page_id      "Shop"       "Boutique"
+rename_wc_page woocommerce_cart_page_id      "Cart"       "Panier"
+rename_wc_page woocommerce_checkout_page_id  "Checkout"   "Commande"
+rename_wc_page woocommerce_myaccount_page_id "My account" "Mon compte"
+
 # ------------------------------------------------------------
 # 3. Plugin métier
 # ------------------------------------------------------------
@@ -161,8 +225,8 @@ if ! $WP plugin is-installed translatepress-multilingual >/dev/null 2>&1; then
 fi
 $WP plugin activate translatepress-multilingual >/dev/null 2>&1 || true
 $WP language core install ar >/dev/null 2>&1 || true
-$WP i18n make-mo /var/www/html/wp-content/plugins/famma-core/languages >/dev/null 2>&1 || true
-$WP eval-file /scripts/configure-translatepress.php
+$WP i18n make-mo "${LANG_DIR}" >/dev/null 2>&1 || true
+$WP eval-file "${SCRIPTS_DIR}/configure-translatepress.php"
 step "traduction automatique désactivée — la Derja est écrite par un humain (§5)"
 
 # ------------------------------------------------------------
@@ -210,18 +274,22 @@ step "famma-child actif"
 # 6b. Contenu : accueil, pages d'information, navigation (§8, §9, §45)
 # ------------------------------------------------------------
 log "Page d'accueil"
-$WP eval-file /scripts/create-homepage.php
+$WP eval-file "${SCRIPTS_DIR}/create-homepage.php"
 
 log "Pages d'information et légales"
-$WP eval-file /scripts/create-pages.php
+$WP eval-file "${SCRIPTS_DIR}/create-pages.php"
 
 log "Navigation"
-$WP eval-file /scripts/create-menus.php
+$WP eval-file "${SCRIPTS_DIR}/create-menus.php"
 
 log "Image de partage social (§16)"
 # Dans le conteneur `wordpress`, pas celui de WP-CLI : lui seul embarque GD
 # avec les polices URW nécessaires au rendu du texte.
-docker compose exec -T wordpress php /scripts/generate-og-image.php
+if [ -n "${FAMMA_SKIP_OG:-}" ]; then
+	step "ignoree (FAMMA_SKIP_OG) — assets/img/famma-og.png est deja versionne"
+else
+	docker compose exec -T wordpress php /scripts/generate-og-image.php
+fi
 
 # ------------------------------------------------------------
 # 7. Catalogue vide (§58)
@@ -244,7 +312,7 @@ else
 	step "aucun produit d'exemple — catalogue vide, conforme au §58"
 fi
 
-$WP rewrite flush --hard >/dev/null
+$WP rewrite flush ${REWRITE_HARD} >/dev/null
 
 # ------------------------------------------------------------
 # Résumé

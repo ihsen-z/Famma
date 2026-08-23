@@ -5,6 +5,12 @@
  * Version:     0.1.0
  * Author:      FAMMA
  *
+ * L'hote et le port sont surchargeables par les constantes
+ * FAMMA_LOCAL_SMTP_HOST / FAMMA_LOCAL_SMTP_PORT, definies dans wp-config.php.
+ * Les valeurs par defaut restent celles de la stack Docker (`mailpit:1025`) ;
+ * sous Local (Local by Flywheel), Mailpit ecoute sur 127.0.0.1:10001, un port
+ * attribue par site et qui ne peut donc pas etre code en dur ici.
+ *
  * Infrastructure de developpement, pas de la logique metier : ce fichier
  * n'a donc pas sa place dans famma-core, qui est destine a la production.
  * Le garde-fou sur l'environnement le rend inoffensif s'il y arrivait quand
@@ -28,8 +34,8 @@ function famma_local_mail_use_mailpit( $mailer ): void {
 
 	$mailer->isSMTP();
 	// phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- PHPMailer's own public API.
-	$mailer->Host        = 'mailpit';
-	$mailer->Port        = 1025;
+	$mailer->Host        = defined( 'FAMMA_LOCAL_SMTP_HOST' ) ? FAMMA_LOCAL_SMTP_HOST : 'mailpit';
+	$mailer->Port        = defined( 'FAMMA_LOCAL_SMTP_PORT' ) ? (int) FAMMA_LOCAL_SMTP_PORT : 1025;
 	$mailer->SMTPAuth    = false;
 	$mailer->SMTPAutoTLS = false;
 	// phpcs:enable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase

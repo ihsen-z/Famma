@@ -29,10 +29,15 @@ base de données, les fichiers téléversés et ce dépôt — rien d'autre.
 ## Variables d'environnement côté serveur
 
 Le pont `.env` → constantes passe par `wp-content/mu-plugins/famma-env.php`,
-qui lit `getenv()`. Sur un hébergement mutualisé sans variables
-d'environnement, il faudra les définir autrement — par exemple en ajoutant les
-`define()` correspondants dans `wp-config.php`, que le mu-plugin respectera
-puisqu'il teste `defined()` avant d'écrire.
+qui lit `getenv()`. Un hébergement mutualisé n'expose **aucune** variable
+d'environnement personnalisée : il faut donc les définir en `define()` dans le
+`wp-config.php` du serveur, que le mu-plugin respecte puisqu'il teste
+`defined()` avant d'écrire.
+
+Gabarit prêt à l'emploi :
+`scripts/deploy/templates/wp-config-production.sample.php`. L'oublier n'émet
+aucune erreur — le tracking et le bouton WhatsApp disparaissent simplement.
+`scripts/deploy/verify.sh` contrôle ce point par l'observable.
 
 Variables à fournir : `FAMMA_WHATSAPP_NUMBER`, `FAMMA_META_PIXEL_ID`,
 `FAMMA_META_ACCESS_TOKEN`, `FAMMA_META_TEST_EVENT_CODE`,
@@ -114,10 +119,22 @@ rester.
 
 ## Ce qui n'est pas prêt pour la production
 
-- **Conversions API Meta** : l'action `famma_capi_purchase` se déclenche bien à
-  la livraison avec son `event_id`, mais **aucun client HTTP ne l'écoute**.
-  Aucun événement Purchase ne part côté serveur.
 - **Consentement aux cookies** : aucune bannière. À arbitrer avant d'activer
   les outils de mesure.
-- **Sauvegardes automatiques** : `scripts/backup.sh` est manuel. Aucune
-  planification n'existe.
+- **Sauvegardes automatiques** : `scripts/backup.sh` est manuel et suppose
+  Docker — il ne tourne pas sur un mutualisé. Pour la cible, utiliser
+  `scripts/deploy/templates/backup-remote.sh` (WP-CLI), à planifier par le
+  propriétaire.
+
+## Automatisation du déploiement
+
+Cible retenue : **Oxahost (DirectAdmin + LiteSpeed), domaine `fammaminnou.tn`**.
+Manuel pas-à-pas : `docs/DEPLOY-OXAHOST.md`.
+
+`scripts/deploy/` automatise la partie répétable : préflight qualité, synchro
+du code, export de base avec URL réécrites, vérification du site en ligne. Voir
+`scripts/deploy/README.md` pour le partage exact entre l'automatisé et le
+manuel.
+
+`deploy.sh` ne touche **jamais** à la base de production : un import écrase des
+commandes réelles et n'est pas réversible. C'est un geste séparé et délibéré.

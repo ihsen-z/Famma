@@ -24,3 +24,6 @@ Thumbs.db
 *.log
 node_modules/
 vendor/
+
+# Configuration de deploiement (hote, identifiants, chemins)
+/scripts/deploy/.env.deploy

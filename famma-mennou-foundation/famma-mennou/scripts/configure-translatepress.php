@@ -68,6 +68,23 @@
 	}
 	$trp->get_component( 'upgrade' )->check_if_gettext_tables_exist();
 
+	/*
+	 * `check_if_gettext_tables_exist()` ne suffit pas : dans TranslatePress 2.x
+	 * il ne cree la table gettext que de la langue du SITE. La table de chaque
+	 * langue traduite est creee par l'ecran de reglages, via le composant
+	 * `gettext_table_creation`. Sans cet appel, `wp_trp_gettext_ar` reste
+	 * absente et chaque page /ar/ empile des erreurs SQL en repondant 200 —
+	 * constate a l'execution sur l'installation Local.
+	 */
+	if ( method_exists( $query, 'get_query_component' ) ) {
+		$gettext_tables = $query->get_query_component( 'gettext_table_creation' );
+		if ( is_object( $gettext_tables ) && method_exists( $gettext_tables, 'check_gettext_table' ) ) {
+			foreach ( $settings['translation-languages'] as $language ) {
+				$gettext_tables->check_gettext_table( $language );
+			}
+		}
+	}
+
 	global $wpdb;
 	$missing = array();
 	foreach ( array( 'trp_dictionary_fr_fr_ar', 'trp_gettext_ar', 'trp_original_strings' ) as $suffix ) {

@@ -71,6 +71,16 @@
 		<exclude-pattern>scripts/*</exclude-pattern>
 	</rule>
 
+	<!--
+		Gabarit de wp-config.php de production : il definit des constantes du
+		coeur WordPress (WP_HOME, DISALLOW_FILE_EDIT...), dont les noms sont
+		imposes par WordPress. Le prefixe « famma_ » n'a pas de sens ici, et
+		les renommer rendrait le gabarit inoperant.
+	-->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<exclude-pattern>scripts/deploy/templates/wp-config-production.sample.php</exclude-pattern>
+	</rule>
+
 	<rule ref="PHPCompatibilityWP"/>
 
 	<!--
@@ -93,8 +103,10 @@
 				<element value="famma_child_cart_badge"/>
 				<element value="famma_child_cart_count"/>
 				<element value="famma_child_cart_fragment"/>
+				<element value="famma_child_category_rank"/>
 				<element value="famma_child_checkout_trust"/>
 				<element value="famma_child_cod_next_steps"/>
+				<element value="famma_child_compare_category_order"/>
 				<element value="famma_child_content_tag"/>
 				<element value="famma_child_count_products"/>
 				<element value="famma_child_dequeue_parent_chrome"/>
@@ -149,14 +161,20 @@
 				<element value="famma_child_loop_favourite"/>
 				<element value="famma_child_loop_new_badge"/>
 				<element value="famma_child_loop_rating"/>
+				<element value="famma_child_menu_categories"/>
+				<element value="famma_child_menu_categories_host"/>
+				<element value="famma_child_menu_category_item"/>
 				<element value="famma_child_open_graph"/>
 				<element value="famma_child_order_received_hero_title"/>
 				<element value="famma_child_order_received_text"/>
 				<element value="famma_child_order_received_title"/>
+				<element value="famma_child_panel_account"/>
 				<element value="famma_child_preload_fonts"/>
 				<element value="famma_child_price_savings"/>
 				<element value="famma_child_primary_nav"/>
 				<element value="famma_child_product_benefits"/>
+				<element value="famma_child_product_categories"/>
+				<element value="famma_child_product_category_url"/>
 				<element value="famma_child_product_faq_pairs"/>
 				<element value="famma_child_product_faq_panel"/>
 				<element value="famma_child_product_faq_tab"/>
