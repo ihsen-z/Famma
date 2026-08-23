@@ -171,6 +171,24 @@ TranslatePress, installés en Phase 3, ne sont jamais touchés.
 transfert passe alors par `lftp` en **FTPS** — jamais en FTP clair, qui
 transporterait le mot de passe en clair sur le réseau.
 
+### Trois modes, et lequel choisir
+
+| Mode | Outil requis | Incrémentiel | Supprime à distance |
+|---|---|---|---|
+| `ssh` | `rsync` + `ssh` | oui | oui, borné à nos trois dossiers |
+| `tar` | `tar` + `ssh` | non | **non** |
+| `ftp` | `lftp` | oui | oui |
+
+`ssh` est le mode à préférer. Mais **la machine de développement Windows ne
+fournit ni `rsync` ni `lftp`** — seuls `ssh` et `tar` sont présents. D'où le
+mode `tar`, qui fonctionne d'emblée sans rien installer.
+
+Sa contrepartie est réelle et doit être connue : il **ne supprime rien** à
+distance. Un fichier retiré du dépôt survivra en production et continuera d'y
+être chargé. Tant qu'on ajoute et modifie, c'est sans conséquence ; le jour où
+l'on supprime un fichier, il faut l'effacer à la main sur le serveur, ou
+installer `rsync` et passer en mode `ssh`.
+
 **Contrôle :** dans l'admin, le thème *FAMMA Child* et l'extension *FAMMA Core*
 apparaissent et sont activables.
 

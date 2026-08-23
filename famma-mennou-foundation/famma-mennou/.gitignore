@@ -27,3 +27,9 @@ vendor/
 
 # Configuration de deploiement (hote, identifiants, chemins)
 /scripts/deploy/.env.deploy
+
+# Le gabarit de configuration de deploiement, lui, doit etre versionne : la
+# documentation demande de le copier. La regle `.env.*` de la racine du depot
+# l'attrapait, d'ou cette exception — volontairement limitee au seul .example,
+# jamais au .env.deploy renseigne juste au-dessus.
+!/scripts/deploy/.env.deploy.example
