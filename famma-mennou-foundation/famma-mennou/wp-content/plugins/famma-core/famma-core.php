@@ -32,6 +32,7 @@ define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
 require_once __DIR__ . '/includes/topbar-content.php';
+require_once __DIR__ . '/includes/tracking-settings.php';
 
 /**
  * Reads configuration from env-fed constants and WordPress options.
@@ -89,12 +90,33 @@ final class Config {
 	}
 
 	/**
+	 * Reads a constant, falling back to the matching admin option.
+	 *
+	 * Same precedence as the shop's contact details: a constant defined on the
+	 * server always wins, so a `.env` reproduced by `git clone` + `setup.sh`
+	 * stays authoritative. The option only fills the gap, which is what lets the
+	 * owner change a tracking identifier without touching a file on the server.
+	 *
+	 * @param string $constant Constant name, e.g. `FAMMA_META_PIXEL_ID`.
+	 * @return string Empty string when neither is set — meaning "disabled".
+	 */
+	private function setting( string $constant ): string {
+		$value = $this->c( $constant );
+
+		if ( '' !== $value ) {
+			return $value;
+		}
+
+		return trim( (string) get_option( strtolower( $constant ), '' ) );
+	}
+
+	/**
 	 * Meta pixel identifier (safe to expose to the browser).
 	 *
 	 * @return string
 	 */
 	public function meta_pixel_id(): string {
-		return $this->c( 'FAMMA_META_PIXEL_ID' );
+		return $this->setting( 'FAMMA_META_PIXEL_ID' );
 	}
 
 	/**
@@ -103,7 +125,7 @@ final class Config {
 	 * @return string
 	 */
 	public function meta_access_token(): string {
-		return $this->c( 'FAMMA_META_ACCESS_TOKEN' );
+		return $this->setting( 'FAMMA_META_ACCESS_TOKEN' );
 	}
 
 	/**
@@ -112,7 +134,7 @@ final class Config {
 	 * @return string
 	 */
 	public function meta_test_event_code(): string {
-		return $this->c( 'FAMMA_META_TEST_EVENT_CODE' );
+		return $this->setting( 'FAMMA_META_TEST_EVENT_CODE' );
 	}
 
 	/**
@@ -121,7 +143,7 @@ final class Config {
 	 * @return string
 	 */
 	public function tiktok_pixel_id(): string {
-		return $this->c( 'FAMMA_TIKTOK_PIXEL_ID' );
+		return $this->setting( 'FAMMA_TIKTOK_PIXEL_ID' );
 	}
 
 	/**
@@ -130,7 +152,7 @@ final class Config {
 	 * @return string
 	 */
 	public function ga4_measurement_id(): string {
-		return $this->c( 'FAMMA_GA4_MEASUREMENT_ID' );
+		return $this->setting( 'FAMMA_GA4_MEASUREMENT_ID' );
 	}
 
 	/**
@@ -2245,6 +2267,7 @@ function boot(): void {
 		Dashboard::instance();
 		Pages_Content::instance();
 		Topbar_Content::instance();
+		Tracking_Settings::instance();
 	}
 }
 
