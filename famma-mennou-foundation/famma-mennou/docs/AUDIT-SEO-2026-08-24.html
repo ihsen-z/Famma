@@ -1,0 +1,473 @@
+<title>Audit SEO FAMMA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap">
+
+<style>
+	:root {
+		--ground: #FBFCFD;
+		--surface: #FFFFFF;
+		--ink: #0B1F3A;
+		--ink-soft: #4A5A70;
+		--ink-faint: #7C8AA0;
+		--line: #E7EAF0;
+		--line-soft: #EEF1F5;
+		--accent: #B85300;
+		--accent-surface: #FF7A00;
+		--critical: #A32017;
+		--critical-bg: #FCEFEE;
+		--medium: #8A5A00;
+		--medium-bg: #FDF5E6;
+		--ok: #1B6344;
+		--ok-bg: #EDF7F1;
+
+		--display: "Poppins", "Segoe UI", system-ui, sans-serif;
+		--body: "Newsreader", Georgia, "Times New Roman", serif;
+	}
+
+	:root:not([data-theme="light"]) {
+		color-scheme: light;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme="light"]) {
+			--ground: #0A1626;
+			--surface: #0F1E33;
+			--ink: #E9EEF5;
+			--ink-soft: #A8B6C9;
+			--ink-faint: #7A8AA0;
+			--line: #1E2E45;
+			--line-soft: #17253A;
+			--accent: #FF9633;
+			--accent-surface: #FF7A00;
+			--critical: #FF8A7E;
+			--critical-bg: #2A1512;
+			--medium: #E8B44F;
+			--medium-bg: #251D0D;
+			--ok: #6FD3A2;
+			--ok-bg: #0D2419;
+			color-scheme: dark;
+		}
+	}
+
+	:root[data-theme="dark"] {
+		--ground: #0A1626;
+		--surface: #0F1E33;
+		--ink: #E9EEF5;
+		--ink-soft: #A8B6C9;
+		--ink-faint: #7A8AA0;
+		--line: #1E2E45;
+		--line-soft: #17253A;
+		--accent: #FF9633;
+		--accent-surface: #FF7A00;
+		--critical: #FF8A7E;
+		--critical-bg: #2A1512;
+		--medium: #E8B44F;
+		--medium-bg: #251D0D;
+		--ok: #6FD3A2;
+		--ok-bg: #0D2419;
+		color-scheme: dark;
+	}
+
+	* { box-sizing: border-box; }
+
+	body {
+		margin: 0;
+		background: var(--ground);
+		color: var(--ink);
+		font-family: var(--body);
+		font-size: 1.0625rem;
+		line-height: 1.7;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	.wrap {
+		max-width: 46rem;
+		margin-inline: auto;
+		padding: clamp(2rem, 5vw, 4.5rem) clamp(1.1rem, 4vw, 2rem) 5rem;
+	}
+
+	/* --- En-tête --- */
+
+	.masthead { display: flex; flex-direction: column; gap: 1.15rem; }
+
+	.eyebrow {
+		display: inline-flex;
+		align-items: center;
+		gap: .55rem;
+		font-family: var(--display);
+		font-size: .7rem;
+		font-weight: 600;
+		letter-spacing: .13em;
+		text-transform: uppercase;
+		color: var(--accent);
+	}
+
+	.eyebrow::before {
+		content: "";
+		inline-size: 1.6rem;
+		block-size: 2px;
+		background: var(--accent-surface);
+	}
+
+	h1 {
+		margin: 0;
+		font-family: var(--display);
+		font-size: clamp(2rem, 6vw, 2.9rem);
+		font-weight: 700;
+		line-height: 1.08;
+		letter-spacing: -.02em;
+		text-wrap: balance;
+	}
+
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: .4rem 1.4rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-family: var(--display);
+		font-size: .8rem;
+		font-weight: 500;
+		color: var(--ink-faint);
+	}
+
+	.meta b { color: var(--ink-soft); font-weight: 600; }
+
+	/* --- Verdict --- */
+
+	.verdict {
+		margin-block: 2.6rem 3.4rem;
+		padding: 1.6rem 1.7rem;
+		border: 1px solid var(--line);
+		border-inline-start: 4px solid var(--accent-surface);
+		border-radius: 3px;
+		background: var(--surface);
+	}
+
+	.verdict p { margin: 0; font-size: 1.18rem; line-height: 1.55; }
+	.verdict p + p { margin-block-start: .8rem; font-size: 1rem; color: var(--ink-soft); }
+	.verdict strong { color: var(--accent); font-weight: 600; }
+
+	/* --- Sections --- */
+
+	section { margin-block-start: 3.4rem; }
+
+	h2 {
+		display: flex;
+		align-items: baseline;
+		gap: .8rem;
+		margin: 0 0 1.2rem;
+		font-family: var(--display);
+		font-size: 1.35rem;
+		font-weight: 600;
+		letter-spacing: -.01em;
+		text-wrap: balance;
+	}
+
+	h2 .num {
+		flex: 0 0 auto;
+		font-size: .82rem;
+		font-weight: 700;
+		color: var(--ink-faint);
+		font-variant-numeric: tabular-nums;
+	}
+
+	h3 {
+		margin: 0 0 .5rem;
+		font-family: var(--display);
+		font-size: 1.02rem;
+		font-weight: 600;
+		letter-spacing: -.005em;
+	}
+
+	p { margin: 0 0 1rem; }
+	p:last-child { margin-block-end: 0; }
+
+	strong { font-weight: 600; }
+	em { color: var(--ink-soft); }
+
+	code {
+		font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+		font-size: .86em;
+		padding: .1em .35em;
+		border-radius: 3px;
+		background: var(--line-soft);
+		color: var(--ink);
+	}
+
+	/* --- Constats --- */
+
+	.finding {
+		margin-block-end: 1.1rem;
+		padding: 1.3rem 1.4rem;
+		border: 1px solid var(--line);
+		border-inline-start: 3px solid var(--tone, var(--line));
+		border-radius: 3px;
+		background: var(--surface);
+	}
+
+	.finding--critical { --tone: var(--critical); }
+	.finding--medium { --tone: var(--medium); }
+
+	.finding__head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: .7rem;
+		margin-block-end: .6rem;
+	}
+
+	.finding__head h3 { margin: 0; }
+
+	.pill {
+		display: inline-block;
+		padding: .18rem .6rem;
+		border-radius: 999px;
+		font-family: var(--display);
+		font-size: .66rem;
+		font-weight: 600;
+		letter-spacing: .09em;
+		text-transform: uppercase;
+		white-space: nowrap;
+	}
+
+	.pill--critical { background: var(--critical-bg); color: var(--critical); }
+	.pill--medium { background: var(--medium-bg); color: var(--medium); }
+	.pill--ok { background: var(--ok-bg); color: var(--ok); }
+
+	.finding p { font-size: 1rem; }
+
+	/* --- Tableau --- */
+
+	.scroller { overflow-x: auto; margin-block-end: 1.2rem; }
+
+	table {
+		inline-size: 100%;
+		border-collapse: collapse;
+		font-size: .95rem;
+	}
+
+	th, td {
+		padding: .62rem .9rem;
+		text-align: start;
+		border-block-end: 1px solid var(--line-soft);
+		vertical-align: top;
+	}
+
+	th {
+		font-family: var(--display);
+		font-size: .72rem;
+		font-weight: 600;
+		letter-spacing: .08em;
+		text-transform: uppercase;
+		color: var(--ink-faint);
+		border-block-end: 1px solid var(--line);
+		white-space: nowrap;
+	}
+
+	tbody tr:last-child td { border-block-end: 0; }
+	td:first-child { font-family: var(--display); font-size: .88rem; font-weight: 500; white-space: nowrap; }
+
+	/* --- Listes --- */
+
+	ul, ol { margin: 0 0 1rem; padding-inline-start: 1.3rem; }
+	li { margin-block-end: .5rem; }
+	li:last-child { margin-block-end: 0; }
+
+	ol.plan { counter-reset: step; list-style: none; padding-inline-start: 0; }
+
+	ol.plan li {
+		position: relative;
+		padding-inline-start: 2.4rem;
+		margin-block-end: .85rem;
+	}
+
+	ol.plan li::before {
+		counter-increment: step;
+		content: counter(step);
+		position: absolute;
+		inset-inline-start: 0;
+		inset-block-start: .12rem;
+		inline-size: 1.6rem;
+		block-size: 1.6rem;
+		display: grid;
+		place-items: center;
+		border-radius: 999px;
+		background: var(--line-soft);
+		color: var(--ink-soft);
+		font-family: var(--display);
+		font-size: .76rem;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+	}
+
+	ol.plan li.is-first::before { background: var(--accent-surface); color: #FFFFFF; }
+
+	/* --- Pied --- */
+
+	footer {
+		margin-block-start: 3.6rem;
+		padding-block-start: 1.4rem;
+		border-block-start: 1px solid var(--line);
+		font-size: .92rem;
+		color: var(--ink-soft);
+	}
+
+	:focus-visible { outline: 2px solid var(--accent-surface); outline-offset: 2px; }
+
+	@media (prefers-reduced-motion: reduce) {
+		* { animation: none !important; transition: none !important; }
+	}
+</style>
+
+<div class="wrap">
+
+	<header class="masthead">
+		<span class="eyebrow">Audit technique</span>
+		<h1>Le référencement de FAMMA, mesuré</h1>
+		<ul class="meta">
+			<li><b>24 août 2026</b></li>
+			<li>Mesuré sur <b>Local</b></li>
+			<li>WooCommerce · TranslatePress · <b>famma-child</b></li>
+		</ul>
+	</header>
+
+	<div class="verdict">
+		<p>Les fondations techniques sont <strong>bonnes</strong> — meilleures que sur la plupart des boutiques WooCommerce. Il manque la couche qui fait la différence en résultats de recherche.</p>
+		<p>Tout ce qui suit a été mesuré sur les pages réelles — accueil, boutique, fiche produit — pas déduit du code. Quand je n'ai pas pu conclure, je le dis.</p>
+	</div>
+
+	<section>
+		<h2><span class="num">01</span> Ce qui est solide</h2>
+
+		<div class="scroller">
+			<table>
+				<thead>
+					<tr><th scope="col">Point</th><th scope="col">Constat</th></tr>
+				</thead>
+				<tbody>
+					<tr><td>Indexation</td><td>Autorisée (<code>blog_public = 1</code>). Aucune balise <code>noindex</code> parasite.</td></tr>
+					<tr><td>Permaliens</td><td><code>/%postname%/</code>, slugs français. Les anciennes URL anglaises redirigent en <strong>301</strong> — pas de contenu dupliqué.</td></tr>
+					<tr><td>Titres</td><td>Un seul <code>H1</code> par page, vérifié sur les trois types de page.</td></tr>
+					<tr><td>Partage social</td><td>Open Graph complet (titre, image 1200×630, type, URL, locale) et Twitter Card.</td></tr>
+					<tr><td>Données structurées</td><td><code>Organization</code> + <code>WebSite</code> sur l'accueil ; <code>Product</code> + <code>BreadcrumbList</code> sur la fiche produit.</td></tr>
+					<tr><td>Fiche produit</td><td>Prix, devise <code>TND</code>, disponibilité <code>InStock</code>, <code>sku</code> — l'essentiel pour un extrait enrichi.</td></tr>
+					<tr><td>Bilingue</td><td><code>hreflang</code> <code>fr-FR</code> / <code>ar</code> / <code>fr</code> sur chaque page.</td></tr>
+					<tr><td>Images</td><td>Dimensions présentes (pas de décalage de mise en page), <code>loading="lazy"</code> en place.</td></tr>
+					<tr><td>robots.txt</td><td>Ne bloque que le panier et les journaux. Déclare le plan de site.</td></tr>
+				</tbody>
+			</table>
+		</div>
+
+		<p>C'est une base saine. Le travail restant est de la finition, pas de la reconstruction.</p>
+	</section>
+
+	<section>
+		<h2><span class="num">02</span> Ce qui coûte des visites</h2>
+
+		<article class="finding finding--critical">
+			<div class="finding__head">
+				<h3>Aucune méta-description</h3>
+				<span class="pill pill--critical">Impact fort</span>
+			</div>
+			<p>Aucune page du site n'en a. Google fabrique alors lui-même l'extrait sous votre titre, en piochant un bout de texte au hasard. Vous perdez la seule phrase d'argumentaire que le client lit <em>avant</em> de cliquer — donc du taux de clic, directement.</p>
+		</article>
+
+		<article class="finding finding--critical">
+			<div class="finding__head">
+				<h3>Le plan de site répondait 404</h3>
+				<span class="pill pill--ok">Corrigé</span>
+			</div>
+			<p>Les trois plans de site servaient un XML valide avec un code <strong>404</strong> — qu'un moteur jette sans le lire.</p>
+			<p><strong>Cause établie :</strong> <code>WP::handle_404()</code> ne prévoit aucune exception pour ces routes et pose un 404 dès que la requête principale ne ramène aucun article. Or l'URL déclenche une requête d'articles, et le site n'en publie aucun — c'est une boutique, pas un blog. Le statut part, puis le générateur écrit son XML par-dessus sans corriger le code. Invisible ailleurs, justement parce qu'un site doté d'un blog ramène des articles.</p>
+			<p>Corrigé par un filtre <code>pre_handle_404</code>, le point de sortie prévu par WordPress. Les trois plans de site répondent maintenant 200 — 4 sitemaps, 13 pages, 2 produits — et une page inexistante répond toujours 404.</p>
+		</article>
+
+		<article class="finding finding--critical">
+			<div class="finding__head">
+				<h3>Aucune extension SEO</h3>
+				<span class="pill pill--critical">Impact fort</span>
+			</div>
+			<p>Extensions actives : <code>famma-core</code>, <code>translatepress</code>, <code>woocommerce</code>. Rien d'autre. Conséquence directe : vous ne pouvez rédiger ni titre ni description <strong>par page</strong> depuis l'administration. C'est le chaînon manquant qui explique le premier point.</p>
+		</article>
+	</section>
+
+	<section>
+		<h2><span class="num">03</span> Défauts moyens</h2>
+
+		<article class="finding finding--medium">
+			<div class="finding__head">
+				<h3>Balise canonique absente sur la boutique</h3>
+				<span class="pill pill--medium">Moyen</span>
+			</div>
+			<p>L'accueil et la fiche produit ont la leur. La page boutique n'en a pas — or c'est précisément celle qui se décline en variantes : pagination, filtres par prix, par disponibilité, par note. Chaque combinaison peut être vue comme une page distincte au contenu quasi identique.</p>
+		</article>
+
+		<article class="finding finding--medium">
+			<div class="finding__head">
+				<h3>Vignettes de catégories sans texte alternatif</h3>
+				<span class="pill pill--medium">Moyen</span>
+			</div>
+			<p>Le chiffre brut est trompeur, alors soyons précis : les images produit <strong>ont bien</strong> leur <code>alt</code>, et les drapeaux de langue ont un <code>alt</code> vide, ce qui est correct pour une image décorative.</p>
+			<p>En revanche les vignettes du carrousel de catégories, sur l'accueil, ont un <code>alt</code> vide alors qu'elles sont des liens vers vos rayons. Elles devraient porter le nom de la catégorie. C'est du code à nous. Restent aussi quelques images sans <code>alt</code> <em>dans les descriptions produit</em> — celles-là se saisissent dans l'éditeur.</p>
+		</article>
+
+		<article class="finding finding--medium">
+			<div class="finding__head">
+				<h3>Slogan uniquement en arabe dans le titre</h3>
+				<span class="pill pill--medium">Moyen</span>
+			</div>
+			<p>Le titre de l'accueil est <strong>« FAMMA MENNOU – فمّا ديما حاجة جديدة »</strong>, y compris sur la version française. C'est un beau slogan, mais dans un résultat de recherche français il n'apporte aucun mot-clé et occupe la moitié du titre.</p>
+		</article>
+
+		<article class="finding finding--medium">
+			<div class="finding__head">
+				<h3>hreflang sans x-default · poids des pages</h3>
+				<span class="pill pill--medium">Moyen</span>
+			</div>
+			<p>Les trois variantes sont déclarées, mais pas <code>x-default</code> — ce qui indique quelle version servir à un visiteur dont la langue ne correspond à aucune des vôtres.</p>
+			<p>Par ailleurs : 18 feuilles de style et 20 scripts sur la fiche produit, pour ~100 Ko de HTML. Pas alarmant, mais la vitesse est un facteur de classement et vos clients sont sur mobile, souvent en 4G.</p>
+		</article>
+	</section>
+
+	<section>
+		<h2><span class="num">04</span> Pas encore un problème, bientôt un</h2>
+		<ul>
+			<li><strong>Deux produits nommés « Test 1 » et « Teste2 »</strong>, indexables en l'état. Ils enverraient à Google le signal d'un site inachevé.</li>
+			<li><strong>Treize pages publiées</strong>, dont les pages légales. Si les CGV et la politique de confidentialité sont vides, elles diluent le site sans rien apporter.</li>
+			<li><strong>La page Contact</strong> n'a pas de données structurées <code>LocalBusiness</code>. Utile quand vous aurez horaires et adresse confirmés — pas avant, sinon on déclare du vide.</li>
+		</ul>
+	</section>
+
+	<section>
+		<h2><span class="num">05</span> L'ordre que je recommande</h2>
+		<p>L'ordre suit le rapport gain/effort, pas la gravité.</p>
+		<ol class="plan">
+			<li class="is-first"><strong>Installer une extension SEO</strong> (Rank Math ou Yoast, gratuites). Un seul geste qui règle les descriptions, ajoute la canonique manquante et vous rend autonome sur titres et extraits. De loin le meilleur investissement.</li>
+			<li><strong>Rédiger titre et description</strong> pour l'accueil, la boutique, À propos et Contact — puis pour chaque produit, à mesure du catalogue.</li>
+			<li><strong>Corriger le <code>alt</code> des vignettes de catégories.</strong> C'est notre code, une dizaine de lignes.</li>
+			<li><strong>Ajouter <code>x-default</code></strong> au <code>hreflang</code>.</li>
+			<li><strong>Arbitrer le slogan</strong> : soit un slogan français côté français, soit le retirer du titre de l'accueil.</li>
+			<li><strong>Supprimer les produits de test</strong> avant l'ouverture.</li>
+			<li><strong>Mesurer la vitesse en production</strong>, une fois le cache LiteSpeed actif.</li>
+		</ol>
+		<p>Les points 3 et 4 sont du code — je peux les faire. Le point 1 est un choix propriétaire : je n'installe pas d'extension sans votre accord.</p>
+	</section>
+
+	<section>
+		<h2><span class="num">06</span> Ce que cet audit ne couvre pas</h2>
+		<ul>
+			<li><strong>Aucune donnée de trafic réel</strong> : ni Search Console, ni position, ni requête. Cet audit est technique ; il ne dit rien de votre visibilité actuelle.</li>
+			<li><strong>Le contenu éditorial</strong> — pertinence des textes, richesse sémantique, maillage interne. Un site à deux produits de test ne permet pas ce jugement.</li>
+			<li><strong>Les performances réelles</strong> : mesurées sur Local, sans cache ni HTTPS, les chiffres ne seraient pas honnêtes.</li>
+			<li><strong>Le référencement arabe</strong> : noms de catégories et menus sont encore en français sur <code>/ar/</code>. Signalé dans le chantier de traduction, cela pénalise aussi le référencement arabe.</li>
+		</ul>
+	</section>
+
+	<footer>
+		<p>Réserve de méthode — Local n'est pas la production. Les réglages serveur (HTTPS, cache LiteSpeed, compression) diffèrent, et les mesures de vitesse devront être refaites en ligne.</p>
+	</footer>
+
+</div>
