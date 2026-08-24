@@ -1,0 +1,413 @@
+# Traduction du thème FAMMA Child en derja tunisienne.
+#
+# La langue cible est la derja telle qu'on la parle, écrite en alphabet arabe —
+# pas l'arabe littéraire. « فابور » plutôt que « مجاني », « القفة » plutôt que
+# « سلة التسوق ». Un client tunisien doit lire sa langue, pas une traduction.
+#
+# Ne sont traduites que les chaînes vues par le client. Les libellés
+# d'administration (titres de widgets, descriptions de réglages, rappels
+# réservés au propriétaire) restent en français : c'est la langue dans laquelle
+# le propriétaire travaille, et les traduire lui compliquerait la tâche.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: FAMMA Child\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-24 00:00+0100\n"
+"PO-Revision-Date: 2026-08-24 00:00+0100\n"
+"Last-Translator: FAMMA\n"
+"Language-Team: Derja tunisienne\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+
+# --- Navigation et chrome ---
+
+msgid "Aller au contenu"
+msgstr "أمشي للمحتوى"
+
+msgid "Navigation"
+msgstr "التنقّل"
+
+msgid "Navigation principale"
+msgstr "التنقّل الرئيسي"
+
+msgid "Informations"
+msgstr "معلومات"
+
+msgid "Informations légales"
+msgstr "معلومات قانونية"
+
+msgid "Langue"
+msgstr "اللغة"
+
+msgid "Menu"
+msgstr "المنيو"
+
+msgid "Mon compte"
+msgstr "حسابي"
+
+msgid "Rechercher"
+msgstr "لوّج"
+
+msgid "Rechercher un produit"
+msgstr "لوّج على منتج"
+
+msgid "Rechercher un produit..."
+msgstr "لوّج على منتج..."
+
+msgid "Catégorie"
+msgstr "قسم"
+
+msgid "Catégories"
+msgstr "الأقسام"
+
+msgid "Toutes les catégories"
+msgstr "الأقسام الكل"
+
+msgid "Panier, %d article"
+msgid_plural "Panier, %d articles"
+msgstr[0] "القفة، فارغة"
+msgstr[1] "القفة، منتج واحد"
+msgstr[2] "القفة، زوز منتجات"
+msgstr[3] "القفة، %d منتجات"
+msgstr[4] "القفة، %d منتج"
+msgstr[5] "القفة، %d منتج"
+
+# --- Barre de promesses de l'en-tête ---
+
+msgid "LIVRAISON GRATUITE 100%"
+msgstr "التوصيل فابور 100%"
+
+msgid "Livraison partout en Tunisie"
+msgstr "التوصيل في تونس الكل"
+
+msgid "Paiement à la livraison"
+msgstr "الدفع كي يوصلك"
+
+msgid "Support WhatsApp"
+msgstr "مساعدة على الواتساب"
+
+# --- Accueil : héros ---
+
+msgid "Il y a toujours quelque chose de nouveau."
+msgstr "ديما فمّا حاجة جديدة."
+
+msgid ""
+"FAMMA choisit des produits pratiques et utiles, livrés partout en Tunisie et "
+"payés à la livraison."
+msgstr ""
+"فمّا تختار حوايج تنفع وتخدم، نوصّلوهم في تونس الكل، وتخلّص كي يوصلك."
+
+msgid "Découvrir la boutique"
+msgstr "شوف الحانوت"
+
+msgid "Livraison offerte"
+msgstr "التوصيل فابور"
+
+msgid "partout en Tunisie"
+msgstr "في تونس الكل"
+
+msgid "Commande sans compte"
+msgstr "أطلب بلا كونت"
+
+msgid "nom, téléphone, adresse"
+msgstr "الإسم، التليفون، العنوان"
+
+msgid "Visuels"
+msgstr "التصاور"
+
+msgid "Visuel %d"
+msgstr "تصويرة %d"
+
+# --- Accueil : sections ---
+
+msgid "Parcourez nos catégories"
+msgstr "دوّر في الأقسام"
+
+msgid "Catégories précédentes"
+msgstr "الأقسام اللي قبل"
+
+msgid "Catégories suivantes"
+msgstr "الأقسام اللي بعد"
+
+msgid "Nos nouveautés"
+msgstr "الجديد عندنا"
+
+msgid "Pourquoi choisir FAMMA ?"
+msgstr "علاش تختار فمّا؟"
+
+msgid "Vous payez à la réception"
+msgstr "تخلّص كي يوصلك"
+
+msgid "La commande n'est réglée qu'une fois livrée, en espèces, au livreur."
+msgstr "الطلبية تتخلّص كي توصل، كاش، في يد الليفرور."
+
+msgid "Partout en Tunisie, dans les 24 gouvernorats, sans frais ajoutés."
+msgstr "في تونس الكل، في 24 ولاية، بلا مصاريف زايدة."
+
+msgid "Nom, téléphone, adresse. Aucun mot de passe à créer."
+msgstr "الإسم، التليفون، العنوان. ما تحتاجش تعمل باسّوورد."
+
+msgid "Une équipe joignable"
+msgstr "فمّا شكون يجاوبك"
+
+msgid ""
+"Vos questions trouvent une réponse sur WhatsApp, avant comme après la "
+"commande."
+msgstr "أسئلتك تلقى جواب على الواتساب، قبل الطلبية وبعدها."
+
+msgid "Ils nous font confiance"
+msgstr "يثقو فينا"
+
+msgid "Basé sur %s avis client"
+msgid_plural "Basé sur %s avis clients"
+msgstr[0] "حتى تقييم"
+msgstr[1] "على أساس تقييم واحد"
+msgstr[2] "على أساس زوز تقييمات"
+msgstr[3] "على أساس %s تقييمات"
+msgstr[4] "على أساس %s تقييم"
+msgstr[5] "على أساس %s تقييم"
+
+# --- Fiche produit ---
+
+msgid "Nouveau"
+msgstr "جديد"
+
+msgid "En stock"
+msgstr "موجود"
+
+msgid "Rupture de stock"
+msgstr "ما فماش"
+
+msgid "Commander"
+msgstr "أطلب"
+
+msgid "Commander : %s"
+msgstr "أطلب: %s"
+
+msgid "Ajouter aux favoris"
+msgstr "زيد في المفضّلة"
+
+msgid "Vous économisez %s"
+msgstr "ربحت %s"
+
+msgid "Une question sur ce produit ?"
+msgstr "عندك سؤال على المنتج هذا؟"
+
+msgid "Vous réglez en espèces, à la réception. Rien avant."
+msgstr "تخلّص كاش كي يوصلك. حتى حاجة قبل."
+
+msgid "Partout en Tunisie, dans les 24 gouvernorats."
+msgstr "في تونس الكل، في 24 ولاية."
+
+msgid "Nom, téléphone, adresse. Rien de plus à remplir."
+msgstr "الإسم، التليفون، العنوان. حتى حاجة أخرى."
+
+msgid "Posez vos questions sur WhatsApp avant de commander."
+msgstr "أسأل على الواتساب قبل ما تطلب."
+
+msgid "Livraison"
+msgstr "التوصيل"
+
+msgid "Voir la page Livraison complète"
+msgstr "شوف صفحة التوصيل الكاملة"
+
+msgid "Basé sur %s avis"
+msgid_plural "Basé sur %s avis"
+msgstr[0] "حتى تقييم"
+msgstr[1] "على أساس تقييم واحد"
+msgstr[2] "على أساس زوز تقييمات"
+msgstr[3] "على أساس %s تقييمات"
+msgstr[4] "على أساس %s تقييم"
+msgstr[5] "على أساس %s تقييم"
+
+msgid "Lire tous les avis"
+msgstr "أقرا التقييمات الكل"
+
+msgid "Spécifications"
+msgstr "المواصفات"
+
+msgid "FAQ"
+msgstr "أسئلة متكرّرة"
+
+# --- Boutique : filtres et affichage ---
+
+msgid "Filtres"
+msgstr "الفلاتر"
+
+msgid "Filtrer"
+msgstr "فلتري"
+
+msgid "Réinitialiser"
+msgstr "رجّع الكل"
+
+msgid "Réinitialiser les filtres"
+msgstr "رجّع الفلاتر"
+
+msgid "Prix"
+msgstr "الثمن"
+
+msgid "Prix maximum"
+msgstr "أقصى ثمن"
+
+msgid "Disponibilité"
+msgstr "التوفّر"
+
+msgid "Note moyenne"
+msgstr "المعدّل"
+
+msgid "et plus"
+msgstr "وأكثر"
+
+msgid "Promotions"
+msgstr "التخفيضات"
+
+msgid "En promotion"
+msgstr "في تخفيض"
+
+msgid "Affichage des produits"
+msgstr "طريقة العرض"
+
+msgid "Affichage en grille"
+msgstr "عرض بالمربّعات"
+
+msgid "Affichage en liste"
+msgstr "عرض بالقائمة"
+
+msgid "Aucun produit ne correspond"
+msgstr "ما فماش منتج يوافق"
+
+msgid ""
+"Essayez d'élargir votre recherche : moins de filtres, ou une fourchette de "
+"prix plus large."
+msgstr "جرّب توسّع في اللوجان: فلاتر أقل، ولا مجال ثمن أوسع."
+
+msgid "La boutique se remplit"
+msgstr "الحانوت تعمّر شية بشية"
+
+msgid ""
+"Nos premiers produits arrivent. Écrivez-nous pour être prévenu dès leur mise "
+"en ligne."
+msgstr "أوّل منتجاتنا في الطريق. أكتبلنا ونعيّطولك كي يطلعو."
+
+msgid "Prévenez-moi sur WhatsApp"
+msgstr "عيّطلي على الواتساب"
+
+# --- Aide et WhatsApp ---
+
+msgid "Besoin d'aide ?"
+msgstr "تحتاج مساعدة؟"
+
+msgid "Notre équipe vous répond sur WhatsApp et vous aide à choisir."
+msgstr "نجاوبوك على الواتساب ونعاونوك تختار."
+
+msgid "Écrire sur WhatsApp"
+msgstr "أكتب على الواتساب"
+
+msgid "Une question sur un produit ?"
+msgstr "عندك سؤال على منتج؟"
+
+msgid ""
+"Écrivez-nous sur WhatsApp : on vous répond et on vous aide à choisir avant "
+"de commander."
+msgstr "أكتبلنا على الواتساب: نجاوبوك ونعاونوك تختار قبل ما تطلب."
+
+msgid "Discuter sur WhatsApp"
+msgstr "أحكي على الواتساب"
+
+msgid "Ouvrir WhatsApp"
+msgstr "أفتح الواتساب"
+
+# --- Pied de page ---
+
+msgid ""
+"Votre boutique en ligne tunisienne : des produits pratiques, utiles et "
+"parfois surprenants, livrés partout en Tunisie et payés à la livraison."
+msgstr ""
+"حانوتك التونسية أونلاين: حوايج تنفع، تخدم، وساعات تعجّب، نوصّلوهم في تونس "
+"الكل وتخلّص كي يوصلك."
+
+msgid "Aide &amp; support"
+msgstr "مساعدة"
+
+msgid "Vous payez uniquement à la réception de votre commande."
+msgstr "تخلّص كان كي توصلك الطلبية."
+
+msgid "© %1$s %2$s. Tous droits réservés."
+msgstr "© %1$s %2$s. الحقوق الكل محفوظة."
+
+msgid "Par téléphone"
+msgstr "بالتليفون"
+
+msgid "Par e-mail"
+msgstr "بالإيميل"
+
+msgid "Où nous sommes"
+msgstr "وين نلقاونا"
+
+# --- Parcours de commande ---
+
+msgid "Commande enregistrée. Nous vous contactons pour la confirmer."
+msgstr "الطلبية تسجّلت. نتّصلو بيك باش نأكّدوها."
+
+msgid "Commande reçue"
+msgstr "الطلبية وصلت"
+
+msgid "Nous vous contactons pour confirmer la commande."
+msgstr "نتّصلو بيك باش نأكّدو الطلبية."
+
+msgid "Le colis part une fois la commande confirmée."
+msgstr "الكولي يتبعث كي تتأكّد الطلبية."
+
+msgid "Vous payez en espèces au livreur, à la réception."
+msgstr "تخلّص كاش للليفرور كي يوصلك."
+
+msgid "Et maintenant ?"
+msgstr "وتوّا؟"
+
+msgid "Numéro à appeler"
+msgstr "النمرة اللي تعيّط عليها"
+
+msgid "À préparer en espèces"
+msgstr "حضّرها كاش"
+
+msgid ""
+"Une erreur dans le numéro ou l’adresse ? Écrivez-nous, on corrige avant "
+"l’envoi."
+msgstr "فمّا غلطة في النمرة ولا العنوان؟ أكتبلنا، نصلّحو قبل ما نبعثو."
+
+msgid "Corriger ma commande"
+msgstr "صلّح طلبيتي"
+
+msgid "Livraison offerte, partout en Tunisie"
+msgstr "التوصيل فابور، في تونس الكل"
+
+msgid "Commande sans créer de compte"
+msgstr "أطلب بلا ما تعمل كونت"
+
+msgid "Paiement à la livraison, en espèces"
+msgstr "الدفع كي يوصلك، كاش"
+
+msgid "Un doute ? Écrivez-nous"
+msgstr "عندك شك؟ أكتبلنا"
+
+# --- Coordonnées ---
+
+msgid "Téléphone"
+msgstr "التليفون"
+
+msgid "Adresse e-mail"
+msgstr "الإيميل"
+
+msgid "Adresse / ville"
+msgstr "العنوان / المدينة"
+
+msgid "Horaires"
+msgstr "أوقات الخدمة"
+
+msgid "Numéro WhatsApp"
+msgstr "نمرة الواتساب"

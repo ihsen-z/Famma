@@ -23,7 +23,7 @@ const FAMMA_CHILD_VERSION = '0.1.0';
  * Chaque fichier est testé avant d'être inclus : un thème dont un fichier
  * manque doit dégrader, pas produire une erreur fatale sur toutes les pages.
  */
-foreach ( array( 'icons', 'catalog', 'header-parts', 'footer-parts', 'shop', 'shop-widgets', 'product', 'home', 'pages', 'editorial-guards', 'assets' ) as $famma_child_part ) {
+foreach ( array( 'i18n', 'icons', 'catalog', 'header-parts', 'footer-parts', 'shop', 'shop-widgets', 'product', 'home', 'pages', 'editorial-guards', 'assets' ) as $famma_child_part ) {
 	$famma_child_file = get_stylesheet_directory() . '/inc/' . $famma_child_part . '.php';
 
 	if ( file_exists( $famma_child_file ) ) {
@@ -741,8 +741,6 @@ add_filter( 'wp_theme_json_data_theme', 'famma_child_theme_json', 20 );
  * WordPress pour les déclarations de support.
  */
 function famma_child_setup(): void {
-	load_child_theme_textdomain( 'famma-child', get_stylesheet_directory() . '/languages' );
-
 	// Galerie produit WooCommerce — zoom/lightbox/slider natifs (§30).
 	add_theme_support( 'wc-product-gallery-zoom' );
 	add_theme_support( 'wc-product-gallery-lightbox' );

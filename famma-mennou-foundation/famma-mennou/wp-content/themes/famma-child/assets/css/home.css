@@ -245,6 +245,27 @@
 	opacity: 0.65;
 }
 
+/*
+ * Centrage des deux decorations en arabe.
+ *
+ * `inset-inline-start: 50%` s'inverse tout seul, mais `translate()` est une
+ * propriete PHYSIQUE : elle ignore le sens de lecture. En RTL, le bord
+ * interieur part donc de la droite tandis que la translation continue de tirer
+ * vers la gauche — la decoration se decale au lieu de se centrer, et elle
+ * debordait de la fenetre par la gauche, ce qui provoquait un defilement
+ * horizontal sur toute la page d'accueil arabe.
+ *
+ * Les deux seuls `translate` physiques du theme sont ici : les autres blocs
+ * utilisent des marges et des grilles, qui suivent le sens de lecture seules.
+ */
+[dir="rtl"] .famma-hero2__disc {
+	transform: translate(50%, -50%);
+}
+
+[dir="rtl"] .famma-hero2__base {
+	transform: translateX(50%);
+}
+
 .famma-hero2__slides {
 	position: absolute;
 	inset: 0;

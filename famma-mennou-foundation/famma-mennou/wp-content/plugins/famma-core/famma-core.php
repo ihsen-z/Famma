@@ -2140,7 +2140,39 @@ final class Dashboard {
  * @return void
  */
 function load_textdomain(): void {
+	static $loaded = '';
+
+	$locale = determine_locale();
+
+	if ( $locale === $loaded ) {
+		return;
+	}
+
+	/*
+	 * Chargement explicite du fichier, et non `load_plugin_textdomain()`.
+	 *
+	 * Sous TranslatePress, la langue de la page n'est arrêtée qu'après `init`,
+	 * et `load_plugin_textdomain()` — qui redéduit la locale lui-même — ne
+	 * retrouvait pas le fichier arabe. Le second argument de
+	 * `unload_textdomain()` compte autant : par défaut il retire le domaine du
+	 * registre de chargement différé, ce qui fait échouer en silence le
+	 * chargement qui suit.
+	 *
+	 * Mesuré sur le site, pas déduit : sans cela, `/ar/` servait les statuts de
+	 * commande en anglais alors que la traduction existait.
+	 */
+	$mofile = plugin_dir_path( FAMMA_CORE_FILE ) . 'languages/famma-core-' . $locale . '.mo';
+
+	if ( is_readable( $mofile ) ) {
+		unload_textdomain( 'famma-core', true );
+		\load_textdomain( 'famma-core', $mofile, $locale );
+		$loaded = $locale;
+		return;
+	}
+
 	load_plugin_textdomain( 'famma-core', false, dirname( plugin_basename( FAMMA_CORE_FILE ) ) . '/languages' );
+
+	$loaded = $locale;
 }
 
 /**
@@ -2203,6 +2235,9 @@ function on_activation(): void {
 }
 
 add_action( 'init', __NAMESPACE__ . '\\load_textdomain' );
+// Rejoué une fois la requête résolue : c'est seulement là que TranslatePress a
+// arrêté la langue de la page.
+add_action( 'wp', __NAMESPACE__ . '\\load_textdomain', 1 );
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\boot' );
 add_action( 'before_woocommerce_init', __NAMESPACE__ . '\\declare_hpos_compatibility' );
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\on_activation' );

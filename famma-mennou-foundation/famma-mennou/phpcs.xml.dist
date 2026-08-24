@@ -81,6 +81,19 @@
 		<exclude-pattern>scripts/deploy/templates/wp-config-production.sample.php</exclude-pattern>
 	</rule>
 
+	<!--
+		Les scripts de scripts/ tournent sous PHP en ligne de commande, hors de
+		WordPress : WP_Filesystem n'y existe pas, et leurs variables de premier
+		niveau ne polluent aucun espace global partage.
+	-->
+	<rule ref="WordPress.WP.AlternativeFunctions">
+		<exclude-pattern>scripts/*</exclude-pattern>
+	</rule>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound">
+		<exclude-pattern>scripts/*</exclude-pattern>
+	</rule>
+
 	<rule ref="PHPCompatibilityWP"/>
 
 	<!--
@@ -226,6 +239,18 @@
 				<element value="famma_child_topbar"/>
 				<element value="famma_child_topbar_promises"/>
 				<element value="famma_child_whatsapp_number"/>
+				<element value="famma_child_is_derja"/>
+				<element value="famma_child_load_textdomain"/>
+				<element value="famma_child_own_textdomains"/>
+				<element value="famma_child_skip_translatepress_gettext"/>
+				<element value="famma_child_translate_woo"/>
+				<element value="famma_child_translate_woo_context"/>
+				<element value="famma_child_translate_woo_plural"/>
+				<element value="famma_child_translate_woo_plural_context"/>
+				<element value="famma_child_woo_derja"/>
+				<element value="famma_mo_build"/>
+				<element value="famma_po_parse"/>
+				<element value="famma_po_unquote"/>
 				<element value="famma_env_define_constants"/>
 				<element value="famma_legacy_urls_redirect"/>
 				<element value="famma_local_mail_from"/>
