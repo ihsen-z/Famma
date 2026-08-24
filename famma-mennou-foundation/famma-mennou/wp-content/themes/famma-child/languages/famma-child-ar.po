@@ -411,3 +411,32 @@ msgstr "أوقات الخدمة"
 
 msgid "Numéro WhatsApp"
 msgstr "نمرة الواتساب"
+
+# --- Choix du mode de commande (avec ou sans compte) ---
+
+msgid "Comment souhaitez-vous commander ?"
+msgstr "كيفاش تحب تطلب؟"
+
+msgid "Commander sans compte"
+msgstr "أطلب بلا كونت"
+
+msgid "Nom, téléphone et adresse suffisent. Aucun mot de passe à créer."
+msgstr "الإسم، التليفون والعنوان يكفيو. ما تحتاجش تعمل باسّوورد."
+
+msgid "Créer un compte"
+msgstr "أعمل كونت"
+
+msgid ""
+"Retrouvez vos commandes et gagnez du temps la prochaine fois. Une adresse e-"
+"mail sera demandée."
+msgstr "تلقى طلبياتك وتربح وقت المرّة الجاية. باش نطلبو منك إيميل."
+
+msgid ""
+"Pour créer un compte, indiquez une adresse e-mail. Sinon, choisissez « "
+"Commander sans compte » : votre commande passera sans e-mail."
+msgstr ""
+"باش تعمل كونت، لازم إيميل. وإلا أختار « أطلب بلا كونت »: الطلبية تعدّي بلا "
+"إيميل."
+
+msgid "Vous souhaitez retrouver facilement vos prochaines commandes ?"
+msgstr "تحب تلقى طلبياتك الجايين بالساهل؟"

@@ -113,6 +113,11 @@
 				<element value="famma_child_always_show_add_to_cart"/>
 				<element value="famma_child_brand_link"/>
 				<element value="famma_child_brand_logo"/>
+				<element value="famma_child_account_choice"/>
+				<element value="famma_child_account_offer_after_order"/>
+				<element value="famma_child_can_offer_account"/>
+				<element value="famma_child_enqueue_checkout"/>
+				<element value="famma_child_require_email_for_account"/>
 				<element value="famma_child_cart_badge"/>
 				<element value="famma_child_cart_count"/>
 				<element value="famma_child_cart_fragment"/>

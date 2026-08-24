@@ -163,10 +163,29 @@ $WP option update woocommerce_price_num_decimals 3 >/dev/null
 step "taxes désactivées tant que le propriétaire n'a pas tranché (§11)"
 $WP option update woocommerce_calc_taxes "no" >/dev/null
 
-step "commande sans compte obligatoire (§13)"
+step "commande sans compte, creation de compte optionnelle (§13)"
+# La commande invite reste la voie par defaut et la plus courte : aucun compte
+# n'est jamais exige, ni avant, ni pendant, ni apres.
 $WP option update woocommerce_enable_guest_checkout "yes" >/dev/null
+
+# Aucun rappel « vous avez deja un compte ? » : sur un tunnel COD, c'est une
+# invitation a quitter le formulaire pour aller chercher un mot de passe.
 $WP option update woocommerce_enable_checkout_login_reminder "no" >/dev/null
-$WP option update woocommerce_enable_signup_and_login_from_checkout "no" >/dev/null
+
+# Creer un compte devient possible — et seulement possible. WooCommerce rend
+# alors sa case « creer un compte », decochee par defaut, et n'affiche le champ
+# mot de passe qu'une fois cochee. Le theme presente ce choix en tete de
+# commande (inc/checkout.php) ; sans ce reglage, il ne propose rien.
+$WP option update woocommerce_enable_signup_and_login_from_checkout "yes" >/dev/null
+
+# Le client choisit son mot de passe au lieu d'en recevoir un par courriel :
+# l'e-mail est facultatif ici, un mot de passe envoye par mail pourrait donc
+# n'arriver nulle part.
+$WP option update woocommerce_registration_generate_password "no" >/dev/null
+
+# Inscription possible depuis « Mon compte » : sans elle, la proposition
+# affichee apres une commande invite pointerait vers une page sans formulaire.
+$WP option update woocommerce_enable_myaccount_registration "yes" >/dev/null
 
 step "avis clients activés, aucun avis factice (§31, §48)"
 $WP option update woocommerce_enable_reviews "yes" >/dev/null

@@ -1,0 +1,129 @@
+/*
+ * FAMMA — choix du mode de commande, avec ou sans compte.
+ *
+ * Mobile-first et bati sur les jetons existants : aucune couleur, aucune taille
+ * ni aucun espacement en dur. Proprietes logiques pour que la version arabe
+ * s'inverse sans feuille dupliquee.
+ */
+
+.famma-account-choice {
+	display: grid;
+	gap: var(--sp-3);
+	margin: 0 0 var(--sp-8);
+	padding: 0;
+	border: 0;
+}
+
+.famma-account-choice__legend {
+	margin: 0 0 var(--sp-4);
+	padding: 0;
+	color: var(--famma-blue);
+	font-size: var(--fs-h4);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-account-choice__option {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--sp-4);
+	/* 48px de cible tactile : la ligne entiere est cliquable, pas juste le rond. */
+	min-block-size: var(--sp-12);
+	padding: var(--sp-4);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+	cursor: pointer;
+}
+
+.famma-account-choice__option:hover {
+	border-color: var(--famma-orange);
+}
+
+/*
+ * L'option retenue se distingue par sa bordure, pas seulement par le rond
+ * coche : sur un ecran de telephone tenu a bout de bras, un rond de 16px ne
+ * suffit pas a dire ou l'on en est.
+ */
+.famma-account-choice__option:has(input:checked) {
+	border-color: var(--famma-orange);
+	box-shadow: inset 0 0 0 1px var(--famma-orange);
+}
+
+.famma-account-choice__option:focus-within {
+	outline: 2px solid var(--famma-orange);
+	outline-offset: 2px;
+}
+
+.famma-account-choice__option input[type="radio"] {
+	flex: 0 0 auto;
+	inline-size: 1.25rem;
+	block-size: 1.25rem;
+	margin-block-start: 0.15rem;
+	accent-color: var(--famma-orange);
+}
+
+.famma-account-choice__body {
+	display: grid;
+	gap: var(--sp-1);
+}
+
+.famma-account-choice__title {
+	color: var(--famma-blue);
+	font-size: var(--fs-body);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-account-choice__hint {
+	color: var(--famma-text-prose);
+	font-size: var(--fs-small);
+	line-height: 1.5;
+}
+
+/*
+ * La case native de WooCommerce ne disparait que lorsque le script a pris le
+ * relais — la classe est posee par lui. Sans JavaScript, elle reste visible et
+ * le client peut toujours creer un compte : masquer en CSS seul lui retirerait
+ * l'option sans rien offrir a la place.
+ */
+.famma-has-account-choice .woocommerce-account-fields > .create-account {
+	display: none;
+}
+
+/* --- Proposition apres commande --- */
+
+.famma-account-offer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--sp-4);
+	margin-block-start: var(--sp-8);
+	padding: var(--sp-6);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-surface-band);
+}
+
+.famma-account-offer__text {
+	margin: 0;
+	color: var(--famma-text-prose);
+	font-size: var(--fs-body);
+}
+
+.famma-account-offer__link {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: var(--sp-10);
+	padding-inline: var(--sp-6);
+	border: 1px solid var(--famma-orange);
+	border-radius: var(--famma-radius-sm);
+	color: var(--famma-blue);
+	font-size: var(--fs-button);
+	font-weight: var(--fw-semibold);
+	text-decoration: none;
+}
+
+.famma-account-offer__link:hover,
+.famma-account-offer__link:focus-visible {
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+}
