@@ -990,6 +990,7 @@ final class Tunisia {
 		add_filter( 'woocommerce_states', array( $this, 'governorates' ) );
 		add_filter( 'woocommerce_checkout_fields', array( $this, 'checkout_fields' ) );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate_phone' ), 10, 2 );
+		add_action( 'woocommerce_after_checkout_validation', array( $this, 'require_email_for_account' ), 20, 2 );
 
 		/*
 		 * The country field is removed from the checkout — the shop only sells
@@ -1123,6 +1124,42 @@ final class Tunisia {
 			$f['billing']['billing_address_1']['label'] = __( 'Address / العنوان', 'famma-core' );
 		}
 		return $f;
+	}
+
+	/**
+	 * Requires an email address — but only from a customer asking for an account.
+	 *
+	 * Email is deliberately optional here (§13): on a cash-on-delivery order the
+	 * reachable channel is the phone number, and an extra mandatory field on
+	 * mobile is pure drop-off. WooCommerce, however, needs an email to open an
+	 * account. Without this rule, ticking "create an account" with no email
+	 * produced a raw WooCommerce error at the exact moment the customer believes
+	 * they are done.
+	 *
+	 * The constraint applies to that case only: a guest order still needs no
+	 * email. The message names the way out rather than just stating the refusal.
+	 *
+	 * Reads the posted data WooCommerce has already assembled and sanitised,
+	 * never `$_POST`: `WC_Checkout::get_posted_data()` exposes `createaccount`,
+	 * so there is no reason to reach for the raw superglobal.
+	 *
+	 * @param array<string, mixed> $data   Posted checkout data.
+	 * @param \WP_Error            $errors Validation errors.
+	 * @return void
+	 */
+	public function require_email_for_account( array $data, \WP_Error $errors ): void {
+		if ( empty( $data['createaccount'] ) ) {
+			return;
+		}
+
+		if ( '' !== trim( (string) ( $data['billing_email'] ?? '' ) ) ) {
+			return;
+		}
+
+		$errors->add(
+			'famma_account_email',
+			__( 'To create an account, please give an email address. Otherwise choose "Order without an account": your order goes through without one.', 'famma-core' )
+		);
 	}
 
 	/**

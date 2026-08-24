@@ -431,12 +431,5 @@ msgid ""
 "mail sera demandée."
 msgstr "تلقى طلبياتك وتربح وقت المرّة الجاية. باش نطلبو منك إيميل."
 
-msgid ""
-"Pour créer un compte, indiquez une adresse e-mail. Sinon, choisissez « "
-"Commander sans compte » : votre commande passera sans e-mail."
-msgstr ""
-"باش تعمل كونت، لازم إيميل. وإلا أختار « أطلب بلا كونت »: الطلبية تعدّي بلا "
-"إيميل."
-
 msgid "Vous souhaitez retrouver facilement vos prochaines commandes ?"
 msgstr "تحب تلقى طلبياتك الجايين بالساهل؟"

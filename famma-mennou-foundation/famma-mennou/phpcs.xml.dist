@@ -117,7 +117,6 @@
 				<element value="famma_child_account_offer_after_order"/>
 				<element value="famma_child_can_offer_account"/>
 				<element value="famma_child_enqueue_checkout"/>
-				<element value="famma_child_require_email_for_account"/>
 				<element value="famma_child_cart_badge"/>
 				<element value="famma_child_cart_count"/>
 				<element value="famma_child_cart_fragment"/>
@@ -227,6 +226,7 @@
 				<element value="famma_child_reorder_loop_benefit"/>
 				<element value="famma_child_replace_loop_rating"/>
 				<element value="famma_child_sale_badge"/>
+				<element value="famma_child_sitemap_not_found"/>
 				<element value="famma_child_search_form"/>
 				<element value="famma_child_setting"/>
 				<element value="famma_child_setup"/>

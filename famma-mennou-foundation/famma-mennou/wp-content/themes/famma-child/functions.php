@@ -610,6 +610,36 @@ function famma_child_product_scripts(): void {
 add_action( 'wp_enqueue_scripts', 'famma_child_product_scripts', 21 );
 
 /**
+ * Empêche le 404 sur les plans de site XML.
+ *
+ * `WP::handle_404()` ne prévoit aucune exception pour ces routes : il pose un
+ * 404 dès que la requête principale ne ramène aucun article. Or l'URL
+ * `/wp-sitemap.xml` déclenche une requête d'articles, et ce site n'en publie
+ * aucun — c'est une boutique, pas un blog. Le statut part donc en 404, puis le
+ * générateur de WordPress écrit son XML par-dessus sans corriger le code.
+ *
+ * Resultat mesuré avant correctif : les trois plans de site renvoyaient un
+ * XML valide avec un code 404. Un moteur de recherche jette la reponse sans
+ * la lire, et le site perd le chemin le plus direct vers ses pages.
+ *
+ * `pre_handle_404` est le point de sortie prevu par WordPress pour ce cas. Le
+ * filtre ne touche a rien d'autre : hors route de plan de site, il rend la
+ * valeur qu'il a recue.
+ *
+ * @param bool      $bypass Vrai si un autre code a deja pris en charge le 404.
+ * @param \WP_Query $query  Requête principale.
+ * @return bool
+ */
+function famma_child_sitemap_not_found( $bypass, $query ) {
+	if ( $bypass ) {
+		return $bypass;
+	}
+
+	return ( $query->get( 'sitemap' ) || $query->get( 'sitemap-stylesheet' ) ) ? true : $bypass;
+}
+add_filter( 'pre_handle_404', 'famma_child_sitemap_not_found', 10, 2 );
+
+/**
  * Émet les données structurées Organization et WebSite (§21).
  *
  * Volontairement limité à ces deux types. WooCommerce produit déjà lui-même

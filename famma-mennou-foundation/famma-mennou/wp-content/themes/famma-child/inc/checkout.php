@@ -138,41 +138,11 @@ function famma_child_enqueue_checkout(): void {
 }
 add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_checkout', 22 );
 
-/**
- * Rend l'e-mail obligatoire — uniquement pour qui demande un compte.
- *
- * C'est le point de friction que la configuration seule n'aurait pas réglé :
- * l'e-mail est volontairement facultatif ici (§13 — sur une commande payée à la
- * livraison, le canal joignable est le téléphone), alors que WooCommerce en
- * exige un pour ouvrir un compte. Sans cette règle, cocher « créer un compte »
- * sans e-mail produisait une erreur brute de WooCommerce, au moment précis où
- * le client croit avoir fini.
- *
- * La contrainte ne s'applique qu'à ce cas : une commande invité n'a toujours
- * pas besoin d'e-mail.
- *
- * @param array<string, mixed> $data   Données postées.
- * @param \WP_Error            $errors Erreurs de validation.
- * @return void
+/*
+ * La règle « e-mail obligatoire si et seulement si le client demande un compte »
+ * vit dans famma-core, avec les autres validations du tunnel tunisien : c'est
+ * une règle métier, et le thème ne fait que de la présentation (règle 6).
  */
-function famma_child_require_email_for_account( $data, $errors ): void {
-	// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce vérifie son propre nonce avant cette étape.
-	$wants_account = ! empty( $_POST['createaccount'] );
-
-	if ( ! $wants_account ) {
-		return;
-	}
-
-	if ( '' !== trim( (string) ( $data['billing_email'] ?? '' ) ) ) {
-		return;
-	}
-
-	$errors->add(
-		'famma_account_email',
-		__( 'Pour créer un compte, indiquez une adresse e-mail. Sinon, choisissez « Commander sans compte » : votre commande passera sans e-mail.', 'famma-child' )
-	);
-}
-add_action( 'woocommerce_after_checkout_validation', 'famma_child_require_email_for_account', 20, 2 );
 
 /**
  * Propose un compte après une commande passée en invité.

@@ -222,3 +222,10 @@ msgstr "Rien pour l'instant."
 
 msgid "FAMMA Core requires WooCommerce to be installed and active."
 msgstr "FAMMA Core requiert que WooCommerce soit installé et actif."
+
+msgid ""
+"To create an account, please give an email address. Otherwise choose \"Order "
+"without an account\": your order goes through without one."
+msgstr ""
+"Pour créer un compte, indiquez une adresse e-mail. Sinon, choisissez "
+"« Commander sans compte » : votre commande passera sans e-mail."

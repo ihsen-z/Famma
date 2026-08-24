@@ -77,3 +77,12 @@ msgstr "أتصل بينا على الواتساب"
 
 msgid "Bonjour, j'ai une question 🙂 / سلام، عندي سؤال"
 msgstr "سلام، عندي سؤال 🙂"
+
+# --- Compte optionnel au checkout ---
+
+msgid ""
+"To create an account, please give an email address. Otherwise choose \"Order "
+"without an account\": your order goes through without one."
+msgstr ""
+"باش تعمل كونت، لازم إيميل. وإلا أختار « أطلب بلا كونت »: الطلبية تعدّي بلا "
+"إيميل."
