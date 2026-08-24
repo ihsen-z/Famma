@@ -86,7 +86,19 @@ add_action( 'wp', 'famma_child_load_textdomain', 1 );
  * @return array<string, string>
  */
 function famma_child_woo_derja(): array {
-	return array(
+	static $map = null;
+
+	/*
+	 * Memorise pour la requete. Ces filtres se declenchent a chaque appel de
+	 * `__()` sur le domaine woocommerce — plusieurs centaines de fois sur une
+	 * page boutique. Reconstruire le tableau a chaque fois etait un cout
+	 * silencieux paye sur toutes les pages du site (regle 10).
+	 */
+	if ( null !== $map ) {
+		return $map;
+	}
+
+	$map = array(
 		// Fil d'Ariane et navigation.
 		'Home'                                            => 'الرئيسية',
 		'Previous'                                        => 'قبل',
@@ -130,6 +142,8 @@ function famma_child_woo_derja(): array {
 		'Order number:'                                   => 'رقم الطلبية:',
 		'Thank you. Your order has been received.'        => 'يعيشك. الطلبية متاعك وصلتنا.',
 	);
+
+	return $map;
 }
 
 /**
@@ -231,7 +245,18 @@ add_filter( 'ngettext_with_context', 'famma_child_translate_woo_plural_context',
  * @return bool
  */
 function famma_child_is_derja(): bool {
-	return 0 === strpos( determine_locale(), 'ar' );
+	static $derja = null;
+
+	/*
+	 * Meme raison que la carte : `determine_locale()` applique des filtres, et
+	 * l'appeler a chaque chaine traduite revient a le faire des centaines de
+	 * fois par page. La langue ne change pas en cours de requete.
+	 */
+	if ( null === $derja ) {
+		$derja = 0 === strpos( determine_locale(), 'ar' );
+	}
+
+	return $derja;
 }
 
 /**
