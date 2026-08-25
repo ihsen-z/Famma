@@ -585,7 +585,10 @@ final class Seo {
 			return $output;
 		}
 
-		$lines = array( (string) $output );
+		// WordPress termine sa sortie par la ligne `Sitemap:`. Reprendre
+		// directement avec des `Disallow:` les détacherait de leur groupe :
+		// on rouvre donc explicitement un groupe `User-agent: *`.
+		$lines = array( (string) $output, '', 'User-agent: *' );
 
 		$lines[] = 'Disallow: /panier/';
 		$lines[] = 'Disallow: /commande/';
