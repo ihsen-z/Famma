@@ -1,0 +1,471 @@
+<title>Chantier SEO FAMMA MINNOU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --ground:#F5F7FA;
+  --surface:#FFFFFF;
+  --surface-2:#EDF1F6;
+  --ink:#101828;
+  --ink-2:#4A5567;
+  --ink-3:#6F7B8E;
+  --line:#D9E0E9;
+  --navy:#0B1F3A;
+  --accent:#1B4D8F;
+  --ok:#166B4C;
+  --ok-bg:#E3F1EA;
+  --warn:#8A5A0B;
+  --warn-bg:#F7EEDC;
+  --off:#7A5060;
+  --off-bg:#F4E7EB;
+  --code-bg:#0E1826;
+  --code-ink:#D6E2F2;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C111A;
+    --surface:#131A26;
+    --surface-2:#1A2331;
+    --ink:#E7ECF4;
+    --ink-2:#A9B4C6;
+    --ink-3:#7F8CA1;
+    --line:#26303F;
+    --navy:#9FC0E8;
+    --accent:#8FB6E8;
+    --ok:#6FD0A6;
+    --ok-bg:#12291F;
+    --warn:#E0B966;
+    --warn-bg:#2A2113;
+    --off:#E0A5B8;
+    --off-bg:#2A1A20;
+    --code-bg:#080D15;
+    --code-ink:#C6D6EC;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0C111A;
+  --surface:#131A26;
+  --surface-2:#1A2331;
+  --ink:#E7ECF4;
+  --ink-2:#A9B4C6;
+  --ink-3:#7F8CA1;
+  --line:#26303F;
+  --navy:#9FC0E8;
+  --accent:#8FB6E8;
+  --ok:#6FD0A6;
+  --ok-bg:#12291F;
+  --warn:#E0B966;
+  --warn-bg:#2A2113;
+  --off:#E0A5B8;
+  --off-bg:#2A1A20;
+  --code-bg:#080D15;
+  --code-ink:#C6D6EC;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"Source Serif 4",Georgia,"Times New Roman",serif;
+  font-size:17px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:52rem;margin:0 auto;padding:clamp(1.5rem,4vw,3.5rem) clamp(1.1rem,4vw,2rem) 5rem}
+
+h1,h2,h3,.label,.chip,th,.mono{font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif}
+h1{
+  font-size:clamp(2rem,5.2vw,3.1rem);
+  line-height:1.06;
+  font-weight:700;
+  letter-spacing:-0.025em;
+  margin:0 0 .2rem;
+  text-wrap:balance;
+}
+h2{
+  font-size:clamp(1.3rem,2.6vw,1.6rem);
+  font-weight:700;
+  letter-spacing:-0.015em;
+  line-height:1.2;
+  margin:0;
+  text-wrap:balance;
+}
+h3{
+  font-size:1.02rem;
+  font-weight:700;
+  letter-spacing:-0.005em;
+  margin:0 0 .35rem;
+  text-wrap:balance;
+}
+p{margin:0}
+a{color:var(--accent)}
+
+.label{
+  font-size:.7rem;
+  font-weight:700;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+}
+
+header.head{
+  display:flex;flex-direction:column;gap:.9rem;
+  padding-bottom:1.6rem;
+  border-bottom:2px solid var(--ink);
+  margin-bottom:2.4rem;
+}
+.head .lede{
+  font-size:1.12rem;
+  color:var(--ink-2);
+  max-width:44ch;
+}
+.meta{
+  display:flex;flex-wrap:wrap;gap:.4rem 1.4rem;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:.76rem;
+  color:var(--ink-3);
+}
+
+section{display:flex;flex-direction:column;gap:1rem;margin-bottom:3rem}
+section > .sec-head{display:flex;flex-direction:column;gap:.3rem}
+.prose{display:flex;flex-direction:column;gap:.85rem;max-width:66ch}
+.prose p{color:var(--ink-2)}
+.prose strong{color:var(--ink);font-weight:600}
+.prose h3{margin-top:.6rem}
+
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  font-size:.86rem;
+  min-width:34rem;
+  font-variant-numeric:tabular-nums;
+}
+caption{
+  text-align:left;
+  color:var(--ink-3);
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:.74rem;
+  line-height:1.6;
+  padding-bottom:.55rem;
+}
+th{
+  text-align:left;
+  font-weight:700;
+  font-size:.7rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  padding:0 .8rem .5rem 0;
+  border-bottom:1px solid var(--line);
+}
+td{
+  padding:.62rem .8rem .62rem 0;
+  border-bottom:1px solid var(--line);
+  vertical-align:top;
+  color:var(--ink-2);
+}
+td:first-child{color:var(--ink);font-weight:500;width:34%}
+td.was{color:var(--off)}
+td.now{color:var(--ink)}
+tbody tr:last-child td{border-bottom:none}
+
+.chip{
+  display:inline-block;
+  font-size:.68rem;
+  font-weight:700;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  padding:.15rem .45rem;
+  border-radius:2px;
+  white-space:nowrap;
+}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.partial{background:var(--warn-bg);color:var(--warn)}
+.chip.no{background:var(--off-bg);color:var(--off)}
+
+.cards{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:3px;
+  padding:1rem 1.1rem;
+  display:flex;flex-direction:column;gap:.4rem;
+}
+.card p{font-size:.92rem;color:var(--ink-2)}
+.card .mono{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:.72rem;
+  color:var(--ink-3);
+  word-break:break-word;
+  margin-top:.15rem;
+}
+
+.term{
+  background:var(--code-bg);
+  color:var(--code-ink);
+  border-radius:3px;
+  padding:1rem 1.1rem;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:.76rem;
+  line-height:1.75;
+  overflow-x:auto;
+  white-space:pre;
+}
+.term .k{color:#7FB2E5}
+.term .v{color:#7FD8AE}
+.term .d{color:#8FA0B8}
+
+ol.seq{
+  list-style:none;
+  counter-reset:s;
+  margin:0;padding:0;
+  display:flex;flex-direction:column;gap:.75rem;
+}
+ol.seq li{
+  counter-increment:s;
+  display:grid;
+  grid-template-columns:1.7rem 1fr;
+  gap:.75rem;
+  align-items:start;
+}
+ol.seq li::before{
+  content:counter(s);
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:.72rem;
+  color:var(--ink-3);
+  border:1px solid var(--line);
+  border-radius:50%;
+  width:1.7rem;height:1.7rem;
+  display:flex;align-items:center;justify-content:center;
+  margin-top:.15rem;
+}
+ol.seq li p{color:var(--ink-2);font-size:.95rem;max-width:62ch}
+ol.seq li p strong{color:var(--ink);font-weight:600}
+
+.note{
+  border-left:3px solid var(--navy);
+  background:var(--surface-2);
+  padding:.9rem 1.1rem;
+  border-radius:0 3px 3px 0;
+  display:flex;flex-direction:column;gap:.4rem;
+}
+.note p{color:var(--ink-2);font-size:.95rem;max-width:62ch}
+.note p strong{color:var(--ink);font-weight:600}
+
+code{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:.85em;
+  background:var(--surface-2);
+  padding:.08em .32em;
+  border-radius:2px;
+  color:var(--ink);
+}
+td code,.card code{background:transparent;padding:0}
+
+footer{
+  border-top:1px solid var(--line);
+  padding-top:1.2rem;
+  color:var(--ink-3);
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:.74rem;
+  line-height:1.8;
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="head">
+  <span class="label">Rapport d'intervention · fammaminnou.tn</span>
+  <h1>Chantier SEO &amp; GEO</h1>
+  <p class="lede">Ce qui a été construit, ce qui est parti en production, et ce que cela change réellement pour le référencement de la boutique.</p>
+  <div class="meta">
+    <span>25 août 2026</span>
+    <span>branche feat/maquette-fidelite-fiche-produit</span>
+    <span>3 commits</span>
+  </div>
+</header>
+
+<section>
+  <div class="sec-head"><span class="label">01 · Résumé</span><h2>Ce qui a changé</h2></div>
+  <div class="prose">
+    <p>Le site partait d'une situation simple à résumer : <strong>aucune page ne servait de description aux moteurs</strong>, les données structurées n'existaient que sur l'accueil, et trois pages de tunnel plus une page d'auteur vide étaient ouvertes à l'indexation. Rien n'était en place pour être cité par ChatGPT, Perplexity ou les résumés d'IA de Google.</p>
+    <p>Dix des douze points du plan d'audit ont été appliqués et vérifiés en ligne. La logique vit désormais dans une classe unique du plugin <code>famma-core</code>, et tout ce qu'un moteur affiche est modifiable depuis le tableau de bord, en français comme en derja — sans toucher au code.</p>
+    <p>Un point de cadrage, dit franchement : ces changements construisent les <strong>fondations</strong> du référencement. Ils ne créent pas de trafic à eux seuls. Avec un catalogue vide et 465 mots en page d'accueil, le plafond reste bas tant que de vrais produits et de vrais contenus ne sont pas publiés.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="label">02 · Mesures</span><h2>Avant / après, vérifié en ligne</h2></div>
+  <div class="scroll">
+    <table>
+      <caption>Relevés par requête HTTP directe sur la production, avant et après intervention.</caption>
+      <thead>
+        <tr><th>Signal</th><th>Avant</th><th>Après</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Pages avec meta description</td><td class="was">0</td><td class="now">Toutes, FR + AR</td></tr>
+        <tr><td><code>og:description</code></td><td class="was">Absente</td><td class="now">Présente</td></tr>
+        <tr><td>Pages portant du JSON-LD</td><td class="was">Accueil seule</td><td class="now">Tout le site</td></tr>
+        <tr><td>Type d'entité déclarée</td><td class="was">Organization</td><td class="now">OnlineStore</td></tr>
+        <tr><td>Téléphone, adresse, e-mail balisés</td><td class="was">Aucun</td><td class="now">Les trois</td></tr>
+        <tr><td>Schéma FAQPage</td><td class="was">Aucun</td><td class="now">4 questions</td></tr>
+        <tr><td>Panier, commande, mon-compte</td><td class="was">Indexables</td><td class="now">noindex, nofollow</td></tr>
+        <tr><td>Pages de tunnel dans le sitemap</td><td class="was">3</td><td class="now">0</td></tr>
+        <tr><td><code>/author/admin/</code></td><td class="was">200 — login exposé</td><td class="now">404</td></tr>
+        <tr><td>Sitemap des comptes</td><td class="was">Publié</td><td class="now">Supprimé</td></tr>
+        <tr><td><code>hreflang="x-default"</code></td><td class="was">Absent</td><td class="now">Présent</td></tr>
+        <tr><td><code>/llms.txt</code></td><td class="was">404</td><td class="now">200</td></tr>
+        <tr><td>Robots IA dans <code>robots.txt</code></td><td class="was">Non mentionnés</td><td class="now">13 déclarés</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="label">03 · Effet</span><h2>Ce que cela change pour le référencement</h2></div>
+  <div class="prose">
+    <h3>Effet immédiat et certain</h3>
+    <p><strong>L'extrait affiché dans Google est désormais choisi, plus subi.</strong> Sans balise, Google découpe un fragment au hasard dans la page — pour la FAQ, c'était un collage illisible de questions et de réponses mises bout à bout. Chaque page annonce maintenant, en une phrase, ce qu'elle contient. C'est le levier de taux de clic le plus direct qui existe : à position égale dans les résultats, un extrait qui répond attire davantage qu'un extrait tronqué.</p>
+    <p><strong>Les partages cessent d'être nus.</strong> Un lien collé dans WhatsApp — canal principal en Tunisie — affichait un titre seul. Il affiche maintenant titre, description et visuel.</p>
+    <p><strong>Le budget d'exploration arrête de fuir.</strong> Google ne dépensera plus de passages sur un panier vide, un tunnel de commande et une page d'auteur sans contenu. Sur un site de cette taille ce n'est pas critique, mais ces pages pouvaient remonter sur des requêtes de marque et donner une première impression de site vide.</p>
+
+    <h3>Effet différé, à mesurer</h3>
+    <p><strong>Le rattachement local.</strong> Déclarer <code>OnlineStore</code> avec zone de service Tunisie, devise TND, paiement à la livraison, langues FR et AR, plus téléphone et adresse, c'est la condition d'entrée pour un panneau de connaissance et pour ressortir sur des requêtes géolocalisées. La condition, pas la garantie : Google arbitre ensuite sur la notoriété, les avis et la cohérence des mentions ailleurs sur le web.</p>
+    <p><strong>Le gabarit de titre du catalogue</strong> est en place mais n'a encore rien à habiller — il s'appliquera au premier vrai produit publié.</p>
+
+    <h3>Ce que cela ne change pas</h3>
+    <p>Aucune de ces corrections ne crée de contenu. Le site reste à <strong>un produit de test et 465 mots en accueil</strong>. Le référencement se joue ensuite sur ce qu'il y a à indexer : des fiches produit réelles, des réponses aux questions que se posent vos clients, et des avis collectés après livraison.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="label">04 · GEO</span><h2>Être cité par les moteurs génératifs</h2></div>
+  <div class="prose">
+    <p>Le GEO ne se joue pas sur le classement mais sur la citabilité : un modèle extrait des passages courts, factuels, attribuables à une source. Trois choses ont été mises en place.</p>
+  </div>
+  <div class="cards">
+    <div class="card">
+      <h3>Schéma FAQPage</h3>
+      <p>Les quatre questions réellement publiées sur la page FAQ sont balisées en paires question / réponse. C'est le format que les moteurs consomment le plus directement.</p>
+      <span class="mono">construit depuis le contenu publié, jamais saisi deux fois</span>
+    </div>
+    <div class="card">
+      <h3>Identité machine</h3>
+      <p>Un moteur interrogé sur « boutique tunisienne paiement à la livraison » dispose maintenant des attributs qui permettent de rattacher la réponse à FAMMA.</p>
+      <span class="mono">areaServed · TND · paiement à la livraison · fr, ar</span>
+    </div>
+    <div class="card">
+      <h3>llms.txt et robots IA</h3>
+      <p>Une fiche d'identité en texte brut à la racine, et une autorisation explicite des robots de ChatGPT, Claude, Perplexity et Gemini — pour que ce soit une décision, pas un effet de bord.</p>
+      <span class="mono">fammaminnou.tn/llms.txt</span>
+    </div>
+  </div>
+  <div class="note">
+    <h3>La limite honnête</h3>
+    <p>Ces éléments rendent le site exploitable par une IA. Ils ne le rendent pas notoire. La citation dépend aussi de la fréquence à laquelle la marque est mentionnée ailleurs — un facteur qui se construit hors du site.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="label">05 · Code</span><h2>Ce qui a été construit</h2></div>
+  <div class="cards">
+    <div class="card">
+      <h3>Classe <code>Seo</code></h3>
+      <p>Propriétaire unique de l'en-tête du document : description, Open Graph, titres, données structurées, directives d'indexation, plan de site, robots.txt, llms.txt.</p>
+      <span class="mono">plugins/famma-core/includes/seo.php</span>
+    </div>
+    <div class="card">
+      <h3>Classe <code>Seo_Admin</code></h3>
+      <p>L'écran « FAMMA → Référencement » et la boîte « Référencement FAMMA » posée sur chaque page, article et produit. Nonce, vérification de capacité, assainissement en entrée.</p>
+      <span class="mono">plugins/famma-core/includes/seo-admin.php</span>
+    </div>
+    <div class="card">
+      <h3>Thème neutralisé</h3>
+      <p>Le thème émettait ses propres balises. Il s'efface dès que la classe du plugin existe — deux jeux concurrents valent moins qu'un seul.</p>
+      <span class="mono">themes/famma-child/functions.php</span>
+    </div>
+  </div>
+  <div class="prose">
+    <p><strong>Rien n'est codé en dur.</strong> Description d'accueil, complément de titre du catalogue, profils officiels, et titre + description par page, en français et en arabe : tout se règle depuis l'administration. Un champ laissé vide n'est simplement pas publié — aucune donnée n'est inventée pour combler un trou.</p>
+    <p><code>php -l</code> et <code>phpcs</code> au standard WordPress passent sans erreur sur les fichiers touchés. Le comportement a été validé sur l'environnement local avant tout envoi en production.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="label">06 · Incident</span><h2>Le déploiement, sans enjoliver</h2></div>
+  <div class="prose">
+    <p>La mise en ligne s'est mal passée et mérite d'être documentée, parce que le piège se reproduira à chaque déploiement fait de cette façon.</p>
+  </div>
+  <ol class="seq">
+    <li><p><strong>Cause.</strong> L'archive du plugin avait été construite avec <code>Compress-Archive</code> de PowerShell, qui écrit les chemins internes avec des antislashes. L'extracteur de WordPress ne les reconnaît pas comme des séparateurs de dossier.</p></li>
+    <li><p><strong>Conséquence.</strong> Le plugin s'est installé dans <code>plugins/famma-core/famma-core/</code>. WordPress ne l'a plus reconnu et l'a laissé désactivé : pendant ce laps de temps, la logique métier de la boutique était hors service, même si le site répondait normalement.</p></li>
+    <li><p><strong>Diagnostic.</strong> L'erreur « Le fichier de l'extension n'existe pas » pointait un chemin à deux niveaux, ce qui a permis d'identifier l'imbrication.</p></li>
+    <li><p><strong>Correction.</strong> Archives reconstruites avec des séparateurs conformes, dossiers parasites supprimés, plugin réinstallé et réactivé, thème déployé par extraction dans le gestionnaire de fichiers.</p></li>
+    <li><p><strong>Nettoyage.</strong> Les deux archives restées sur le serveur étaient téléchargeables publiquement — code source exposé. Elles ont été supprimées et renvoient un 404.</p></li>
+  </ol>
+  <div class="note">
+    <h3>À retenir pour la prochaine fois</h3>
+    <p>Ne jamais construire un paquet WordPress avec <code>Compress-Archive</code>. Après tout remplacement de plugin, vérifier qu'il est bien <strong>actif</strong> — l'écran d'installation annonce le succès même quand l'extension a été désactivée au passage.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="label">07 · Preuves</span><h2>Vérifications sur la production</h2></div>
+  <div class="term"><span class="d">$ contrôles effectués après déploiement</span>
+accueil, boutique, faq, contact, à-propos, livraison, retours, /ar/   <span class="v">200</span>
+/author/admin/                                                        <span class="v">404</span>
+/llms.txt                                                             <span class="v">200</span>
+panier · mon-compte · recherche       <span class="k">robots</span>=<span class="v">noindex, nofollow</span>
+accueil                               <span class="k">schema</span>=<span class="v">OnlineStore + WebSite + PostalAddress</span>
+faq                                   <span class="k">schema</span>=<span class="v">FAQPage + 4 Question</span>
+accueil                               <span class="k">hreflang</span>=<span class="v">x-default, fr, fr-FR, ar</span>
+wp-sitemap.xml                        <span class="k">sections</span>=<span class="v">pages, produits, catégories</span>
+plugins/famma-core.zip                <span class="v">404</span>  <span class="d">archive retirée</span>
+themes/famma-child.zip                <span class="v">404</span>  <span class="d">archive retirée</span></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="label">08 · Suite</span><h2>Ce qui reste, et à qui</h2></div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Point du plan</th><th>État</th><th>Qui</th></tr></thead>
+      <tbody>
+        <tr><td>Produit de test <code>prd-1</code></td><td><span class="chip no">exclu</span></td><td>Écarté à votre demande</td></tr>
+        <tr><td>Page Retours</td><td><span class="chip partial">bloqué</span></td><td>Vos décisions commerciales</td></tr>
+        <tr><td>Profils officiels (<code>sameAs</code>)</td><td><span class="chip partial">champ prêt</span></td><td>Vos adresses réelles</td></tr>
+        <tr><td>Conversion WebP des visuels</td><td><span class="chip no">à faire</span></td><td>Médiathèque</td></tr>
+        <tr><td>Vrais produits et vrais avis</td><td><span class="chip no">à faire</span></td><td>Vous</td></tr>
+        <tr><td>Les huit autres points</td><td><span class="chip ok">en ligne</span></td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p>La <strong>page Retours</strong> affiche encore une note de travail listant les points à trancher : délai de rétractation, état du produit renvoyé, qui paie le retour, délai de remboursement, traitement d'un colis refusé. Ce sont des engagements commerciaux et juridiques — ils vous appartiennent, et rien ne sera écrit à votre place. Une fois tranchés, la page se rédige vite et les données structurées la reprennent automatiquement.</p>
+  </div>
+  <div class="note">
+    <h3>Point à vérifier</h3>
+    <p>Le téléphone enregistré dans les réglages est le <strong>56261412</strong>, alors que le numéro noté comme confirmé pour la marque est le <strong>26767491</strong>. C'est le premier qui part désormais dans les données structurées et dans <code>llms.txt</code>. À corriger depuis « FAMMA → Pages » si ce n'est pas le bon.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="label">09 · Dépôt</span><h2>État du code</h2></div>
+  <div class="prose">
+    <p>Trois commits sur <code>feat/maquette-fidelite-fiche-produit</code> : la fonctionnalité, un correctif de <code>robots.txt</code> constaté en production, et la mise à jour du rapport d'audit.</p>
+    <p><strong>Ils ne sont pas encore poussés.</strong> Le garde-fou de permissions de Claude Code a bloqué l'envoi, et il n'a pas été contourné. La commande à lancer :</p>
+  </div>
+  <div class="term">$ git push -u origin feat/maquette-fidelite-fiche-produit</div>
+</section>
+
+<footer>
+  Rapport établi le 25 août 2026 · relevés par requête HTTP directe sur fammaminnou.tn<br>
+  Audit source : docs/AUDIT-SEO-GEO-2026-08-25.md
+</footer>
+
+</div>
