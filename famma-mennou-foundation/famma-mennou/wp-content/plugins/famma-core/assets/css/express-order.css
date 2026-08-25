@@ -1,0 +1,203 @@
+/**
+ * Commande express — présentation du formulaire de la fiche produit.
+ *
+ * Les jetons du thème sont utilisés quand ils existent, avec une valeur de
+ * repli systématique : cette feuille vient du plugin, et le plugin ne peut pas
+ * supposer qu'un thème donné est actif. Sans repli, un changement de thème
+ * rendrait le formulaire illisible — or c'est lui qui prend la commande.
+ *
+ * Propriétés logiques partout (`padding-inline`, `margin-block`, `text-align:
+ * start`) : la boutique est bilingue français / derja, et l'arabe s'affiche en
+ * RTL. Aucune règle `left` / `right` ne doit être dupliquée pour cela.
+ */
+
+.famma-express {
+	margin-block: var(--sp-6, 24px);
+	padding: var(--sp-4, 16px);
+	border: 2px solid var(--famma-orange, #F5A623);
+	border-radius: var(--famma-radius, 12px);
+	background: var(--famma-white, #FFF);
+}
+
+.famma-express__title {
+	margin-block: 0 var(--sp-1, 4px);
+	font-size: var(--fs-h3, 1.25rem);
+	font-weight: var(--fw-bold, 700);
+	color: var(--famma-blue, #10275A);
+}
+
+.famma-express__lead {
+	margin-block: 0 var(--sp-4, 16px);
+	font-size: var(--fs-caption, 0.875rem);
+	color: var(--famma-ink-muted, #55606E);
+}
+
+/*
+ * Une colonne sur mobile : deux champs côte à côte sur 375px donnent des
+ * cibles trop étroites, et le clavier virtuel masque le second.
+ */
+.famma-express__grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--sp-3, 12px);
+}
+
+.famma-express__field {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-1, 4px);
+}
+
+.famma-express__field label {
+	font-size: var(--fs-caption, 0.875rem);
+	font-weight: var(--fw-medium, 500);
+	color: var(--famma-blue, #10275A);
+	/* `start`, pas `left` : l'intitulé suit le sens de lecture. */
+	text-align: start;
+}
+
+.famma-express__field .required {
+	color: var(--famma-danger, #C0392B);
+	text-decoration: none;
+	border: 0;
+}
+
+.famma-express__field input[type="text"],
+.famma-express__field input[type="tel"],
+.famma-express__field input[type="number"],
+.famma-express__field select {
+	/* 48px : cible tactile minimale du projet. */
+	min-block-size: 48px;
+	inline-size: 100%;
+	padding-inline: var(--chrome-field-pad-inline, 14px);
+	border: 1px solid var(--famma-line, #DBE1E8);
+	border-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-surface-field, #FBFCFD);
+	color: var(--famma-blue, #10275A);
+	font-family: inherit;
+	/*
+	 * 16px minimum, et ce n'est pas un choix esthétique : en dessous, iOS
+	 * zoome automatiquement à la mise au point du champ, ce qui décale la
+	 * page et fait perdre le fil au client en pleine saisie.
+	 */
+	font-size: 1rem;
+}
+
+.famma-express__field input:focus-visible,
+.famma-express__field select:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #2C6BED);
+	outline-offset: 1px;
+}
+
+.famma-express__field--qty input {
+	max-inline-size: 7rem;
+}
+
+.famma-express__terms label {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--sp-2, 8px);
+	font-weight: var(--fw-regular, 400);
+}
+
+.famma-express__terms input[type="checkbox"] {
+	/* La case reste à sa taille native, mais assez grande pour le doigt. */
+	inline-size: 1.25rem;
+	block-size: 1.25rem;
+	margin-block-start: 2px;
+	flex: 0 0 auto;
+}
+
+.famma-express__summary {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--sp-2, 8px);
+	margin-block: var(--sp-4, 16px) var(--sp-3, 12px);
+	padding-block: var(--sp-3, 12px);
+	border-block-start: 1px solid var(--famma-line, #DBE1E8);
+}
+
+.famma-express__total-label {
+	font-size: var(--fs-caption, 0.875rem);
+	color: var(--famma-ink-muted, #55606E);
+}
+
+.famma-express__total {
+	font-size: var(--fs-h3, 1.25rem);
+	font-weight: var(--fw-bold, 700);
+	color: var(--famma-blue, #10275A);
+	/* Le prix ne se coupe jamais en deux lignes. */
+	white-space: nowrap;
+}
+
+.famma-express__cart-note {
+	flex-basis: 100%;
+	font-size: var(--fs-caption, 0.875rem);
+	color: var(--famma-ink-muted, #55606E);
+}
+
+/*
+ * Bleu sur orange, comme les autres CTA de la boutique : le contraste a été
+ * calculé pour cette paire, et du blanc sur cet orange ne passerait pas.
+ */
+.famma-express__submit {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	inline-size: 100%;
+	min-block-size: var(--sp-12, 48px);
+	padding: var(--sp-3, 12px) var(--sp-4, 16px);
+	border: 0;
+	border-radius: var(--famma-radius, 12px);
+	background: var(--famma-orange, #F5A623);
+	color: var(--famma-blue, #10275A);
+	font-family: inherit;
+	font-size: var(--fs-button, 1rem);
+	font-weight: var(--fw-bold, 700);
+	line-height: var(--lh-tight, 1.2);
+	cursor: pointer;
+}
+
+.famma-express__submit:disabled {
+	opacity: 0.7;
+	cursor: progress;
+}
+
+.famma-express__submit-ar {
+	font-size: var(--fs-caption, 0.875rem);
+	font-weight: var(--fw-medium, 500);
+}
+
+/* Vide par défaut : sans cette règle, la marge apparaîtrait sans message. */
+.famma-express__notices:not(:empty) {
+	margin-block-start: var(--sp-3, 12px);
+	padding: var(--sp-3, 12px);
+	border-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-danger-bg, #FDECEA);
+	color: var(--famma-danger, #C0392B);
+	font-size: var(--fs-caption, 0.875rem);
+}
+
+.famma-express__notices ul {
+	margin: 0;
+	padding-inline-start: var(--sp-4, 16px);
+}
+
+@media (min-width: 600px) {
+	.famma-express {
+		padding: var(--sp-6, 24px);
+	}
+
+	/* Deux colonnes dès qu'il y a la place ; l'adresse garde toute la largeur. */
+	.famma-express__grid {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.famma-express__field--wide,
+	.famma-express__terms {
+		grid-column: 1 / -1;
+	}
+}

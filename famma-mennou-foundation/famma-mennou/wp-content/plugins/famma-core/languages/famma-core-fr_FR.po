@@ -229,3 +229,44 @@ msgid ""
 msgstr ""
 "Pour créer un compte, indiquez une adresse e-mail. Sinon, choisissez "
 "« Commander sans compte » : votre commande passera sans e-mail."
+
+
+# — Commande express sur la fiche produit (option C, décision D-8) —
+
+msgid "Order now / أطلب توا"
+msgstr "Commander maintenant / أطلب توا"
+
+msgid "Cash on delivery. No account needed. Free shipping across Tunisia."
+msgstr "Paiement à la livraison. Sans créer de compte. Livraison offerte partout en Tunisie."
+
+msgid "First name / الاسم"
+msgstr "Prénom / الاسم"
+
+msgid "Last name / اللقب"
+msgstr "Nom / اللقب"
+
+msgid "Choose… / اختار"
+msgstr "Choisir… / اختار"
+
+msgid "Quantity / الكمية"
+msgstr "Quantité / الكمية"
+
+msgid "Total to pay on delivery"
+msgstr "Total à payer à la livraison"
+
+msgid "Confirm my order"
+msgstr "Je confirme ma commande"
+
+msgid "Sending…"
+msgstr "Envoi en cours…"
+
+msgid "required"
+msgstr "obligatoire"
+
+msgid "The order could not go through. Please check the form and try again."
+msgstr "La commande n'''a pas pu aboutir. Vérifiez les informations saisies, puis réessayez."
+
+msgid "Plus %d item already in your cart."
+msgid_plural "Plus %d items already in your cart."
+msgstr[0] "Plus %d article déjà dans votre panier."
+msgstr[1] "Plus %d articles déjà dans votre panier."

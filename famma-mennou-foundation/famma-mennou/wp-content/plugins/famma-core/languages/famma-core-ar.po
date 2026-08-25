@@ -86,3 +86,48 @@ msgid ""
 msgstr ""
 "باش تعمل كونت، لازم إيميل. وإلا أختار « أطلب بلا كونت »: الطلبية تعدّي بلا "
 "إيميل."
+
+
+# — Commande express sur la fiche produit (option C, décision D-8) —
+
+msgid "Order now / أطلب توا"
+msgstr "أطلب توا"
+
+msgid "Cash on delivery. No account needed. Free shipping across Tunisia."
+msgstr "الدفع عند التوصيل. من غير ما تعمل حساب. التوصيل فابور في تونس الكل."
+
+msgid "First name / الاسم"
+msgstr "الاسم"
+
+msgid "Last name / اللقب"
+msgstr "اللقب"
+
+msgid "Choose… / اختار"
+msgstr "اختار…"
+
+msgid "Quantity / الكمية"
+msgstr "الكمية"
+
+msgid "Total to pay on delivery"
+msgstr "الجملة اللي باش تخلّصها كي توصلك"
+
+msgid "Confirm my order"
+msgstr "أكّد الطلب"
+
+msgid "Sending…"
+msgstr "قاعد يتبعث…"
+
+msgid "required"
+msgstr "ضروري"
+
+msgid "The order could not go through. Please check the form and try again."
+msgstr "الطلب ما نجّمش يتبعث. شوف المعلومات وعاود جرّب."
+
+msgid "Plus %d item already in your cart."
+msgid_plural "Plus %d items already in your cart."
+msgstr[0] "ما فماش حوايج أخرى في السلة."
+msgstr[1] "زيد حاجة وحدة في السلة متاعك."
+msgstr[2] "زيد زوز حوايج في السلة متاعك."
+msgstr[3] "زيد %d حوايج في السلة متاعك."
+msgstr[4] "زيد %d حاجة في السلة متاعك."
+msgstr[5] "زيد %d حاجة في السلة متاعك."

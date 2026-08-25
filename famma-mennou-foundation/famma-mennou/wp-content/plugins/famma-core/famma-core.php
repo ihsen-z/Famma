@@ -33,6 +33,8 @@ define( 'FAMMA_CORE_FILE', __FILE__ );
 require_once __DIR__ . '/includes/pages-content.php';
 require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';
+require_once __DIR__ . '/includes/tracking-events.php';
+require_once __DIR__ . '/includes/express-order.php';
 
 /**
  * Reads configuration from env-fed constants and WordPress options.
@@ -2257,6 +2259,8 @@ function boot(): void {
 	Shipping::instance();
 	Tunisia::instance();
 	Tracking::instance();
+	Tracking_Events::instance();
+	Express_Order::instance();
 	Capi::instance();
 	WhatsApp::instance();
 

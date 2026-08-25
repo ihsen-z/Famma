@@ -558,9 +558,11 @@ add_action( 'woocommerce_thankyou_cod', 'famma_child_cod_next_steps' );
 /**
  * Barre d'achat collante sur mobile (§13, §30).
  *
- * Le bouton ne réimplémente pas l'ajout au panier : il déclenche le
- * formulaire WooCommerce d'origine, donc quantité, variations et validations
- * restent celles du cœur.
+ * Le bouton ne réimplémente rien. Ce qu'il déclenche dépend du parcours en
+ * place, et c'est `assets/js/sticky-cta.js` qui tranche : s'il y a un
+ * formulaire de commande express sur la fiche, la barre y amène le client ;
+ * sinon elle déclenche le formulaire d'achat de WooCommerce, donc quantité,
+ * variations et validations restent celles du cœur.
  *
  * @return void
  */
