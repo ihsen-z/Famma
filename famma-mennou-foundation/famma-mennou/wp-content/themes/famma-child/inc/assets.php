@@ -234,6 +234,24 @@ function famma_child_enqueue_product(): void {
 		array( 'famma-layout' ),
 		(string) filemtime( $path )
 	);
+
+	/*
+	 * L'accordéon des sections de bas de fiche fonctionne sans ce script :
+	 * `<details>` s'ouvre nativement. Le script ne sert qu'aux ancres qui
+	 * pointent DANS une section fermée — « Lire tous les avis » vers
+	 * `#reviews`. Chargé en pied de page, sans dépendance.
+	 */
+	$accordion = get_stylesheet_directory() . '/assets/js/product-accordion.js';
+
+	if ( file_exists( $accordion ) ) {
+		wp_enqueue_script(
+			'famma-product-accordion',
+			get_stylesheet_directory_uri() . '/assets/js/product-accordion.js',
+			array(),
+			(string) filemtime( $accordion ),
+			true
+		);
+	}
 }
 add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_product', 22 );
 

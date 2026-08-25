@@ -52,9 +52,9 @@
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 	}
 
-	/* Les blocs pleine largeur (onglets, avis, produits liés) traversent
+	/* Les blocs pleine largeur (sections, avis, produits liés) traversent
 	   les deux colonnes au lieu de se tasser sous la galerie. */
-	.famma-product div.product > .woocommerce-tabs,
+	.famma-product div.product > .famma-accordion,
 	.famma-product div.product > .famma-benefits,
 	.famma-product div.product > .famma-reviews,
 	.famma-product div.product > .related,
@@ -484,40 +484,128 @@
 }
 
 /* ------------------------------------------------------------
-   Onglets et blocs de bas de fiche — valeurs de la maquette
+   Sections de bas de fiche — accordeon (§B14-15)
 
-   Kadence dimensionne les onglets en `em`, ce qui donnait 7,65/15,3px
-   la ou la maquette pose 15/22px. Selecteurs a trois classes pour
-   passer devant, sans `!important`.
+   Remplace les onglets de WooCommerce. Le pourquoi est dans
+   `woocommerce/single-product/tabs/tabs.php` : une rangee d'onglets
+   ne tient pas sur 375px, et ce sont les onglets qui levent les
+   objections d'achat (livraison, FAQ) qui passent hors ecran.
+
+   Proprietes logiques partout (`border-inline`, `padding-inline`,
+   `margin-inline-start`) : la meme feuille doit tenir en arabe RTL
+   sans etre dupliquee.
    ------------------------------------------------------------ */
 
-/*
- * `div.product` dans le selecteur, et ce n'est pas cosmetique.
- *
- * Kadence stylise les onglets avec `.woocommerce div.product .woocommerce-tabs
- * ul.tabs li a`, soit exactement la meme specificite que la version sans
- * `div.product` — et sa feuille est chargee APRES la notre. A egalite, la
- * derniere gagne : nos 15/22px etaient ecrases par ses 0.5em/1em, soit
- * 7,65/15,3px. Un cran de specificite en plus suffit, sans `!important`.
- */
-.famma-product div.product .woocommerce-tabs ul.tabs li a {
-	padding: 15px 22px;
-	/* 14,5px de la maquette. La taille vit ICI et nulle part ailleurs : sur
-	   le selecteur sans `div.product` elle etait ecrasee par le 0.9em de
-	   Kadence, qui donnait 15,3px. Un seul declarateur, pas d'`!important`. */
-	font-size: var(--fs-chrome-nav);
+.famma-product .famma-accordion {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-2);
+	inline-size: 100%;
+	margin-block-start: var(--sp-6);
 }
 
-.famma-product div.product .woocommerce-tabs .woocommerce-Tabs-panel {
-	padding: 26px;
+.famma-product .famma-accordion__item {
 	border: 1px solid var(--famma-line);
-	border-block-start: 0;
-	border-end-start-radius: 14px;
-	border-end-end-radius: 14px;
+	border-radius: 14px;
+	background: var(--famma-white);
+	/* Le panneau depasserait les coins arrondis a l'ouverture. */
+	overflow: hidden;
 }
 
-.famma-product div.product .woocommerce-tabs ul.tabs {
-	gap: 6px;
+/*
+ * `list-item` est le display par defaut de `<summary>` : il ajoute une
+ * puce triangulaire, en plus de notre chevron. `display: flex` la retire,
+ * et `::-webkit-details-marker` couvre les anciens WebKit qui l'ignorent.
+ */
+.famma-product .famma-accordion__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-3);
+	/* Cible tactile : 48px minimum (regle 9). */
+	min-block-size: var(--sp-12);
+	padding: var(--sp-4);
+	cursor: pointer;
+	font-size: var(--fs-chrome-nav);
+	font-weight: var(--fw-bold);
+	color: var(--famma-blue);
+	/* Un appui long sur mobile ne doit pas selectionner l'intitule. */
+	user-select: none;
+}
+
+.famma-product .famma-accordion__head::-webkit-details-marker {
+	display: none;
+}
+
+/*
+ * Survol seulement la ou il existe un vrai pointeur : sur mobile, un
+ * `:hover` reste « collé » apres l'appui et l'intitule garde un fond
+ * grise qui fait croire a une section active.
+ */
+@media (hover: hover) {
+	.famma-product .famma-accordion__head:hover {
+		background: var(--famma-surface-field);
+	}
+}
+
+/*
+ * L'anneau de focus vit sur `<summary>`, pas sur `<details>` : c'est
+ * `<summary>` qui recoit le clavier. Sans cette regle, la navigation au
+ * clavier n'affiche plus rien une fois `outline` neutralise par le theme.
+ */
+.famma-product .famma-accordion__head:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color);
+	outline-offset: -2px;
+}
+
+/*
+ * Chevron en bordures tournees plutot qu'une image : pas de requete
+ * reseau, et il suit la couleur du texte.
+ */
+.famma-product .famma-accordion__chevron {
+	flex: 0 0 auto;
+	inline-size: 0.5rem;
+	block-size: 0.5rem;
+	border-inline-end: 2px solid currentColor;
+	border-block-end: 2px solid currentColor;
+	transform: rotate(45deg);
+	/* Recentre la fleche dans sa boite apres rotation. */
+	margin-block-end: 2px;
+	transition: transform var(--dur-base) var(--ease-out);
+}
+
+.famma-product .famma-accordion__item[open] .famma-accordion__chevron {
+	transform: rotate(-135deg);
+	margin-block-end: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-product .famma-accordion__chevron {
+		transition: none;
+	}
+}
+
+.famma-product .famma-accordion__panel {
+	padding: 0 var(--sp-4) var(--sp-4);
+}
+
+/*
+ * Le premier enfant du panneau porte souvent sa propre marge haute
+ * (`<p>`, `<h2>` d'une extension d'avis), ce qui doublait l'ecart avec
+ * l'intitule.
+ */
+.famma-product .famma-accordion__panel > :first-child {
+	margin-block-start: 0;
+}
+
+@media (min-width: 768px) {
+	.famma-product .famma-accordion__head {
+		padding: var(--sp-4) 26px;
+	}
+
+	.famma-product .famma-accordion__panel {
+		padding: 0 26px 26px;
+	}
 }
 
 /* --- Ligne de disponibilite, a cote de la quantite --- */
