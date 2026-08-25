@@ -168,3 +168,40 @@ retirent des pages nuisibles de l'index.
 - Un seul `<h1>` par page (le double h1 d'accueil a été traité, `functions.php:726`).
 - 10 images sur 10 avec attribut `alt` en accueil.
 - OG/Twitter et JSON-LD neutralisés si un plugin SEO est activé — bon réflexe anti-doublon.
+
+---
+
+## 7. État d'application — 25/08/2026, en production
+
+Appliqué et vérifié en ligne sur `fammaminnou.tn` :
+
+| # | Action | État |
+|---|---|---|
+| 1 | Produit `prd-1` | **Non fait** — exclu à votre demande |
+| 2 | `noindex` panier / commande / compte + sortie du sitemap | Fait |
+| 3 | `/author/*` en 404 + sitemap des comptes retiré | Fait |
+| 4 | Meta description et og:description, éditables par page (FR/AR) | Fait — accueil, boutique, à propos, contact, FAQ, livraison |
+| 5 | Schéma `FAQPage` sur `/faq/` | Fait — 4 questions balisées |
+| 6 | JSON-LD sur toutes les pages, `OnlineStore` + téléphone / e-mail / adresse | Fait |
+| 7 | Gabarit de titre du catalogue | Fait — actif dès qu'un produit est publié |
+| 8 | Pages Livraison / Retours / FAQ en réponses autonomes | Partiel — voir ci-dessous |
+| 9 | `hreflang="x-default"` | Fait |
+| 10 | `/llms.txt` + robots des moteurs génératifs autorisés explicitement | Fait |
+| 11 | Conversion WebP des visuels | Non fait |
+| 12 | Vrais produits et vrais avis | Non fait — dépend de vous |
+
+### Ce qui reste, et pourquoi
+
+- **Page Retours** : son contenu est encore une note de travail (« Points à trancher : délai
+  de rétractation, qui paie le retour, délai de remboursement… »). Ces choix sont des
+  engagements commerciaux et juridiques : ils vous appartiennent. Une fois tranchés, la
+  page se rédige en dix minutes et le schéma la reprend automatiquement.
+- **Profils officiels** (`sameAs`) : le champ existe dans « FAMMA → Référencement », laissé
+  vide faute d'adresses réelles à déclarer.
+- **WebP** : demande de retraiter les visuels de la médiathèque.
+
+### Point de vigilance relevé au passage
+
+Le téléphone déclaré dans les réglages est **56261412**, alors que le numéro noté comme
+confirmé pour la marque est **26767491**. C'est ce premier numéro qui part désormais dans
+les données structurées et dans `/llms.txt`. À vérifier depuis « FAMMA → Pages ».
