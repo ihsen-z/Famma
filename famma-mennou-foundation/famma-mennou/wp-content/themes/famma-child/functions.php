@@ -174,6 +174,13 @@ function famma_child_head_icons(): void {
  * @return void
  */
 function famma_child_open_graph(): void {
+	if ( class_exists( '\Famma\Core\Seo' ) ) {
+		// Le plugin famma-core est le propriétaire unique du `<head>` :
+		// il émet description, Open Graph et données structurées pour
+		// toutes les pages. Deux jeux concurrents valent moins qu'un.
+		return;
+	}
+
 	if ( defined( 'WPSEO_VERSION' ) || defined( 'RANK_MATH_VERSION' ) || defined( 'SEOPRESS_VERSION' ) ) {
 		return;
 	}
@@ -656,6 +663,13 @@ add_filter( 'pre_handle_404', 'famma_child_sitemap_not_found', 10, 2 );
  * @return void
  */
 function famma_child_structured_data(): void {
+	if ( class_exists( '\Famma\Core\Seo' ) ) {
+		// Le plugin famma-core est le propriétaire unique du `<head>` :
+		// il émet description, Open Graph et données structurées pour
+		// toutes les pages. Deux jeux concurrents valent moins qu'un.
+		return;
+	}
+
 	if ( ! is_front_page() ) {
 		return;
 	}

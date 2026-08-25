@@ -35,6 +35,8 @@ require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';
 require_once __DIR__ . '/includes/tracking-events.php';
 require_once __DIR__ . '/includes/express-order.php';
+require_once __DIR__ . '/includes/seo.php';
+require_once __DIR__ . '/includes/seo-admin.php';
 
 /**
  * Reads configuration from env-fed constants and WordPress options.
@@ -2263,6 +2265,7 @@ function boot(): void {
 	Express_Order::instance();
 	Capi::instance();
 	WhatsApp::instance();
+	Seo::instance();
 
 	// Le tableau de bord ne sert qu'à l'administration : rien de tout cela
 	// n'est chargé sur le front (règle 10).
@@ -2272,6 +2275,7 @@ function boot(): void {
 		Pages_Content::instance();
 		Topbar_Content::instance();
 		Tracking_Settings::instance();
+		Seo_Admin::instance();
 	}
 }
 
