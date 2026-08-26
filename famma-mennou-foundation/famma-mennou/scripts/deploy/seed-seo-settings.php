@@ -20,6 +20,7 @@ if ( PHP_SAPI !== 'cli' ) {
 	exit( 1 );
 }
 
+// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Constante du coeur, attendue par wp-load.php.
 define( 'WP_USE_THEMES', false );
 
 $root = getcwd() . '/wp-load.php';
@@ -46,11 +47,27 @@ $settings = array(
 );
 
 /**
+ * Titre servi aux moteurs pour la page d'accueil.
+ *
+ * Le titre par défaut — nom du site suivi du slogan — tient en 35 caractères
+ * et ne porte aucun mot que quelqu'un taperait dans Google. Celui-ci nomme le
+ * marché et la promesse que le checkout applique réellement.
+ *
+ * @var array<string, array<string, string>>
+ */
+$titles = array(
+	'accueil' => array(
+		'fr' => 'FAMMA MINNOU — Boutique en ligne, paiement à la livraison',
+		'ar' => 'فمّا مينّو — حانوت أونلاين تونسي، الخلاص عند الاستلام',
+	),
+);
+
+/**
  * Descriptions par page, indexées sur le slug.
  *
  * @var array<string, array<string, string>>
  */
-$pages = array(
+$page_descriptions = array(
 	'boutique'  => array(
 		'fr' => 'Le catalogue FAMMA MINNOU : livraison offerte partout en Tunisie, paiement en espèces à la livraison, commande sans création de compte.',
 		'ar' => 'كاطالوغ فمّا مينّو: توصيل مجاني في كامل تونس، الخلاص كاش عند الاستلام، وتطلب بلا ما تعمل حساب.',
@@ -73,28 +90,46 @@ $pages = array(
 	),
 );
 
-echo "Site : " . home_url( '/' ) . "\n\n";
+echo 'Site : ' . home_url( '/' ) . "\n\n";
 
 update_option( \Famma\Core\Seo::OPTION, $settings );
-echo "[ok]   reglages globaux ecrits (" . count( $settings ) . " champs)\n";
+echo '[ok]   reglages globaux ecrits (' . count( $settings ) . " champs)\n";
 
 $prefix  = \Famma\Core\Seo::META_PREFIX;
 $manques = array();
 
-foreach ( $pages as $slug => $texts ) {
-	$page = get_page_by_path( $slug );
+foreach ( $page_descriptions as $slug => $texts ) {
+	$target = get_page_by_path( $slug );
 
-	if ( ! $page instanceof WP_Post ) {
+	if ( ! $target instanceof WP_Post ) {
 		$manques[] = $slug;
 		echo "[skip] page introuvable : {$slug}\n";
 		continue;
 	}
 
 	foreach ( $texts as $lang => $text ) {
-		update_post_meta( (int) $page->ID, $prefix . 'description_' . $lang, $text );
+		update_post_meta( (int) $target->ID, $prefix . 'description_' . $lang, $text );
 	}
 
-	echo "[ok]   {$slug} (#{$page->ID}) : description FR + AR\n";
+	echo "[ok]   {$slug} (#{$target->ID}) : description FR + AR\n";
+}
+
+foreach ( $titles as $slug => $texts ) {
+	$target = get_page_by_path( $slug );
+
+	if ( ! $target instanceof WP_Post ) {
+		$manques[] = $slug;
+		echo "[skip] page introuvable : {$slug}
+";
+		continue;
+	}
+
+	foreach ( $texts as $lang => $text ) {
+		update_post_meta( (int) $target->ID, $prefix . 'title_' . $lang, $text );
+	}
+
+	echo "[ok]   {$slug} (#{$target->ID}) : titre FR + AR
+";
 }
 
 // Le plan de site et les archives d'auteur passent par des regles de
