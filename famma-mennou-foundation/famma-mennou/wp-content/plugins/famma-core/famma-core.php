@@ -35,6 +35,7 @@ require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';
 require_once __DIR__ . '/includes/tracking-events.php';
 require_once __DIR__ . '/includes/express-order.php';
+require_once __DIR__ . '/includes/product-video.php';
 require_once __DIR__ . '/includes/seo.php';
 require_once __DIR__ . '/includes/seo-admin.php';
 
@@ -2265,6 +2266,7 @@ function boot(): void {
 	Express_Order::instance();
 	Capi::instance();
 	WhatsApp::instance();
+	Product_Video::instance();
 	Seo::instance();
 
 	// Le tableau de bord ne sert qu'à l'administration : rien de tout cela

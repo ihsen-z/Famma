@@ -131,6 +131,46 @@ function famma_child_product_new_badge(): void {
 add_action( 'woocommerce_single_product_summary', 'famma_child_product_new_badge', 4 );
 
 /**
+ * Encadre le champ de quantité pour reproduire le sélecteur MOINS / PLUS.
+ *
+ * La maquette pose un bloc unique bordé : « MOINS », la valeur, « PLUS ».
+ * WooCommerce rend un `input[type=number]` seul ; les flèches natives du
+ * navigateur sont minuscules sur mobile et hors de la cible tactile de 48 px
+ * (§9).
+ *
+ * Les deux boutons ne remplacent pas le champ, ils l'entourent : sans
+ * JavaScript, le client saisit toujours la quantité au clavier et le formulaire
+ * fonctionne. Le script ne fait qu'incrémenter la valeur du champ.
+ *
+ * @return void
+ */
+function famma_child_quantity_open(): void {
+	echo '<div class="famma-qty" data-famma-qty>';
+	printf(
+		'<button type="button" class="famma-qty__btn" data-famma-qty-step="down" aria-label="%s">−</button>',
+		esc_attr__( 'Diminuer la quantité', 'famma-child' )
+	);
+}
+add_action( 'woocommerce_before_add_to_cart_quantity', 'famma_child_quantity_open' );
+
+/**
+ * Ferme le sélecteur de quantité.
+ *
+ * Priorité 5 : la ligne « En stock » s'accroche au même hook en priorité 10 et
+ * doit rester **en dehors** du bloc bordé, comme sur la maquette.
+ *
+ * @return void
+ */
+function famma_child_quantity_close(): void {
+	printf(
+		'<button type="button" class="famma-qty__btn" data-famma-qty-step="up" aria-label="%s">+</button>',
+		esc_attr__( 'Augmenter la quantité', 'famma-child' )
+	);
+	echo '</div>';
+}
+add_action( 'woocommerce_after_add_to_cart_quantity', 'famma_child_quantity_close', 5 );
+
+/**
  * Ligne de disponibilité, à côté du sélecteur de quantité.
  *
  * La maquette pose « ✓ En stock » en vert contre le champ de quantité.

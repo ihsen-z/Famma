@@ -55,6 +55,7 @@
 	/* Les blocs pleine largeur (sections, avis, produits liés) traversent
 	   les deux colonnes au lieu de se tasser sous la galerie. */
 	.famma-product div.product > .famma-accordion,
+	.famma-product div.product > .famma-product-video,
 	.famma-product div.product > .famma-benefits,
 	.famma-product div.product > .famma-reviews,
 	.famma-product div.product > .related,
@@ -236,15 +237,65 @@
 	margin: 0;
 }
 
-.famma-product div.product form.cart .quantity input.qty {
-	inline-size: 5rem;
-	min-block-size: var(--sp-12);
-	padding: var(--sp-2);
+/*
+ * Sélecteur de quantité de la maquette : un seul bloc bordé, « − » 42x44, la
+ * valeur entre deux filets, « + ». La bordure passe sur l'enveloppe ; le champ
+ * perd la sienne pour ne pas la doubler.
+ */
+.famma-product div.product form.cart .famma-qty {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
 	border: 1px solid var(--famma-line-field);
 	border-radius: var(--famma-radius-sm);
+	background: var(--famma-white);
+}
+
+.famma-product div.product form.cart .famma-qty__btn {
+	inline-size: 42px;
+	block-size: 44px;
+	flex-shrink: 0;
+	padding: 0;
+	border: 0;
+	background: var(--famma-white);
+	color: var(--famma-text-2);
+	font-size: 1.1875rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.famma-product div.product form.cart .famma-qty__btn:hover,
+.famma-product div.product form.cart .famma-qty__btn:focus-visible {
+	color: var(--famma-ink);
+}
+
+.famma-product div.product form.cart .famma-qty .quantity {
+	margin: 0;
+}
+
+.famma-product div.product form.cart .quantity input.qty {
+	inline-size: 2.875rem;
+	min-block-size: 44px;
+	padding: 0;
+	border: 0;
+	border-inline: 1px solid var(--famma-line-field);
+	border-radius: 0;
+	background: var(--famma-white);
 	text-align: center;
+	font-weight: var(--fw-medium);
 	/* 16px : en dessous, Safari iOS zoome au focus et casse la mise en page. */
 	font-size: var(--fs-input);
+}
+
+/* Les fleches natives feraient doublon avec les deux boutons. */
+.famma-product div.product form.cart .quantity input.qty::-webkit-outer-spin-button,
+.famma-product div.product form.cart .quantity input.qty::-webkit-inner-spin-button {
+	appearance: none;
+	margin: 0;
+}
+
+.famma-product div.product form.cart .quantity input.qty[type="number"] {
+	appearance: textfield;
 }
 
 .famma-product div.product form.cart button.single_add_to_cart_button {
@@ -924,4 +975,107 @@
 	transform: rotate(-135deg);
 	margin-inline-end: 0;
 	margin-inline-start: 3px;
+}
+
+/* --- Video publicitaire (sous la galerie) ---
+ *
+ * Section facultative, pilotee depuis l'ecran produit. Deux colonnes sur
+ * grand ecran, le texte d'abord puis la video ; empilees sur mobile, ou la
+ * video passe en premier pour rester au-dessus de la ligne de flottaison.
+ */
+
+.famma-product-video {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 22px;
+	margin: 34px 0 0;
+	padding: 22px;
+	border: 1px solid var(--famma-line);
+	border-radius: 14px;
+	background: var(--famma-white);
+}
+
+@media (min-width: 1000px) {
+	.famma-product-video {
+		grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+		align-items: center;
+		gap: 30px;
+	}
+}
+
+.famma-product-video--media-only {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1000px) {
+	.famma-product-video--media-only {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.famma-product-video__body {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-inline-size: 0;
+}
+
+.famma-product-video__title {
+	margin: 0;
+	font-size: clamp(1.25rem, 2.4vw, 1.5rem);
+	font-weight: 600;
+	line-height: 1.3;
+	color: var(--famma-ink);
+	text-wrap: pretty;
+}
+
+.famma-product-video__text {
+	font-size: 0.84375rem;
+	line-height: 1.75;
+	color: var(--famma-text-prose);
+	text-wrap: pretty;
+}
+
+.famma-product-video__text p {
+	margin: 0 0 0.75em;
+}
+
+.famma-product-video__text p:last-child {
+	margin-block-end: 0;
+}
+
+/* La video passe avant le texte sur mobile ; l'ordre du balisage garde le
+   titre en premier pour les lecteurs d'ecran et le referencement. */
+.famma-product-video__media {
+	order: -1;
+	min-inline-size: 0;
+	border-radius: 12px;
+	overflow: hidden;
+	background: var(--famma-surface-media);
+}
+
+@media (min-width: 1000px) {
+	.famma-product-video__media {
+		order: 0;
+	}
+}
+
+/* Ratio 16/9 impose au lecteur, quel que soit le fournisseur : oEmbed rend
+   une `<iframe>` avec des dimensions fixes qui deborderaient de la colonne. */
+.famma-product-video__media > :is(iframe, video, .fluid-width-video-wrapper) {
+	display: block;
+	inline-size: 100%;
+	block-size: auto;
+	aspect-ratio: 16 / 9;
+	border: 0;
+}
+
+.famma-product-video__media > .fluid-width-video-wrapper {
+	padding: 0 !important;
+}
+
+.famma-product-video__media .fluid-width-video-wrapper > iframe {
+	position: static;
+	inline-size: 100%;
+	block-size: 100%;
 }

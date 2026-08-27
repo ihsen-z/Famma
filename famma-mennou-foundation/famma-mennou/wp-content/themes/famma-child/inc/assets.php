@@ -252,6 +252,22 @@ function famma_child_enqueue_product(): void {
 			true
 		);
 	}
+
+	/*
+	 * Sélecteur de quantité − / + : progressif lui aussi. Le champ de
+	 * WooCommerce reste utilisable au clavier si le script ne se charge pas.
+	 */
+	$quantity = get_stylesheet_directory() . '/assets/js/product-quantity.js';
+
+	if ( file_exists( $quantity ) ) {
+		wp_enqueue_script(
+			'famma-product-quantity',
+			get_stylesheet_directory_uri() . '/assets/js/product-quantity.js',
+			array(),
+			(string) filemtime( $quantity ),
+			true
+		);
+	}
 }
 add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_product', 22 );
 
