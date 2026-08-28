@@ -251,9 +251,16 @@
 	background: var(--famma-white);
 }
 
+/*
+ * 48x48 et non le 42x44 de la maquette : `style.css` impose
+ * `min-block-size`/`min-inline-size: var(--sp-12)` a tout bouton (§9, cible
+ * tactile). Declarer 42x44 ici ne changerait rien au rendu — la valeur serait
+ * fausse dans le code. La regle d'accessibilite du projet l'emporte, comme
+ * pour le bouton d'achat juste a cote.
+ */
 .famma-product div.product form.cart .famma-qty__btn {
-	inline-size: 42px;
-	block-size: 44px;
+	inline-size: var(--sp-12);
+	block-size: var(--sp-12);
 	flex-shrink: 0;
 	padding: 0;
 	border: 0;
@@ -274,8 +281,8 @@
 }
 
 .famma-product div.product form.cart .quantity input.qty {
-	inline-size: 2.875rem;
-	min-block-size: 44px;
+	inline-size: 3.25rem;
+	min-block-size: var(--sp-12);
 	padding: 0;
 	border: 0;
 	border-inline: 1px solid var(--famma-line-field);
