@@ -246,6 +246,11 @@
 				<element value="famma_child_topbar_promises"/>
 				<element value="famma_child_whatsapp_number"/>
 				<element value="famma_child_is_derja"/>
+				<element value="famma_child_delivery_delay"/>
+				<element value="famma_child_is_mostly_arabic"/>
+				<element value="famma_child_text_dir_attrs"/>
+				<element value="famma_child_short_description_dir"/>
+				<element value="famma_child_product_description_heading"/>
 				<element value="famma_child_load_textdomain"/>
 				<element value="famma_child_own_textdomains"/>
 				<element value="famma_child_skip_translatepress_gettext"/>

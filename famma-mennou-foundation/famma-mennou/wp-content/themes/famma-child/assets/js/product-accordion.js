@@ -112,6 +112,42 @@
 		}
 	} );
 
+	/*
+	 * Description repliée : elle s'ouvrait sur 2 492 px (3,7 écrans mobiles) et
+	 * repoussait la section Livraison tout en bas (audit du 23/09, FP-10). Le
+	 * début reste visible, le reste suit sur « Lire la suite ».
+	 *
+	 * Amélioration progressive : c'est le script qui pose la troncature. S'il
+	 * ne se charge pas, la description s'affiche en entier, comme avant.
+	 */
+	var description = root.querySelector( '.woocommerce-Tabs-panel--description' );
+	var moreLabel = root.getAttribute( 'data-more' );
+	var lessLabel = root.getAttribute( 'data-less' );
+
+	if ( description && moreLabel && lessLabel && description.scrollHeight > 640 ) {
+		var toggle = document.createElement( 'button' );
+
+		toggle.type = 'button';
+		toggle.className = 'famma-accordion__more';
+		toggle.textContent = moreLabel;
+		toggle.setAttribute( 'aria-expanded', 'false' );
+
+		description.classList.add( 'is-clamped' );
+		description.after( toggle );
+
+		toggle.addEventListener( 'click', function () {
+			var clamped = description.classList.toggle( 'is-clamped' );
+
+			toggle.textContent = clamped ? moreLabel : lessLabel;
+			toggle.setAttribute( 'aria-expanded', clamped ? 'false' : 'true' );
+
+			// Replié depuis le bas du texte : on ramène le client au début, sinon il se retrouve plus bas, sans repère.
+			if ( clamped ) {
+				description.closest( 'details' ).scrollIntoView( { block: 'start' } );
+			}
+		} );
+	}
+
 	// Arrivée directe sur la page avec l'ancre déjà dans l'URL.
 	revealAnchor( window.location.hash, false );
 

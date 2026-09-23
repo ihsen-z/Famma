@@ -217,11 +217,18 @@ add_action( 'wp_head', 'famma_child_head_icons', 2 );
  * @return void
  */
 function famma_child_reassurance_list( array $items, string $extra = '' ): void {
+	/*
+	 * Sur le site arabe, la ligne principale est déjà traduite en derja : y
+	 * ajouter la ligne arabe donnait deux fois la même promesse (« الدفع كي
+	 * يوصلك » puis « الدفع عند التوصيل »).
+	 */
+	$bilingual = ! famma_child_is_derja();
+
 	printf( '<ul class="famma-reassure %s">', esc_attr( $extra ) );
 
 	foreach ( $items as $item ) {
 		echo '<li class="famma-reassure__item"><span>' . esc_html( $item['fr'] ) . '</span>';
-		if ( '' !== $item['ar'] ) {
+		if ( $bilingual && '' !== $item['ar'] ) {
 			echo '<span class="famma-reassure__ar" lang="ar" dir="rtl">' . esc_html( $item['ar'] ) . '</span>';
 		}
 		echo '</li>';
@@ -231,11 +238,26 @@ function famma_child_reassurance_list( array $items, string $extra = '' ): void 
 }
 
 /**
- * Bloc de réassurance sous le bouton d'achat (§30, §48).
+ * Délai de livraison saisi par le propriétaire (FAMMA → Pages).
+ *
+ * @return string Chaîne vide tant qu'aucun délai n'est renseigné.
+ */
+function famma_child_delivery_delay(): string {
+	// `method_exists` aussi : un thème déployé avant le plugin ne doit pas produire d'erreur fatale.
+	if ( ! class_exists( '\Famma\Core\Pages_Content' ) || ! method_exists( '\Famma\Core\Pages_Content', 'delivery_delay' ) ) {
+		return '';
+	}
+
+	return \Famma\Core\Pages_Content::delivery_delay();
+}
+
+/**
+ * Bloc de réassurance entre le prix et le formulaire de commande (§30, §48).
  *
  * Ne contient que des faits établis : paiement à la livraison, 0 TND de
- * frais, 24 gouvernorats. Aucun délai, aucune garantie, aucune statistique
- * — le §60 les interdit tant que le propriétaire ne les a pas fournis.
+ * frais, 24 gouvernorats, et le délai **tel que le propriétaire l'a écrit**
+ * dans FAMMA → Pages. Tant que ce champ est vide, aucun délai n'est promis
+ * (§60). Aucune garantie, aucune statistique.
  *
  * @return void
  */
@@ -247,13 +269,18 @@ function famma_child_product_reassurance(): void {
 		),
 		array(
 			'fr' => __( 'Livraison offerte, partout en Tunisie', 'famma-child' ),
-			'ar' => 'التوصيل للدار',
-		),
-		array(
-			'fr' => __( 'Commande sans créer de compte', 'famma-child' ),
-			'ar' => '',
+			'ar' => 'التوصيل بلاش',
 		),
 	);
+
+	$delay = famma_child_delivery_delay();
+
+	if ( '' !== $delay ) {
+		$items[] = array(
+			'fr' => $delay,
+			'ar' => '',
+		);
+	}
 
 	famma_child_reassurance_list( $items );
 
@@ -287,7 +314,7 @@ function famma_child_checkout_trust(): void {
 			),
 			array(
 				'fr' => __( 'Livraison offerte, partout en Tunisie', 'famma-child' ),
-				'ar' => 'التوصيل للدار',
+				'ar' => 'التوصيل بلاش',
 			),
 		),
 		'famma-reassure--checkout'
@@ -321,8 +348,12 @@ function famma_child_loop_benefit(): void {
 		return;
 	}
 
+	// Résumé en derja : sens de lecture explicite, sinon l'ordre des mots se casse sur le site français.
+	$derja = '' !== famma_child_text_dir_attrs( $short );
+
 	printf(
-		'<p class="famma-card__benefit">%s</p>',
+		'<p class="famma-card__benefit"%1$s>%2$s</p>',
+		$derja ? ' lang="ar" dir="rtl"' : '',
 		esc_html( wp_trim_words( $short, 12, '…' ) )
 	);
 }
@@ -583,13 +614,41 @@ function famma_child_sticky_cta(): void {
 		return;
 	}
 
+	/*
+	 * WhatsApp entre le prix et le bouton : sur la fiche mobile, la pastille
+	 * flottante recouvrait en permanence la fin des lignes. Elle est rangée
+	 * tant que la barre est affichée (style.css), et le lien passe ici.
+	 */
+	$whatsapp = '';
+
+	if ( class_exists( '\Famma\Core\WhatsApp' ) ) {
+		$whatsapp = \Famma\Core\WhatsApp::link(
+			sprintf(
+				/* translators: %s: nom du produit. */
+				__( 'Bonjour, une question sur : %s', 'famma-child' ),
+				$product->get_name()
+			)
+		);
+	}
+
+	echo '<div class="famma-sticky-cta">';
+	printf( '<span class="famma-sticky-cta__price">%s</span>', wp_kses_post( $product->get_price_html() ) );
+
+	if ( '' !== $whatsapp ) {
+		printf(
+			'<a class="famma-sticky-cta__wa" href="%1$s" target="_blank" rel="noopener nofollow" aria-label="%2$s">%3$s</a>',
+			esc_url( $whatsapp ),
+			esc_attr__( 'Poser une question sur WhatsApp', 'famma-child' ),
+			'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2a10 10 0 0 0-8.6 15l-1.4 5 5.1-1.3A10 10 0 1 0 12 2Zm5.9 14.1c-.2.7-1.4 1.4-2 1.4-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.6-.6-2.9-1.2-4.7-4.1-4.9-4.3-.1-.2-1.1-1.4-1.1-2.7 0-1.3.7-1.9.9-2.2.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.4.6c-.1.2-.3.3-.1.6.1.3.6 1 1.3 1.6.9.8 1.6 1 1.9 1.2.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.8.9c.2.1.4.2.4.3.1.1.1.6-.1 1.2Z"/></svg>'
+		);
+	}
+
 	printf(
-		'<div class="famma-sticky-cta"><span class="famma-sticky-cta__price">%1$s</span>'
-		. '<button type="button" class="famma-sticky-cta__button">%2$s<span class="famma-sticky-cta__ar" lang="ar" dir="rtl">%3$s</span></button></div>',
-		wp_kses_post( $product->get_price_html() ),
+		'<button type="button" class="famma-sticky-cta__button">%1$s<span class="famma-sticky-cta__ar" lang="ar" dir="rtl">%2$s</span></button>',
 		esc_html__( 'Commander', 'famma-child' ),
 		esc_html( 'أطلب توا' )
 	);
+	echo '</div>';
 }
 add_action( 'wp_footer', 'famma_child_sticky_cta', 4 );
 

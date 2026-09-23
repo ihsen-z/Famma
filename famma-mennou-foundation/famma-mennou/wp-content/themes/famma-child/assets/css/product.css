@@ -19,6 +19,36 @@
 	font-size: var(--fs-chrome-body);
 }
 
+/*
+ * Premier écran mobile (audit du 23/09, FP-03).
+ *
+ * 1. Un seul rembourrage latéral de 16 px. Kadence (24 px) et le conteneur
+ *    FAMMA (20 px) s'additionnaient : 44 px de chaque côté, soit 23 % de la
+ *    largeur d'un écran de 375 px, et une photo carrée plus basse d'autant.
+ * 2. Pas de marge haute de Kadence (32 px) au-dessus du fil d'Ariane.
+ * 3. Fil d'Ariane sur une ligne : le nom du produit, répété par le H1 juste
+ *    dessous, se coupe en « … » au lieu d'ajouter une deuxième ligne.
+ */
+@media (max-width: 999px) {
+	body.single-product .content-area {
+		margin-block-start: 0;
+	}
+
+	body.single-product .content-container.site-container {
+		padding-inline: 0;
+	}
+
+	.famma-container.famma-product {
+		padding-inline: var(--sp-4);
+	}
+
+	.famma-product .woocommerce-breadcrumb {
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+}
+
 .famma-product .woocommerce-breadcrumb a {
 	color: var(--famma-text-3);
 	text-decoration: none;
@@ -41,15 +71,35 @@
  * `inline-size: 100%` ramene ensuite a la largeur disponible.
  */
 .famma-product div.product {
+	/* Repère des badges posés sur la photo (« Nouveau », promotion). */
+	position: relative;
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
-	gap: 34px;
+	/* 16 px entre la galerie et le titre sur mobile : 34 px repoussaient encore le prix. */
+	gap: var(--sp-4);
 	align-items: start;
 }
 
+/*
+ * Kadence impose `float` et `width: 48%` à la galerie et au résumé, avec une
+ * spécificité de (0,3,2) : `.woocommerce div.product div.images`. Les règles
+ * de cette feuille visaient `.famma-product div.product .summary`, soit
+ * (0,3,1), et perdaient. Résultat mesuré en ligne : deux colonnes de 280 px
+ * dans un conteneur de 1 200 px (audit du 23/09, FP-01). Ces sélecteurs
+ * égalent Kadence, et cette feuille, chargée après la sienne, l'emporte.
+ */
+.famma-product div.product div.images,
+.famma-product div.product div.summary {
+	float: none;
+	inline-size: auto;
+	margin: 0;
+}
+
 @media (min-width: 1000px) {
+	/* 55 % pour la galerie, 45 % pour le résumé : la photo vend, le résumé tient. */
 	.famma-product div.product {
-		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+		gap: 34px;
 	}
 
 	/* Les blocs pleine largeur (sections, avis, produits liés) traversent
@@ -85,26 +135,53 @@
 	object-fit: cover;
 }
 
-/* Vignettes : cinq par rangée comme dans la maquette, carrées, la vignette
-   active soulignée d'orange. */
-.famma-product .flex-control-thumbs {
-	display: grid;
-	grid-template-columns: repeat(5, 1fr);
+/*
+ * Vignettes : UNE rangée, qui défile au doigt quand il y a plus de cinq photos.
+ *
+ * Même guerre de spécificité que la galerie (FP-02) : Kadence pose
+ * `margin: -32px 0 0`, `max-width: 94%`, `transform: translate(-50%)` et
+ * `opacity: .5` avec `.woocommerce div.product div.images .flex-control-thumbs`
+ * (0,4,2) et au-delà. Les vignettes chevauchaient la photo de 32 px, à demi
+ * transparentes. Les sélecteurs ci-dessous l'égalent, variante RTL comprise
+ * (`.rtl.woocommerce …`, (0,5,2)).
+ */
+.famma-product div.product div.images .flex-control-thumbs,
+.rtl .famma-product div.product div.images .flex-control-thumbs {
+	display: flex;
+	/* Kadence fait passer les vignettes à la ligne : 2 rangées de 138 px mesurées. */
+	flex-wrap: nowrap;
 	gap: var(--sp-2);
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+	scrollbar-width: none;
+	inline-size: 100%;
+	max-inline-size: none;
 	margin: var(--sp-3) 0 0;
 	padding: 0;
+	inset-inline: auto;
+	transform: none;
 	list-style: none;
 }
 
-.famma-product .flex-control-thumbs li {
+.famma-product div.product div.images .flex-control-thumbs::-webkit-scrollbar {
+	display: none;
+}
+
+/* `:nth-child(n)` : Kadence élargit le 1er et le 9e élément avec (0,5,3). */
+.famma-product div.product div.images .flex-control-thumbs li:nth-child(n) {
+	/* Cinq vignettes visibles, la sixième dépasse : on voit qu'il y en a d'autres. */
+	flex: 0 0 calc((100% - 4 * var(--sp-2)) / 5);
 	inline-size: auto;
+	block-size: auto;
 	margin: 0;
+	padding: 0;
 	float: none;
 }
 
-.famma-product .flex-control-thumbs img {
+.famma-product div.product div.images .flex-control-thumbs li img {
 	inline-size: 100%;
 	aspect-ratio: 1 / 1;
+	margin: 0;
 	border: 2px solid transparent;
 	border-radius: var(--famma-radius-sm);
 	background: var(--famma-surface-media);
@@ -113,7 +190,7 @@
 	cursor: pointer;
 }
 
-.famma-product .flex-control-thumbs img.flex-active {
+.famma-product div.product div.images .flex-control-thumbs li img.flex-active {
 	border-color: var(--famma-orange);
 }
 
@@ -197,12 +274,12 @@
 }
 
 /*
- * Prix : orange de la maquette.
+ * Prix en bleu nuit (16,5:1).
  *
- * ⚠ `#FF7A00` sur blanc vaut 2,61:1 et échoue **même** le seuil « grand
- * texte » de 3:1 (WCAG 1.4.3), alors que le prix est l'information la plus lue
- * de la page. La fidélité stricte l'a emporté (demande du 16/08/2026, C-1
- * renversé) ; repasser sur `var(--famma-blue)` ici rétablit la lisibilité.
+ * L'orange de la maquette, `#FF7A00` sur blanc, mesurait 2,46:1 : il échouait
+ * même le seuil « grand texte » de 3:1 (WCAG 1.4.3), sur l'information la plus
+ * lue de la page (audit du 23/09, FP-06). L'orange reste la couleur des
+ * boutons, c'est-à-dire d'une surface, pas d'un texte (DESIGN-SYSTEM).
  */
 .famma-product div.product .summary p.price {
 	display: flex;
@@ -210,7 +287,7 @@
 	align-items: baseline;
 	gap: 14px;
 	margin: 0;
-	color: var(--famma-orange);
+	color: var(--famma-blue);
 	font-size: clamp(1.875rem, 3.6vw, 2.375rem);
 	font-weight: var(--fw-bold);
 }
@@ -325,8 +402,71 @@
 	color: var(--famma-on-orange);
 }
 
+/*
+ * Fiche avec commande express (classe posée par famma-core) : « Ajouter au
+ * panier » devient l'action secondaire.
+ *
+ * Décision du propriétaire du 23/09/2026 : garder l'ajout au panier, mais en
+ * petit bouton, aux couleurs de la charte. Contour bleu nuit sur blanc, texte
+ * bleu (16,5:1), et non plus blanc sur orange (2,61:1), qui rivalisait avec le
+ * bouton « Confirmer ma commande ». 48 px de haut : c'est la cible tactile
+ * minimale du projet, « petit » tient à la largeur et au poids visuel.
+ *
+ * La quantité du panier est rangée : le formulaire express porte la seule
+ * quantité visible, et son script aligne celle-ci dessus. Le champ reste
+ * dans le formulaire, donc envoyé avec la bonne valeur.
+ */
+.famma-has-express .famma-product div.product form.cart .famma-qty {
+	display: none;
+}
+
+.famma-has-express .famma-product div.product form.cart .famma-stock {
+	flex-basis: 100%;
+}
+
+.famma-has-express .famma-product div.product form.cart button.single_add_to_cart_button {
+	display: inline-flex;
+	flex: 0 1 auto;
+	align-items: center;
+	gap: var(--sp-2);
+	padding: 0 var(--sp-4);
+	border: 1.5px solid var(--famma-blue);
+	background: var(--famma-white);
+	color: var(--famma-blue);
+	font-size: var(--fs-chrome-nav);
+}
+
+.famma-has-express .famma-product div.product form.cart button.single_add_to_cart_button::before {
+	content: "";
+	inline-size: 1.125rem;
+	block-size: 1.125rem;
+	flex: none;
+	background: currentColor;
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='20' r='1.5'/%3E%3Ccircle cx='18' cy='20' r='1.5'/%3E%3Cpath d='M2 3h3l2.7 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='20' r='1.5'/%3E%3Ccircle cx='18' cy='20' r='1.5'/%3E%3Cpath d='M2 3h3l2.7 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.famma-has-express .famma-product div.product form.cart button.single_add_to_cart_button:hover,
+.famma-has-express .famma-product div.product form.cart button.single_add_to_cart_button:focus-visible {
+	background: var(--famma-surface-field);
+	color: var(--famma-blue);
+}
+
 .famma-product .famma-product__whatsapp {
 	margin: 0;
+}
+
+.famma-product .famma-product__delay {
+	margin-block: 0 var(--sp-3);
+	color: var(--famma-blue);
+}
+
+/* Le bandeau de bénéfices répète la réassurance du résumé : sur mobile, où
+   chaque écran compte, il n'est plus affiché (audit du 23/09, FP-09). */
+@media (max-width: 767px) {
+	.famma-product .famma-benefits {
+		display: none;
+	}
 }
 
 /* --- Bandeau de bénéfices --- */
@@ -656,6 +796,38 @@
 	margin-block-start: 0;
 }
 
+/*
+ * Description repliée par `product-accordion.js` (FP-10) : le début reste
+ * lisible, un fondu signale la suite. Sans le script, la classe n'est jamais
+ * posée et tout le texte s'affiche.
+ */
+.famma-product .famma-accordion__panel.is-clamped {
+	max-block-size: 26rem;
+	overflow: hidden;
+	-webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+	mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
+
+.famma-product .famma-accordion__more {
+	display: block;
+	min-block-size: var(--sp-12);
+	margin: 0 var(--sp-4) var(--sp-4);
+	padding: 0 var(--sp-4);
+	border: 1.5px solid var(--famma-blue);
+	border-radius: 9px;
+	background: var(--famma-white);
+	color: var(--famma-blue);
+	font-family: inherit;
+	font-size: var(--fs-chrome-nav);
+	font-weight: var(--fw-semibold);
+	cursor: pointer;
+}
+
+.famma-product .famma-accordion__more:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color);
+	outline-offset: 2px;
+}
+
 @media (min-width: 768px) {
 	.famma-product .famma-accordion__head {
 		padding: var(--sp-4) 26px;
@@ -681,9 +853,16 @@
 	block-size: 1.0625rem;
 }
 
-/* --- Badge « Nouveau » du resume --- */
+/* --- Badge « Nouveau », pose sur la photo comme celui de promotion --- */
 
-.famma-product .summary .famma-badge--new {
+.famma-product div.product > .famma-badge--media {
+	position: absolute;
+	inset-block-start: var(--sp-4);
+	inset-inline-start: var(--sp-4);
+	z-index: 2;
+}
+
+.famma-product .famma-badge--new {
 	align-self: flex-start;
 	padding: 5px 12px;
 	border-radius: 6px;
@@ -696,10 +875,11 @@
 
 /* --- Bouton favori, a cote du CTA --- */
 
+/* 48 px, comme le bouton qu'il accompagne : à 56 px, l'action secondaire dominait l'action d'achat (UX-33). */
 .famma-product .summary .famma-fav {
 	position: static;
-	inline-size: 3.5rem;
-	block-size: 3.5rem;
+	inline-size: var(--sp-12);
+	block-size: var(--sp-12);
 	min-inline-size: 0;
 	min-block-size: 0;
 	flex: none;
@@ -904,16 +1084,34 @@
 	grid-area: 1 / 1;
 }
 
-/* Les vignettes se resserrent pour laisser la place aux flèches. */
 .famma-product .flex-control-thumbs {
 	grid-area: 2 / 1;
-	padding-inline: 40px;
+}
+
+/*
+ * Mobile : pas de flèches. On change de photo en glissant le doigt sur
+ * l'image (flexslider gère le tactile) ou en touchant une vignette, et les
+ * flèches de 32 px sous la cible tactile de 48 px mangeaient la rangée.
+ */
+.famma-product .flex-direction-nav {
+	display: none;
+}
+
+@media (min-width: 1000px) {
+	/* Les vignettes se resserrent pour laisser la place aux flèches de 48 px. */
+	.famma-product div.product div.images .flex-control-thumbs,
+	.rtl .famma-product div.product div.images .flex-control-thumbs {
+		padding-inline: calc(var(--sp-12) + var(--sp-2));
+	}
+
+	.famma-product .flex-direction-nav {
+		display: flex;
+	}
 }
 
 .famma-product .flex-direction-nav {
 	grid-area: 2 / 1;
 	z-index: 1;
-	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	margin: var(--sp-3) 0 0;
@@ -933,8 +1131,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	inline-size: 32px;
-	block-size: 32px;
+	inline-size: var(--sp-12);
+	block-size: var(--sp-12);
 	border: 1px solid var(--famma-line-field);
 	border-radius: var(--famma-radius-pill);
 	background: var(--famma-white);

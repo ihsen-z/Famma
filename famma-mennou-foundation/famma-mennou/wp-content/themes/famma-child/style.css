@@ -662,11 +662,16 @@ summary:focus-visible,
 	gap: var(--sp-2);
 }
 
+/*
+ * Grille à deux colonnes : la puce, puis le texte (et sa traduction dessous).
+ * En `flex-wrap`, un libellé français trop long passait à la ligne SANS sa
+ * puce, qui restait seule sur sa ligne (audit du 23/09, FP-09).
+ */
 .famma-reassure__item {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
+	grid-template-columns: 8px minmax(0, 1fr);
+	column-gap: var(--sp-2);
 	align-items: baseline;
-	gap: var(--sp-2);
 	font-size: var(--fs-body);
 	line-height: var(--lh-base);
 }
@@ -677,10 +682,11 @@ summary:focus-visible,
 	block-size: 8px;
 	border-radius: 50%;
 	background: var(--famma-success);
-	flex: none;
+	align-self: center;
 }
 
 .famma-reassure__ar {
+	grid-column: 2;
 	color: var(--famma-muted);
 	font-size: var(--fs-small);
 	line-height: var(--lh-ar);
@@ -923,9 +929,41 @@ summary:focus-visible,
 		/* Pas d'opacité : elle dégraderait un contraste déjà calculé. */
 	}
 
-	/* Le bouton WhatsApp flottant de famma-core ne doit pas
-	   recouvrir le CTA collant. */
-	body:has(.famma-sticky-cta:not(.is-hidden)) .famma-wa {
-		inset-block-end: calc(var(--sticky-cta-h) + var(--sp-4));
+	/* Site arabe : le libellé principal est déjà en derja, la ligne de traduction ferait « أطلب / أطلب توا ». */
+	html[lang^="ar"] .famma-sticky-cta__ar {
+		display: none;
+	}
+
+	/* WhatsApp dans la barre : 48 px, vert de la marque WhatsApp. */
+	.famma-sticky-cta__wa {
+		display: inline-flex;
+		flex: none;
+		align-items: center;
+		justify-content: center;
+		inline-size: var(--sp-12);
+		block-size: var(--sp-12);
+		border-radius: var(--famma-radius);
+		background: #25D366;
+	}
+
+	.famma-sticky-cta__wa svg {
+		inline-size: 26px;
+		block-size: 26px;
+		fill: var(--famma-white);
+	}
+
+	.famma-sticky-cta__wa:focus-visible {
+		outline: var(--focus-ring-width, 2px) solid var(--famma-blue);
+		outline-offset: 2px;
+	}
+
+	/*
+	 * Sur une fiche avec barre d'achat, le WhatsApp flottant de famma-core est
+	 * rangé : la barre porte déjà le lien, et la pastille de 56 px masquait la
+	 * fin des lignes, puis les champs du formulaire quand la barre s'efface. Le
+	 * bouton « Une question sur ce produit ? » reste juste sous le formulaire.
+	 */
+	body:has(.famma-sticky-cta) .famma-wa {
+		display: none;
 	}
 }

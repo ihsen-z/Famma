@@ -21,11 +21,9 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
-"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
 
 # --- Navigation et chrome ---
-
 msgid "Aller au contenu"
 msgstr "أمشي للمحتوى"
 
@@ -78,7 +76,6 @@ msgstr[4] "القفة، %d منتج"
 msgstr[5] "القفة، %d منتج"
 
 # --- Barre de promesses de l'en-tête ---
-
 msgid "LIVRAISON GRATUITE 100%"
 msgstr "التوصيل فابور 100%"
 
@@ -92,15 +89,13 @@ msgid "Support WhatsApp"
 msgstr "مساعدة على الواتساب"
 
 # --- Accueil : héros ---
-
 msgid "Il y a toujours quelque chose de nouveau."
 msgstr "ديما فمّا حاجة جديدة."
 
 msgid ""
-"FAMMA choisit des produits pratiques et utiles, livrés partout en Tunisie et "
-"payés à la livraison."
-msgstr ""
-"فمّا تختار حوايج تنفع وتخدم، نوصّلوهم في تونس الكل، وتخلّص كي يوصلك."
+"FAMMA choisit des produits pratiques et utiles, livrés partout en Tunisie et"
+" payés à la livraison."
+msgstr "فمّا تختار حوايج تنفع وتخدم، نوصّلوهم في تونس الكل، وتخلّص كي يوصلك."
 
 msgid "Découvrir la boutique"
 msgstr "شوف الحانوت"
@@ -124,7 +119,6 @@ msgid "Visuel %d"
 msgstr "تصويرة %d"
 
 # --- Accueil : sections ---
-
 msgid "Parcourez nos catégories"
 msgstr "دوّر في الأقسام"
 
@@ -173,7 +167,6 @@ msgstr[4] "على أساس %s تقييم"
 msgstr[5] "على أساس %s تقييم"
 
 # --- Fiche produit ---
-
 msgid "Nouveau"
 msgstr "جديد"
 
@@ -204,9 +197,6 @@ msgstr "تخلّص كاش كي يوصلك. حتى حاجة قبل."
 msgid "Partout en Tunisie, dans les 24 gouvernorats."
 msgstr "في تونس الكل، في 24 ولاية."
 
-msgid "Nom, téléphone, adresse. Rien de plus à remplir."
-msgstr "الإسم، التليفون، العنوان. حتى حاجة أخرى."
-
 msgid "Posez vos questions sur WhatsApp avant de commander."
 msgstr "أسأل على الواتساب قبل ما تطلب."
 
@@ -235,7 +225,6 @@ msgid "FAQ"
 msgstr "أسئلة متكرّرة"
 
 # --- Boutique : filtres et affichage ---
-
 msgid "Filtres"
 msgstr "الفلاتر"
 
@@ -290,15 +279,14 @@ msgid "La boutique se remplit"
 msgstr "الحانوت تعمّر شية بشية"
 
 msgid ""
-"Nos premiers produits arrivent. Écrivez-nous pour être prévenu dès leur mise "
-"en ligne."
+"Nos premiers produits arrivent. Écrivez-nous pour être prévenu dès leur mise"
+" en ligne."
 msgstr "أوّل منتجاتنا في الطريق. أكتبلنا ونعيّطولك كي يطلعو."
 
 msgid "Prévenez-moi sur WhatsApp"
 msgstr "عيّطلي على الواتساب"
 
 # --- Aide et WhatsApp ---
-
 msgid "Besoin d'aide ?"
 msgstr "تحتاج مساعدة؟"
 
@@ -323,7 +311,6 @@ msgid "Ouvrir WhatsApp"
 msgstr "أفتح الواتساب"
 
 # --- Pied de page ---
-
 msgid ""
 "Votre boutique en ligne tunisienne : des produits pratiques, utiles et "
 "parfois surprenants, livrés partout en Tunisie et payés à la livraison."
@@ -350,7 +337,6 @@ msgid "Où nous sommes"
 msgstr "وين نلقاونا"
 
 # --- Parcours de commande ---
-
 msgid "Commande enregistrée. Nous vous contactons pour la confirmer."
 msgstr "الطلبية تسجّلت. نتّصلو بيك باش نأكّدوها."
 
@@ -396,7 +382,6 @@ msgid "Un doute ? Écrivez-nous"
 msgstr "عندك شك؟ أكتبلنا"
 
 # --- Coordonnées ---
-
 msgid "Téléphone"
 msgstr "التليفون"
 
@@ -413,7 +398,6 @@ msgid "Numéro WhatsApp"
 msgstr "نمرة الواتساب"
 
 # --- Choix du mode de commande (avec ou sans compte) ---
-
 msgid "Comment souhaitez-vous commander ?"
 msgstr "كيفاش تحب تطلب؟"
 
@@ -427,9 +411,31 @@ msgid "Créer un compte"
 msgstr "أعمل كونت"
 
 msgid ""
-"Retrouvez vos commandes et gagnez du temps la prochaine fois. Une adresse e-"
-"mail sera demandée."
+"Retrouvez vos commandes et gagnez du temps la prochaine fois. Une adresse "
+"e-mail sera demandée."
 msgstr "تلقى طلبياتك وتربح وقت المرّة الجاية. باش نطلبو منك إيميل."
 
 msgid "Vous souhaitez retrouver facilement vos prochaines commandes ?"
 msgstr "تحب تلقى طلبياتك الجايين بالساهل؟"
+
+msgid "Photo précédente"
+msgstr "التصويرة اللي قبل"
+
+msgid "Photo suivante"
+msgstr "التصويرة اللي بعد"
+
+msgid "Lire la suite"
+msgstr "أقرا الكل"
+
+msgid "Réduire"
+msgstr "صغّر"
+
+#, php-format
+msgid "Bonjour, une question sur : %s"
+msgstr "سلام، عندي سؤال على: %s"
+
+msgid "Poser une question sur WhatsApp"
+msgstr "أسأل على الواتساب"
+
+msgid "Nom, téléphone, gouvernorat et adresse. Rien de plus."
+msgstr "الإسم، التليفون، الولاية والعنوان. حتى حاجة أخرى."

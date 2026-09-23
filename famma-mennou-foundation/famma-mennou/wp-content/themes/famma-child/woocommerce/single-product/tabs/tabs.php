@@ -65,7 +65,12 @@ if ( empty( $famma_product_tabs ) ) {
 $famma_is_first = true;
 ?>
 
-<div class="famma-accordion" id="famma-product-sections">
+<div
+	class="famma-accordion"
+	id="famma-product-sections"
+	data-more="<?php esc_attr_e( 'Lire la suite', 'famma-child' ); ?>"
+	data-less="<?php esc_attr_e( 'Réduire', 'famma-child' ); ?>"
+>
 	<?php foreach ( $famma_product_tabs as $famma_key => $famma_tab ) : ?>
 		<details
 			class="famma-accordion__item famma-accordion__item--<?php echo esc_attr( $famma_key ); ?>"

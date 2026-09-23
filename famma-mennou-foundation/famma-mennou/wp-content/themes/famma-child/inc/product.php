@@ -13,19 +13,22 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Réordonne le résumé produit selon la maquette.
+ * Réordonne le résumé produit.
  *
- * Ordre voulu : titre · note · accroche · prix · économie · réassurance ·
- * quantité + achat · WhatsApp.
+ * Ordre voulu : titre · note · prix · économie · réassurance · accroche ·
+ * commande express · ajout au panier · WhatsApp.
  *
- * WooCommerce pose la note ET le prix en priorité 10, et l'accroche en 20 —
- * donc après le prix. Impossible d'y glisser l'accroche sans redistribuer les
- * priorités : on décale le prix en 12 et l'accroche en 11.
+ * Le prix passe juste sous le titre (priorité 7), avant l'accroche : venu
+ * d'une publicité, le visiteur cherche d'abord « combien ? ». Placée entre les
+ * deux, l'accroche repoussait le prix à 973 px, soit 1,4 écran sur mobile
+ * (audit du 23/09, FP-03). La note suit le titre en 6, elle n'apparaît
+ * qu'avec de vrais avis.
  *
- * La réassurance passe de 35 à 25, c'est-à-dire **avant** le bouton d'achat :
- * le client lit comment il paie et qui le livre au moment où il hésite, pas
- * après s'être engagé. La carte WhatsApp, elle, reste sous le bouton — au-dessus
- * elle concurrencerait le CTA qui fait la vente.
+ * La réassurance (8) reste **avant** le bouton d'achat : le client lit comment
+ * il paie, qui le livre et en combien de temps au moment où il hésite.
+ * L'accroche (20) vient ensuite, juste avant le formulaire express (26). La
+ * carte WhatsApp reste sous le bouton : au-dessus, elle concurrencerait le CTA
+ * qui fait la vente.
  *
  * @return void
  */
@@ -34,17 +37,19 @@ function famma_child_product_reorder_summary(): void {
 		return;
 	}
 
-	remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_excerpt', 20 );
-	add_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_excerpt', 11 );
+	remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_rating', 10 );
+	add_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_rating', 6 );
 
 	remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_price', 10 );
-	add_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_price', 12 );
+	add_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_price', 7 );
 
 	remove_action( 'woocommerce_single_product_summary', 'famma_child_price_savings', 11 );
-	add_action( 'woocommerce_single_product_summary', 'famma_child_price_savings', 13 );
+	add_action( 'woocommerce_single_product_summary', 'famma_child_price_savings', 7 );
 
 	remove_action( 'woocommerce_single_product_summary', 'famma_child_product_reassurance', 35 );
-	add_action( 'woocommerce_single_product_summary', 'famma_child_product_reassurance', 25 );
+	add_action( 'woocommerce_single_product_summary', 'famma_child_product_reassurance', 8 );
+
+	// L'accroche reste à sa priorité d'origine (20) : après la réassurance, avant le formulaire.
 }
 add_action( 'wp', 'famma_child_product_reorder_summary' );
 
@@ -100,11 +105,16 @@ function famma_child_product_whatsapp_card(): void {
 add_action( 'woocommerce_single_product_summary', 'famma_child_product_whatsapp_card', 36 );
 
 /**
- * Badge vert « Nouveau » en tête du résumé.
+ * Badge vert « Nouveau », posé sur la photo.
  *
  * Même règle que sur la carte : la fraîcheur se lit sur la date de publication,
  * et un produit déjà en promotion ne le porte pas — la remise est le message
  * qui vend.
+ *
+ * Sur la photo et non plus en tête du résumé : il y prenait une ligne de
+ * 43 px au-dessus du titre, dans le premier écran mobile. Même emplacement que
+ * le badge de promotion de WooCommerce (`woocommerce_show_product_sale_flash`,
+ * priorité 10), que la feuille de la fiche positionne sur l'image.
  *
  * @return void
  */
@@ -124,11 +134,11 @@ function famma_child_product_new_badge(): void {
 	}
 
 	printf(
-		'<span class="famma-badge--new">%s</span>',
+		'<span class="famma-badge--new famma-badge--media">%s</span>',
 		esc_html__( 'Nouveau', 'famma-child' )
 	);
 }
-add_action( 'woocommerce_single_product_summary', 'famma_child_product_new_badge', 4 );
+add_action( 'woocommerce_before_single_product_summary', 'famma_child_product_new_badge', 11 );
 
 /**
  * Encadre le champ de quantité pour reproduire le sélecteur MOINS / PLUS.
@@ -253,7 +263,7 @@ function famma_child_product_benefits(): void {
 		array(
 			'icon'  => 'user',
 			'title' => __( 'Commande sans compte', 'famma-child' ),
-			'text'  => __( 'Nom, téléphone, adresse. Rien de plus à remplir.', 'famma-child' ),
+			'text'  => __( 'Nom, téléphone, gouvernorat et adresse. Rien de plus.', 'famma-child' ),
 		),
 	);
 
@@ -322,6 +332,12 @@ function famma_child_product_shipping_panel(): void {
 	}
 
 	echo '<div class="famma-product__shipping">';
+
+	$delay = famma_child_delivery_delay();
+
+	if ( '' !== $delay ) {
+		printf( '<p class="famma-product__delay"><strong>%s</strong></p>', esc_html( $delay ) );
+	}
 
 	/*
 	 * `the_content` est un filtre du cœur, pas un hook que nous inventons :
@@ -528,12 +544,17 @@ function famma_child_product_specs_panel(): void {
  * @return array<string, array<string, mixed>>
  */
 function famma_child_product_tabs_order( array $tabs ): array {
+	/*
+	 * Livraison juste après la description et la fiche technique : c'est la
+	 * première objection d'un achat payé à la livraison. Elle arrivait en
+	 * dernier, à 8,8 écrans sur mobile (audit du 23/09, FP-10).
+	 */
 	$order = array(
 		'description'    => 10,
 		'famma_specs'    => 15,
-		'reviews'        => 20,
+		'famma_shipping' => 20,
 		'famma_faq'      => 25,
-		'famma_shipping' => 30,
+		'reviews'        => 30,
 	);
 
 	foreach ( $order as $key => $priority ) {
@@ -542,8 +563,32 @@ function famma_child_product_tabs_order( array $tabs ): array {
 		}
 	}
 
+	/*
+	 * « Avis (0) » disait au visiteur que personne n'avait acheté, et ouvrait
+	 * à tous un formulaire nom + e-mail : une porte pour le spam. La section
+	 * n'apparaît qu'à partir du premier avis.
+	 */
+	$product = wc_get_product();
+
+	if ( isset( $tabs['reviews'] ) && $product instanceof WC_Product && 0 === (int) $product->get_review_count() ) {
+		unset( $tabs['reviews'] );
+	}
+
 	return $tabs;
 }
+
+/**
+ * Retire le titre « Description » répété dans la section du même nom.
+ *
+ * L'intitulé de l'accordéon dit déjà « Description » : WooCommerce ajoutait
+ * un H2 identique juste dessous.
+ *
+ * @return string
+ */
+function famma_child_product_description_heading(): string {
+	return '';
+}
+add_filter( 'woocommerce_product_description_heading', 'famma_child_product_description_heading' );
 add_filter( 'woocommerce_product_tabs', 'famma_child_product_tabs_order', 98 );
 
 /**
@@ -674,6 +719,14 @@ function famma_child_product_faq_panel(): void {
  */
 function famma_child_gallery_carousel_options( array $options ): array {
 	$options['directionNav'] = true;
+
+	/*
+	 * Flexslider nomme ses flèches « Previous » / « Next », en anglais, et
+	 * c'est ce que lisaient les lecteurs d'écran sur les pages FR et AR. Il
+	 * insère ce texte tel quel dans du HTML : il est donc échappé ici.
+	 */
+	$options['prevText'] = esc_html__( 'Photo précédente', 'famma-child' );
+	$options['nextText'] = esc_html__( 'Photo suivante', 'famma-child' );
 
 	return $options;
 }

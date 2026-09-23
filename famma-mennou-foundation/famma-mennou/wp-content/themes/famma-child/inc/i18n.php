@@ -116,7 +116,8 @@ function famma_child_woo_derja(): array {
 		'Current price is: %s.'                           => 'الثمن توّا: %s.',
 
 		// Fiche produit.
-		'Add to cart'                                     => 'أطلب',
+		// « Ajouter au panier » est l'action secondaire depuis le 23/09 : « أطلب » la confondait avec la commande express.
+		'Add to cart'                                     => 'زيد للسلّة',
 		'Read more'                                       => 'أقرا أكثر',
 		'Description'                                     => 'الوصف',
 		'Additional information'                          => 'معلومات أخرى',
@@ -291,3 +292,56 @@ function famma_child_skip_translatepress_gettext( $skip, $translation, $text, $d
 	return $skip;
 }
 add_filter( 'trp_skip_gettext_processing', 'famma_child_skip_translatepress_gettext', 10, 4 );
+
+/**
+ * Le texte est-il majoritairement en arabe ?
+ *
+ * Les descriptions courtes sont écrites en derja, mais commencent souvent par
+ * un mot français (« Visseuse برو 21V… »). `dir="auto"` ne regarde que la
+ * première lettre forte : il choisirait la gauche-à-droite, et c'est justement
+ * ce qui cassait l'ordre des mots sur le site français (audit du 23/09, FP-11).
+ * On compte donc les lettres des deux écritures.
+ *
+ * @param string $text Texte, HTML accepté.
+ * @return bool
+ */
+function famma_child_is_mostly_arabic( string $text ): bool {
+	$plain  = wp_strip_all_tags( $text );
+	$arabic = (int) preg_match_all( '/\p{Arabic}/u', $plain );
+	$latin  = (int) preg_match_all( '/\p{Latin}/u', $plain );
+
+	return $arabic > $latin;
+}
+
+/**
+ * Attributs de langue et de sens pour un texte écrit en derja.
+ *
+ * Rien sur une page déjà en RTL : le sens y est déjà le bon.
+ *
+ * @param string $text Texte à afficher.
+ * @return string ` lang="ar" dir="rtl"`, ou une chaîne vide.
+ */
+function famma_child_text_dir_attrs( string $text ): string {
+	if ( is_rtl() || ! famma_child_is_mostly_arabic( $text ) ) {
+		return '';
+	}
+
+	return ' lang="ar" dir="rtl"';
+}
+
+/**
+ * Remet la description courte de la fiche dans son sens de lecture.
+ *
+ * @param string $html Description courte, déjà mise en forme.
+ * @return string
+ */
+function famma_child_short_description_dir( $html ) {
+	if ( ! is_string( $html ) || '' === trim( $html ) ) {
+		return $html;
+	}
+
+	$attrs = famma_child_text_dir_attrs( $html );
+
+	return '' === $attrs ? $html : '<div' . $attrs . '>' . $html . '</div>';
+}
+add_filter( 'woocommerce_short_description', 'famma_child_short_description_dir', 20 );

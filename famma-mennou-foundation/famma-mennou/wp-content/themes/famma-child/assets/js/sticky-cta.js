@@ -69,7 +69,14 @@
 	 * @return {void}
 	 */
 	function goToExpress() {
-		express.scrollIntoView( {
+		/*
+		 * Défile vers la SECTION, pas vers le formulaire : c'est elle qui porte
+		 * le titre « Commander », et sa `scroll-margin` la dégage de l'en-tête
+		 * collant. Viser le formulaire laissait titre et premier champ dessous.
+		 */
+		var section = express.closest( '.famma-express' ) || express;
+
+		section.scrollIntoView( {
 			behavior: reducedMotion() ? 'auto' : 'smooth',
 			block: 'start',
 		} );
