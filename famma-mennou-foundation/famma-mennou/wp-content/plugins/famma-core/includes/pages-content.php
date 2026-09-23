@@ -303,7 +303,27 @@ final class Pages_Content {
 				'default_fr' => 'Nous livrons dans les 24 gouvernorats, avec paiement à la livraison et frais de port offerts.',
 				'default_ar' => 'نوصّلو في 24 ولاية، الدفع كي يوصلك والتوصيل فابور.',
 			),
+			array(
+				'key'        => 'delivery_delay',
+				'type'       => 'text',
+				'label'      => __( 'Délai de livraison', 'famma-core' ),
+				'help'       => __( 'Affiché sur chaque fiche produit, près du prix, et dans la section Livraison. Exemple de forme : « Livraison en 24 h à 48 h ». Tant que ce champ est vide, aucun délai n’est annoncé.', 'famma-core' ),
+				'default_fr' => '',
+				'default_ar' => '',
+			),
 		);
+	}
+
+	/**
+	 * Délai de livraison annoncé au client, dans la langue de la page.
+	 *
+	 * Aucune valeur par défaut : un délai est une promesse, il ne s'affiche que
+	 * si le propriétaire l'a écrit (§60).
+	 *
+	 * @return string Chaîne vide tant que le champ n'est pas rempli.
+	 */
+	public static function delivery_delay(): string {
+		return trim( self::text( 'contact', 'delivery_delay' ) );
 	}
 
 	/**
