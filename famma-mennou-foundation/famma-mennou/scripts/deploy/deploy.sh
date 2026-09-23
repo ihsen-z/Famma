@@ -77,10 +77,17 @@ esac
 # Les trois répertoires transférés. Toute autre chose sur le serveur —
 # WooCommerce, Kadence, TranslatePress, les médias, wp-config.php — est hors
 # de portée de ce script et ne peut donc pas être écrasée par erreur.
+#
+# Les mu-plugins sont listés un par un, jamais le dossier : avec `--delete`,
+# transférer `wp-content/mu-plugins` effacerait tout mu-plugin posé par
+# l'hébergeur, et enverrait l'outil de développement `famma-local-mail.php`
+# en production (audit du 23/09, CODE-05 / SEC-12).
 PAYLOAD=(
 	"wp-content/plugins/famma-core"
 	"wp-content/themes/famma-child"
-	"wp-content/mu-plugins"
+	"wp-content/mu-plugins/famma-env.php"
+	"wp-content/mu-plugins/famma-legacy-urls.php"
+	"wp-content/mu-plugins/famma-cron.php"
 )
 
 # --- 1. Porte qualité ---------------------------------------------------
@@ -170,6 +177,7 @@ EXCLUDES=(
 	--exclude '*.log'
 	--exclude '.DS_Store'
 	--exclude 'Thumbs.db'
+	--exclude 'famma-local-mail.php'
 )
 
 case "$DEPLOY_MODE" in
@@ -253,8 +261,15 @@ case "$DEPLOY_MODE" in
 			echo "set ftp:ssl-protect-data true"
 			echo "set ssl:verify-certificate true"
 			echo "open -u ${DEPLOY_USER},${DEPLOY_FTP_PASSWORD} ${DEPLOY_HOST}"
-			for dir in "${PAYLOAD[@]}"; do
-				echo "mirror ${MIRROR_FLAGS} ./${dir} ${DEPLOY_WP_PATH}/${dir}"
+			for item in "${PAYLOAD[@]}"; do
+				if [ -d "$item" ]; then
+					echo "mirror ${MIRROR_FLAGS} ./${item} ${DEPLOY_WP_PATH}/${item}"
+				elif [ "$DRY_RUN" -eq 1 ]; then
+					echo "!echo 'serait envoyé : ${item}'"
+				else
+					# Fichier isolé (mu-plugin) : `mirror` n'accepte que des dossiers.
+					echo "put -O ${DEPLOY_WP_PATH}/$(dirname "$item") ./${item}"
+				fi
 			done
 			echo "bye"
 		} | lftp -f /dev/stdin

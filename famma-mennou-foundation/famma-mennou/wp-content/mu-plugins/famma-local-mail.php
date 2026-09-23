@@ -45,9 +45,19 @@ add_action( 'phpmailer_init', 'famma_local_mail_use_mailpit' );
 /**
  * Gives outgoing mail a sender the local MTA will not reject.
  *
+ * Même garde d'environnement que `famma_local_mail_use_mailpit()` : sans elle,
+ * ce fichier copié par erreur en production réécrivait l'expéditeur de TOUS les
+ * e-mails de commande en `no-reply@famma.local`, un domaine inexistant que les
+ * boîtes de réception rejettent (audit du 23/09, SEC-12).
+ *
+ * @param string $from Expéditeur proposé par WordPress.
  * @return string
  */
-function famma_local_mail_from(): string {
+function famma_local_mail_from( $from ): string {
+	if ( 'local' !== wp_get_environment_type() ) {
+		return (string) $from;
+	}
+
 	return 'no-reply@famma.local';
 }
 add_filter( 'wp_mail_from', 'famma_local_mail_from' );
