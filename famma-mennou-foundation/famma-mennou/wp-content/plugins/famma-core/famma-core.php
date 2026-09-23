@@ -1113,6 +1113,87 @@ final class Tunisia {
 		add_filter( 'default_checkout_billing_country', array( $this, 'default_country' ) );
 		add_filter( 'default_checkout_shipping_country', array( $this, 'default_country' ) );
 		add_filter( 'woocommerce_checkout_posted_data', array( $this, 'force_country' ) );
+
+		/*
+		 * One "full name" field instead of first + last name, and an optional
+		 * city (owner's decision, 23/09/2026): the governorate is enough to
+		 * route a parcel, and every extra field on mobile costs orders.
+		 */
+		add_filter( 'woocommerce_checkout_posted_data', array( $this, 'split_full_name' ), 20 );
+		add_filter( 'woocommerce_get_country_locale', array( $this, 'country_locale' ) );
+
+		add_filter( 'woocommerce_currency_symbol', array( $this, 'currency_symbol' ), 10, 2 );
+	}
+
+	/**
+	 * Splits the single "full name" field into first and last name.
+	 *
+	 * The customer types « Mohamed Ben Ali » once; the order still carries a
+	 * first and a last name, which is what the courier, the order e-mails and
+	 * the Meta Conversions API expect. First word = first name, the rest = last
+	 * name. A one-word name leaves the last name empty, which is accepted.
+	 *
+	 * When the parcel goes to the billing address, WooCommerce has already
+	 * copied the billing names into the shipping ones: they are aligned here.
+	 *
+	 * @param array<string,mixed> $data Posted checkout data.
+	 * @return array<string,mixed>
+	 */
+	public function split_full_name( array $data ): array {
+		$full = trim( (string) ( $data['billing_first_name'] ?? '' ) );
+
+		if ( '' === $full || '' !== trim( (string) ( $data['billing_last_name'] ?? '' ) ) ) {
+			return $data;
+		}
+
+		$parts = preg_split( '/\s+/u', $full, 2 );
+		$parts = is_array( $parts ) ? $parts : array( $full );
+
+		$data['billing_first_name'] = (string) $parts[0];
+		$data['billing_last_name']  = (string) ( $parts[1] ?? '' );
+
+		if ( empty( $data['ship_to_different_address'] ) && array_key_exists( 'shipping_first_name', $data ) ) {
+			$data['shipping_first_name'] = $data['billing_first_name'];
+			$data['shipping_last_name']  = $data['billing_last_name'];
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Makes the city optional for Tunisia in the country locale.
+	 *
+	 * The locale is what the classic checkout script reads to toggle the
+	 * « required » mark when the address form is refreshed; without this entry
+	 * it would put the asterisk back on the city field.
+	 *
+	 * @param array<string,array<string,mixed>> $locale Locale rules by country.
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function country_locale( array $locale ): array {
+		$locale['TN']['city']['required'] = false;
+
+		return $locale;
+	}
+
+	/**
+	 * « DT » on the French site, « د.ت » on the Arabic one.
+	 *
+	 * In a left-to-right paragraph, a number followed by Arabic letters is laid
+	 * out right-to-left as a block: « 79,000 د.ت » was displayed with the symbol
+	 * BEFORE the amount on the French pages (audit du 23/09, FP-06). « DT » is
+	 * also how Tunisian shops write the dinar in French.
+	 *
+	 * @param string $symbol   Currency symbol.
+	 * @param string $currency Currency code.
+	 * @return string
+	 */
+	public function currency_symbol( string $symbol, string $currency ): string {
+		if ( 'TND' !== $currency || str_starts_with( determine_locale(), 'ar' ) ) {
+			return $symbol;
+		}
+
+		return 'DT';
 	}
 
 	/**
@@ -1216,10 +1297,21 @@ final class Tunisia {
 			$f['billing']['billing_email']['label']    = __( 'Email (optional) / البريد الإلكتروني', 'famma-core' );
 		}
 
+		/*
+		 * One "full name" field: `split_full_name()` turns it back into first
+		 * and last name on the order.
+		 */
+		unset( $f['billing']['billing_last_name'] );
+		if ( isset( $f['billing']['billing_first_name'] ) ) {
+			$f['billing']['billing_first_name']['label']        = __( 'Full name / الاسم واللقب', 'famma-core' );
+			$f['billing']['billing_first_name']['autocomplete'] = 'name';
+			$f['billing']['billing_first_name']['class']        = array( 'form-row-wide' );
+		}
+
 		if ( isset( $f['billing']['billing_phone'] ) ) {
 			$f['billing']['billing_phone']['required']    = true;
 			$f['billing']['billing_phone']['priority']    = 25;
-			$f['billing']['billing_phone']['placeholder'] = '2X XXX XXX';
+			$f['billing']['billing_phone']['placeholder'] = 'XX XXX XXX';
 			$f['billing']['billing_phone']['label']       = __( 'Phone / الهاتف', 'famma-core' );
 		}
 		if ( isset( $f['billing']['billing_state'] ) ) {
@@ -1227,7 +1319,9 @@ final class Tunisia {
 			$f['billing']['billing_state']['required'] = true;
 		}
 		if ( isset( $f['billing']['billing_city'] ) ) {
-			$f['billing']['billing_city']['label'] = __( 'City / Delegation — المدينة', 'famma-core' );
+			// WooCommerce appends « (optional) » itself to a non-required field.
+			$f['billing']['billing_city']['label']    = __( 'City / Delegation — المدينة', 'famma-core' );
+			$f['billing']['billing_city']['required'] = false;
 		}
 		if ( isset( $f['billing']['billing_address_1'] ) ) {
 			$f['billing']['billing_address_1']['label'] = __( 'Address / العنوان', 'famma-core' );

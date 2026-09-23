@@ -31,12 +31,13 @@
  *
  * ── Ce que le formulaire demande ────────────────────────────────────────────
  *
- * Les six champs obligatoires du checkout, ni plus ni moins : prénom, nom,
- * téléphone, gouvernorat, ville, adresse. Le plan parlait de trois champs
- * (nom, téléphone, gouvernorat) — mais un gouvernorat ne suffit pas à livrer,
- * et inventer une adresse est exclu. En retirer un ici ne raccourcirait pas le
- * parcours : `process_checkout()` le refuserait, et le client verrait une
- * erreur au moment où il se croit arrivé.
+ * Quatre champs obligatoires, décidés par le propriétaire le 23/09/2026 : nom
+ * complet, téléphone, gouvernorat, adresse. La ville reste proposée, mais
+ * facultative. Ce sont exactement les champs obligatoires du checkout, que
+ * `Tunisia::checkout_fields()` règle de la même façon : un champ retiré ici mais
+ * exigé là-bas ferait refuser la commande par `process_checkout()`, au moment
+ * où le client se croit arrivé. Le nom complet est redécoupé en prénom et nom
+ * par `Tunisia::split_full_name()`.
  *
  * S'y ajoute la case des conditions de vente, parce que la boutique en a
  * désigné une page : sans elle, WooCommerce refuse la commande.
@@ -95,6 +96,26 @@ final class Express_Order {
 		add_action( 'woocommerce_single_product_summary', array( $this, 'render' ), 26 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'assets' ) );
 		add_action( 'wc_ajax_famma_express_nonce', array( $this, 'send_nonce' ) );
+		add_filter( 'body_class', array( $this, 'body_class' ) );
+	}
+
+	/**
+	 * Signale au thème que la fiche porte le formulaire express.
+	 *
+	 * Le formulaire a sa propre quantité : le thème s'en sert pour ranger celle
+	 * du bouton « Ajouter au panier », que le script synchronise. Deux
+	 * sélecteurs de quantité visibles pour un seul produit, c'était deux
+	 * réponses possibles à la même question.
+	 *
+	 * @param array<int, string> $classes Classes du `<body>`.
+	 * @return array<int, string>
+	 */
+	public function body_class( array $classes ): array {
+		if ( $this->eligible_product() instanceof \WC_Product ) {
+			$classes[] = 'famma-has-express';
+		}
+
+		return $classes;
 	}
 
 	/**
@@ -198,6 +219,20 @@ final class Express_Order {
 				'currency'     => get_woocommerce_currency(),
 				'genericError' => __( 'The order could not go through. Please check the form and try again.', 'famma-core' ),
 				'sending'      => __( 'Sending…', 'famma-core' ),
+				'phoneError'   => __( 'Check the number: 8 digits (XX XXX XXX).', 'famma-core' ),
+
+				/*
+				 * Format de prix de la boutique, pour recalculer le total quand
+				 * la quantité change. Le symbole passe par le même filtre que
+				 * `wc_price()` : « DT » en français, « د.ت » en arabe.
+				 */
+				'price'        => array(
+					'decimals' => wc_get_price_decimals(),
+					'decimal'  => wc_get_price_decimal_separator(),
+					'thousand' => wc_get_price_thousand_separator(),
+					'format'   => get_woocommerce_price_format(),
+					'symbol'   => html_entity_decode( get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8' ),
+				),
 			)
 		);
 	}
@@ -205,20 +240,26 @@ final class Express_Order {
 	/**
 	 * Champ texte du formulaire.
 	 *
-	 * @param string $name        Nom du champ, tel que le checkout l'attend.
-	 * @param string $label       Intitulé visible.
-	 * @param string $type        Type HTML.
+	 * @param string $name         Nom du champ, tel que le checkout l'attend.
+	 * @param string $label        Intitulé visible.
+	 * @param string $type         Type HTML.
 	 * @param string $autocomplete Valeur d'`autocomplete`.
-	 * @param bool   $wide        Champ sur toute la largeur de la grille.
+	 * @param bool   $wide         Champ sur toute la largeur de la grille.
+	 * @param bool   $required     Champ obligatoire.
 	 * @return void
 	 */
-	private function text_field( string $name, string $label, string $type = 'text', string $autocomplete = '', bool $wide = false ): void {
-		$id = 'famma-express-' . str_replace( '_', '-', $name );
+	private function text_field( string $name, string $label, string $type = 'text', string $autocomplete = '', bool $wide = false, bool $required = true ): void {
+		$id    = 'famma-express-' . str_replace( '_', '-', $name );
+		$error = $id . '-error';
 		?>
 		<p class="famma-express__field<?php echo $wide ? ' famma-express__field--wide' : ''; ?>">
 			<label for="<?php echo esc_attr( $id ); ?>">
 				<?php echo esc_html( $label ); ?>
-				<abbr class="required" title="<?php esc_attr_e( 'required', 'famma-core' ); ?>">*</abbr>
+				<?php if ( $required ) : ?>
+					<abbr class="required" title="<?php esc_attr_e( 'required', 'famma-core' ); ?>">*</abbr>
+				<?php else : ?>
+					<span class="famma-express__optional"><?php esc_html_e( '(optional)', 'famma-core' ); ?></span>
+				<?php endif; ?>
 			</label>
 			<input
 				type="<?php echo esc_attr( $type ); ?>"
@@ -228,12 +269,56 @@ final class Express_Order {
 					autocomplete="<?php echo esc_attr( $autocomplete ); ?>"
 				<?php endif; ?>
 				<?php if ( 'tel' === $type ) : ?>
-					<?php // `inputmode` sort le pavé numérique sur mobile ; `pattern` n'est PAS la validation — celle-ci reste côté serveur. ?>
-					inputmode="tel" placeholder="2X XXX XXX"
+					<?php
+					/*
+					 * `inputmode` sort le pavé numérique sur mobile. Le contrôle
+					 * en direct du script n'est qu'un confort : la règle qui fait
+					 * foi reste `Tunisia::validate_phone()`, côté serveur.
+					 */
+					?>
+					inputmode="tel" placeholder="XX XXX XXX" maxlength="20"
+					aria-describedby="<?php echo esc_attr( $error ); ?>"
 				<?php endif; ?>
-				required
+				<?php echo $required ? 'required' : ''; ?>
 			/>
+			<?php if ( 'tel' === $type ) : ?>
+				<span class="famma-express__error" id="<?php echo esc_attr( $error ); ?>" hidden></span>
+			<?php endif; ?>
 		</p>
+		<?php
+	}
+
+	/**
+	 * Quantité, avec les boutons − / + à 48 px.
+	 *
+	 * Le champ reste saisissable au clavier : sans script, les boutons ne font
+	 * rien et la commande part avec la valeur tapée.
+	 *
+	 * @param \WC_Product $product Produit affiché.
+	 * @return void
+	 */
+	private function quantity_field( \WC_Product $product ): void {
+		$max = $product->get_max_purchase_quantity();
+		?>
+		<div class="famma-express__field famma-express__field--qty">
+			<label for="famma-express-qty"><?php esc_html_e( 'Quantity / الكمية', 'famma-core' ); ?></label>
+			<div class="famma-express__qty" data-famma-express-qty>
+				<button type="button" class="famma-express__qty-btn" data-famma-express-step="-1" aria-label="<?php esc_attr_e( 'Decrease quantity', 'famma-core' ); ?>">−</button>
+				<input
+					type="number"
+					id="famma-express-qty"
+					name="famma_quantity"
+					value="1"
+					min="1"
+					<?php if ( $max > 0 ) : ?>
+						max="<?php echo esc_attr( (string) $max ); ?>"
+					<?php endif; ?>
+					step="1"
+					inputmode="numeric"
+				/>
+				<button type="button" class="famma-express__qty-btn" data-famma-express-step="1" aria-label="<?php esc_attr_e( 'Increase quantity', 'famma-core' ); ?>">+</button>
+			</div>
+		</div>
 		<?php
 	}
 
@@ -336,35 +421,25 @@ final class Express_Order {
 			<h2 class="famma-express__title" id="famma-express-title">
 				<?php esc_html_e( 'Order now / أطلب توا', 'famma-core' ); ?>
 			</h2>
-			<p class="famma-express__lead">
-				<?php esc_html_e( 'Cash on delivery. No account needed. Free shipping across Tunisia.', 'famma-core' ); ?>
-			</p>
+			<?php
+			/*
+			 * Plus de chapeau « Paiement à la livraison… » ici : la liste de
+			 * réassurance juste au-dessus le dit déjà. Le même message cinq fois
+			 * sur la fiche, c'était de la hauteur perdue (audit du 23/09, FP-09).
+			 */
+			?>
 
 			<form class="famma-express__form" method="post" novalidate>
 				<div class="famma-express__grid">
 					<?php
-					$this->text_field( 'billing_first_name', __( 'First name / الاسم', 'famma-core' ), 'text', 'given-name' );
-					$this->text_field( 'billing_last_name', __( 'Last name / اللقب', 'famma-core' ), 'text', 'family-name' );
+					$this->text_field( 'billing_first_name', __( 'Full name / الاسم واللقب', 'famma-core' ), 'text', 'name', true );
 					$this->text_field( 'billing_phone', __( 'Phone / الهاتف', 'famma-core' ), 'tel', 'tel' );
 					$this->governorate_field();
-					$this->text_field( 'billing_city', __( 'City / Delegation — المدينة', 'famma-core' ), 'text', 'address-level2' );
+					$this->text_field( 'billing_city', __( 'City / Delegation — المدينة', 'famma-core' ), 'text', 'address-level2', false, false );
 					$this->text_field( 'billing_address_1', __( 'Address / العنوان', 'famma-core' ), 'text', 'street-address', true );
+					$this->quantity_field( $product );
+					$this->terms_field();
 					?>
-
-					<p class="famma-express__field famma-express__field--qty">
-						<label for="famma-express-qty"><?php esc_html_e( 'Quantity / الكمية', 'famma-core' ); ?></label>
-						<input
-							type="number"
-							id="famma-express-qty"
-							name="famma_quantity"
-							value="1"
-							min="1"
-							step="1"
-							inputmode="numeric"
-						/>
-					</p>
-
-					<?php $this->terms_field(); ?>
 				</div>
 
 				<?php $this->summary( $product ); ?>
@@ -382,7 +457,8 @@ final class Express_Order {
 
 				<button type="submit" class="famma-express__submit">
 					<span class="famma-express__submit-fr"><?php esc_html_e( 'Confirm my order', 'famma-core' ); ?></span>
-					<span class="famma-express__submit-ar">أطلب توا</span>
+					<?php // Traduction du bouton, et non un autre appel à l'action : masquée sur le site arabe, où le libellé principal est déjà en derja. ?>
+					<span class="famma-express__submit-ar" lang="ar" dir="rtl">أكّد طلبيتك</span>
 				</button>
 
 				<?php

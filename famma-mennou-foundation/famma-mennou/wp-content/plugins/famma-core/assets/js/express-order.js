@@ -30,6 +30,159 @@
 	var buttonLabel = button ? button.innerHTML : '';
 	var busy = false;
 
+	var qtyInput = form.querySelector( '[name="famma_quantity"]' );
+	var totalNode = form.querySelector( '.famma-express__total' );
+	var phoneInput = form.querySelector( '[name="billing_phone"]' );
+	var phoneError = phoneInput ? document.getElementById( phoneInput.getAttribute( 'aria-describedby' ) ) : null;
+
+	/**
+	 * Met un montant au format de la boutique (décimales, séparateurs, symbole).
+	 *
+	 * @param {number} amount Montant.
+	 * @return {string} Montant formaté, en texte brut.
+	 */
+	function formatPrice( amount ) {
+		var p = fammaExpress.price || {};
+		var decimals = parseInt( p.decimals, 10 ) || 0;
+		var parts = amount.toFixed( decimals ).split( '.' );
+
+		parts[ 0 ] = parts[ 0 ].replace( /\B(?=(\d{3})+(?!\d))/g, p.thousand || '' );
+
+		var number = parts.join( p.decimal || ',' );
+		var format = p.format || '%2$s %1$s';
+
+		return format
+			.replace( '%1$s', p.symbol || '' )
+			.replace( '%2$s', number )
+			.replace( /&nbsp;/g, ' ' );
+	}
+
+	/**
+	 * Quantité courante, bornée par les attributs du champ.
+	 *
+	 * @return {number}
+	 */
+	function currentQuantity() {
+		if ( ! qtyInput ) {
+			return 1;
+		}
+
+		var min = parseInt( qtyInput.getAttribute( 'min' ), 10 ) || 1;
+		var max = parseInt( qtyInput.getAttribute( 'max' ), 10 ) || Infinity;
+		var value = parseInt( qtyInput.value, 10 );
+
+		if ( isNaN( value ) || value < min ) {
+			value = min;
+		}
+
+		return Math.min( value, max );
+	}
+
+	/**
+	 * Recalcule le total et aligne la quantité du bouton « Ajouter au panier ».
+	 *
+	 * Le client ne voit qu'un sélecteur de quantité : celui du panier est rangé
+	 * par le thème, mais il doit porter la même valeur, sinon « Ajouter au
+	 * panier » ajouterait 1 article quand le client en a choisi 3.
+	 *
+	 * @return {void}
+	 */
+	function syncQuantity() {
+		var quantity = currentQuantity();
+
+		if ( totalNode ) {
+			var unit = parseFloat( totalNode.getAttribute( 'data-unit-price' ) || '0' );
+			totalNode.textContent = formatPrice( unit * quantity );
+		}
+
+		var cartQty = document.querySelector( 'form.cart input.qty' );
+
+		if ( cartQty && String( quantity ) !== cartQty.value ) {
+			cartQty.value = String( quantity );
+			cartQty.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+		}
+	}
+
+	form.addEventListener( 'click', function ( event ) {
+		var step = event.target.closest( '[data-famma-express-step]' );
+
+		if ( ! step || ! qtyInput ) {
+			return;
+		}
+
+		event.preventDefault();
+
+		var next = currentQuantity() + parseInt( step.getAttribute( 'data-famma-express-step' ), 10 );
+		var min = parseInt( qtyInput.getAttribute( 'min' ), 10 ) || 1;
+		var max = parseInt( qtyInput.getAttribute( 'max' ), 10 ) || Infinity;
+
+		qtyInput.value = String( Math.max( min, Math.min( next, max ) ) );
+		syncQuantity();
+	} );
+
+	if ( qtyInput ) {
+		qtyInput.addEventListener( 'input', syncQuantity );
+		qtyInput.addEventListener( 'change', syncQuantity );
+	}
+
+	/**
+	 * Le numéro ressemble-t-il à un numéro tunisien ?
+	 *
+	 * Même règle que `Tunisia::validate_phone()` : espaces, points et tirets
+	 * tolérés, préfixe +216 ou 00216 facultatif, puis 8 chiffres. Le serveur
+	 * reste juge ; ce contrôle évite seulement d'attendre l'envoi pour le savoir.
+	 *
+	 * @param {string} value Saisie brute.
+	 * @return {boolean}
+	 */
+	function plausiblePhone( value ) {
+		var digits = value.replace( /[\s.\-]/g, '' ).replace( /^(?:\+?216|00216)/, '' );
+
+		return /^[2-9]\d{7}$/.test( digits );
+	}
+
+	/**
+	 * Affiche ou retire l'erreur du téléphone.
+	 *
+	 * `setCustomValidity` fait entrer l'erreur dans `reportValidity()` : le
+	 * formulaire ne part pas avec un numéro manifestement faux.
+	 *
+	 * @param {boolean} strict Vrai à la sortie du champ et à l'envoi.
+	 * @return {boolean} Vrai si le numéro est acceptable.
+	 */
+	function checkPhone( strict ) {
+		if ( ! phoneInput ) {
+			return true;
+		}
+
+		var value = phoneInput.value.trim();
+		var ok = '' === value || plausiblePhone( value );
+
+		// Pendant la frappe, on ne signale rien : on se contente d'effacer l'erreur dès qu'elle est corrigée.
+		if ( ! strict && ! ok ) {
+			return ok;
+		}
+
+		phoneInput.setCustomValidity( ok ? '' : fammaExpress.phoneError );
+		phoneInput.setAttribute( 'aria-invalid', ok ? 'false' : 'true' );
+
+		if ( phoneError ) {
+			phoneError.textContent = ok ? '' : fammaExpress.phoneError;
+			phoneError.hidden = ok;
+		}
+
+		return ok;
+	}
+
+	if ( phoneInput ) {
+		phoneInput.addEventListener( 'blur', function () {
+			checkPhone( true );
+		} );
+		phoneInput.addEventListener( 'input', function () {
+			checkPhone( false );
+		} );
+	}
+
 	/**
 	 * Affiche un message d'échec au-dessus du bouton.
 	 *
@@ -139,6 +292,8 @@
 		 * sans perdre les messages natifs — traduits, et lus par les lecteurs
 		 * d'écran.
 		 */
+		checkPhone( true );
+
 		if ( ! form.reportValidity() ) {
 			return;
 		}

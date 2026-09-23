@@ -17,19 +17,20 @@
 	border: 2px solid var(--famma-orange, #F5A623);
 	border-radius: var(--famma-radius, 12px);
 	background: var(--famma-white, #FFF);
+	/*
+	 * La barre d'achat collante fait défiler jusqu'ici : sans cette marge, le
+	 * titre et le premier champ finissaient sous l'en-tête collant (77 px
+	 * mesurés au rendu, pour un jeton `--header-h` de 70 px : d'où l'air de
+	 * 24 px), et le client tapait dans un champ qu'il ne voyait pas.
+	 */
+	scroll-margin-block-start: calc(var(--header-h, 70px) + var(--sp-6, 24px));
 }
 
 .famma-express__title {
-	margin-block: 0 var(--sp-1, 4px);
+	margin-block: 0 var(--sp-3, 12px);
 	font-size: var(--fs-h3, 1.25rem);
 	font-weight: var(--fw-bold, 700);
 	color: var(--famma-blue, #10275A);
-}
-
-.famma-express__lead {
-	margin-block: 0 var(--sp-4, 16px);
-	font-size: var(--fs-caption, 0.875rem);
-	color: var(--famma-ink-muted, #55606E);
 }
 
 /*
@@ -42,11 +43,30 @@
 	gap: var(--sp-3, 12px);
 }
 
-.famma-express__field {
+/*
+ * Deux classes : cette feuille est chargée avant celles du thème, et la marge
+ * basse que le thème donne aux paragraphes (17 px mesurés) l'emportait sur
+ * une classe seule — d'où un pas de 117 px entre deux champs.
+ */
+.famma-express .famma-express__field {
 	margin: 0;
 	display: flex;
 	flex-direction: column;
 	gap: var(--sp-1, 4px);
+}
+
+.famma-express__optional {
+	color: var(--famma-ink-muted, #55606E);
+	font-weight: var(--fw-regular, 400);
+}
+
+.famma-express__error {
+	color: var(--famma-danger, #C0392B);
+	font-size: var(--fs-caption, 0.875rem);
+}
+
+.famma-express__field input[aria-invalid="true"] {
+	border-color: var(--famma-danger, #C0392B);
 }
 
 .famma-express__field label {
@@ -90,8 +110,50 @@
 	outline-offset: 1px;
 }
 
-.famma-express__field--qty input {
-	max-inline-size: 7rem;
+/* Quantité : un bloc bordé « − valeur + », boutons de 48 px. */
+.famma-express__qty {
+	display: inline-flex;
+	align-items: stretch;
+	align-self: flex-start;
+	overflow: hidden;
+	border: 1px solid var(--famma-line, #DBE1E8);
+	border-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-white, #FFF);
+}
+
+.famma-express__qty-btn {
+	inline-size: 48px;
+	min-block-size: 48px;
+	padding: 0;
+	border: 0;
+	background: var(--famma-white, #FFF);
+	color: var(--famma-blue, #10275A);
+	font-family: inherit;
+	font-size: 1.25rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.famma-express__qty-btn:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #2C6BED);
+	outline-offset: -2px;
+}
+
+.famma-express .famma-express__qty input[type="number"] {
+	inline-size: 3.5rem;
+	padding-inline: 0;
+	border: 0;
+	border-inline: 1px solid var(--famma-line, #DBE1E8);
+	border-radius: 0;
+	background: var(--famma-white, #FFF);
+	text-align: center;
+	appearance: textfield;
+}
+
+.famma-express__qty input::-webkit-outer-spin-button,
+.famma-express__qty input::-webkit-inner-spin-button {
+	appearance: none;
+	margin: 0;
 }
 
 .famma-express__terms label {
@@ -169,6 +231,11 @@
 .famma-express__submit-ar {
 	font-size: var(--fs-caption, 0.875rem);
 	font-weight: var(--fw-medium, 500);
+}
+
+/* Sur le site arabe, le libellé principal est déjà en derja : la ligne de traduction ferait doublon. */
+html[lang^="ar"] .famma-express__submit-ar {
+	display: none;
 }
 
 /* Vide par défaut : sans cette règle, la marge apparaîtrait sans message. */
