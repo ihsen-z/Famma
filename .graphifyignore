@@ -1,0 +1,7 @@
+# Périmètre graphify à la racine du dépôt — ne concerne pas git.
+#
+# Photos produits sources (avant et après optimisation) : une extraction vision
+# par image, pour un contenu qui vit déjà dans le catalogue WooCommerce.
+# Elles n'apportent rien au graphe du code.
+/zinger product/
+/zinger product optimises/

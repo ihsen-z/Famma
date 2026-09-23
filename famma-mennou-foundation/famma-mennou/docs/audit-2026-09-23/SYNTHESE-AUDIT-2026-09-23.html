@@ -1,0 +1,851 @@
+<title>Audit FAMMA MINNOU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@600&family=Poppins:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<style>
+:root{
+  --ground:#F4F6FA; --surface:#FFFFFF; --surface-2:#EEF2F8;
+  --ink:#0B1F3A; --ink-2:#34435B; --muted:#5E6A7E; --line:#DDE3EC; --line-soft:#E9EDF3;
+  --navy:#0B1F3A; --navy-2:#12315C; --on-navy:#FFFFFF; --on-navy-2:#B9C4D6;
+  --orange:#FF7A00; --orange-text:#B85300; --orange-soft:#FFF1E3;
+  --chart-hl:#E86E00; --chart-base:#2F6FD0; --track:#E4E9F1;
+  --crit:#B42323; --crit-bg:#FCEBEB;
+  --high:#A84C00; --high-bg:#FFF0E0;
+  --mid:#7A5C00; --mid-bg:#FFF6D6;
+  --low:#3F4E66; --low-bg:#EDF1F6;
+  --good:#157A45; --good-bg:#E6F5EC;
+  --focus:#2F6FD0;
+  --f-display:"Poppins",system-ui,"Segoe UI",sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --f-ar:"Noto Kufi Arabic","Segoe UI",Tahoma,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#0A1220; --surface:#101B2E; --surface-2:#15233A;
+    --ink:#E7ECF4; --ink-2:#C3CDDC; --muted:#93A0B5; --line:#24344D; --line-soft:#1C2A40;
+    --navy:#0F2340; --navy-2:#173A69; --on-navy:#FFFFFF; --on-navy-2:#B9C4D6;
+    --orange:#FF8A1F; --orange-text:#FFA451; --orange-soft:#2A1B0C;
+    --chart-hl:#D96A00; --chart-base:#4F86DB; --track:#1E2D45;
+    --crit:#FF8A8A; --crit-bg:#3A1518;
+    --high:#FFB066; --high-bg:#35220F;
+    --mid:#F0CF5C; --mid-bg:#2F280D;
+    --low:#B7C3D6; --low-bg:#1C2A40;
+    --good:#6FD39C; --good-bg:#0F2E1E;
+    --focus:#7FA8EC;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0A1220; --surface:#101B2E; --surface-2:#15233A;
+  --ink:#E7ECF4; --ink-2:#C3CDDC; --muted:#93A0B5; --line:#24344D; --line-soft:#1C2A40;
+  --navy:#0F2340; --navy-2:#173A69; --on-navy:#FFFFFF; --on-navy-2:#B9C4D6;
+  --orange:#FF8A1F; --orange-text:#FFA451; --orange-soft:#2A1B0C;
+  --chart-hl:#D96A00; --chart-base:#4F86DB; --track:#1E2D45;
+  --crit:#FF8A8A; --crit-bg:#3A1518;
+  --high:#FFB066; --high-bg:#35220F;
+  --mid:#F0CF5C; --mid-bg:#2F280D;
+  --low:#B7C3D6; --low-bg:#1C2A40;
+  --good:#6FD39C; --good-bg:#0F2E1E;
+  --focus:#7FA8EC;
+}
+
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6;margin:0}
+a{color:var(--chart-base);text-underline-offset:2px}
+a:focus-visible,button:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+h1,h2,h3,h4{font-family:var(--f-display);line-height:1.2;text-wrap:balance;margin:0}
+h2{font-size:clamp(1.45rem,1.1rem + 1.4vw,1.9rem);font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.15rem;font-weight:600}
+p{margin:0}
+code,.mono{font-family:var(--f-mono);font-size:.84em}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:20px}
+.eyebrow{font-family:var(--f-display);font-size:.76rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lead{font-size:1.1rem;color:var(--ink-2);max-width:68ch}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- Masthead ---------- */
+.mast{background:var(--navy);color:var(--on-navy);padding-block:44px 36px}
+.mast .eyebrow{color:var(--on-navy-2)}
+.mast-grid{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:end}
+.mast h1{font-size:clamp(2rem,1.4rem + 2.6vw,3.1rem);font-weight:700;letter-spacing:-.02em;margin-top:10px}
+.mast h1 span{color:var(--orange)}
+.slogan{font-family:var(--f-ar);font-weight:600;font-size:1.05rem;color:var(--on-navy-2);margin-top:8px;direction:rtl;text-align:start;unicode-bidi:isolate}
+.mast .lead{color:#DCE3EE;margin-top:18px}
+.verdict-score{background:var(--navy-2);border-radius:18px;padding:22px 26px;min-width:230px;text-align:center}
+.verdict-score .big{font-family:var(--f-display);font-weight:700;font-size:3.6rem;line-height:1;color:#fff}
+.verdict-score .big small{font-size:1.3rem;color:var(--on-navy-2);font-weight:600}
+.verdict-score .tag{display:inline-block;margin-top:12px;background:var(--orange);color:var(--navy);font-family:var(--f-display);font-weight:600;font-size:.82rem;padding:5px 12px;border-radius:999px}
+.verdict-score .sub{font-size:.85rem;color:var(--on-navy-2);margin-top:10px;line-height:1.4}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:26px;font-size:.88rem;color:var(--on-navy-2)}
+.meta-row b{color:#fff;font-weight:600}
+
+/* ---------- TOC ---------- */
+.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.toc ul{list-style:none;margin:0 auto;padding:0 20px;max-width:1100px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:thin}
+.toc a{display:block;white-space:nowrap;padding:13px 12px;font-family:var(--f-display);font-size:.86rem;font-weight:500;color:var(--ink-2);text-decoration:none;border-bottom:2px solid transparent}
+.toc a:hover{color:var(--ink);border-bottom-color:var(--orange)}
+
+/* ---------- Sections ---------- */
+section{padding-block:56px 8px}
+.sec-head{display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
+.sec-head .lead{margin-top:4px}
+
+/* Score bars */
+.scores{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px 22px 10px}
+.score-row{display:grid;grid-template-columns:minmax(150px,210px) 1fr 58px 118px;gap:14px;align-items:center;padding-block:11px;border-bottom:1px solid var(--line-soft)}
+.score-row:last-of-type{border-bottom:0}
+.score-row .lbl{font-family:var(--f-display);font-weight:600;font-size:.95rem}
+.score-row .lbl a{color:inherit;text-decoration:none}
+.score-row .lbl a:hover{text-decoration:underline}
+.track{position:relative;height:14px;background:var(--track);border-radius:7px}
+.bar{position:absolute;inset-block:0;inset-inline-start:0;background:var(--chart-base);border-radius:7px}
+.goal{position:absolute;inset-block:-6px;width:0;border-inline-start:2px dashed var(--ink-2);opacity:.55}
+.score-row .val{font-family:var(--f-display);font-weight:700;font-size:1.05rem;text-align:end}
+.axis{display:grid;grid-template-columns:minmax(150px,210px) 1fr 58px 118px;gap:14px;padding-top:6px}
+.axis-scale{position:relative;height:22px;font-size:.75rem;color:var(--muted)}
+.axis-scale span{position:absolute;transform:translateX(-50%)}
+.axis-scale span:first-child{transform:none}
+.axis-scale span:last-child{transform:translateX(-100%)}
+.chart-note{font-size:.85rem;color:var(--muted);padding:6px 0 12px}
+
+/* Pills */
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-display);font-weight:600;font-size:.74rem;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.p-crit{color:var(--crit);background:var(--crit-bg)}
+.p-high{color:var(--high);background:var(--high-bg)}
+.p-mid{color:var(--mid);background:var(--mid-bg)}
+.p-low{color:var(--low);background:var(--low-bg)}
+.p-good{color:var(--good);background:var(--good-bg)}
+
+/* Urgences */
+.urg-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.urg{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:8px}
+.urg.crit{border-color:color-mix(in srgb,var(--crit) 45%,var(--line))}
+.urg h3{font-size:1.02rem}
+.urg p{font-size:.95rem;color:var(--ink-2)}
+.urg .fix{font-size:.9rem;color:var(--ink);background:var(--surface-2);border-radius:8px;padding:8px 10px}
+.urg .fix b{font-family:var(--f-display);font-weight:600;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:2px}
+
+/* Plan */
+.plan{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.phase{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.phase-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.phase:first-child .phase-head{background:var(--orange-soft)}
+.phase-head .when{font-family:var(--f-display);font-weight:700;font-size:1.12rem}
+.phase-head .why{font-size:.88rem;color:var(--muted)}
+.phase ol{margin:0;padding:14px 18px 18px 40px;display:flex;flex-direction:column;gap:10px;font-size:.94rem}
+.phase li::marker{font-family:var(--f-display);font-weight:600;color:var(--orange-text)}
+.who{display:inline-block;font-size:.72rem;font-family:var(--f-display);font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:0 6px;margin-inline-start:4px;vertical-align:1px;white-space:nowrap}
+
+/* Acquis */
+.acq{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.acq div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:.94rem}
+.acq b{display:block;font-family:var(--f-display);font-weight:600;font-size:.98rem;margin-bottom:3px;color:var(--good)}
+
+/* Domain blocks */
+.dom{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;margin-bottom:18px}
+.dom-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px 20px;margin-bottom:12px}
+.dom-head h3{font-size:1.3rem;font-weight:700}
+.dom-score{font-family:var(--f-display);font-weight:700;font-size:1.5rem}
+.dom-score small{font-size:.9rem;color:var(--muted);font-weight:600}
+.dom > p{color:var(--ink-2);max-width:78ch}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:18px 0 6px}
+.kpi{background:var(--surface-2);border-radius:10px;padding:12px 14px}
+.kpi .k{font-family:var(--f-display);font-weight:700;font-size:1.35rem;line-height:1.15}
+.kpi .l{font-size:.84rem;color:var(--muted);margin-top:2px;line-height:1.35}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:16px}
+.two h4{font-family:var(--f-display);font-size:.8rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.two .plus h4{color:var(--good)}
+.two .minus h4{color:var(--crit)}
+.two ul{margin:0;padding-inline-start:18px;display:flex;flex-direction:column;gap:6px;font-size:.93rem;color:var(--ink-2)}
+.src{font-size:.84rem;color:var(--muted);margin-top:14px}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{padding:10px 12px;text-align:start;vertical-align:top;border-bottom:1px solid var(--line-soft)}
+thead th{font-family:var(--f-display);font-weight:600;font-size:.78rem;letter-spacing:.04em;color:var(--muted);background:var(--surface-2);position:sticky;top:0}
+tbody tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:end;font-variant-numeric:tabular-nums}
+.matrix th:first-child,.matrix td:first-child{position:sticky;inset-inline-start:0;background:var(--surface);font-weight:600;min-width:150px;z-index:1}
+.matrix thead th:first-child{background:var(--surface-2)}
+.matrix td.me,.matrix th.me{background:var(--orange-soft)}
+.matrix td{min-width:118px}
+.y{color:var(--good);font-weight:600}.no{color:var(--crit);font-weight:600}.pa{color:var(--mid);font-weight:600}
+
+/* TTFB chart */
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 22px 14px}
+.chart h3{margin-bottom:4px}
+.hb-row{display:grid;grid-template-columns:130px 1fr 70px;gap:12px;align-items:center;padding-block:5px}
+.hb-row .nm{font-size:.9rem;text-align:end}
+.hb-row.me .nm{font-weight:700;font-family:var(--f-display)}
+.hb-track{position:relative;height:18px}
+.hb-bar{position:absolute;inset-block:0;inset-inline-start:0;background:var(--chart-base);border-radius:0 4px 4px 0}
+.hb-row.me .hb-bar{background:var(--chart-hl)}
+.hb-row .v{font-size:.88rem;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.hb-row.me .v{color:var(--ink);font-weight:700}
+.hb-row:hover .hb-bar{filter:brightness(1.12)}
+.hb-grid{position:absolute;inset-block:-4px;border-inline-start:1px solid var(--line);pointer-events:none}
+.hb-axis{display:grid;grid-template-columns:130px 1fr 70px;gap:12px}
+.hb-axis .axis-scale{height:20px}
+
+/* Registre */
+.filters{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin-bottom:14px}
+.fgroup{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fgroup .flab{font-family:var(--f-display);font-size:.76rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-inline-end:4px}
+.chip{font-family:var(--f-display);font-size:.8rem;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:6px 12px;cursor:pointer;min-height:34px}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+:root[data-theme="dark"] .chip[aria-pressed="true"]{background:var(--chart-base);border-color:var(--chart-base)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chip[aria-pressed="true"]{background:var(--chart-base);border-color:var(--chart-base)}}
+.count{font-size:.88rem;color:var(--muted)}
+.reg td:first-child{white-space:nowrap}
+.reg .id{font-family:var(--f-mono);font-size:.78rem;color:var(--muted);display:block;margin-top:4px}
+.reg td.fixc{color:var(--ink-2);min-width:260px}
+.reg td.what{min-width:260px}
+.reg .dm{font-size:.82rem;color:var(--muted);white-space:nowrap}
+
+/* Owner list */
+.owner{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.owner div{background:var(--surface);border:1px solid var(--line);border-inline-start:4px solid var(--orange);border-radius:10px;padding:14px 16px;font-size:.94rem}
+.owner b{font-family:var(--f-display);font-weight:600;display:block;margin-bottom:3px}
+
+.files{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px}
+.files a{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-decoration:none;color:var(--ink)}
+.files a:hover{border-color:var(--chart-base)}
+.files a b{font-family:var(--f-display);font-weight:600}
+.files a span{font-size:.84rem;color:var(--muted)}
+footer{padding-block:40px 60px;color:var(--muted);font-size:.86rem}
+
+@media (max-width:900px){
+  .plan{grid-template-columns:1fr}
+  .mast-grid{grid-template-columns:1fr}
+  .verdict-score{justify-self:start}
+}
+@media (max-width:640px){
+  body{font-size:16px}
+  .wrap{padding-inline:16px}
+  .toc ul{padding-inline:12px}
+  .score-row,.axis{grid-template-columns:1fr 50px;row-gap:6px}
+  .score-row .lbl{grid-column:1 / -1}
+  .score-row .track{grid-column:1}
+  .score-row .val{grid-column:2;grid-row:2}
+  .score-row .st{grid-column:1 / -1}
+  .axis .sp1,.axis .sp2,.axis .sp3{display:none}
+  .two{grid-template-columns:1fr}
+  .hb-row,.hb-axis{grid-template-columns:96px 1fr 58px;gap:8px}
+  .dom{padding:18px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .bar,.hb-bar{transition:filter .15s}
+}
+</style>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="mast-grid">
+      <div>
+        <p class="eyebrow">Audit complet · fammaminnou.tn · 23 septembre 2026</p>
+        <h1>FAMMA MINNOU<span>.</span> Solide sous le capot, pas encore prête pour la pub.</h1>
+        <p class="slogan" lang="ar">فمّا ديما حاجة جديدة</p>
+        <p class="lead">Le code est propre, la logique COD est juste et tu as une offre que personne d'autre n'a sur le marché : la livraison à 0 DT sans minimum. Mais la vitrine perd des clients avant même qu'ils achètent. Le site est 5 à 10 fois plus lent que les concurrents, WhatsApp est cassé, les pages Retours et CGV sont vides et un produit de test est en ligne. La bonne nouvelle : l'essentiel se corrige en une semaine, sans refonte.</p>
+      </div>
+      <div class="verdict-score" role="img" aria-label="Note globale 4,8 sur 10">
+        <div class="big num">4,8<small>/10</small></div>
+        <span class="tag">Pas prête pour la pub payante</span>
+        <p class="sub">Objectif réaliste après le plan « cette semaine » : 7/10</p>
+      </div>
+    </div>
+    <div class="meta-row">
+      <span><b>7</b> domaines audités</span>
+      <span><b>6</b> agents experts + inspection de l'hébergement</span>
+      <span><b>140+</b> constats, <b>58</b> retenus ici</span>
+      <span><b>9</b> sites concurrents visités</span>
+      <span>Mode <b>lecture seule</b> : rien n'a été modifié, aucune commande passée</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Sommaire">
+  <ul>
+    <li><a href="#notes">Notes</a></li>
+    <li><a href="#urgences">Urgences</a></li>
+    <li><a href="#plan">Plan d'action</a></li>
+    <li><a href="#acquis">Déjà bien</a></li>
+    <li><a href="#domaines">Par domaine</a></li>
+    <li><a href="#concurrence">Concurrence</a></li>
+    <li><a href="#registre">Tous les constats</a></li>
+    <li><a href="#toi">À toi de décider</a></li>
+    <li><a href="#methode">Méthode et rapports</a></li>
+  </ul>
+</nav>
+
+<main class="wrap">
+
+<!-- ================= NOTES ================= -->
+<section id="notes">
+  <div class="sec-head">
+    <p class="eyebrow">La photo d'ensemble</p>
+    <h2>Notes par domaine</h2>
+    <p class="lead">La note globale pondère ce qui compte le plus pour une boutique COD qui vit de la publicité mobile : UX et performance 20 % chacune, sécurité et SEO 15 %, code, hébergement et position concurrentielle 10 %.</p>
+  </div>
+  <div class="scores" role="figure" aria-labelledby="scores-cap">
+    <p id="scores-cap" class="chart-note" style="padding-top:0">Note sur 10. La ligne pointillée marque l'objectif de 7/10.</p>
+    <div class="score-row"><span class="lbl"><a href="#d-code">Code et architecture</a></span><div class="track"><div class="bar" style="width:65%"></div><div class="goal" style="inset-inline-start:70%"></div></div><span class="val num">6,5</span><span class="st"><span class="pill p-mid">À consolider</span></span></div>
+    <div class="score-row"><span class="lbl"><a href="#d-ux">UX/UI et conversion</a></span><div class="track"><div class="bar" style="width:52%"></div><div class="goal" style="inset-inline-start:70%"></div></div><span class="val num">5,2</span><span class="st"><span class="pill p-high">Freins à la vente</span></span></div>
+    <div class="score-row"><span class="lbl"><a href="#d-secu">Sécurité</a></span><div class="track"><div class="bar" style="width:50%"></div><div class="goal" style="inset-inline-start:70%"></div></div><span class="val num">5,0</span><span class="st"><span class="pill p-high">Failles connues</span></span></div>
+    <div class="score-row"><span class="lbl"><a href="#concurrence">Position concurrentielle</a></span><div class="track"><div class="bar" style="width:50%"></div><div class="goal" style="inset-inline-start:70%"></div></div><span class="val num">5,0</span><span class="st"><span class="pill p-mid">Offre forte, invisible</span></span></div>
+    <div class="score-row"><span class="lbl"><a href="#d-seo">SEO et visibilité IA</a></span><div class="track"><div class="bar" style="width:47%"></div><div class="goal" style="inset-inline-start:70%"></div></div><span class="val num">4,7</span><span class="st"><span class="pill p-high">Invisible</span></span></div>
+    <div class="score-row"><span class="lbl"><a href="#d-perf">Performance</a></span><div class="track"><div class="bar" style="width:40%"></div><div class="goal" style="inset-inline-start:70%"></div></div><span class="val num">4,0</span><span class="st"><span class="pill p-crit">Critique</span></span></div>
+    <div class="score-row"><span class="lbl"><a href="#d-heb">Hébergement et exploitation</a></span><div class="track"><div class="bar" style="width:35%"></div><div class="goal" style="inset-inline-start:70%"></div></div><span class="val num">3,5</span><span class="st"><span class="pill p-crit">Critique</span></span></div>
+    <div class="axis" aria-hidden="true"><span class="sp1"></span><div class="axis-scale"><span style="inset-inline-start:0">0</span><span style="inset-inline-start:25%">2,5</span><span style="inset-inline-start:50%">5</span><span style="inset-inline-start:75%">7,5</span><span style="inset-inline-start:100%">10</span></div><span class="sp2"></span><span class="sp3"></span></div>
+  </div>
+</section>
+
+<!-- ================= URGENCES ================= -->
+<section id="urgences">
+  <div class="sec-head">
+    <p class="eyebrow">À corriger avant de dépenser 1 DT en publicité</p>
+    <h2>Les 6 urgences</h2>
+    <p class="lead">Chacune fait perdre des commandes aujourd'hui, ou expose la boutique à un risque réel. Toutes ont été vérifiées sur le site en ligne.</p>
+  </div>
+  <div class="urg-list">
+    <article class="urg crit">
+      <span class="pill p-crit">Critique · conversion</span>
+      <h3>WhatsApp ne fonctionne nulle part</h3>
+      <p>Les 4 liens WhatsApp de l'accueil pointent vers <code>wa.me/56261412</code>, sans l'indicatif 216. WhatsApp compose alors un numéro chilien et le message n'arrive jamais. Or 6 boutons y renvoient, et c'est le canal préféré des acheteurs COD tunisiens.</p>
+      <p class="fix"><b>Correctif · 15 min</b>Enregistrer le numéro au format <code>21656261412</code> dans FAMMA → Pages et générer <code>tel:+216…</code>. Il faut aussi confirmer le bon numéro : le site affiche 56261412, mes notes indiquent 26767491.</p>
+    </article>
+    <article class="urg crit">
+      <span class="pill p-crit">Critique · vitesse</span>
+      <h3>Le serveur met 3,6 s à répondre, jusqu'à 15 s</h3>
+      <p>Aucun cache de page (LiteSpeed Cache n'est pas installé, alors que le serveur est LiteSpeed). Les concurrents répondent en 0,24 à 1,35 s. Et un clic sur « Commander » enchaîne 3 appels serveur : 6 à 20 s d'attente.</p>
+      <p class="fix"><b>Correctif · 1 h</b>Installer LiteSpeed Cache avec les réglages fournis (dont l'exclusion de <code>fbclid</code>, <code>ttclid</code> et <code>utm*</code>), activer OPcache et un cron système. Gain attendu : 2 s ou plus par page.</p>
+    </article>
+    <article class="urg crit">
+      <span class="pill p-crit">Critique · confiance</span>
+      <h3>Pages Retours et CGV affichent des notes de chantier</h3>
+      <p>« Points à trancher… », « Clauses à faire rédiger… » sont visibles de tous. La case CGV est pourtant obligatoire pour commander, et le bandeau promet « Satisfait ou remboursé » sans aucune politique écrite. Pas de mentions légales (404).</p>
+      <p class="fix"><b>Correctif · tes textes</b>Rédiger Retours, CGV et mentions légales (raison sociale, MF, RNE). En attendant, retirer « Satisfait ou remboursé » et passer ces deux pages en <code>noindex</code>.</p>
+    </article>
+    <article class="urg crit">
+      <span class="pill p-crit">Critique · crédibilité</span>
+      <h3>Un produit de test est en vente</h3>
+      <p>« Prd 1 » : image générée par ChatGPT, fausse remise de 140 → 75 DT (−46 %), sans description. C'est le seul résultat du menu « Promotions ». S'y ajoutent le doublon « Pince de Câblage Pro » et 4 catégories vides en tête de l'accueil.</p>
+      <p class="fix"><b>Correctif · 20 min</b>Corbeille et redirection 301 pour Prd 1 et le doublon, masquer les catégories vides et le bloc « Les premiers produits arrivent ».</p>
+    </article>
+    <article class="urg crit">
+      <span class="pill p-crit">Critique · commandes</span>
+      <h3>Aucun e-mail ne part à la création d'une commande</h3>
+      <p>Les commandes COD démarrent au statut « À confirmer » (<code>pending-confirm</code>), que WooCommerce ne relie à aucun e-mail. Ni toi ni le client n'êtes prévenus. De plus, l'hébergeur plafonne l'envoi à 40 e-mails par jour, sans SMTP.</p>
+      <p class="fix"><b>Correctif · ½ journée</b>Relier la transition à l'e-mail « Nouvelle commande » (<code>woocommerce_email_actions</code>) et passer par un SMTP transactionnel authentifié.</p>
+    </article>
+    <article class="urg">
+      <span class="pill p-high">Élevée · sécurité</span>
+      <h3>Deux plugins ont des failles publiques exploitables sans compte</h3>
+      <p>TranslatePress 3.3.3 : deux XSS stockées (CVSS 7,2). WooCommerce 11.0.1 : déni de service CVE-2026-48888 (CVSS 7,5). Le compte s'appelle <code>admin</code> et son nom est lisible via l'API publique. La double authentification DirectAdmin est désactivée et aucune sauvegarde n'est planifiée.</p>
+      <p class="fix"><b>Correctif · 1 h</b>Mettre à jour TranslatePress (3.3.6 ou plus) et WooCommerce (11.1.0 ou plus) après un test COD en local. Activer la 2FA, remplacer <code>admin</code>, fermer les inscriptions et mettre en place une sauvegarde externe.</p>
+    </article>
+  </div>
+</section>
+
+<!-- ================= PLAN ================= -->
+<section id="plan">
+  <div class="sec-head">
+    <p class="eyebrow">Dans l'ordre</p>
+    <h2>Plan d'action</h2>
+    <p class="lead">Chaque étape débloque la suivante : inutile d'optimiser le SEO d'un site qui met 5 secondes à s'ouvrir. Le badge indique qui intervient : toi, l'admin WordPress, le code ou l'hébergeur.</p>
+  </div>
+  <div class="plan">
+    <div class="phase">
+      <div class="phase-head"><span class="when">Cette semaine</span><span class="why">Avant toute campagne. Environ 2 jours de travail, surtout des réglages.</span></div>
+      <ol>
+        <li>Réparer WhatsApp et le téléphone au format +216 <span class="who">toi + code</span></li>
+        <li>Supprimer Prd 1 et le doublon, masquer les catégories vides <span class="who">admin</span></li>
+        <li>Retirer « Satisfait ou remboursé », passer Retours et CGV en noindex <span class="who">admin</span></li>
+        <li>Mettre à jour WooCommerce et TranslatePress, activer leurs mises à jour auto <span class="who">admin</span></li>
+        <li>2FA DirectAdmin, nouveau compte admin, inscriptions fermées, avis réservés aux acheteurs vérifiés, xmlrpc bloqué <span class="who">toi + admin</span></li>
+        <li>LiteSpeed Cache + OPcache + cron système <span class="who">admin + hébergeur</span></li>
+        <li>Sauvegarde quotidienne hors serveur, avec une restauration testée <span class="who">hébergeur</span></li>
+        <li>E-mails de commande + SMTP transactionnel <span class="who">code + admin</span></li>
+        <li>Liens du menu en https, désactiver le sélecteur de langue flottant <span class="who">admin</span></li>
+        <li>Ticket OXA : faire exempter de la page anti-bot les robots IA et les navigateurs Facebook, Instagram et TikTok <span class="who">hébergeur</span></li>
+      </ol>
+    </div>
+    <div class="phase">
+      <div class="phase-head"><span class="when">Ce mois-ci</span><span class="why">Convertir mieux et être trouvé. Surtout du code, dans famma-core et le thème enfant.</span></div>
+      <ol>
+        <li>Anti-abus de la commande express : piège anti-robot, limite par IP et par téléphone, plafond de quantité. Protéger aussi l'API Store <span class="who">code</span></li>
+        <li>Commande express en un seul appel serveur, formulaire à 4 champs avec validation du téléphone en direct <span class="who">code</span></li>
+        <li>Fiche mobile : prix dans le premier écran, marges de 16 px, grille à 2 colonnes, CTA texte bleu sur orange <span class="who">code</span></li>
+        <li>SEO : liens vers <code>/categorie/</code>, canonical et noindex sur les variantes, titres de 65 caractères maximum, robots.txt corrigé, Bing Webmaster Tools <span class="who">code + admin</span></li>
+        <li>Galerie produit allégée d'environ 1 Mo, décalage de mise en page de la boutique corrigé (CLS) <span class="who">code</span></li>
+        <li>Délai de livraison affiché partout, liens Instagram et TikTok <span class="who">toi + admin</span></li>
+        <li>DKIM, DMARC et en-têtes de sécurité <span class="who">hébergeur</span></li>
+        <li>Fusionner la branche dans <code>main</code>, sécuriser <code>deploy.sh</code>, puis déployer la vidéo produit (avec cache oEmbed) <span class="who">code</span></li>
+      </ol>
+    </div>
+    <div class="phase">
+      <div class="phase-head"><span class="when">Ce trimestre</span><span class="why">Construire l'avantage : contenu, catalogue, preuve sociale.</span></div>
+      <ol>
+        <li>Fiches rédigées en français (langue d'origine), derja en traduction arabe <span class="who">toi</span></li>
+        <li>Catalogue de 40 à 60 produits, texte d'introduction pour chaque rayon <span class="who">toi</span></li>
+        <li>Traduction arabe complète : menus, catégories, titres, checkout <span class="who">admin</span></li>
+        <li>Vrais avis demandés après livraison, schéma livraison, retours et note <span class="who">code + toi</span></li>
+        <li>Offres par quantité (1/2/3) pour amortir les 7 DT de livraison <span class="who">code</span></li>
+        <li>Fiche Google Business, 1 à 2 guides par mois <span class="who">toi</span></li>
+        <li>Événements CAPI fiables (Action Scheduler), bannière de consentement, export des données personnelles <span class="who">code</span></li>
+        <li>Découpe de famma-core par domaine, i18n complète, source unique de réassurance <span class="who">code</span></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ACQUIS ================= -->
+<section id="acquis">
+  <div class="sec-head">
+    <p class="eyebrow">À ne pas casser</p>
+    <h2>Ce qui est déjà bien</h2>
+    <p class="lead">Beaucoup de boutiques tunisiennes n'ont pas ces bases. Elles font de FAMMA un bon produit mal exposé, plutôt qu'un mauvais produit.</p>
+  </div>
+  <div class="acq">
+    <div><b>Offre unique sur le marché</b>Livraison à 0 DT sans minimum. Les 7 concurrents directs facturent 6 à 8 DT, ou n'offrent la livraison qu'au-dessus de 199–250 DT.</div>
+    <div><b>Code sécurisé et propre</b>0 erreur <code>phpcs</code> (normes WordPress + PHP 8.1) et 0 erreur de syntaxe sur 46 fichiers. Nonce, capacité et échappement partout. Le token Meta n'apparaît jamais dans le HTML public (vérifié).</div>
+    <div><b>Logique COD juste</b>Une commande n'est payée qu'à « livré ». Le stock est réservé à la confirmation, et l'événement Purchase part côté serveur, une seule fois. Compatible HPOS.</div>
+    <div><b>Seule boutique vraiment bilingue</b>Version arabe RTL indexable avec hreflang corrects. Aucun des 9 sites comparés ne le fait.</div>
+    <div><b>Honnêteté</b>Aucun faux avis ni fausse urgence, et pas de fausses remises (hors Prd 1). Les concurrents affichent des remises permanentes de −20 à −63 % et la même note « 4.9 (27 avis) » partout.</div>
+    <div><b>Fondations SEO et IA posées</b>Meta et JSON-LD sur toutes les pages, prix du schéma cohérent sur les 16 fiches, <code>llms.txt</code>, robots IA autorisés, sitemap en 200.</div>
+    <div><b>Fiches riches</b>5 à 10 photos WebP carrées par produit, descriptions de 1 000 à 2 000 caractères avec fiche technique, commande express directement sur la fiche.</div>
+    <div><b>Front-end moderne</b>Brotli, HTTP/3, WebP, polices auto-hébergées, CSS entièrement en propriétés logiques (RTL sans doublon). Accessibilité Lighthouse de 97.</div>
+    <div><b>Base d'hébergement saine</b>SSL wildcard renouvelé automatiquement, WAF ModSecurity actif, WordPress 7.1.2 à jour, fichiers sensibles bloqués en 403.</div>
+  </div>
+</section>
+
+<!-- ================= DOMAINES ================= -->
+<section id="domaines">
+  <div class="sec-head">
+    <p class="eyebrow">Le détail</p>
+    <h2>Domaine par domaine</h2>
+  </div>
+
+  <article class="dom" id="d-heb">
+    <div class="dom-head"><h3>Hébergement et exploitation</h3><span class="dom-score num">3,5<small>/10</small></span></div>
+    <p>J'ai inspecté ton compte DirectAdmin chez OXA Host en lecture seule. La base technique est correcte (LiteSpeed 6.3.7, MariaDB 10.6, SSL, WAF), mais rien n'est configuré pour une boutique : pas de cache, pas de sauvegarde, pas de cron et pas de double authentification. L'envoi d'e-mails est aussi plafonné, ce qui menace directement les notifications de commande.</p>
+    <div class="kpis">
+      <div class="kpi"><div class="k num">40 / jour</div><div class="l">e-mails sortants autorisés, sans SMTP (3 envoyés ce jour)</div></div>
+      <div class="kpi"><div class="k">0</div><div class="l">tâche cron, sauvegarde planifiée ou plugin de cache</div></div>
+      <div class="kpi"><div class="k">Désactivée</div><div class="l">double authentification du panneau</div></div>
+      <div class="kpi"><div class="k num">25/08</div><div class="l">dernier déploiement : vidéo produit et quantité à 48 px pas en ligne</div></div>
+    </div>
+    <div class="two">
+      <div class="plus"><h4>Points positifs</h4><ul>
+        <li>Certificat SSL <code>*.fammaminnou.tn</code>, renouvellement automatique (expire le 22/11)</li>
+        <li>WAF ModSecurity actif, sans exclusion</li>
+        <li>Racine du site propre : aucun dump ni sauvegarde exposé</li>
+        <li>Plugins réduits au strict minimum (4)</li>
+      </ul></div>
+      <div class="minus"><h4>Points faibles</h4><ul>
+        <li>Plugins en prod : famma-core, WooCommerce, TranslatePress, Site Kit. Aucun cache, SMTP, sécurité ni sauvegarde</li>
+        <li><code>comin.tn</code> partage le même compte : une faille sur l'un touche l'autre</li>
+        <li><code>wp-config.php</code> en 644 (600 recommandé)</li>
+        <li>Anti-bot Imunify360 : page vide en HTTP 200 après environ 18 requêtes, ou en passant par <code>http://</code></li>
+        <li>Branche <code>main</code> en retard de 30 commits : la prod ne correspond à aucune branche claire</li>
+      </ul></div>
+    </div>
+  </article>
+
+  <article class="dom" id="d-code">
+    <div class="dom-head"><h3>Code et architecture</h3><span class="dom-score num">6,5<small>/10</small></span></div>
+    <p>L'hygiène de sécurité est rare pour un projet de cette taille, et chaque décision est documentée. La note baisse parce que plusieurs règles métier cassent en silence : pas d'e-mail de commande, statut « Terminée » qui contourne la règle COD, envoi CAPI sans reprise. Le script de déploiement peut aussi effacer des fichiers du serveur, et la dette de structure grossit (famma-core.php fait 2 313 lignes).</p>
+    <div class="kpis">
+      <div class="kpi"><div class="k num">0</div><div class="l">erreur phpcs et <code>php -l</code> sur 46 fichiers</div></div>
+      <div class="kpi"><div class="k num">17</div><div class="l">fichiers de plus de 250 lignes (règle projet)</div></div>
+      <div class="kpi"><div class="k num">8</div><div class="l">copies du texte de réassurance à tenir à jour</div></div>
+      <div class="kpi"><div class="k num">24/190</div><div class="l">chaînes de famma-core traduites en arabe</div></div>
+    </div>
+    <div class="two">
+      <div class="plus"><h4>Points positifs</h4><ul>
+        <li>Séquence nonce → capacité → assainissement → échappement appliquée partout</li>
+        <li>HPOS : uniquement les objets CRUD WooCommerce, aucun accès direct à postmeta</li>
+        <li>Aucun doublon de classe ou de fonction ; admin chargé sous <code>is_admin()</code></li>
+        <li>Assets versionnés par <code>filemtime()</code> et chargés page par page</li>
+      </ul></div>
+      <div class="minus"><h4>Points faibles</h4><ul>
+        <li>Aucun e-mail « Nouvelle commande » (<code>famma-core.php:275</code>)</li>
+        <li>« Terminée » : pas de paiement enregistré, pas de Purchase, vente ignorée du tableau de bord</li>
+        <li>Purchase CAPI : <code>event_time</code> = date de création (rejet par Meta après 7 j), pas de reprise, envoi bloquant de 8 s</li>
+        <li><code>deploy.sh</code> : <code>rsync --delete</code> sur tous les mu-plugins, et enverrait l'outil mail local en prod</li>
+        <li>Tableau de bord : marges calculées sur le coût actuel du produit, pas celui du jour de la vente</li>
+      </ul></div>
+    </div>
+  </article>
+
+  <article class="dom" id="d-secu">
+    <div class="dom-head"><h3>Sécurité</h3><span class="dom-score num">5<small>/10</small></span></div>
+    <p>Deux notes en une : le code écrit pour FAMMA vaut 8,5/10, l'exploitation en production 3/10. Aucune faille critique n'a été trouvée en test passif. Le vrai risque vient des mises à jour en retard, de l'authentification faible et de l'abus métier : de fausses commandes COD en masse coûtent des appels et épuisent le quota d'e-mails.</p>
+    <div class="kpis">
+      <div class="kpi"><div class="k num">3</div><div class="l">failles publiques non corrigées (2 TranslatePress, 1 WooCommerce)</div></div>
+      <div class="kpi"><div class="k">admin</div><div class="l">identifiant exposé par <code>/wp-json/wp/v2/users</code></div></div>
+      <div class="kpi"><div class="k num">0</div><div class="l">en-tête de sécurité sur les pages publiques</div></div>
+      <div class="kpi"><div class="k">~all</div><div class="l">SPF souple, ni DKIM ni DMARC : domaine facile à usurper</div></div>
+    </div>
+    <div class="two">
+      <div class="plus"><h4>Points positifs</h4><ul>
+        <li><code>.env</code>, <code>.git</code> et <code>debug.log</code> en 403, pas de listing de dossiers</li>
+        <li>Garde <code>ABSPATH</code> efficace (0 octet en accès direct)</li>
+        <li>Aucun secret dans l'historique Git ; token CAPI jamais journalisé</li>
+        <li>Aucune redirection ouverte, SQL injectable ni <code>unserialize</code></li>
+      </ul></div>
+      <div class="minus"><h4>Points faibles</h4><ul>
+        <li>Commande express sans anti-robot, et jeton de checkout servi publiquement</li>
+        <li>L'API Store contourne la validation du téléphone tunisien</li>
+        <li>xmlrpc actif, aucune limite de tentatives de connexion</li>
+        <li>Inscriptions WordPress et WooCommerce ouvertes, avis ouverts aux anonymes</li>
+      </ul></div>
+    </div>
+  </article>
+
+  <article class="dom" id="d-perf">
+    <div class="dom-head"><h3>Performance</h3><span class="dom-score num">4<small>/10</small></span></div>
+    <p>Le front-end mériterait 7/10 à lui seul. Tout se joue côté serveur : sans cache de page, chaque visite venue d'une pub fait travailler PHP pendant 2 à 15 secondes. La fiche produit, qui est ta page d'atterrissage, télécharge aussi deux ou trois fois sa galerie.</p>
+    <div class="kpis">
+      <div class="kpi"><div class="k num">3,6 s</div><div class="l">temps de réponse serveur médian (p90 : 7,1 s, max : 14,9 s)</div></div>
+      <div class="kpi"><div class="k num">4 à 5,5 s</div><div class="l">affichage principal probable sur Android en 4G (LCP)</div></div>
+      <div class="kpi"><div class="k num">2 056 Kio</div><div class="l">poids d'une fiche produit, en 100 requêtes (dont environ 1 Mo d'images en double)</div></div>
+      <div class="kpi"><div class="k num">0,487</div><div class="l">décalage de mise en page sur la boutique mobile (seuil « mauvais » : 0,25)</div></div>
+    </div>
+    <div class="tbl-wrap" style="margin-top:14px">
+      <table>
+        <caption class="muted" style="caption-side:bottom;text-align:start;padding:10px 12px;font-size:.84rem">Lighthouse 13.5 lancé depuis la Tunisie, avec un ralentissement « 4G lente » simulé. Ces scores sont optimistes : le temps serveur réel est dilué par les fichiers statiques rapides.</caption>
+        <thead><tr><th>Page</th><th class="n">Perf. mobile</th><th class="n">Perf. desktop</th><th class="n">Accessibilité</th><th class="n">Bonnes pratiques</th><th class="n">SEO</th></tr></thead>
+        <tbody>
+          <tr><td>Accueil</td><td class="n">78</td><td class="n">93</td><td class="n">97</td><td class="n">77</td><td class="n">92</td></tr>
+          <tr><td>Fiche produit</td><td class="n">72</td><td class="n">92</td><td class="n">97</td><td class="n">77</td><td class="n">100</td></tr>
+          <tr><td>Boutique</td><td class="n">58</td><td class="n">—</td><td class="n">97</td><td class="n">77</td><td class="n">100</td></tr>
+          <tr><td>Panier</td><td class="n">82</td><td class="n">—</td><td class="n">100</td><td class="n">77</td><td class="n">61 (noindex voulu)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="dom" id="d-seo">
+    <div class="dom-head"><h3>SEO et visibilité dans les IA</h3><span class="dom-score num">4,7<small>/10</small></span></div>
+    <p>Les fondations posées en août tiennent : 8 des 12 actions du plan précédent sont vérifiées en ligne. Le site reste pourtant introuvable, même sur son propre nom. Trois causes : les liens internes vont vers des URL à paramètres au lieu des pages catégorie, les fiches FR sont écrites en derja, et les pages de confiance sont des brouillons. Sur les requêtes testées, les concurrents classent des produits que FAMMA vend souvent moins cher.</p>
+    <div class="kpis">
+      <div class="kpi"><div class="k num">0 / 11</div><div class="l">requêtes testées où FAMMA apparaît (marque comprise)</div></div>
+      <div class="kpi"><div class="k num">98</div><div class="l">liens internes vers <code>/boutique/?product_cat=</code> au lieu de <code>/categorie/</code></div></div>
+      <div class="kpi"><div class="k num">86 à 116</div><div class="l">caractères par titre de catalogue (Google coupe vers 60)</div></div>
+      <div class="kpi"><div class="k num">4</div><div class="l">homonymes qui captent la marque (famma.tn, famma-tn.shop, fammamenou.tn…)</div></div>
+    </div>
+    <div class="two">
+      <div class="plus"><h4>Points positifs</h4><ul>
+        <li>Meta description et JSON-LD sur toutes les pages hors tunnel</li>
+        <li>Tunnel en <code>noindex</code>, pages auteur en 404, vraie page 404</li>
+        <li><code>llms.txt</code>, FAQPage, OnlineStore, robots IA autorisés</li>
+        <li>Slugs en français lisibles, un seul H1 par page</li>
+      </ul></div>
+      <div class="minus"><h4>Points faibles</h4><ul>
+        <li>Pas de canonical sur la boutique et les catégories ; variantes triées ou filtrées indexables</li>
+        <li>Meta descriptions en arabe sur les pages FR ; slogan arabe comme description des catégories</li>
+        <li>robots.txt : Bingbot n'est plus exclu de <code>/wp-admin/</code> ni de <code>?add-to-cart=</code></li>
+        <li>Schéma Product sans livraison, politique de retour ni marque ; fil d'Ariane doublement échappé</li>
+        <li>Aucun délai de livraison publié ; pas de fiche Google Business</li>
+      </ul></div>
+    </div>
+  </article>
+
+  <article class="dom" id="d-ux">
+    <div class="dom-head"><h3>UX/UI et conversion</h3><span class="dom-score num">5,2<small>/10</small></span></div>
+    <p>L'identité bleu nuit et orange est maîtrisée, la promesse COD se lit en 5 secondes et la commande express est placée au bon endroit. Mais la confiance, qui compte le plus en COD, est à 3,5/10, et le passage du panier au checkout est resté au rendu WooCommerce par défaut. Sur mobile, le visiteur venu d'une pub ne voit ni le prix ni le nom du produit sans faire défiler.</p>
+    <div class="kpis">
+      <div class="kpi"><div class="k num">1,2 écran</div><div class="l">avant de voir le prix sur une fiche mobile</div></div>
+      <div class="kpi"><div class="k num">3,6 écrans</div><div class="l">avant le bouton « Commander » du checkout</div></div>
+      <div class="kpi"><div class="k num">15 écrans</div><div class="l">pour parcourir 16 produits (grille à 1 colonne)</div></div>
+      <div class="kpi"><div class="k num">2,61:1</div><div class="l">contraste des boutons blanc sur orange (4,5:1 requis)</div></div>
+    </div>
+    <div class="two">
+      <div class="plus"><h4>Points positifs</h4><ul>
+        <li>Triptyque « paiement à la livraison · livraison offerte · sans compte » clair, en FR et en derja</li>
+        <li>Formulaire express : type <code>tel</code>, autocomplete, cibles de 48 px, total « à payer à la livraison »</li>
+        <li>Barre d'achat collante « Commander / أطلب توا » conforme</li>
+        <li>Miroir RTL réussi ; lien d'évitement, <code>alt</code> et labels présents</li>
+      </ul></div>
+      <div class="minus"><h4>Points faibles</h4><ul>
+        <li>Le sélecteur de langue flottant masque le prix de la barre collante</li>
+        <li>Après un clic sur « Commander », le formulaire reste caché sous l'en-tête</li>
+        <li>Fiche desktop en deux colonnes de 280 px sur un écran de 1 366 px</li>
+        <li>Checkout : choix de compte, code promo et notes, textes en anglais, téléphone non validé avant l'envoi</li>
+        <li>Aucun lien vers les réseaux sociaux, alors que le trafic en vient</li>
+      </ul></div>
+    </div>
+  </article>
+</section>
+
+<!-- ================= CONCURRENCE ================= -->
+<section id="concurrence">
+  <div class="sec-head">
+    <p class="eyebrow">Marché tunisien · gadgets, maison, COD</p>
+    <h2>Comparaison avec les concurrents</h2>
+    <p class="lead">J'ai visité et comparé 7 boutiques de même nature, dont Dokani, qui est à Sousse comme toi, et 2 grandes références hors catégorie (Tunisianet, Wamia). Jumia a été écarté : le site renvoie « 410 Gone » depuis son départ de Tunisie fin 2024. Chaque donnée a été observée sur le site cité.</p>
+  </div>
+
+  <div class="chart" role="figure" aria-labelledby="ttfb-t" aria-describedby="ttfb-d">
+    <h3 id="ttfb-t">Temps de réponse du serveur (TTFB) de l'accueil</h3>
+    <p id="ttfb-d" class="chart-note" style="padding-top:0">En secondes, plus court = mieux. Mesuré avec curl depuis la Tunisie le 23/09 : moyenne de 3 appels, médiane de 5 appels pour FAMMA. Les pics de FAMMA montent jusqu'à 14,9 s.</p>
+    <div id="ttfb-rows"></div>
+    <div class="hb-axis" aria-hidden="true"><span></span><div class="axis-scale" id="ttfb-axis"></div><span></span></div>
+  </div>
+
+  <h3 style="margin:30px 0 12px">Matrice comparative</h3>
+  <div class="tbl-wrap">
+    <table class="matrix">
+      <thead><tr><th>Critère</th><th class="me">FAMMA</th><th>Dokani</th><th>Mantoujna</th><th>Forca</th><th>Tunisia Store</th><th>Express Shop</th><th>Cheapshop</th><th>Pratiko</th><th>Tunisianet*</th><th>Wamia*</th></tr></thead>
+      <tbody>
+        <tr><td>Plateforme</td><td class="me">WooCommerce</td><td>Odoo</td><td>Converty</td><td>Converty</td><td>TikTak PRO</td><td>WooCommerce</td><td>WooCommerce</td><td>TikTak PRO</td><td>PrestaShop</td><td>Magento (probable)</td></tr>
+        <tr><td>Catalogue visible</td><td class="me pa">14 réels (+1 test, +1 doublon)</td><td>1 155</td><td>14 et plus</td><td>10</td><td>16 et plus</td><td>63</td><td>1 219</td><td>1</td><td>milliers</td><td>milliers</td></tr>
+        <tr><td>Prix</td><td class="me">25–110 DT</td><td>3,90–949 DT</td><td>29–179 DT</td><td>16–99 DT</td><td>18,9–439 DT</td><td>8–959 DT</td><td>4–860 DT</td><td>27,92 DT</td><td>—</td><td>—</td></tr>
+        <tr><td>Frais de livraison</td><td class="me y">0 DT, sans seuil</td><td>8 DT (offerte dès 199 DT)</td><td>7 DT</td><td>7 DT</td><td>non observé</td><td>6 DT (offerte dès 250 DT)</td><td>7 DT</td><td>7 DT</td><td>non observé</td><td>8 DT</td></tr>
+        <tr><td>Délai affiché</td><td class="me no">Aucun</td><td class="y">24–72 h, moins de 24 h avant 20 h</td><td class="y">2–3 j</td><td>non observé</td><td>non observé</td><td class="y">48–72 h</td><td class="y">24 h + 24 h</td><td>non observé</td><td>non observé</td><td class="y">1–4 j</td></tr>
+        <tr><td>Commande express</td><td class="me pa">Oui, 7 champs + CGV</td><td class="pa">Tunnel classique</td><td class="y">3 champs</td><td class="y">3 champs</td><td class="y">3 champs</td><td class="y">3 champs, 1er écran</td><td class="pa">non observé</td><td class="y">4 champs</td><td class="no">Panier</td><td class="no">Panier</td></tr>
+        <tr><td>WhatsApp</td><td class="me no">Présent mais cassé</td><td class="pa">Mentionné</td><td class="y">wa.me</td><td class="y">wa.me</td><td class="no">Non</td><td class="no">Non</td><td class="no">Non</td><td class="no">Lien cassé</td><td class="no">Non</td><td class="pa">Mentionné</td></tr>
+        <tr><td>Langues</td><td class="me y">FR + AR RTL, hreflang</td><td>FR</td><td>AR + FR</td><td>AR</td><td>FR</td><td>FR</td><td>FR (+ EN)</td><td>FR</td><td>FR</td><td>FR</td></tr>
+        <tr><td>Avis clients</td><td class="me pa">0 (honnête)</td><td class="pa">0</td><td class="no">non observé</td><td class="pa">non observé</td><td class="no">« 4.9 (27) » partout</td><td class="y">Vrais avis, 4,8/5</td><td class="pa">rares</td><td class="no">« 27 avis » identiques</td><td>non observé</td><td class="pa">0</td></tr>
+        <tr><td>Politique de retour</td><td class="me no">Brouillon public</td><td class="y">14 j, enlèvement à domicile</td><td class="y">3 j / 7 j</td><td class="y">3 j / 7 j</td><td class="pa">non observé</td><td class="pa">Défaut seulement</td><td class="pa">Colis abîmé seulement</td><td>non observé</td><td>non observé</td><td class="y">30 j</td></tr>
+        <tr><td>Fausses remises / urgence</td><td class="me y">Non (sauf Prd 1)</td><td class="pa">« 3 vendus en 24 h »</td><td class="no">−29 à −63 % partout</td><td class="no">−19 à −44 % partout</td><td class="no">Compte à rebours</td><td class="pa">Promos</td><td class="pa">Promos</td><td class="pa">−20 %</td><td>—</td><td class="pa">Promos</td></tr>
+        <tr><td>Schéma Product</td><td class="me pa">Oui (sans livraison ni retours)</td><td class="y">Complet + délai + FAQ</td><td class="y">Oui</td><td class="y">Oui</td><td class="y">Oui</td><td class="no">Non</td><td class="y">Oui</td><td class="y">Oui</td><td class="y">Microdonnées</td><td class="no">non observé</td></tr>
+        <tr><td>Réseaux liés</td><td class="me pa">Facebook</td><td>FB, IG, YouTube</td><td class="y">FB, IG, TikTok</td><td>FB</td><td>FB, IG</td><td>FB, IG, YouTube</td><td>FB</td><td class="no">Liens cassés</td><td>6 réseaux</td><td>5 réseaux + appli</td></tr>
+        <tr><td>TTFB accueil</td><td class="me no">1,9–10,8 s</td><td class="y">0,43 s</td><td class="y">0,63 s</td><td class="y">0,40 s</td><td class="y">0,53 s</td><td class="pa">1,35 s</td><td class="y">0,24 s</td><td class="y">0,40 s</td><td class="y">0,31 s</td><td class="y">0,28 s</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">* Références hors catégorie. PageSpeed non mesuré (quota Google épuisé). La visibilité a été testée avec un moteur de recherche qui n'est pas Google.tn : c'est une tendance, pas un classement.</p>
+
+  <div class="two" style="margin-top:26px">
+    <div class="plus"><h4>Là où FAMMA est en avance</h4><ul>
+      <li><b>Prix final</b> : grâce à la livraison incluse, le total payé est compétitif (visseuse 21V à 79 DT, contre 71 à 205 DT ailleurs)</li>
+      <li><b>Bilinguisme</b> : seule version arabe indexable du panel</li>
+      <li><b>Honnêteté</b> : pas de pression artificielle, dans un marché qui en abuse</li>
+      <li><b>Professionnalisme</b> : domaine et e-mail propres, alors que Mantoujna, Forca et Tunisia Store utilisent Gmail ou Outlook</li>
+    </ul></div>
+    <div class="minus"><h4>Là où FAMMA est en retard</h4><ul>
+      <li><b>Vitesse</b> : 5 à 10 fois plus lente que tous les autres</li>
+      <li><b>Confiance</b> : retours et CGV vides, pas de délai, 0 avis</li>
+      <li><b>Catalogue</b> : 14 produits réels, contre des dizaines à des milliers ailleurs</li>
+      <li><b>Visibilité</b> : absente de toutes les requêtes testées ; social limité à Facebook</li>
+      <li><b>Friction</b> : formulaire express de 7 champs, contre 3 chez Mantoujna, Forca et Express Shop</li>
+    </ul></div>
+  </div>
+
+  <h3 style="margin:30px 0 12px">Bonnes pratiques à reprendre</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Pratique observée</th><th>Chez qui</th><th>Pour FAMMA</th></tr></thead>
+      <tbody>
+        <tr><td>Formulaire express à 3 champs, visible dès le premier écran mobile</td><td><a href="https://expressshop.tn/produit/set-de-24-pots-a-epices-en-verre-avec-couvercles-bambou/" target="_blank" rel="noopener">Express Shop</a></td><td>Remonter prix et formulaire au-dessus des miniatures ; viser 4 champs</td></tr>
+        <tr><td>Délai chiffré avec heure limite : « moins de 24 h si commande avant 20 h »</td><td><a href="https://www.dokani.tn/" target="_blank" rel="noopener">Dokani</a></td><td>Délai réel par zone, réglable depuis l'admin</td></tr>
+        <tr><td>« Vous pouvez ouvrir votre colis avant de payer »</td><td><a href="https://www.dokani.tn/" target="_blank" rel="noopener">Dokani</a></td><td>C'est le levier de confiance COD le plus fort observé, si ton transporteur l'accepte</td></tr>
+        <tr><td>Politique de retour publiée : 14 jours, enlèvement à domicile</td><td><a href="https://www.dokani.tn/politique-retours" target="_blank" rel="noopener">Dokani</a></td><td>Publier avant toute campagne, puis remettre « Satisfait ou remboursé »</td></tr>
+        <tr><td>Offres par quantité : 1 = 89 DT, 2 = 159 DT, 3 = 219 DT</td><td><a href="https://mantoujna.net/" target="_blank" rel="noopener">Mantoujna</a></td><td>Augmente le panier moyen et amortit les 7 DT de livraison internes</td></tr>
+        <tr><td>Vrais avis nommés avec histogramme, et une page « Avis »</td><td><a href="https://expressshop.tn/reviews/" target="_blank" rel="noopener">Express Shop</a></td><td>Demander un avis par WhatsApp après chaque statut « livré »</td></tr>
+        <tr><td>Schéma produit avec délai de livraison et FAQ</td><td><a href="https://www.dokani.tn/" target="_blank" rel="noopener">Dokani</a></td><td><code>shippingDetails</code>, retours, marque, puis <code>aggregateRating</code></td></tr>
+        <tr><td>Mini-FAQ en derja sous le formulaire</td><td><a href="https://pratiko.tn/" target="_blank" rel="noopener">Pratiko</a></td><td>Moins d'allers-retours WhatsApp, et de la longue traîne pour le SEO</td></tr>
+        <tr><td>Blog de conseils et de recettes relié aux catégories</td><td><a href="https://www.dokani.tn/blog" target="_blank" rel="noopener">Dokani</a></td><td>1 à 2 guides par mois, en FR et en derja</td></tr>
+        <tr><td>Paiement par carte optionnel, avec −5 %</td><td><a href="https://expressshop.tn/" target="_blank" rel="noopener">Express Shop</a></td><td>À moyen terme : réduit les refus de colis</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="dom" style="margin-top:22px">
+    <h3 style="margin-bottom:8px">Positionnement recommandé : « la nouveauté utile, au prix final, sans mauvaise surprise »</h3>
+    <p class="muted" style="max-width:78ch">Le créneau des gadgets COD joue sur l'urgence, les remises gonflées et les 7 DT ajoutés à la dernière étape. FAMMA peut prendre et tenir la place opposée. Il faut marteler « le prix affiché, c'est le prix payé » dans le hero, les publicités et les titres SEO. Il faut aussi faire de « فمّا ديما حاجة جديدة » un rythme réel, avec une nouveauté datée chaque semaine, ce qui suppose d'étoffer le catalogue. Face à Dokani, ne pas l'attaquer sur l'électroménager de marque, mais se différencier par le gadget malin, la livraison toujours offerte et la derja. Express Shop est la référence d'exécution à imiter.</p>
+  </div>
+</section>
+
+<!-- ================= REGISTRE ================= -->
+<section id="registre">
+  <div class="sec-head">
+    <p class="eyebrow">Registre filtrable</p>
+    <h2>Tous les constats retenus</h2>
+    <p class="lead">Les 58 constats les plus utiles, tirés des 6 rapports détaillés. Filtre par gravité ou par domaine. L'identifiant renvoie au rapport détaillé, avec preuves et <code>fichier:ligne</code>.</p>
+  </div>
+  <div class="filters" role="group" aria-label="Filtres">
+    <div class="fgroup" id="f-sev"><span class="flab">Gravité</span></div>
+    <div class="fgroup" id="f-dom"><span class="flab">Domaine</span></div>
+    <span class="count" id="reg-count" aria-live="polite"></span>
+  </div>
+  <div class="tbl-wrap">
+    <table class="reg">
+      <thead><tr><th>Gravité</th><th>Constat</th><th>Correctif</th><th>Qui</th><th>Effort</th></tr></thead>
+      <tbody id="reg-body"></tbody>
+    </table>
+  </div>
+  <p class="src">Effort : S = moins d'une demi-journée, M = 1 à 3 jours, L = plus. « Toi » = une information ou une décision que toi seul peux fournir (règle projet : rien d'inventé).</p>
+</section>
+
+<!-- ================= PROPRIETAIRE ================= -->
+<section id="toi">
+  <div class="sec-head">
+    <p class="eyebrow">Ce que personne ne peut faire à ta place</p>
+    <h2>À toi de décider ou de fournir</h2>
+  </div>
+  <div class="owner">
+    <div><b>Le bon numéro</b>Le site affiche 56261412 ; mes notes projet indiquent 26767491 comme confirmé. Lequel est le bon pour WhatsApp et le téléphone ?</div>
+    <div><b>Les textes légaux</b>Retours, CGV, mentions légales : raison sociale, matricule fiscal, RNE, délai de rétractation, qui paie le retour.</div>
+    <div><b>Le délai de livraison</b>Un délai réel par zone (par exemple 24 à 72 h). Et ton transporteur permet-il d'ouvrir le colis avant de payer ?</div>
+    <div><b>Deux plugins à ajouter</b>LiteSpeed Cache (vitesse) et un SMTP transactionnel (e-mails). Cela fait 6 plugins au lieu de 4.</div>
+    <div><b>Le nettoyage du catalogue</b>Mettre à la corbeille « Prd 1 » et l'ancienne fiche « Pince de Câblage Pro ».</div>
+    <div><b>Réseaux et fiche Google</b>Les URL Instagram et TikTok à afficher, et la création d'une fiche Google Business.</div>
+    <div><b>Le compte d'hébergement</b>Séparer <code>comin.tn</code> dans un autre compte ? Monter d'offre si les limites de ressources sont atteintes ?</div>
+    <div><b>Deux choix de design en suspens</b>Texte bleu sur les boutons orange (lisibilité) et grille mobile à 2 colonnes : décisions ouvertes depuis l'audit du 18/08.</div>
+  </div>
+</section>
+
+<!-- ================= METHODE ================= -->
+<section id="methode">
+  <div class="sec-head">
+    <p class="eyebrow">Comment cet audit a été fait</p>
+    <h2>Méthode et rapports détaillés</h2>
+    <p class="lead">Six agents spécialisés ont travaillé en parallèle sur le code source (dépôt local), sur le site en ligne et sur le marché. En plus, j'ai inspecté moi-même le panneau DirectAdmin. Tout a été fait en lecture seule : aucun fichier modifié, aucun formulaire envoyé, aucune commande passée, et seulement des tests de sécurité passifs (environ 60 requêtes espacées). Les constats les plus graves ont été revérifiés : liens WhatsApp relevés en direct, absence d'e-mail de commande confirmée dans le code.</p>
+  </div>
+  <div class="files">
+    <a href="rapports/audit-code.md" target="_blank" rel="noopener"><b>Code et architecture</b><span>30 constats, php -l, phpcs, gabarits Woo</span></a>
+    <a href="rapports/audit-securite.md" target="_blank" rel="noopener"><b>Sécurité</b><span>19 constats, checklist de durcissement</span></a>
+    <a href="rapports/audit-performance.md" target="_blank" rel="noopener"><b>Performance</b><span>19 constats, réglages LiteSpeed Cache, budget</span></a>
+    <a href="rapports/audit-seo.md" target="_blank" rel="noopener"><b>SEO et GEO</b><span>30 constats, 20 requêtes cibles</span></a>
+    <a href="rapports/audit-ux.md" target="_blank" rel="noopener"><b>UX/UI et conversion</b><span>40 constats, top 10 des actions CRO</span></a>
+    <a href="rapports/audit-concurrence.md" target="_blank" rel="noopener"><b>Concurrence</b><span>9 sites, matrice complète, priorités</span></a>
+  </div>
+  <p class="src">Limites : l'API PageSpeed était hors quota, remplacée par Lighthouse en local ; il n'y a aucune donnée terrain CrUX. La visibilité a été testée hors Google.tn. Le site Local était arrêté pendant l'audit de code : aucun test à l'exécution. L'écran de confirmation de commande n'a pas été testé, pour ne pas créer de fausse commande.</p>
+</section>
+
+</main>
+<footer class="wrap">Audit réalisé le 23 septembre 2026 pour FAMMA MINNOU (fammaminnou.tn). Les données reflètent l'état du site à cette date.</footer>
+
+<script>
+(function(){
+  // ---- TTFB chart ----
+  var ttfb = [
+    {n:"FAMMA", v:3.2, me:true, t:"médiane 3,2 s (1,9 à 14,9 s)"},
+    {n:"Express Shop", v:1.35},
+    {n:"Mantoujna", v:0.63},
+    {n:"Tunisia Store", v:0.53},
+    {n:"Dokani", v:0.43},
+    {n:"Forca", v:0.40},
+    {n:"Pratiko", v:0.40},
+    {n:"Tunisianet*", v:0.31},
+    {n:"Wamia*", v:0.28},
+    {n:"Cheapshop", v:0.24}
+  ];
+  var max = 4, ticks = [0,1,2,3,4];
+  var rows = document.getElementById("ttfb-rows");
+  ttfb.forEach(function(d){
+    var r = document.createElement("div");
+    r.className = "hb-row" + (d.me ? " me" : "");
+    var grid = ticks.slice(1).map(function(t){ return '<span class="hb-grid" style="inset-inline-start:'+(t/max*100)+'%"></span>'; }).join("");
+    var label = (d.v).toLocaleString("fr-FR",{maximumFractionDigits:2}) + " s";
+    r.innerHTML = '<span class="nm">'+d.n+'</span><div class="hb-track">'+grid+'<div class="hb-bar" style="width:'+(d.v/max*100)+'%" title="'+d.n+' : '+(d.t||label)+'"></div></div><span class="v">'+label+'</span>';
+    rows.appendChild(r);
+  });
+  var ax = document.getElementById("ttfb-axis");
+  ax.innerHTML = ticks.map(function(t){ return '<span style="inset-inline-start:'+(t/max*100)+'%">'+t+' s</span>'; }).join("");
+
+  // ---- Registre ----
+  var R = [
+    ["crit","UX","UX-01","Liens WhatsApp cassés : wa.me/56261412 sans indicatif 216 (aussi tel: sans +216)","Numéro au format 21656261412 dans FAMMA → Pages ; normaliser 8 chiffres → 216 dans le code ; tel:+216","Toi + code","S","ux"],
+    ["crit","Performance","PERF-01","Aucun cache de page : temps de réponse médian 3,6 s, pics à 15 s","LiteSpeed Cache + Drop Query String (fbclid, ttclid, utm*) + Vary for Mini Cart","Admin","S","performance"],
+    ["crit","Hébergement","PERF-02","PHP lent même hors rendu : robots.txt jusqu'à 15,6 s, wc-ajax jusqu'à 16,6 s","OPcache PHP 8.3, vérifier les limites LVE, isoler comin.tn, cache objet si disponible","Hébergeur","S–M","performance"],
+    ["crit","Performance","PERF-03","Commande express = 3 appels PHP en chaîne : 6 à 20 s entre le clic et la confirmation","Un seul point d'entrée qui ajoute au panier et crée la commande ; état « Envoi en cours »","Code","M","performance"],
+    ["crit","Contenu","UX-02/03","Retours et CGV publics avec notes de chantier ; case CGV obligatoire ; mentions légales en 404","Textes réels (raison sociale, MF, RNE) ; en attendant, noindex et retrait des liens","Toi","M","ux"],
+    ["crit","Contenu","UX-04","« Satisfait ou remboursé » promis sans aucune politique de retour","Retirer la promesse jusqu'à la publication de la page Retours","Admin","S","ux"],
+    ["crit","Contenu","UX-05","Produit test « Prd 1 » en vente : image ChatGPT, fausse remise de −46 %, seul résultat de « Promotions »","Corbeille + 301 vers /boutique/ ; masquer « Promotions » sans vraie promo","Toi","S","ux"],
+    ["crit","Code","CODE-01","Aucun e-mail « Nouvelle commande » ni confirmation client : pending-confirm n'est relié à aucun e-mail","Ajouter la transition à woocommerce_email_actions ; SMTP en prod","Code","S","code"],
+    ["high","Sécurité","SEC-01","Commande express sans anti-robot ; jeton de checkout servi publiquement","Piège + horodatage signé, limite par IP et par téléphone, plafond de quantité réglable","Code","M","securite"],
+    ["high","Sécurité","SEC-02","TranslatePress 3.3.3 : deux XSS stockées non authentifiées (CVSS 7,2)","Mise à jour vers 3.3.6 ou plus + mises à jour auto","Admin","S","securite"],
+    ["high","Sécurité","SEC-03","WooCommerce 11.0.1 : déni de service CVE-2026-48888 (CVSS 7,5)","Mise à jour vers 11.1.0 ou plus après un test du parcours COD en local","Admin","S","securite"],
+    ["high","Hébergement","SEC-04","Double authentification DirectAdmin désactivée (accès aux 2 domaines)","Activer la 2FA TOTP, mot de passe unique","Toi","S","securite"],
+    ["high","Hébergement","SEC-05","Aucune sauvegarde planifiée ni externe","Sauvegarde quotidienne chiffrée hors serveur + restauration testée","Hébergeur","M","securite"],
+    ["high","Sécurité","SEC-06","Identifiant « admin » exposé via l'API ; xmlrpc actif ; aucune limite de tentatives","Nouveau compte admin, route users masquée, xmlrpc bloqué, limitation + 2FA WordPress","Admin","S–M","securite"],
+    ["high","Hébergement","HEB-01","Envoi plafonné à 40 e-mails par jour, sans SMTP : environ 20 commandes par jour avant blocage","SMTP transactionnel authentifié, ou relèvement du quota par OXA","Hébergeur","S","securite"],
+    ["high","Code","CODE-03","Purchase CAPI fragile : event_time = création (rejet après 7 j), pas de reprise, envoi bloquant de 8 s","Action Scheduler avec reprise ; event_time = heure de livraison","Code","M","code"],
+    ["high","Code","CODE-04","Le statut « Terminée » contourne la règle COD (ni paiement, ni Purchase, ni tableau de bord)","Traiter completed comme « livré », ou retirer les statuts natifs inutiles","Code","S","code"],
+    ["high","Code","CODE-05","deploy.sh destructeur : rsync --delete sur tous les mu-plugins, enverrait famma-local-mail en prod","Lister les fichiers, exclure local-mail, tar distant avant transfert, séparer --yes","Code","M","code"],
+    ["high","SEO","SEO-01","98 liens du menu et du carrousel vers /boutique/?product_cat= au lieu de /categorie/","get_term_link() dans inc/catalog.php:104-112","Code","S","seo"],
+    ["high","SEO","SEO-02","Pas de canonical sur la boutique et les catégories ; variantes ?orderby et ?min_price indexables","Canonical propre + noindex, follow dès qu'un tri ou filtre est présent","Code","S","seo"],
+    ["high","SEO","SEO-03","Descriptions produit uniquement en derja, même sur les pages FR (meta et schéma en arabe)","Rédiger en FR dans l'éditeur, derja en traduction AR via TranslatePress","Toi","L","seo"],
+    ["high","Hébergement","SEO-04","Anti-bot Imunify360 : page vide en HTTP 200 après environ 18 requêtes ou en passant par http://","Ticket OXA : liste blanche des robots IA et des navigateurs in-app Meta et TikTok","Hébergeur","S","seo"],
+    ["high","Contenu","SEO-06","Doublon « Pince de Câblage Pro » (deux fiches, même titre)","Dépublier l'ancienne + 301","Toi","S","seo"],
+    ["high","UX","UX-09","4 catégories vides mises en avant dans le menu et en tête de l'accueil","hide_empty sur le menu et le carrousel ; message propre aux catégories vides","Code","S","ux"],
+    ["high","Performance","PERF-04","Galerie produit téléchargée 2 à 3 fois : 2 056 Kio en 100 requêtes par fiche","Désactiver sizes=auto et le zoom au survol ; vérifier le lazy-loading","Code","S–M","performance"],
+    ["high","Performance","PERF-05","Décalage de mise en page de 0,487 sur la boutique mobile (colonne de filtres)","Attribut hidden rendu côté PHP sur la colonne","Code","S","performance"],
+    ["high","UX","UX-07","Liens du menu et du pied de page en http:// : passage par la page anti-bot","Liens https ou relatifs dans Apparence > Menus","Admin","S","ux"],
+    ["high","UX","UX-11","Grille mobile à 1 colonne : 15 écrans pour 16 produits","2 colonnes sous 480 px, carte compacte","Code","S–M","ux"],
+    ["high","UX","UX-12","Fiche mobile : prix à 1,2 écran, 44 px de marge perdus de chaque côté","Marges de 16 px, miniatures sur une rangée, H1 et prix au premier écran","Code","S–M","ux"],
+    ["high","UX","UX-13","Le sélecteur de langue flottant masque le prix de la barre collante (et affiche le drapeau saoudien)","Désactiver le flottant TranslatePress, garder FR | عربي de l'en-tête","Admin","S","ux"],
+    ["high","UX","UX-14","Après un clic sur « Commander », le formulaire express reste caché sous l'en-tête collant","scroll-margin-top sur le formulaire","Code","S","ux"],
+    ["high","UX","UX-16/17","Panier et checkout WooCommerce par défaut : bouton « Commander » à 3,6 écrans","Retirer le choix de compte, replier coupon et notes, supprimer le calculateur de livraison","Code + admin","M","ux"],
+    ["mid","Sécurité","SEC-07","Inscriptions WordPress et WooCommerce ouvertes, sans anti-robot","Fermer les inscriptions, rôle par défaut « Abonné »","Admin","S","securite"],
+    ["mid","Sécurité","SEC-08","L'API Store /wc/store/v1/checkout contourne la validation tunisienne","Désactiver la route publique, ou brancher les contrôles + limitation native","Code","M","securite"],
+    ["mid","Sécurité","SEC-09","Aucun en-tête de sécurité (HSTS, nosniff, X-Frame-Options, Referrer-Policy)","En-têtes dans .htaccess ; CSP d'abord en mode rapport","Code","S","securite"],
+    ["mid","Hébergement","SEC-10","SPF en ~all, ni DKIM ni DMARC : domaine facile à usurper","Activer DKIM, publier DMARC p=none, puis quarantine","Hébergeur","S","securite"],
+    ["mid","Hébergement","SEC-11","comin.tn sur le même compte ; wp-config.php en 644","Séparer les comptes ; wp-config.php en 600","Hébergeur","M","securite"],
+    ["mid","Sécurité","SEC-13","Avis produit ouverts aux anonymes (spam et vecteur de la faille XSS)","Avis réservés aux acheteurs vérifiés, modération manuelle","Admin","S","securite"],
+    ["mid","UX","UX-19/20","Formulaire express à 7 champs ; téléphone non validé en direct ; indication « 2X XXX XXX »","Nom complet, téléphone validé au blur (2, 4, 5 ou 9), gouvernorat, adresse","Code","M","ux"],
+    ["mid","UX","UX-22","Boutons blanc sur orange à 2,61:1, prix de la fiche à 2,46:1","Texte bleu nuit sur orange (6,32:1), prix en bleu ou en orange foncé","Code","S","ux"],
+    ["mid","Contenu","UX-29","Aucun délai de livraison affiché nulle part","Délai réel par zone près du prix, dans Livraison, la FAQ et llms.txt","Toi","S","ux"],
+    ["mid","Contenu","UX-30","Aucun lien Instagram ni TikTok, alors que le trafic vient de ces pubs","Renseigner les URL sociales dans les réglages","Toi","S","ux"],
+    ["mid","SEO","SEO-09","Titres de catalogue de 86 à 116 caractères, même suffixe partout","Titres de 65 caractères maximum avec « prix Tunisie »","Admin","S","seo"],
+    ["mid","SEO","SEO-11/12","Version /ar/ partielle : titres et H1 en FR, FAQ du schéma en français","Passe de traduction TranslatePress ; FAQ AR dans le schéma","Admin","M","seo"],
+    ["mid","SEO","SEO-13","Schéma Product sans shippingDetails, politique de retour ni marque","Filtre woocommerce_structured_data_product dans famma-core","Code","M","seo"],
+    ["mid","SEO","SEO-17","robots.txt : Bingbot rangé parmi les agents IA, donc plus exclu de /wp-admin/ ni d'add-to-cart","Corriger seo.php:599-632, fusionner les groupes User-agent: *","Code","S","seo"],
+    ["mid","SEO","SEO-19/20","Pas de fiche Google Business ; marque captée par famma.tn, famma-tn.shop, fammamenou.tn","Fiche GBP, alternateName, sameAs complet, nom constant « FAMMA MINNOU »","Toi","S","seo"],
+    ["mid","Hébergement","PERF-14","Aucune tâche cron : WP-Cron ne tourne qu'au passage des visiteurs","Cron DirectAdmin toutes les 5 min + DISABLE_WP_CRON","Hébergeur","S","performance"],
+    ["mid","Performance","PERF-06/08","13 à 20 CSS bloquants, 365 Kio de JS tiers, 381 Kio de zxcvbn sur le panier","Minify et defer LSCache ; option « lien pour définir le mot de passe »","Admin","S–M","performance"],
+    ["mid","Code","CODE-08","Tableau de bord : coûts non figés sur la commande, 3 × wc_get_orders(1000)","Figer le coût sur la ligne de commande, une seule requête paginée","Code","M","code"],
+    ["mid","Code","CODE-10","IP, user-agent et fbp stockés sans exporteur ni effaceur ; pixels chargés sans consentement","Exporteur et effaceur WooCommerce, bannière de consentement, Consent Mode","Code","M","code"],
+    ["mid","Code","CODE-11","famma-core.php fait 2 313 lignes, 17 fichiers dépassent 250 lignes, réassurance en 8 copies","Découper par domaine, source unique de réassurance","Code","L","code"],
+    ["mid","Code","CODE-13","i18n incomplète : ar.po couvre 24 chaînes sur 190, gouvernorats en dur en français","Langue source unique, .pot régénéré, gouvernorats via __()","Code","M","code"],
+    ["mid","Code","CODE-15","Site Kit + gtag : double balisage Google possible ; aucun événement e-commerce GA4","Garder un seul émetteur, ajouter view_item, add_to_cart, purchase","Code","S–M","code"],
+    ["low","Code","CODE-02","Capture UTM dépendante du chargement d'un pixel ; cookie sans Secure","Handle famma-utm indépendant, ;Secure","Code","S","code"],
+    ["low","Code","CODE-27","main en retard de 30 commits, 3 commits non poussés, 72 Mo de médias non ignorés","Fusionner avant le déploiement, .gitignore sur « zinger product* »","Code","S","code"],
+    ["low","Sécurité","SEC-14","Versions divulguées (generator), readme.html et fichiers .po lisibles","Retirer les balises generator, règle .htaccess FilesMatch","Code","S","securite"],
+    ["low","Code","CODE-28","API Graph Meta v21.0 figée, fin de vie imminente","Passer à la version courante via le filtre existant","Code","S","code"]
+  ];
+  var SEV = {crit:["Critique","p-crit"],high:["Élevée","p-high"],mid:["Moyenne","p-mid"],low:["Faible","p-low"]};
+  var body = document.getElementById("reg-body"), cnt = document.getElementById("reg-count");
+  var state = {sev:"all", dom:"all"};
+  var doms = ["Hébergement","Code","Sécurité","Performance","SEO","UX","Contenu"];
+  function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  function render(){
+    var n = 0, html = "";
+    R.forEach(function(r){
+      if ((state.sev==="all"||state.sev===r[0]) && (state.dom==="all"||state.dom===r[1])){
+        n++;
+        html += '<tr><td><span class="pill '+SEV[r[0]][1]+'">'+SEV[r[0]][0]+'</span><a class="id" href="rapports/audit-'+r[7]+'.md" target="_blank" rel="noopener">'+esc(r[2])+'</a></td>'+
+          '<td class="what">'+esc(r[3])+'<br><span class="dm">'+esc(r[1])+'</span></td>'+
+          '<td class="fixc">'+esc(r[4])+'</td><td class="dm">'+esc(r[5])+'</td><td class="dm">'+esc(r[6])+'</td></tr>';
+      }
+    });
+    body.innerHTML = html || '<tr><td colspan="5" class="muted">Aucun constat pour cette combinaison de filtres.</td></tr>';
+    cnt.textContent = n + " constat" + (n>1?"s":"") + " affiché" + (n>1?"s":"");
+  }
+  function chips(containerId, key, items){
+    var c = document.getElementById(containerId);
+    items.forEach(function(it){
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.id = "chip-"+key+"-"+it[0].replace(/\W/g,"");
+      b.textContent = it[1]; b.setAttribute("aria-pressed", it[0]==="all" ? "true" : "false");
+      b.addEventListener("click", function(){
+        state[key] = it[0];
+        c.querySelectorAll(".chip").forEach(function(x){ x.setAttribute("aria-pressed", x===b ? "true" : "false"); });
+        render();
+      });
+      c.appendChild(b);
+    });
+  }
+  chips("f-sev","sev",[["all","Toutes"],["crit","Critique"],["high","Élevée"],["mid","Moyenne"],["low","Faible"]]);
+  chips("f-dom","dom",[["all","Tous"]].concat(doms.map(function(d){return [d,d];})));
+  render();
+})();
+</script>
