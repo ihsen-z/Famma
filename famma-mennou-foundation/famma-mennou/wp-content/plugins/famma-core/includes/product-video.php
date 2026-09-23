@@ -240,8 +240,22 @@ final class Product_Video {
 			);
 		}
 
-		$embed = wp_oembed_get( $url );
+		/*
+		 * `wp_oembed_get()` interroge le fournisseur (YouTube, Vimeo…) à CHAQUE
+		 * appel, sans cache : chaque affichage de la fiche — la page
+		 * d'atterrissage des pubs — attendait un aller-retour réseau (audit du
+		 * 23/09, CODE-07). Le rendu est gardé une journée par adresse ; un échec
+		 * est gardé une heure, pour ne pas marteler un fournisseur indisponible.
+		 */
+		$key   = 'famma_oembed_' . md5( $url );
+		$embed = get_transient( $key );
 
-		return is_string( $embed ) ? $embed : '';
+		if ( false === $embed ) {
+			$embed = wp_oembed_get( $url );
+			$embed = is_string( $embed ) ? $embed : '';
+			set_transient( $key, $embed, '' === $embed ? HOUR_IN_SECONDS : DAY_IN_SECONDS );
+		}
+
+		return (string) $embed;
 	}
 }
