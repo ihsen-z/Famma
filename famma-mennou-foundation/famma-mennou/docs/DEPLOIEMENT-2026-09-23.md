@@ -99,3 +99,51 @@ Contrôle après enregistrement : l'accueil doit répondre en 200 avec l'en-têt
 > 3. Relever le quota d'envoi d'e-mails (actuellement 40 par jour) : chaque commande envoie 2 e-mails.
 > 4. Confirmer l'existence de sauvegardes côté hébergeur (JetBackup ou autre), leur fréquence et leur rétention.
 > Merci.
+
+---
+
+## 5. Déploiement du soir : fiche produit (rapport UX du 23/09)
+
+Suite de `RAPPORT-UX-FICHE-PRODUIT-2026-09-23.md` et des décisions du propriétaire : formulaire à 4 champs obligatoires (ville facultative), « Ajouter au panier » en bouton secondaire, « DT » sur le site français, délai de 24 h à 48 h, WhatsApp au 26767491 « pour le moment ».
+
+### 5.1 Code déployé (commits `89e9040` → `4dada78`)
+
+Archive `git archive` du plugin et du thème, déposée **hors du dossier public** (racine du compte, `famma-deploy-fiche.zip` puis `famma-deploy-vignettes.zip`) et extraite vers `domains/fammaminnou.tn/public_html/wp-content` avec « fusionner et écraser ». Archive de retour arrière gardée sur le poste : état `1d0ac36`.
+
+### 5.2 Réglages faits dans l'administration
+
+| Réglage | Valeur |
+|---|---|
+| FAMMA → Pages → Numéro WhatsApp | `26767491` (le téléphone de contact reste 56261412, non tranché) |
+| FAMMA → Pages → Délai de livraison (FR) | `Livraison en 24 h à 48 h` |
+| FAMMA → Pages → Délai de livraison (derja) | `التوصيل في 24 لـ 48 ساعة` |
+| TranslatePress → Sélecteur de langues → Floating | désactivé |
+
+### 5.3 Vérifié en ligne (visiteur, 375 px et 1 366 px, FR et AR)
+
+| Point | Avant | Après |
+|---|---|---|
+| Pages clés (accueil, boutique, 2 fiches, fiche AR, panier, contact) | — | HTTP 200, aucune erreur |
+| Colonnes desktop galerie / résumé | 280 / 280 px | 636 / 530 px |
+| Marges mobiles | 44 px | 16 px |
+| H1 / prix (mobile) | 752 / 973 px | 646 / 725 px |
+| Vignettes | 2 rangées, −32 px sur la photo, 50 % d'opacité | 1 rangée défilante, 100 % |
+| Prix | orange 2,46:1, « د.ت 79,000 » | bleu nuit, « 79,000 DT » (AR : « 79,000 د.ت ») |
+| Formulaire express | 1 191 px, 7 saisies | 983 px, 4 obligatoires + ville facultative |
+| Formulaire après appui sur la barre | champ sous l'en-tête (40–88 px) | titre à 158 px, champ à 240–288 px |
+| Section Livraison | 5 927 px | 2 995 px |
+| Hauteur de la fiche mobile | 8 906 px | 6 031 px |
+| Sélecteur de langue flottant, WhatsApp flottant | sur le prix, sur le contenu | retirés de la fiche (WhatsApp dans la barre) |
+| Quantité | 2 sélecteurs | 1 seul, synchronisé avec le panier, total recalculé |
+| Téléphone « 12 » | accepté jusqu'à l'envoi | refusé à la sortie du champ |
+| Checkout classique | Prénom + Nom, ville obligatoire | Nom complet, ville (facultatif), `XX XXX XXX` |
+| AR | doublons derja / arabe standard | une ligne par promesse, « أكّد طلبيتك », « زيد للسلّة » |
+
+Corrigé pendant la vérification : les vignettes étaient centrées par Kadence et la première était coupée (commit `4dada78`, redéployé seul).
+
+### 5.4 Restant
+
+- Supprimer `public_html/wp-content/famma-deploy-1.zip` (toujours téléchargeable) ; les deux archives du soir sont hors du dossier public et peuvent aussi être supprimées.
+- Parcours COD de bout en bout avec une vraie commande de test (création → confirmé → expédié → livré), à faire avec l'accord du propriétaire.
+- Libellé e-mail du checkout : « (facultatif) » apparaît deux fois (constat UX-18, antérieur).
+- Décisions en attente : téléphone de contact, « Satisfait ou remboursé », doublon « Pince de Câblage Pro ».
