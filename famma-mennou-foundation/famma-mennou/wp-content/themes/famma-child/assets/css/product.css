@@ -150,6 +150,13 @@
 	display: flex;
 	/* Kadence fait passer les vignettes à la ligne : 2 rangées de 138 px mesurées. */
 	flex-wrap: nowrap;
+	/*
+	 * Et il les centre : une rangée plus large que la galerie débordait alors
+	 * des DEUX côtés, et la première vignette était coupée à gauche (vérifié en
+	 * ligne après le déploiement du 23/09). Alignées au début, elles débordent
+	 * seulement vers la fin, là où le doigt fait défiler.
+	 */
+	justify-content: flex-start;
 	gap: var(--sp-2);
 	overflow-x: auto;
 	overscroll-behavior-x: contain;
