@@ -38,6 +38,7 @@ require_once __DIR__ . '/includes/express-order.php';
 require_once __DIR__ . '/includes/product-video.php';
 require_once __DIR__ . '/includes/seo.php';
 require_once __DIR__ . '/includes/seo-admin.php';
+require_once __DIR__ . '/includes/hardening.php';
 
 /**
  * Reads configuration from env-fed constants and WordPress options.
@@ -91,7 +92,44 @@ final class Config {
 			$raw = (string) get_option( 'famma_whatsapp_number', '' );
 		}
 
-		return preg_replace( '/\D+/', '', $raw );
+		return self::international_phone( $raw );
+	}
+
+	/**
+	 * Normalises a phone number to international digits, Tunisia by default.
+	 *
+	 * Le service wa.me exige le numéro complet, indicatif compris, sans « + » ni « 00 ».
+	 * Saisi en local (« 56 261 412 »), le numéro partait tel quel et WhatsApp
+	 * le lisait comme un numéro chilien (+56) : aucun message n'arrivait
+	 * (audit du 23/09, UX-01). Un numéro à 8 chiffres est donc tunisien.
+	 *
+	 * @param string $raw Number as typed: spaces, dots, « + » or « 00 » allowed.
+	 * @return string Digits only, e.g. `21656261412`; empty when nothing usable.
+	 */
+	public static function international_phone( string $raw ): string {
+		$digits = (string) preg_replace( '/\D+/', '', $raw );
+
+		if ( str_starts_with( $digits, '00' ) ) {
+			$digits = substr( $digits, 2 );
+		}
+
+		if ( 8 === strlen( $digits ) ) {
+			$digits = '216' . $digits;
+		}
+
+		return $digits;
+	}
+
+	/**
+	 * Builds a `tel:` URI in international format, or an empty string.
+	 *
+	 * @param string $raw Number as typed in the admin.
+	 * @return string e.g. `tel:+21656261412`.
+	 */
+	public static function tel_uri( string $raw ): string {
+		$digits = self::international_phone( $raw );
+
+		return '' === $digits ? '' : 'tel:+' . $digits;
 	}
 
 	/**
@@ -273,6 +311,50 @@ final class Order_Statuses {
 		 * workflow in §2 anyway.
 		 */
 		add_filter( 'woocommerce_cod_process_payment_order_status', array( $this, 'cod_initial_status' ) );
+
+		/*
+		 * Conséquence du point précédent : WooCommerce ne rattache ses e-mails
+		 * « Nouvelle commande » (admin) et « Commande reçue » (client) qu'aux
+		 * transitions pending → processing / on-hold / completed. Une commande
+		 * qui démarre en « pending-confirm » ne déclenchait donc AUCUN e-mail :
+		 * le marchand n'était pas prévenu (audit du 23/09, CODE-01).
+		 */
+		add_action( 'woocommerce_order_status_pending_to_pending-confirm', array( $this, 'send_new_order_emails' ), 10, 2 );
+		add_action( 'woocommerce_order_status_failed_to_pending-confirm', array( $this, 'send_new_order_emails' ), 10, 2 );
+	}
+
+	/**
+	 * Sends the "new order" (admin) and "order received" (customer) emails.
+	 *
+	 * Uses WooCommerce's own email classes, so the templates, the recipient set
+	 * in WooCommerce → Settings → Emails and the on/off switches all still
+	 * apply. WC_Email_New_Order guards against a second send by itself.
+	 *
+	 * @param int            $order_id Order ID.
+	 * @param \WC_Order|null $order    Order object when WooCommerce passes it.
+	 * @return void
+	 */
+	public function send_new_order_emails( int $order_id, $order = null ): void {
+		if ( ! function_exists( 'WC' ) || ! WC()->mailer() ) {
+			return;
+		}
+
+		$order = $order instanceof \WC_Order ? $order : wc_get_order( $order_id );
+
+		if ( ! $order instanceof \WC_Order ) {
+			return;
+		}
+
+		$emails = WC()->mailer()->get_emails();
+
+		if ( isset( $emails['WC_Email_New_Order'] ) ) {
+			$emails['WC_Email_New_Order']->trigger( $order_id, $order );
+		}
+
+		// E-mail client facultatif au checkout : WooCommerce ne l'envoie que s'il existe.
+		if ( isset( $emails['WC_Email_Customer_Processing_Order'] ) && '' !== $order->get_billing_email() ) {
+			$emails['WC_Email_Customer_Processing_Order']->trigger( $order_id, $order );
+		}
 	}
 
 	/**
@@ -1635,18 +1717,7 @@ final class Capi {
 	 * @return string
 	 */
 	private function normalise_phone( string $phone ): string {
-		$digits = preg_replace( '/\D+/', '', $phone );
-
-		if ( '' === $digits ) {
-			return '';
-		}
-
-		// Un numéro local à 8 chiffres est tunisien : on préfixe l'indicatif.
-		if ( 8 === strlen( $digits ) ) {
-			$digits = '216' . $digits;
-		}
-
-		return $digits;
+		return Config::international_phone( $phone );
 	}
 
 	/**
@@ -2268,6 +2339,7 @@ function boot(): void {
 	WhatsApp::instance();
 	Product_Video::instance();
 	Seo::instance();
+	Hardening::instance();
 
 	// Le tableau de bord ne sert qu'à l'administration : rien de tout cela
 	// n'est chargé sur le front (règle 10).

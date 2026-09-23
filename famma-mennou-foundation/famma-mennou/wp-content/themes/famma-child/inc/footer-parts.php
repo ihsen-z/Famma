@@ -154,7 +154,7 @@ function famma_child_footer_help(): void {
 		$rows[] = array(
 			'icon'  => 'phone',
 			'label' => $phone,
-			'url'   => 'tel:' . preg_replace( '/[^\d+]/', '', $phone ),
+			'url'   => famma_child_tel_uri( $phone ),
 			'class' => '',
 		);
 	}

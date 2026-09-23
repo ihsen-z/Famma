@@ -39,11 +39,11 @@ $famma_coverage_title = famma_child_page_text( 'contact', 'coverage_title' );
 $famma_coverage_text  = famma_child_page_text( 'contact', 'coverage_text' );
 
 /*
- * `tel:` n'accepte pas d'espace. On retire donc les séparateurs de lecture sans
- * toucher au « + » d'un éventuel indicatif : réécrire le numéro serait deviner
- * un format que le propriétaire n'a pas saisi.
+ * `tel:` n'accepte pas d'espace, et un numéro local à 8 chiffres est tunisien :
+ * la normalisation (indicatif +216 ajouté) est celle de famma-core, la même que
+ * pour WhatsApp. Le numéro affiché, lui, reste tel que saisi.
  */
-$famma_phone_href = preg_replace( '/[^0-9+]/', '', $famma_phone );
+$famma_phone_href = famma_child_tel_uri( $famma_phone );
 ?>
 
 <<?php echo esc_attr( famma_child_content_tag() ); ?> class="famma-container famma-page famma-contact-page">
@@ -94,7 +94,7 @@ $famma_phone_href = preg_replace( '/[^0-9+]/', '', $famma_phone );
 							<?php famma_child_the_icon( 'phone' ); ?>
 						</span>
 						<h2 class="famma-contact-card__title"><?php esc_html_e( 'Par téléphone', 'famma-child' ); ?></h2>
-						<a class="famma-contact-card__value" href="<?php echo esc_url( 'tel:' . $famma_phone_href ); ?>">
+						<a class="famma-contact-card__value" href="<?php echo esc_url( $famma_phone_href ); ?>">
 							<?php echo esc_html( $famma_phone ); ?>
 						</a>
 					</li>

@@ -121,6 +121,7 @@
 				<element value="famma_child_cart_count"/>
 				<element value="famma_child_cart_fragment"/>
 				<element value="famma_child_category_rank"/>
+				<element value="famma_child_tel_uri"/>
 				<element value="famma_child_checkout_trust"/>
 				<element value="famma_child_cod_next_steps"/>
 				<element value="famma_child_compare_category_order"/>

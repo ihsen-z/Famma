@@ -33,6 +33,26 @@ function famma_child_whatsapp_number(): string {
 }
 
 /**
+ * Lien `tel:` au format international (`tel:+216…`).
+ *
+ * Même règle de normalisation que WhatsApp, possédée par famma-core. Sans le
+ * plugin, repli sur les seuls chiffres saisis : le lien reste utilisable en
+ * Tunisie, il perd seulement l'indicatif.
+ *
+ * @param string $phone Numéro tel que saisi dans l'administration.
+ * @return string Chaîne vide si le numéro ne contient aucun chiffre.
+ */
+function famma_child_tel_uri( string $phone ): string {
+	if ( class_exists( '\Famma\Core\Config' ) ) {
+		return \Famma\Core\Config::tel_uri( $phone );
+	}
+
+	$digits = preg_replace( '/[^\d+]/', '', $phone );
+
+	return '' === $digits ? '' : 'tel:' . $digits;
+}
+
+/**
  * Balise du conteneur de contenu : `main` ou `div`.
  *
  * Constaté sur les pages rendues, pas supposé : Kadence n'émet aucun élément
@@ -643,7 +663,8 @@ function famma_child_menu_category_item( WP_Term $term, $host, int $index, strin
 	 * `current`, le walker émet une notice par rayon (constaté sous E_ALL) et
 	 * l'attribut `aria-current` du rayon actif n'est jamais écrit.
 	 */
-	$item->current               = '' !== $active && $active === $term->slug;
+	$item->current               = ( '' !== $active && $active === $term->slug )
+		|| ( function_exists( 'is_product_category' ) && is_product_category( $term->slug ) );
 	$item->current_item_parent   = false;
 	$item->current_item_ancestor = false;
 
