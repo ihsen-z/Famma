@@ -537,3 +537,31 @@ add_action( 'woocommerce_update_product', 'famma_child_home_flush_cache' );
 add_action( 'comment_post', 'famma_child_home_flush_cache' );
 add_action( 'edit_comment', 'famma_child_home_flush_cache' );
 add_action( 'wp_set_comment_status', 'famma_child_home_flush_cache' );
+
+/**
+ * Masque le bloc « Les premiers produits arrivent » dès qu'un produit existe.
+ *
+ * Ce bloc (`famma-soon`, posé par scripts/create-homepage.php) annonce un
+ * catalogue fermé ; affiché sous 16 produits en vente, il faisait croire que
+ * la boutique n'était pas ouverte (audit du 23/09, UX-10). Il reste dans le
+ * contenu de la page, modifiable depuis l'éditeur, et réapparaît de lui-même
+ * si le catalogue redevient vide.
+ *
+ * @param string               $content Rendu du bloc.
+ * @param array<string, mixed> $block   Bloc analysé.
+ * @return string
+ */
+function famma_child_hide_soon_block( $content, $block ) {
+	if ( ! is_front_page() || 'core/group' !== ( $block['blockName'] ?? '' ) ) {
+		return $content;
+	}
+
+	$classes = explode( ' ', (string) ( $block['attrs']['className'] ?? '' ) );
+
+	if ( ! in_array( 'famma-soon', $classes, true ) ) {
+		return $content;
+	}
+
+	return (int) wp_count_posts( 'product' )->publish > 0 ? '' : $content;
+}
+add_filter( 'render_block', 'famma_child_hide_soon_block', 10, 2 );

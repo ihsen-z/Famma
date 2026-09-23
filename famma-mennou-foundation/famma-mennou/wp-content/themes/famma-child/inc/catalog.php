@@ -30,10 +30,16 @@ defined( 'ABSPATH' ) || exit;
  * @return array<int, WP_Term> Termes `product_cat`, hors catégorie par défaut.
  */
 function famma_child_product_categories(): array {
+	/*
+	 * Rayons vides écartés : menu, carrousel d'accueil et colonne de filtres
+	 * proposaient 4 rayons à 0 produit, et le premier clic d'exploration menait
+	 * à « Aucun produit ne correspond » (audit du 23/09, UX-09 / SEO-07). Un
+	 * rayon réapparaît de lui-même dès qu'un produit y est publié.
+	 */
 	$terms = get_terms(
 		array(
 			'taxonomy'   => 'product_cat',
-			'hide_empty' => false,
+			'hide_empty' => true,
 		)
 	);
 
@@ -90,13 +96,18 @@ function famma_child_category_rank( WP_Term $term ): int {
 }
 
 /**
- * URL de la boutique filtrée sur un rayon.
+ * URL d'un rayon : sa page catégorie (`/categorie/<slug>/`).
  *
  * Volontairement distincte de `famma_child_filter_url()` : celle-ci reporte
  * les autres paramètres de l'URL courante, ce qui a un sens dans la colonne de
  * filtres — cocher « en promotion » ne doit pas effacer le rayon choisi — mais
  * pas dans l'en-tête, présent sur toutes les pages du site. Un lien de menu
  * doit mener au même endroit qu'on clique depuis le panier ou depuis une fiche.
+ *
+ * La page catégorie plutôt que `/boutique/?product_cat=` : c'est elle qui est
+ * dans le plan de site. Les 98 liens internes du menu et du carrousel
+ * alimentaient jusqu'ici un doublon à paramètre, sans canonical, et laissaient
+ * les vraies pages rayon sans aucun lien (audit du 23/09, SEO-01).
  *
  * @param string $slug Identifiant du rayon, ou chaîne vide pour tout le catalogue.
  * @return string
@@ -108,5 +119,7 @@ function famma_child_product_category_url( string $slug ): string {
 		return (string) $base;
 	}
 
-	return add_query_arg( 'product_cat', $slug, (string) $base );
+	$link = get_term_link( $slug, 'product_cat' );
+
+	return is_wp_error( $link ) ? add_query_arg( 'product_cat', $slug, (string) $base ) : $link;
 }
