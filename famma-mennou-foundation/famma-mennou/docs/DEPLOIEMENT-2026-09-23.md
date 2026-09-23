@@ -147,3 +147,9 @@ Corrigé pendant la vérification : les vignettes étaient centrées par Kadence
 - Parcours COD de bout en bout avec une vraie commande de test (création → confirmé → expédié → livré), à faire avec l'accord du propriétaire.
 - Libellé e-mail du checkout : « (facultatif) » apparaît deux fois (constat UX-18, antérieur).
 - Décisions en attente : téléphone de contact, « Satisfait ou remboursé », doublon « Pince de Câblage Pro ».
+
+### 5.5 Correctif : favori cliquable sur toute la page (mobile, commit `3d4a5af`)
+
+Sous 1000 px, l'extension tactile `::after` du cœur des cartes (position absolue, `inset: -9px`) s'appliquait aussi au bouton favori de la fiche, en `position: static` : elle se calait sur un ancêtre lointain et recouvrait toute la page, donc chaque tap basculait le favori. Retirée sur la fiche (le bouton fait déjà 48 px).
+
+Déployé seul : `product.css` envoyé dans `themes/famma-child/assets/css/` (écrasement) via le gestionnaire de fichiers DirectAdmin. Vérifié en ligne à 372 px : `::after` à `none`, 0 point sur 78 de la page ne touche le favori, le bouton bascule toujours (`aria-pressed` false → true → false), nouvelle version de la feuille servie sans purge de cache.
