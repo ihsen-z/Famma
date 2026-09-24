@@ -153,3 +153,27 @@ Corrigé pendant la vérification : les vignettes étaient centrées par Kadence
 Sous 1000 px, l'extension tactile `::after` du cœur des cartes (position absolue, `inset: -9px`) s'appliquait aussi au bouton favori de la fiche, en `position: static` : elle se calait sur un ancêtre lointain et recouvrait toute la page, donc chaque tap basculait le favori. Retirée sur la fiche (le bouton fait déjà 48 px).
 
 Déployé seul : `product.css` envoyé dans `themes/famma-child/assets/css/` (écrasement) via le gestionnaire de fichiers DirectAdmin. Vérifié en ligne à 372 px : `::after` à `none`, 0 point sur 78 de la page ne touche le favori, le bouton bascule toujours (`aria-pressed` false → true → false), nouvelle version de la feuille servie sans purge de cache.
+
+---
+
+## 6. 24/09 matin : textes de la fiche produit éditables (commit `387b077`)
+
+Règle « tout paramétrable depuis l'admin » : les textes commerciaux de la fiche, restés dans le code, passent dans **FAMMA → Pages → Fiche produit** (15 textes, chacun en français et en derja). Même mécanisme que les pages À propos et Contact (`Pages_Content`), schéma dans `includes/product-content.php`.
+
+| Texte | Où il s'affiche |
+|---|---|
+| Sous le prix — paiement, livraison | Liste de réassurance (le délai reste dans Contact › Délai de livraison) |
+| Bouton « Commander » | Barre du bas, titre du formulaire express |
+| Bouton de validation | « Confirmer ma commande / أكّد طلبيتك » |
+| Bouton « Ajouter au panier » | Bouton secondaire de la fiche |
+| Bouton WhatsApp sous le formulaire | « Une question sur ce produit ? » |
+| WhatsApp — message pré-rempli | Lien WhatsApp de la barre du bas, `{produit}` = nom du produit |
+| Bénéfices 1 à 4 (titre, texte) | Bandeau sous la fiche (écrans larges) |
+
+Règles : une ligne vidée disparaît ; un bouton vidé reprend son libellé par défaut ; valeurs par défaut = textes affichés jusqu'ici.
+
+Déployé par DirectAdmin comme la veille (archive hors du dossier public, extraite vers `wp-content`). Retour arrière : archive de l'état `f3b3a69`.
+
+Vérifié en ligne : 7 pages en HTTP 200 sans erreur ; textes FR et AR identiques à la veille, sauf les lignes derja affichées sous le français dans la réassurance, qui reprennent désormais le texte de la version arabe (« الدفع كي يوصلك », « التوصيل فابور، في تونس الكل ») au lieu de deux formulations différentes ; section visible dans l'administration, 30 champs préremplis.
+
+Reste dans le code, volontairement : petits textes d'interface traduits par fichiers `.po` (libellés de champs, erreurs, « Lire la suite »), mise en page, règles de fonctionnement. À traiter plus tard : textes de réassurance du **checkout** (`famma_child_checkout_trust()`), encore dans le code.
