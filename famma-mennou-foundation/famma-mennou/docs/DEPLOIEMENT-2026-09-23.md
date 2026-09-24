@@ -212,3 +212,36 @@ Archive `famma-deploy-tunnel.zip` (13 fichiers du thème, `git archive` de `3645
 - « Complétez votre commande » n'apparaît que si des ventes croisées sont renseignées sur les fiches produit.
 - Parcours COD réel (confirmé → expédié → livré) toujours à faire avec l'accord du propriétaire.
 
+---
+
+## 7. Déploiement du 24/09 (nuit) : newsletter et « Ils nous font confiance » sur l'accueil
+
+Maquette « FAMMA Accueil ». Commits `a6e2b87` et `38140b5` (famma-core + thème).
+
+### 7.1 Code déployé
+
+Archive `famma-deploy-accueil.zip` (13 fichiers), racine du compte, extraite vers `domains/fammaminnou.tn/public_html/wp-content` (« fusionner et écraser »). Retour arrière sur le poste : `famma-rollback-accueil.zip` (état `ca85c2d`) ; supprimer aussi `plugins/famma-core/includes/home-content.php`, `plugins/famma-core/includes/newsletter.php` et `themes/famma-child/inc/home-social.php`.
+
+| Élément | Où le régler |
+|---|---|
+| Newsletter : titre, texte, champ, bouton, mention, message de confirmation (FR + derja) | FAMMA → Pages → « Page d'accueil » (bouton vide = section masquée) |
+| Inscrits : liste, recherche, corbeille, export CSV | FAMMA → Newsletter |
+| Confiance : titre, chiffre + légende, 3 témoignages (FR + derja) | FAMMA → Pages → « Page d'accueil » |
+| Note moyenne | calculée sur les avis WooCommerce approuvés, jamais saisie |
+
+Sécurité : nonce, pot de miel, 5 inscriptions / heure / IP (empreinte), `sanitize_email` + `is_email`, adresse déjà inscrite = même réponse (pas d'énumération). Le site enregistre les adresses, il n'envoie aucun e-mail (quota de 40/jour) : les campagnes se font depuis l'export CSV.
+
+Aucun chiffre ni témoignage par défaut (§58) : la section « Ils nous font confiance » reste masquée tant que le propriétaire n'a pas saisi de vraies données ou qu'aucun avis n'est approuvé.
+
+### 7.2 Vérifié
+
+- Local : rendu 1 366 et 375 px sans défilement horizontal, adresse invalide refusée, inscription valide enregistrée (privée, langue fr), requête forgée sans nonce refusée, section confiance affichée avec une donnée de test puis retirée ; `debug.log` propre.
+- En ligne : accueil FR et AR, boutique, panier, fiche, À propos, Contact en HTTP 200 sans erreur ; FAMMA → Pages affiche la section « Page d'accueil » (15 champs × 2 langues) ; inscription réelle `test-deploiement@example.com` → message vert, visible dans FAMMA → Newsletter, puis mise à la corbeille.
+- `php -l` et `phpcs` propres ; type de retour `never` remplacé par `void` (compatibilité PHP 8.0).
+
+### 7.3 Restant
+
+- Saisir, si souhaité, un vrai chiffre et de vrais témoignages (avec l'accord des clients) pour faire apparaître « Ils nous font confiance ».
+- Vider la corbeille de FAMMA → Newsletter et supprimer `famma-deploy-accueil.zip` à la racine du compte.
+- Si un cache de page (LiteSpeed) est activé plus tard, exclure l'accueil du cache au-delà de 12 h ou le purger chaque jour : le nonce du formulaire expire au bout de 12 à 24 h.
+
