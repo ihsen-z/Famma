@@ -300,3 +300,33 @@ Nouvel audit des 70 pages : aucun anglais visible (hors noms techniques `utm_*`)
 - Le délai « 24 h à 48 h » est écrit en dur dans les pages Livraison : à changer aussi dans FAMMA → Pages → Contact si le délai évolue.
 - Menus et pages en arabe : les libellés (Accueil, Boutique, Livraison…) restent en français sur /ar/ tant qu'ils ne sont pas traduits dans TranslatePress.
 - Supprimer les archives `famma-deploy-pages.zip`, `famma-deploy-promos.zip`, `famma-deploy-lignes.zip` à la racine du compte.
+
+---
+
+## 9. 25/09 (nuit) : menus et titres traduits en arabe
+
+### 9.1 Traductions saisies dans TranslatePress (57 chaînes, statut « relue »)
+
+Enregistrées par le point d'entrée de l'éditeur visuel (`trp_save_translations_regular`), identifiants relevés en mode aperçu et textes d'origine exacts repris du dictionnaire : aucune écriture directe en base. Modifiables ensuite dans TranslatePress → Traduire le site.
+
+| Zone | Exemples |
+|---|---|
+| Menu principal et pied de page | الرئيسية, الحانوت, الأقسام, الجديد, التخفيضات, شكون أحنا, اتصل بينا, التوصيل, الإرجاع وترجيع الفلوس, الأسئلة المتكرّرة, الشروط العامة للبيع, سياسة الخصوصية, سياسة الكوكيز |
+| Rayons (menu, titres, fil d'Ariane) | الصحة والرياضة, الكوجينة, الصغار, الدار والخرجات, العدّة والبريكولاج |
+| Titres de page | حسابي, et les titres ci-dessus (même chaîne que le menu) |
+| Accueil, FAQ, Livraison, À propos | titres de section, questions et réponses courtes (paiement, frais, zone, délai), « أكتبلنا على واتساب » |
+| Panier / commande | « التوصيل فابور », description du paiement à la livraison |
+
+Restent en français : le corps des pages Confidentialité, Cookies, CGV et Retours (sous leur titre traduit) et les noms des produits.
+
+### 9.2 Code déployé (commit `6160cce`)
+
+- `famma-core/includes/seo.php` : TranslatePress ne traite pas la balise `<title>` ; sur /ar/, le titre nu de la page ou du rayon lui est soumis par `trp_translate()`. L'onglet et `og:title` suivent la traduction saisie dans TranslatePress (« التوصيل – FAMMA MINNOU », « الحانوت – توصيل مجاني… »). Français inchangé.
+- `famma-child/inc/footer-parts.php` et `inc/home.php` : « خلص كي توصل » n'est plus répété sous une phrase déjà en derja.
+
+### 9.3 Vérifié en ligne
+
+Menu, pied de page, H1, titres de section, fil d'Ariane et titre d'onglet en arabe sur 12 pages /ar/ ; pages françaises identiques ; aucune erreur PHP. **Le cache LiteSpeed est actif** (7 jours) : les pages servies depuis le cache contiennent bien les nouveaux textes. Après toute modification faite dans TranslatePress, purger le cache (LiteSpeed Cache → Purger tout), car la modification d'une traduction ne vide pas le cache.
+
+Archive à supprimer à la racine du compte : `famma-deploy-titres-ar.zip`.
+
