@@ -99,18 +99,27 @@ function famma_child_account_choice(): void {
 	</fieldset>
 	<?php
 }
-add_action( 'woocommerce_checkout_before_customer_details', 'famma_child_account_choice' );
+/*
+ * Priorité 5 sur `woocommerce_checkout_billing` : en tête de la colonne du
+ * formulaire, juste avant la carte « Vos coordonnées ». Accroché avant les
+ * coordonnées (`woocommerce_checkout_before_customer_details`), le bloc
+ * devenait une cellule de la grille de la commande et repoussait tout le
+ * formulaire dans la colonne du récapitulatif.
+ */
+add_action( 'woocommerce_checkout_billing', 'famma_child_account_choice', 5 );
 
 /**
- * Charge la feuille et le script du choix de compte.
+ * Charge la feuille de la commande, et le script du choix de compte.
  *
- * Seulement sur la commande, et seulement si le choix est réellement offert :
- * une feuille chargée pour un bloc absent est une requête pour rien.
+ * La feuille porte la mise en page de la maquette : elle est chargée sur toute
+ * la page de commande. Le script, lui, ne sert que si le choix de compte est
+ * réellement offert — un script chargé pour un bloc absent est une requête
+ * pour rien.
  *
  * @return void
  */
 function famma_child_enqueue_checkout(): void {
-	if ( ! famma_child_can_offer_account() ) {
+	if ( ! function_exists( 'famma_child_tunnel_step' ) || 2 !== famma_child_tunnel_step() ) {
 		return;
 	}
 
@@ -121,12 +130,12 @@ function famma_child_enqueue_checkout(): void {
 		wp_enqueue_style(
 			'famma-checkout',
 			$uri . '/assets/css/checkout.css',
-			array( 'famma-layout' ),
+			array( 'famma-tunnel' ),
 			(string) filemtime( $dir . '/assets/css/checkout.css' )
 		);
 	}
 
-	if ( file_exists( $dir . '/assets/js/checkout-account.js' ) ) {
+	if ( famma_child_can_offer_account() && file_exists( $dir . '/assets/js/checkout-account.js' ) ) {
 		wp_enqueue_script(
 			'famma-checkout-account',
 			$uri . '/assets/js/checkout-account.js',
@@ -136,7 +145,7 @@ function famma_child_enqueue_checkout(): void {
 		);
 	}
 }
-add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_checkout', 22 );
+add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_checkout', 23 );
 
 /*
  * La règle « e-mail obligatoire si et seulement si le client demande un compte »

@@ -52,6 +52,12 @@ function famma_child_icon_paths(): array {
 		'mail'      => '<path d="M3 5h18v14H3zM3 6l9 7 9-7"/>',
 		'pin'       => '<path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>',
 
+		// Panier et commande.
+		'check'     => '<path d="M4 12.5l5 5L20 6.5"/>',
+		'trash'     => '<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/>',
+		'forward'   => '<path d="M9 6l6 6-6 6"/>',
+		'back'      => '<path d="M15 6l-6 6 6 6"/>',
+
 		// Pied de page — réseaux sociaux.
 		'facebook'  => '<path d="M14 8h3V5h-3a4 4 0 0 0-4 4v2H8v3h2v7h3v-7h3l1-3h-4V9a1 1 0 0 1 1-1z"/>',
 		'instagram' => '<path d="M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM17.5 6.5h.01"/>',

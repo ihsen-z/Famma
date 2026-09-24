@@ -127,3 +127,577 @@
 	background: var(--famma-orange);
 	color: var(--famma-on-orange);
 }
+
+/* ============================================================
+   Mise en page de la maquette « FAMMA Commande »
+
+   Formulaire en cartes numérotées à gauche, récapitulatif collant
+   à droite à partir de 1000 px. Sous ce seuil, une seule colonne :
+   les cartes, puis le récapitulatif et le bouton — l'ordre de la
+   maquette mobile.
+   ============================================================ */
+
+.woocommerce-checkout form.checkout.woocommerce-checkout {
+	display: grid;
+	gap: var(--sp-6);
+}
+
+.woocommerce-checkout form.checkout.woocommerce-checkout::before,
+.woocommerce-checkout form.checkout.woocommerce-checkout::after {
+	content: none;
+}
+
+/* Les erreurs de validation que WooCommerce insère en tête du formulaire. */
+.woocommerce-checkout form.checkout > .woocommerce-NoticeGroup {
+	grid-column: 1 / -1;
+}
+
+body.famma-tunnel #customer_details.col2-set {
+	inline-size: auto;
+	min-inline-size: 0;
+	margin: 0;
+}
+
+body.famma-tunnel #customer_details .col-1,
+body.famma-tunnel #customer_details .col-2 {
+	float: none;
+	inline-size: auto;
+}
+
+body.famma-tunnel #customer_details .col-1 {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-4);
+}
+
+/* Les champs d'adresse et les notes ont rejoint la carte « Adresse ». */
+body.famma-tunnel #customer_details .col-2:not(:has(*)) {
+	display: none;
+}
+
+@media (min-width: 1000px) {
+	.woocommerce-checkout form.checkout.woocommerce-checkout {
+		grid-template-columns: minmax(0, 1fr) 360px;
+		align-items: start;
+	}
+
+	.famma-co-aside {
+		position: sticky;
+		inset-block-start: calc(var(--header-h) + var(--sp-6));
+	}
+}
+
+/* --- Cartes du formulaire --- */
+
+.famma-co-card {
+	padding: 22px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+}
+
+.famma-co-card__title {
+	display: flex;
+	align-items: center;
+	gap: 11px;
+	margin: 0 0 18px;
+	color: var(--famma-ink);
+	font-size: 1.03125rem;
+	font-weight: var(--fw-semibold);
+	line-height: var(--lh-tight);
+}
+
+.famma-co-card__num {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	inline-size: 25px;
+	block-size: 25px;
+	border-radius: 50%;
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	font-size: var(--fs-card-meta);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-co-card .woocommerce-billing-fields__field-wrapper,
+.famma-co-card .woocommerce-shipping-fields__field-wrapper {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+	gap: 14px;
+}
+
+.famma-co-card .form-row {
+	float: none;
+	inline-size: auto;
+	margin: 0;
+	padding: 0;
+}
+
+/* L'adresse se lit en entier : une ligne pour elle seule. */
+.famma-co-card #billing_address_1_field,
+.famma-co-card #shipping_address_1_field,
+.famma-co-card .form-row.notes {
+	grid-column: 1 / -1;
+}
+
+.famma-co-card .form-row > label {
+	display: block;
+	margin-block-end: 7px;
+	color: var(--famma-text-prose);
+	font-size: var(--fs-chrome-body);
+	font-weight: var(--fw-medium);
+	line-height: 1.4;
+}
+
+.famma-co-card .form-row input.input-text,
+.famma-co-card .form-row textarea,
+.famma-co-card .form-row select {
+	border-color: var(--famma-line-field);
+	background: var(--famma-surface-field);
+	color: var(--famma-ink);
+}
+
+.famma-co-card .form-row textarea {
+	min-block-size: 5.5rem;
+	padding-block: 13px;
+	resize: vertical;
+}
+
+.famma-co-card__note {
+	margin: 10px 0 0;
+	color: var(--famma-text-3);
+	font-size: var(--fs-card-meta);
+}
+
+/* « Expédier à une adresse différente » et les notes, dans la carte 2. */
+.famma-co-card .woocommerce-shipping-fields,
+.famma-co-card .woocommerce-additional-fields {
+	margin-block-start: 18px;
+}
+
+.famma-co-card #ship-to-different-address {
+	margin: 0 0 14px;
+	font-size: var(--fs-small);
+	font-weight: var(--fw-medium);
+}
+
+.famma-co-card .woocommerce-additional-fields > h3 {
+	display: none;
+}
+
+.famma-co-card .woocommerce-account-fields {
+	margin-block-start: 14px;
+}
+
+/* --- Carte « Mode de livraison » --- */
+
+.famma-co-option {
+	display: flex;
+	align-items: flex-start;
+	gap: 13px;
+	padding: var(--sp-4);
+	border: 1.5px solid var(--famma-line-field);
+	border-radius: 10px;
+	background: var(--famma-white);
+}
+
+.famma-co-option.is-selected {
+	border-color: var(--famma-orange);
+	background: var(--famma-saving-bg);
+}
+
+.famma-co-option__dot {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	inline-size: 19px;
+	block-size: 19px;
+	margin-block-start: 2px;
+	border: 1.5px solid var(--famma-orange);
+	border-radius: 50%;
+}
+
+.famma-co-option__dot::after {
+	content: "";
+	inline-size: 9px;
+	block-size: 9px;
+	border-radius: 50%;
+	background: var(--famma-orange);
+}
+
+.famma-co-option__body {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 4px;
+	min-inline-size: 0;
+}
+
+.famma-co-option__label {
+	color: var(--famma-ink);
+	font-size: 0.90625rem;
+	font-weight: var(--fw-semibold);
+}
+
+.famma-co-option__sub {
+	color: var(--famma-text-2);
+	font-size: var(--fs-card-meta);
+	line-height: var(--lh-base);
+}
+
+.famma-co-option__price {
+	color: var(--famma-ink);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+	white-space: nowrap;
+}
+
+.famma-co-option__price.is-free {
+	color: var(--famma-success-700);
+}
+
+/* --- Récapitulatif --- */
+
+.famma-co-aside {
+	min-inline-size: 0;
+}
+
+.famma-co-aside__card {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	padding: 20px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+}
+
+.famma-co-aside__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.famma-co-aside__title {
+	margin: 0;
+	color: var(--famma-ink);
+	font-size: 1rem;
+	font-weight: var(--fw-semibold);
+}
+
+.famma-co-aside__edit {
+	color: var(--famma-orange-700);
+	font-size: var(--fs-chrome-body);
+	text-decoration: none;
+}
+
+.famma-co-aside__edit:hover,
+.famma-co-aside__edit:focus-visible {
+	text-decoration: underline;
+}
+
+/* Kadence range le récapitulatif en colonne flottante de ~45 % avec son
+   propre cadre : ici, c'est la carte qui en tient lieu. */
+.woocommerce-checkout .famma-co-aside #order_review {
+	float: none;
+	inline-size: auto;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+}
+
+/* « Votre commande » de WooCommerce : remplacé par le titre ci-dessus. */
+.woocommerce-checkout #order_review_heading {
+	display: none;
+}
+
+.woocommerce-checkout table.woocommerce-checkout-review-order-table {
+	display: block;
+	margin: 0;
+	border: 0;
+	border-radius: 0;
+}
+
+.woocommerce-checkout table.woocommerce-checkout-review-order-table thead {
+	display: none;
+}
+
+.woocommerce-checkout table.woocommerce-checkout-review-order-table tbody,
+.woocommerce-checkout table.woocommerce-checkout-review-order-table tfoot {
+	display: flex;
+	flex-direction: column;
+	padding-block-start: 12px;
+	border-block-start: 1px solid var(--famma-line-soft);
+}
+
+.woocommerce-checkout table.woocommerce-checkout-review-order-table tbody {
+	gap: 13px;
+}
+
+.woocommerce-checkout table.woocommerce-checkout-review-order-table tfoot {
+	gap: 11px;
+	margin-block-start: 14px;
+}
+
+.woocommerce-checkout table.woocommerce-checkout-review-order-table tr {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+/* `body.famma-tunnel` : Kadence borde les cellules du pied de tableau avec
+   `.woocommerce table.shop_table tfoot th`, spécificité (0,2,3). */
+body.famma-tunnel table.woocommerce-checkout-review-order-table th,
+body.famma-tunnel table.woocommerce-checkout-review-order-table td {
+	padding: 0;
+	border: 0;
+	background: none;
+	font-size: var(--fs-small);
+}
+
+/*
+ * Ligne d'article : vignette à part, nom puis quantité l'un sous l'autre.
+ * `font-size: 0` sur la cellule : WooCommerce y laisse un `&nbsp;` entre le
+ * nom et la quantité, qui aurait sinon occupé une ligne vide.
+ */
+.woocommerce-checkout .woocommerce-checkout-review-order-table td.product-name {
+	position: relative;
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	justify-content: center;
+	gap: 3px;
+	min-inline-size: 0;
+	min-block-size: 52px;
+	padding-inline-start: 64px;
+	font-size: 0;
+}
+
+.famma-co-line__thumb {
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-start: 0;
+	overflow: hidden;
+	inline-size: 52px;
+	block-size: 52px;
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-surface-media);
+	transform: translateY(-50%);
+}
+
+.famma-co-line__thumb img {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+	object-fit: cover;
+}
+
+.famma-co-line__name {
+	color: var(--famma-ink);
+	font-size: var(--fs-chrome-body);
+	font-weight: var(--fw-medium);
+	line-height: 1.4;
+}
+
+.woocommerce-checkout .woocommerce-checkout-review-order-table .famma-co-line__qty {
+	color: var(--famma-text-3);
+	font-size: var(--fs-caption);
+	font-weight: var(--fw-regular);
+}
+
+.woocommerce-checkout .woocommerce-checkout-review-order-table td.product-name dl {
+	margin: 0;
+	font-size: var(--fs-caption);
+}
+
+.woocommerce-checkout .woocommerce-checkout-review-order-table td.product-total {
+	color: var(--famma-ink);
+	font-size: 0.84375rem;
+	font-weight: var(--fw-semibold);
+	white-space: nowrap;
+}
+
+.woocommerce-checkout .woocommerce-checkout-review-order-table tfoot th {
+	color: var(--famma-text-2);
+	font-weight: var(--fw-regular);
+	text-align: start;
+}
+
+.woocommerce-checkout .woocommerce-checkout-review-order-table tfoot td {
+	color: var(--famma-ink);
+	font-weight: var(--fw-medium);
+	text-align: end;
+}
+
+.woocommerce-checkout .woocommerce-checkout-review-order-table tr.order-total {
+	align-items: baseline;
+	padding-block-start: 12px;
+	border-block-start: 1px solid var(--famma-line-soft);
+}
+
+.woocommerce-checkout .woocommerce-checkout-review-order-table tr.order-total th {
+	color: var(--famma-ink);
+	font-size: 0.9375rem;
+	font-weight: var(--fw-semibold);
+}
+
+.woocommerce-checkout .woocommerce-checkout-review-order-table tr.order-total td {
+	font-size: 1.5rem;
+	font-weight: var(--fw-bold);
+}
+
+.woocommerce-checkout .woocommerce-checkout-review-order-table .woocommerce-shipping-totals td,
+.woocommerce-checkout .woocommerce-checkout-review-order-table .woocommerce-shipping-totals td label {
+	color: var(--famma-success-700);
+}
+
+.woocommerce-checkout .woocommerce-checkout-review-order-table #shipping_method {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* --- Paiement, conditions, bouton --- */
+
+.woocommerce-checkout #payment {
+	margin-block-start: 14px;
+	padding: 0;
+	border-radius: 0;
+	background: none;
+}
+
+.woocommerce-checkout #payment ul.payment_methods {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.woocommerce-checkout #payment ul.payment_methods::before,
+.woocommerce-checkout #payment ul.payment_methods::after {
+	content: none;
+}
+
+.woocommerce-checkout #payment ul.payment_methods li.wc_payment_method {
+	padding: var(--sp-4);
+	border: 1.5px solid var(--famma-line-field);
+	border-radius: 10px;
+	background: var(--famma-white);
+	line-height: var(--lh-base);
+}
+
+.woocommerce-checkout #payment ul.payment_methods li.wc_payment_method:only-child,
+.woocommerce-checkout #payment ul.payment_methods li.wc_payment_method:has(> input:checked) {
+	border-color: var(--famma-orange);
+	background: var(--famma-saving-bg);
+}
+
+/* Le second sélecteur répond à celui de Kadence, qui peint le libellé du
+   moyen choisi en bandeau gris bordé (spécificité 1,5,3). */
+.woocommerce-checkout #payment ul.payment_methods li.wc_payment_method > label,
+body.famma-tunnel #payment ul.wc_payment_methods li.wc_payment_method input[type="radio"]:first-child:checked + label {
+	padding: 0;
+	border: 0;
+	background: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 13px;
+	margin: 0;
+	color: var(--famma-ink);
+	font-size: 0.90625rem;
+	font-weight: var(--fw-semibold);
+}
+
+/*
+ * Le point de la maquette. Kadence dessine déjà un faux bouton radio en
+ * `label::before` (10 px, gris, masqué quand il n'y a qu'un moyen de
+ * paiement) : on le redessine plutôt que d'en ajouter un second. Le second
+ * sélecteur répond à la variante « cochée » de Kadence (spécificité 1,5,4).
+ */
+body.famma-tunnel #payment ul.wc_payment_methods li.wc_payment_method > label::before,
+body.famma-tunnel #payment ul.wc_payment_methods li.wc_payment_method input[type="radio"]:first-child:checked + label::before {
+	content: "";
+	display: inline-block;
+	flex-shrink: 0;
+	inline-size: 19px;
+	block-size: 19px;
+	margin: 0;
+	border: 1.5px solid var(--famma-orange);
+	border-radius: 50%;
+	background: radial-gradient(circle, var(--famma-orange) 0 4.5px, transparent 5px);
+}
+
+.woocommerce-checkout #payment div.payment_box {
+	margin: 6px 0 0;
+	padding: 0;
+	padding-inline-start: 32px;
+	background: none;
+	color: var(--famma-text-2);
+	font-size: var(--fs-card-meta);
+}
+
+.woocommerce-checkout #payment div.payment_box::before {
+	content: none;
+}
+
+.woocommerce-checkout #payment div.payment_box p {
+	margin: 0;
+}
+
+.woocommerce-checkout #payment div.form-row.place-order {
+	margin: 14px 0 0;
+	padding: 0;
+}
+
+.woocommerce-checkout #payment .woocommerce-privacy-policy-text p,
+.woocommerce-checkout #payment .woocommerce-terms-and-conditions-checkbox-text {
+	color: var(--famma-text-prose);
+	font-size: var(--fs-card-meta);
+	line-height: 1.55;
+}
+
+.woocommerce-checkout #payment .woocommerce-terms-and-conditions-wrapper {
+	margin: 0 0 14px;
+}
+
+.woocommerce-checkout #payment #place_order {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 9px;
+	float: none;
+	inline-size: 100%;
+	min-block-size: var(--sp-12);
+	padding: 15px;
+	border: 0;
+	border-radius: var(--famma-radius-sm);
+	font-size: 0.9375rem;
+	font-weight: var(--fw-semibold);
+}
+
+.woocommerce-checkout #payment #place_order:hover,
+.woocommerce-checkout #payment #place_order:focus-visible {
+	background-color: var(--famma-orange-600);
+}
+
+.woocommerce-checkout #payment #place_order .famma-icon {
+	flex-shrink: 0;
+	inline-size: 17px;
+	block-size: 17px;
+	stroke-width: 2.1;
+}
+
+/* Le choix « avec / sans compte » ouvre la colonne du formulaire : l'écart
+   vient de la colonne, pas de sa propre marge. */
+body.famma-tunnel #customer_details .famma-account-choice {
+	margin: 0;
+}

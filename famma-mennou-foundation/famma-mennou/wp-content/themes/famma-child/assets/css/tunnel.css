@@ -1,0 +1,289 @@
+/*
+ * FAMMA — parcours d'achat : en-tête commun du panier, de la commande et de
+ * la confirmation (maquettes « FAMMA Panier » et « FAMMA Commande »).
+ *
+ * Mobile-first, sur les jetons de tokens.css. Propriétés logiques partout :
+ * le site arabe s'inverse sans feuille dupliquée.
+ */
+
+/* ------------------------------------------------------------
+   Conteneur : la maquette pose le contenu à même la page.
+   Kadence l'enferme dans une boîte blanche ombrée (« boxed ») ;
+   sur ces pages, les cartes du panier et du formulaire font déjà
+   ce travail — une boîte de plus les enfermait deux fois.
+   ------------------------------------------------------------ */
+
+body.famma-tunnel .content-area {
+	margin-block: var(--sp-6) 0;
+}
+
+body.famma-tunnel .entry.single-entry {
+	margin-inline: 0;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+body.famma-tunnel .entry.single-entry > .entry-content-wrap {
+	padding: 0;
+}
+
+@media (max-width: 767px) {
+	/* Un seul rembourrage latéral de 16 px, comme la fiche produit (FP-03). */
+	body.famma-tunnel .content-container.site-container,
+	.famma-tunnel-head.site-container {
+		padding-inline: var(--sp-4);
+	}
+}
+
+/* ------------------------------------------------------------
+   En-tête : fil d'Ariane, étapes, titre
+   ------------------------------------------------------------ */
+
+.famma-tunnel-head {
+	padding-block-start: 18px;
+	color: var(--famma-ink);
+}
+
+.famma-tunnel-head__crumbs ol {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 9px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	color: var(--famma-text-3);
+	font-size: var(--fs-chrome-body);
+}
+
+.famma-tunnel-head__crumbs li {
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+}
+
+/* Chevron dessiné en bordure : il suit le sens de lecture sans image. */
+.famma-tunnel-head__crumbs li + li::before {
+	content: "";
+	inline-size: 6px;
+	block-size: 6px;
+	border-block-start: 2px solid var(--famma-line-field);
+	border-inline-end: 2px solid var(--famma-line-field);
+	transform: rotate(45deg);
+}
+
+[dir="rtl"] .famma-tunnel-head__crumbs li + li::before {
+	transform: rotate(-45deg);
+}
+
+.famma-tunnel-head__crumbs a {
+	color: var(--famma-text-3);
+	text-decoration: none;
+}
+
+.famma-tunnel-head__crumbs a:hover,
+.famma-tunnel-head__crumbs a:focus-visible {
+	color: var(--famma-accent-text);
+}
+
+.famma-tunnel-head__crumbs [aria-current="page"] {
+	color: var(--famma-ink);
+}
+
+.famma-steps {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px 14px;
+	margin: 22px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-steps__item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	color: var(--famma-text-3);
+	font-size: var(--fs-chrome-field);
+}
+
+/* Le trait qui relie deux étapes. */
+.famma-steps__item + .famma-steps__item::before {
+	content: "";
+	inline-size: 34px;
+	block-size: 1.5px;
+	margin-inline-end: 4px;
+	background: var(--famma-line-field);
+}
+
+.famma-steps__dot {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 26px;
+	block-size: 26px;
+	border: 1.5px solid var(--famma-line-field);
+	border-radius: 50%;
+	background: var(--famma-white);
+	font-size: var(--fs-chrome-body);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-steps__dot .famma-icon {
+	inline-size: 14px;
+	block-size: 14px;
+	stroke-width: 3;
+}
+
+.famma-steps__item.is-current {
+	color: var(--famma-ink);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-steps__item.is-current .famma-steps__dot {
+	border-color: var(--famma-orange);
+	background: var(--famma-orange);
+	color: var(--famma-blue); /* §44 : bleu sur orange, 6,31:1 */
+}
+
+.famma-steps__item.is-done .famma-steps__dot {
+	border-color: var(--famma-new);
+	background: var(--famma-new);
+	color: var(--famma-white);
+}
+
+/*
+ * Écran étroit : les trois libellés ne tiennent pas sur une ligne, et la
+ * seconde ligne commençait par un trait orphelin. Seule l'étape en cours garde
+ * son libellé visible ; les autres ne montrent que leur numéro, et leur
+ * libellé reste lu par les lecteurs d'écran.
+ */
+@media (max-width: 479px) {
+	.famma-steps {
+		flex-wrap: nowrap;
+		gap: 8px;
+	}
+
+	.famma-steps__item {
+		gap: 8px;
+	}
+
+	.famma-steps__item + .famma-steps__item::before {
+		inline-size: 18px;
+		margin-inline-end: 0;
+	}
+
+	.famma-steps__item:not(.is-current) .famma-steps__label {
+		position: absolute;
+		inline-size: 1px;
+		block-size: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+}
+
+.famma-tunnel-head__title {
+	margin: 18px 0 0;
+	color: var(--famma-ink);
+	font-size: clamp(1.75rem, 3.4vw, 2.25rem);
+	font-weight: var(--fw-bold);
+	line-height: var(--lh-tight);
+	letter-spacing: -0.01em;
+}
+
+.famma-tunnel-head__sub {
+	max-inline-size: 35rem;
+	margin: 6px 0 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+	line-height: var(--lh-base);
+}
+
+/* ------------------------------------------------------------
+   Réassurance sous le bouton d'action : une liste nue, sans cadre,
+   le cadre étant déjà celui du récapitulatif.
+   ------------------------------------------------------------ */
+
+.famma-reassure.famma-reassure--tunnel {
+	gap: 9px;
+	margin: var(--sp-4) 0 0;
+	padding: 0;
+	border: 0;
+	background: none;
+}
+
+.famma-reassure--tunnel .famma-reassure__item {
+	color: var(--famma-text-prose);
+	font-size: var(--fs-card-meta);
+}
+
+.famma-reassure--tunnel .famma-reassure__ar {
+	font-size: var(--fs-card-meta);
+}
+
+/* ------------------------------------------------------------
+   Encart WhatsApp
+   ------------------------------------------------------------ */
+
+.famma-tunnel-help {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin-block-start: var(--sp-4);
+	padding: 18px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+	color: var(--famma-ink);
+	text-decoration: none;
+	transition: border-color var(--dur-base) var(--ease-out);
+}
+
+.famma-tunnel-help:hover,
+.famma-tunnel-help:focus-visible {
+	border-color: var(--famma-whatsapp);
+	color: var(--famma-ink);
+}
+
+.famma-tunnel-help__icon {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	inline-size: 42px;
+	block-size: 42px;
+	border-radius: 50%;
+	background: var(--famma-whatsapp);
+	color: var(--famma-white);
+}
+
+.famma-tunnel-help__icon .famma-icon {
+	inline-size: 22px;
+	block-size: 22px;
+}
+
+.famma-tunnel-help__body {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.famma-tunnel-help__title {
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-tunnel-help__sub {
+	color: var(--famma-text-2);
+	font-size: var(--fs-card-meta);
+	line-height: var(--lh-base);
+}
+
+/* Flèches « continuer / retour » : elles suivent le sens de lecture. */
+[dir="rtl"] .famma-tunnel .famma-icon--forward,
+[dir="rtl"] .famma-tunnel .famma-icon--back {
+	transform: scaleX(-1);
+}

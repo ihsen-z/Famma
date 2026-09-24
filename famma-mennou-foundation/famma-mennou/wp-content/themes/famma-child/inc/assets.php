@@ -337,7 +337,7 @@ function famma_child_enqueue_product_card(): void {
 		return;
 	}
 
-	if ( ! ( is_front_page() || is_shop() || is_product_taxonomy() || is_product() ) ) {
+	if ( ! ( is_front_page() || is_shop() || is_product_taxonomy() || is_product() || is_cart() ) ) {
 		return;
 	}
 
@@ -370,7 +370,7 @@ function famma_child_enqueue_favourites(): void {
 		return;
 	}
 
-	if ( ! ( is_front_page() || is_shop() || is_product_taxonomy() || is_product() ) ) {
+	if ( ! ( is_front_page() || is_shop() || is_product_taxonomy() || is_product() || is_cart() ) ) {
 		return;
 	}
 

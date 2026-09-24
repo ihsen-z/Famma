@@ -23,7 +23,7 @@ const FAMMA_CHILD_VERSION = '0.1.0';
  * Chaque fichier est testé avant d'être inclus : un thème dont un fichier
  * manque doit dégrader, pas produire une erreur fatale sur toutes les pages.
  */
-foreach ( array( 'i18n', 'icons', 'catalog', 'header-parts', 'footer-parts', 'shop', 'shop-widgets', 'product', 'product-video', 'home', 'pages', 'checkout', 'editorial-guards', 'assets' ) as $famma_child_part ) {
+foreach ( array( 'i18n', 'icons', 'catalog', 'header-parts', 'footer-parts', 'shop', 'shop-widgets', 'product', 'product-video', 'home', 'pages', 'tunnel', 'cart', 'checkout', 'checkout-layout', 'editorial-guards', 'assets' ) as $famma_child_part ) {
 	$famma_child_file = get_stylesheet_directory() . '/inc/' . $famma_child_part . '.php';
 
 	if ( file_exists( $famma_child_file ) ) {
@@ -283,16 +283,19 @@ function famma_child_product_copy_derja( string $key ): string {
 }
 
 /**
- * Bloc de réassurance entre le prix et le formulaire de commande (§30, §48).
+ * Lignes de réassurance saisies par le propriétaire.
  *
- * Les lignes sont celles que le propriétaire écrit dans FAMMA → Pages →
- * Fiche produit, et le délai **tel qu'il l'a saisi** dans la section Contact.
- * Une ligne vidée disparaît ; tant que le délai est vide, aucun n'est promis
- * (§60). Aucune garantie, aucune statistique.
+ * Paiement et livraison viennent de FAMMA → Pages → Fiche produit, le délai
+ * **tel qu'il l'a saisi** dans la section Contact. Une ligne vidée disparaît ;
+ * tant que le délai est vide, aucun n'est promis (§60). Aucune garantie,
+ * aucune statistique.
  *
- * @return void
+ * Une seule source pour la fiche, le panier et la commande : trois listes
+ * écrites à la main finiraient par promettre trois choses différentes.
+ *
+ * @return array<int, array<string, string>> Entrées { fr, ar }, éventuellement vide.
  */
-function famma_child_product_reassurance(): void {
+function famma_child_reassurance_items(): array {
 	$items = array();
 
 	foreach ( array( 'reassure_payment', 'reassure_shipping' ) as $key ) {
@@ -315,6 +318,17 @@ function famma_child_product_reassurance(): void {
 		);
 	}
 
+	return $items;
+}
+
+/**
+ * Bloc de réassurance entre le prix et le formulaire de commande (§30, §48).
+ *
+ * @return void
+ */
+function famma_child_product_reassurance(): void {
+	$items = famma_child_reassurance_items();
+
 	// Tout vidé dans l'administration : pas de cadre vide sur la fiche.
 	if ( empty( $items ) ) {
 		return;
@@ -331,36 +345,10 @@ function famma_child_product_reassurance(): void {
 }
 add_action( 'woocommerce_single_product_summary', 'famma_child_product_reassurance', 35 );
 
-/**
- * Rappelle les conditions juste avant de valider la commande (§19 du brief UX).
- *
- * Placé au-dessus du bouton, et non dans le pied de page : le client doit
- * savoir comment il paie et qui le livre au moment précis où il s'engage,
- * sans avoir à faire défiler ni à quitter la page.
- *
- * Rien qui ne soit établi : aucun délai promis, aucune garantie de retour —
- * le §60 les interdit tant que le propriétaire ne les a pas fournis.
- *
- * @return void
+/*
+ * La réassurance et l'invitation WhatsApp du panier et de la commande vivent
+ * dans inc/tunnel.php, avec le reste du parcours d'achat.
  */
-function famma_child_checkout_trust(): void {
-	famma_child_reassurance_list(
-		array(
-			array(
-				'fr' => __( 'Paiement à la livraison, en espèces', 'famma-child' ),
-				'ar' => 'الدفع عند التوصيل',
-			),
-			array(
-				'fr' => __( 'Livraison offerte, partout en Tunisie', 'famma-child' ),
-				'ar' => 'التوصيل بلاش',
-			),
-		),
-		'famma-reassure--checkout'
-	);
-
-	echo do_shortcode( '[famma_whatsapp text="' . esc_attr__( 'Un doute ? Écrivez-nous', 'famma-child' ) . '"]' );
-}
-add_action( 'woocommerce_review_order_before_submit', 'famma_child_checkout_trust' );
 
 /**
  * Ajoute le bénéfice principal sur la carte produit (§13 du brief UX).

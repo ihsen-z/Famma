@@ -1,0 +1,676 @@
+/*
+ * FAMMA — panier (maquette « FAMMA Panier »).
+ *
+ * Le tableau de WooCommerce est conservé — ses mises à jour AJAX et ses
+ * nonces en dépendent — et redessiné en cartes : chaque `tr` devient une
+ * grille nommée. Mobile d'abord (vignette + nom, puis quantité et total),
+ * trois colonnes à partir de 600 px, récapitulatif collant à 1000 px.
+ *
+ * Quelques `!important` répondent à ceux de WooCommerce et de Kadence sur les
+ * tableaux « responsive » et le lien de suppression : c'est la seule façon de
+ * les contrer sans copier de gabarit. Chacun est signalé.
+ */
+
+/* ------------------------------------------------------------
+   Deux colonnes : lignes à gauche, récapitulatif à droite
+   ------------------------------------------------------------ */
+
+.woocommerce-cart .kadence-woo-cart-form-wrap {
+	display: grid;
+	gap: var(--sp-6);
+}
+
+/* Le « clearfix » de Kadence deviendrait deux cellules vides de la grille. */
+.woocommerce-cart .kadence-woo-cart-form-wrap::before,
+.woocommerce-cart .kadence-woo-cart-form-wrap::after {
+	content: none;
+}
+
+.woocommerce-cart .kadence-woo-cart-form-wrap > form {
+	margin: 0;
+}
+
+.woocommerce-cart .kadence-woo-cart-form-wrap > form,
+.woocommerce-cart .kadence-woo-cart-form-wrap > .cart-collaterals {
+	float: none;
+	inline-size: auto;
+	min-inline-size: 0;
+	padding: 0;
+}
+
+@media (min-width: 1000px) {
+	.woocommerce-cart .kadence-woo-cart-form-wrap {
+		grid-template-columns: minmax(0, 1fr) 340px;
+		align-items: start;
+	}
+
+	.woocommerce-cart .kadence-woo-cart-form-wrap > .cart-collaterals {
+		position: sticky;
+		inset-block-start: calc(var(--header-h) + var(--sp-6));
+	}
+}
+
+/* ------------------------------------------------------------
+   Lignes du panier en cartes
+   ------------------------------------------------------------ */
+
+.woocommerce-cart table.shop_table.cart {
+	display: block;
+	margin: 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+}
+
+.woocommerce-cart table.shop_table.cart thead {
+	display: none;
+}
+
+.woocommerce-cart table.shop_table.cart tbody {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.woocommerce-cart table.shop_table.cart tr.cart_item {
+	display: grid;
+	grid-template-columns: 84px minmax(0, 1fr);
+	grid-template-areas:
+		"thumb name"
+		"thumb price"
+		"thumb remove"
+		"qty total";
+	align-items: start;
+	gap: 8px 14px;
+	padding: var(--sp-4);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+}
+
+/* `!important` : WooCommerce force `text-align: right !important` sur les
+   cellules d'un tableau « responsive » sous 768 px. */
+.woocommerce-cart table.shop_table.cart tr.cart_item td {
+	display: block;
+	min-inline-size: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	text-align: start !important;
+}
+
+.woocommerce-cart table.shop_table.cart tr.cart_item td::before {
+	content: none;
+}
+
+.woocommerce-cart table.shop_table.cart td.product-thumbnail {
+	grid-area: thumb;
+}
+
+.woocommerce-cart table.shop_table.cart td.product-thumbnail a {
+	display: block;
+}
+
+.woocommerce-cart table.shop_table.cart td.product-thumbnail img {
+	display: block;
+	inline-size: 100%;
+	block-size: auto;
+	aspect-ratio: 1;
+	object-fit: cover;
+	border-radius: 9px;
+	background: var(--famma-surface-media);
+}
+
+/* `tr.cart_item` dans le sélecteur : il doit passer devant le `display: block`
+   posé sur toutes les cellules plus haut. */
+.woocommerce-cart table.shop_table.cart tr.cart_item td.product-name {
+	grid-area: name;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.woocommerce-cart table.shop_table.cart td.product-name > a {
+	color: var(--famma-ink);
+	font-size: 0.9375rem;
+	font-weight: var(--fw-medium);
+	line-height: 1.4;
+	text-decoration: none;
+}
+
+.woocommerce-cart table.shop_table.cart td.product-name > a:hover,
+.woocommerce-cart table.shop_table.cart td.product-name > a:focus-visible {
+	color: var(--famma-orange-700);
+}
+
+.famma-cart__ref {
+	color: var(--famma-text-3);
+	font-size: var(--fs-card-meta);
+}
+
+.famma-cart__stock {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--sp-2);
+	color: var(--famma-success-700);
+	font-size: var(--fs-chrome-body);
+}
+
+.famma-cart__stock::before {
+	content: "";
+	inline-size: 7px;
+	block-size: 7px;
+	border-radius: 50%;
+	background: currentColor;
+}
+
+.woocommerce-cart table.shop_table.cart td.product-price {
+	grid-area: price;
+}
+
+.famma-cart__unit {
+	color: var(--famma-text-3);
+	font-size: var(--fs-card-meta);
+}
+
+.woocommerce-cart table.shop_table.cart td.product-remove {
+	grid-area: remove;
+}
+
+/* `!important` : WooCommerce pose `color: … !important` sur `a.remove` (et un
+   fond rouge au survol) pour sa croix ronde ; la maquette veut un lien texte. */
+.woocommerce-cart table.shop_table.cart td.product-remove a.remove {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	inline-size: auto;
+	block-size: auto;
+	min-block-size: var(--sp-12);
+	border-radius: 0;
+	background: none !important;
+	color: var(--famma-text-3) !important;
+	font-size: var(--fs-chrome-body);
+	font-weight: var(--fw-regular);
+	line-height: 1;
+}
+
+.woocommerce-cart table.shop_table.cart td.product-remove a.remove:hover,
+.woocommerce-cart table.shop_table.cart td.product-remove a.remove:focus-visible {
+	color: var(--famma-danger-700) !important;
+}
+
+.woocommerce-cart table.shop_table.cart td.product-remove .famma-icon {
+	inline-size: 14px;
+	block-size: 14px;
+}
+
+.woocommerce-cart table.shop_table.cart td.product-quantity {
+	grid-area: qty;
+	align-self: center;
+}
+
+.woocommerce-cart table.shop_table.cart td.product-subtotal {
+	grid-area: total;
+	align-self: center;
+	justify-self: end;
+	color: var(--famma-ink);
+	font-size: 1.125rem;
+	font-weight: var(--fw-bold);
+	white-space: nowrap;
+}
+
+.famma-cart__old {
+	margin-inline-start: var(--sp-2);
+	color: var(--famma-price-old);
+	font-size: var(--fs-card-meta);
+	font-weight: var(--fw-regular);
+}
+
+@media (min-width: 600px) {
+	.woocommerce-cart table.shop_table.cart tr.cart_item {
+		grid-template-columns: 108px minmax(0, 1fr) auto;
+		grid-template-areas:
+			"thumb name total"
+			"thumb name price"
+			"thumb remove qty";
+		column-gap: var(--sp-4);
+	}
+
+	.woocommerce-cart table.shop_table.cart td.product-price,
+	.woocommerce-cart table.shop_table.cart td.product-quantity {
+		justify-self: end;
+	}
+
+	.woocommerce-cart table.shop_table.cart td.product-subtotal {
+		align-self: start;
+	}
+
+	.woocommerce-cart table.shop_table.cart td.product-remove {
+		align-self: end;
+	}
+}
+
+/* ------------------------------------------------------------
+   Sélecteur − / + (même composant que la fiche produit)
+   ------------------------------------------------------------ */
+
+.woocommerce-cart .famma-qty {
+	display: inline-flex;
+	align-items: center;
+	overflow: hidden;
+	border: 1px solid var(--famma-line-field);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-white);
+}
+
+.woocommerce-cart .famma-qty__btn {
+	flex-shrink: 0;
+	inline-size: var(--sp-12);
+	block-size: var(--sp-12);
+	padding: 0;
+	border: 0;
+	background: var(--famma-surface-field);
+	color: var(--famma-ink);
+	font-size: 1.0625rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.woocommerce-cart .famma-qty__btn:hover,
+.woocommerce-cart .famma-qty__btn:focus-visible {
+	background: var(--famma-surface-icon);
+}
+
+.woocommerce-cart .famma-qty .quantity {
+	margin: 0;
+}
+
+.woocommerce-cart .famma-qty .quantity input.qty {
+	inline-size: 3rem;
+	min-block-size: var(--sp-12);
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-inline: 1px solid var(--famma-line-field);
+	border-radius: 0;
+	background: var(--famma-white);
+	color: var(--famma-ink);
+	/* 16px : en dessous, Safari iOS zoome au focus. */
+	font-size: var(--fs-input);
+	font-weight: var(--fw-semibold);
+	text-align: center;
+	appearance: textfield;
+}
+
+.woocommerce-cart .famma-qty .quantity input.qty::-webkit-outer-spin-button,
+.woocommerce-cart .famma-qty .quantity input.qty::-webkit-inner-spin-button {
+	appearance: none;
+	margin: 0;
+}
+
+/* ------------------------------------------------------------
+   Rangée d'actions : « Continuer mes achats », code promo
+   ------------------------------------------------------------ */
+
+.woocommerce-cart table.shop_table.cart tr:not(.cart_item) {
+	display: block;
+}
+
+.woocommerce-cart table.shop_table.cart td.actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 4px 0 0;
+	border: 0;
+	background: none;
+	text-align: start !important; /* voir les cellules plus haut */
+}
+
+.woocommerce-cart table.shop_table.cart td.actions::before {
+	content: none;
+}
+
+.famma-cart__continue {
+	order: 1;
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+	min-block-size: var(--sp-12);
+	padding: 0 18px;
+	border: 1px solid var(--famma-line-field);
+	border-radius: var(--famma-radius-sm);
+	color: var(--famma-ink);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-medium);
+	text-decoration: none;
+}
+
+.famma-cart__continue:hover,
+.famma-cart__continue:focus-visible {
+	border-color: var(--famma-orange);
+	color: var(--famma-orange-700);
+}
+
+.famma-cart__continue .famma-icon {
+	inline-size: 15px;
+	block-size: 15px;
+	stroke-width: 2.2;
+}
+
+.woocommerce-cart table.shop_table.cart td.actions button[name="update_cart"] {
+	order: 2;
+	block-size: auto;
+	min-block-size: var(--sp-12);
+	line-height: 1.2;
+}
+
+/* Le script met le panier à jour tout seul : le bouton ne sert plus qu'au
+   client sans JavaScript, et reste alors visible. */
+/* Sélecteur long : sous 768 px, WooCommerce affiche ce bouton en bloc pleine
+   largeur avec une spécificité plus haute qu'une simple classe. */
+.famma-cart-auto .woocommerce-cart table.shop_table.cart td.actions button[name="update_cart"] {
+	display: none;
+}
+
+.woocommerce-cart table.shop_table.cart td.actions .coupon {
+	order: 3;
+	display: flex;
+	flex: 1 1 100%;
+	flex-wrap: wrap;
+	gap: 10px;
+	float: none;
+	padding: 18px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+}
+
+/* Le libellé masqué de WooCommerce et le « clearfix » comptaient chacun pour
+   un élément de la rangée : leurs écarts décalaient le champ. Le libellé sort
+   du flux (il reste lu) ; le clearfix n'a plus rien à dégager. */
+.woocommerce-cart table.shop_table.cart td.actions .coupon > label {
+	position: absolute;
+}
+
+.woocommerce-cart table.shop_table.cart td.actions .coupon::before,
+.woocommerce-cart table.shop_table.cart td.actions .coupon::after {
+	content: none;
+}
+
+.famma-cart__coupon-title {
+	order: -1;
+	flex-basis: 100%;
+	color: var(--famma-ink);
+	font-size: 0.90625rem;
+	font-weight: var(--fw-semibold);
+}
+
+.woocommerce-cart table.shop_table.cart td.actions .coupon input#coupon_code {
+	flex: 1 1 12.5rem;
+	float: none;
+	inline-size: auto;
+	min-inline-size: 0;
+	block-size: auto;
+	min-block-size: var(--sp-12);
+	margin: 0;
+	padding: 0 14px;
+	border: 1px solid var(--famma-line-field);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-surface-field);
+	color: var(--famma-ink);
+	font-size: var(--fs-input);
+}
+
+/* Sélecteur long à dessein : Kadence peint ce bouton en gris avec
+   `.coupon .button:not(:hover)`, spécificité (0,5,1). */
+.woocommerce-cart table.shop_table.cart td.actions .coupon button.button[name="apply_coupon"] {
+	block-size: auto;
+	min-block-size: var(--sp-12);
+	padding: 0 22px;
+	border: 0;
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-medium);
+	line-height: 1.2;
+	white-space: nowrap;
+	/* WooCommerce le réduit à 48 % sous 768 px : le libellé était coupé. */
+	inline-size: auto;
+}
+
+.woocommerce-cart table.shop_table.cart td.actions .coupon button.button[name="apply_coupon"]:hover,
+.woocommerce-cart table.shop_table.cart td.actions .coupon button.button[name="apply_coupon"]:focus-visible {
+	background: var(--famma-blue-600);
+}
+
+/* ------------------------------------------------------------
+   Récapitulatif
+   ------------------------------------------------------------ */
+
+.woocommerce-cart .cart-collaterals .cart_totals {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	float: none;
+	inline-size: 100%;
+	padding: 20px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+}
+
+/* Le « Total panier » de WooCommerce : remplacé par « Récapitulatif ». */
+.woocommerce-cart .cart_totals > h2:not(.famma-cart__summary-title) {
+	display: none;
+}
+
+.famma-cart__summary-title {
+	margin: 0;
+	color: var(--famma-ink);
+	font-size: 1rem;
+	font-weight: var(--fw-semibold);
+}
+
+.woocommerce-cart .cart_totals table.shop_table {
+	display: block;
+	margin: 0;
+	padding-block-start: 12px;
+	border: 0;
+	border-block-start: 1px solid var(--famma-line-soft);
+	border-radius: 0;
+}
+
+.woocommerce-cart .cart_totals table.shop_table tbody {
+	display: flex;
+	flex-direction: column;
+	gap: 11px;
+}
+
+.woocommerce-cart .cart_totals table.shop_table tbody tr {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.woocommerce-cart .cart_totals table.shop_table tbody tr th,
+.woocommerce-cart .cart_totals table.shop_table tbody tr td {
+	display: block;
+	padding: 0;
+	border: 0;
+	background: none;
+	font-size: var(--fs-small);
+}
+
+.woocommerce-cart .cart_totals table.shop_table tbody tr th {
+	color: var(--famma-text-2);
+	font-weight: var(--fw-regular);
+}
+
+/* `!important` : voir les cellules du tableau des lignes. */
+.woocommerce-cart .cart_totals table.shop_table tbody tr td {
+	color: var(--famma-ink);
+	font-weight: var(--fw-medium);
+	text-align: end !important;
+}
+
+.woocommerce-cart .cart_totals table.shop_table tbody tr td::before {
+	content: none;
+}
+
+.woocommerce-cart .cart_totals tr.order-total {
+	margin-block-start: 1px;
+	padding-block-start: 12px;
+	border-block-start: 1px solid var(--famma-line-soft);
+}
+
+.woocommerce-cart .cart_totals table.shop_table tbody tr.order-total th {
+	color: var(--famma-ink);
+	font-size: 0.9375rem;
+	font-weight: var(--fw-semibold);
+}
+
+.woocommerce-cart .cart_totals table.shop_table tbody tr.order-total td {
+	font-size: 1.5rem;
+	font-weight: var(--fw-bold);
+}
+
+.woocommerce-cart .cart_totals .woocommerce-shipping-totals td,
+.woocommerce-cart .cart_totals .woocommerce-shipping-totals td label {
+	color: var(--famma-success-700);
+}
+
+.woocommerce-cart .cart_totals #shipping_method {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.woocommerce-cart .cart_totals #shipping_method li {
+	margin: 0;
+}
+
+/* La livraison est la même partout : « Livraison à … » n'apprend rien. */
+.woocommerce-cart .cart_totals .woocommerce-shipping-destination {
+	display: none;
+}
+
+.woocommerce-cart .cart_totals .wc-proceed-to-checkout {
+	padding: 0;
+}
+
+.woocommerce-cart .wc-proceed-to-checkout a.checkout-button.famma-cart__checkout {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 9px;
+	min-block-size: var(--sp-12);
+	margin: 0;
+	padding: 15px;
+	border: 0;
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-orange);
+	color: var(--famma-blue); /* §44 : bleu sur orange, 6,31:1 */
+	font-size: 0.9375rem;
+	font-weight: var(--fw-semibold);
+	text-align: center;
+	text-decoration: none;
+}
+
+.woocommerce-cart .wc-proceed-to-checkout a.checkout-button.famma-cart__checkout:hover,
+.woocommerce-cart .wc-proceed-to-checkout a.checkout-button.famma-cart__checkout:focus-visible {
+	background: var(--famma-orange-600);
+	color: var(--famma-blue); /* §44 : bleu sur orange, 6,31:1 */
+}
+
+.famma-cart__checkout .famma-icon {
+	inline-size: 16px;
+	block-size: 16px;
+	stroke-width: 2.2;
+}
+
+/* ------------------------------------------------------------
+   Panier vide
+   ------------------------------------------------------------ */
+
+.famma-cart-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 15px;
+	padding: 64px 24px 8px;
+	border: 1px dashed var(--famma-line-field);
+	border-block-end: 0;
+	border-radius: var(--famma-radius) var(--famma-radius) 0 0;
+	text-align: center;
+}
+
+.famma-cart-empty__icon {
+	inline-size: 46px;
+	block-size: 46px;
+	color: var(--famma-line-field);
+	stroke-width: 1.5;
+}
+
+/* Préfixées par la carte : `.single-content p` de Kadence leur rendait sa marge. */
+.famma-cart-empty .famma-cart-empty__title {
+	margin: 0;
+	color: var(--famma-ink);
+	font-size: 1.0625rem;
+	font-weight: var(--fw-semibold);
+}
+
+.famma-cart-empty .famma-cart-empty__sub {
+	max-inline-size: 21.25rem;
+	margin: 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-chrome-field);
+	line-height: 1.55;
+}
+
+/* Le bouton de WooCommerce complète la carte, dont il ferme le cadre. */
+.famma-cart-empty + .return-to-shop {
+	margin: 0;
+	padding: 7px 24px 64px;
+	border: 1px dashed var(--famma-line-field);
+	border-block-start: 0;
+	border-radius: 0 0 var(--famma-radius) var(--famma-radius);
+	text-align: center;
+}
+
+.famma-cart-empty + .return-to-shop a.button {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: var(--sp-12);
+	padding: 0 26px;
+	border: 0;
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-orange);
+	color: var(--famma-blue); /* §44 : bleu sur orange, 6,31:1 */
+	font-size: 0.90625rem;
+	font-weight: var(--fw-medium);
+}
+
+.famma-cart-empty + .return-to-shop a.button:hover,
+.famma-cart-empty + .return-to-shop a.button:focus-visible {
+	background: var(--famma-orange-600);
+	color: var(--famma-blue); /* §44 : bleu sur orange, 6,31:1 */
+}
+
+/* ------------------------------------------------------------
+   « Complétez votre commande »
+   ------------------------------------------------------------ */
+
+.woocommerce-cart .cross-sells {
+	margin-block-start: 44px;
+}
+
+.woocommerce-cart .cross-sells > h2 {
+	margin: 0 0 18px;
+	color: var(--famma-ink);
+	font-size: clamp(1.25rem, 2.4vw, 1.5rem);
+	font-weight: var(--fw-semibold);
+}

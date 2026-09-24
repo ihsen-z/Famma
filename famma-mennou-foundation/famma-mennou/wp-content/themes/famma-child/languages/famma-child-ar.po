@@ -439,3 +439,118 @@ msgstr "أسأل على الواتساب"
 
 msgid "Nom, téléphone, gouvernorat et adresse. Rien de plus."
 msgstr "الإسم، التليفون، الولاية والعنوان. حتى حاجة أخرى."
+
+# --- Parcours d'achat : panier et commande (maquettes du 24/09) ---
+msgid "Accueil"
+msgstr "الرئيسية"
+
+msgid "Mon panier"
+msgstr "القفة متاعي"
+
+msgid "Finaliser ma commande"
+msgstr "كمّل طلبيتك"
+
+msgid "Panier"
+msgstr "القفة"
+
+msgid "Commande"
+msgstr "الطلبية"
+
+msgid "Confirmation"
+msgstr "التأكيد"
+
+msgid "Commande reçue, merci !"
+msgstr "وصلتنا طلبيتك، يعيشك!"
+
+msgid "Fil d’Ariane"
+msgstr "وين إنتي"
+
+msgid "Votre panier est vide"
+msgstr "القفة فارغة"
+
+msgid "Remplissez vos coordonnées : nous vous appelons pour confirmer la commande avant l’expédition."
+msgstr "عمّر معطياتك: نعيطولك باش نأكدو الطلبية قبل ما نبعثوها."
+
+msgid "Écrivez-nous sur WhatsApp."
+msgstr "أكتبلنا على واتساب."
+
+msgid "Supprimer"
+msgstr "نحّي"
+
+msgid "/ unité"
+msgstr "/ الحبّة"
+
+msgid "Réf. %s"
+msgstr "المرجع %s"
+
+msgid "Diminuer la quantité"
+msgstr "نقّص الكمية"
+
+msgid "Augmenter la quantité"
+msgstr "زيد الكمية"
+
+msgid "Code promo"
+msgstr "كود التخفيض"
+
+msgid "Continuer mes achats"
+msgstr "كمّل التسوّق"
+
+msgid "Récapitulatif"
+msgstr "الملخّص"
+
+msgid "Passer la commande"
+msgstr "عدّي الطلبية"
+
+msgid "Une question sur votre panier ?"
+msgstr "عندك سؤال على القفة؟"
+
+msgid "Complétez votre commande"
+msgstr "زيد على طلبيتك"
+
+msgid "Parcourez la boutique et ajoutez vos premiers produits."
+msgstr "دور في المتجر وزيد أوّل منتجاتك."
+
+msgid "Aller à la boutique"
+msgstr "أمشي للمتجر"
+
+msgid "Vos coordonnées"
+msgstr "معطياتك"
+
+msgid "Nous vous appelons à ce numéro pour confirmer la commande."
+msgstr "نعيطولك على هالنومرو باش نأكدو الطلبية."
+
+msgid "Adresse de livraison"
+msgstr "عنوان التوصيل"
+
+msgid "Mode de livraison"
+msgstr "طريقة التوصيل"
+
+msgid "Offerte"
+msgstr "فابور"
+
+msgid "Livraison à domicile, partout en Tunisie"
+msgstr "توصيل للدار، في تونس الكل"
+
+msgid "Votre commande"
+msgstr "طلبيتك"
+
+msgid "Modifier"
+msgstr "بدّل"
+
+msgid "Une question avant de commander ?"
+msgstr "عندك سؤال قبل ما تطلب؟"
+
+msgid "Quantité : %d"
+msgstr "الكمية: %d"
+
+msgid "Confirmer ma commande"
+msgstr "أكّد طلبيتك"
+
+msgid "%d article dans votre panier"
+msgid_plural "%d articles dans votre panier"
+msgstr[0] "القفة فارغة"
+msgstr[1] "منتج واحد في القفة"
+msgstr[2] "زوز منتجات في القفة"
+msgstr[3] "%d منتجات في القفة"
+msgstr[4] "%d منتج في القفة"
+msgstr[5] "%d منتج في القفة"
