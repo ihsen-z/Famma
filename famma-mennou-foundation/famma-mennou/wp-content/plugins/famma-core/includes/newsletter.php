@@ -257,9 +257,9 @@ final class Newsletter {
 	 * Renvoie le visiteur sur la page d'où il vient, avec le résultat.
 	 *
 	 * @param string $status `ok`, `invalid`, `expired`, `busy` ou `error`.
-	 * @return never
+	 * @return void
 	 */
-	private function back( string $status ): never {
+	private function back( string $status ): void {
 		$target = wp_validate_redirect( (string) wp_get_referer(), home_url( '/' ) );
 
 		// Sans référent, `add_query_arg()` repartirait de l'URL courante, admin-post.php.
