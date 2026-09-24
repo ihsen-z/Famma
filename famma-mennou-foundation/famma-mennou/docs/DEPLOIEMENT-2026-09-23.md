@@ -172,7 +172,7 @@ Règle « tout paramétrable depuis l'admin » : les textes commerciaux de la fi
 
 Règles : une ligne vidée disparaît ; un bouton vidé reprend son libellé par défaut ; valeurs par défaut = textes affichés jusqu'ici.
 
-Déployé par DirectAdmin comme la veille (archive hors du dossier public, extraite vers `wp-content`). Retour arrière : archive de l'état `f3b3a69`.
+Déployé par DirectAdmin comme la veille (archive hors du dossier public, extraite vers `wp-content`). Retour arrière : archive de l'état `e77a5af` (inclut le correctif du favori de la section 5.5).
 
 Vérifié en ligne : 7 pages en HTTP 200 sans erreur ; textes FR et AR identiques à la veille, sauf les lignes derja affichées sous le français dans la réassurance, qui reprennent désormais le texte de la version arabe (« الدفع كي يوصلك », « التوصيل فابور، في تونس الكل ») au lieu de deux formulations différentes ; section visible dans l'administration, 30 champs préremplis.
 
