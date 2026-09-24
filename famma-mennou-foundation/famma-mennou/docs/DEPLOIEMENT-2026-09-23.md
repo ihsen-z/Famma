@@ -245,3 +245,45 @@ Aucun chiffre ni témoignage par défaut (§58) : la section « Ils nous font co
 - Vider la corbeille de FAMMA → Newsletter et supprimer `famma-deploy-accueil.zip` à la racine du compte.
 - Si un cache de page (LiteSpeed) est activé plus tard, exclure l'accueil du cache au-delà de 12 h ou le purger chaque jour : le nonce du formulaire expire au bout de 12 à 24 h.
 
+
+---
+
+## 8. Nuit du 24 au 25/09 : pages vérifiées, anglais et promesses non tenues retirés
+
+Audit automatique des 70 pages en ligne (FR + AR : pages, 14 fiches, 5 rayons, recherche, 404, panier et commande remplis) : texte visible, attributs lus par les lecteurs d'écran (`aria-label`, `alt`, `placeholder`) et balises de partage.
+
+### 8.1 Code déployé (commits `bac1ac5`, `357098d`, `bb0f2bd`)
+
+Trois archives partielles, extraites dans `wp-content/` : seuls les fichiers modifiés, dont la version en ligne était vérifiée identique au commit précédent.
+
+| Constat | Correctif |
+|---|---|
+| 404 arabe : « عفوا! ’t لا يمكن… » puis une phrase en anglais ; 404 française : « n'ai été trouvé » | les deux phrases de Kadence réécrites (FR + derja) |
+| Fil d'Ariane : `aria-label="Breadcrumb"` en anglais sur la boutique, les rayons et les fiches | libellé traduit |
+| « Promotions » au menu et « En promotion (1) » en boutique, alors qu'aucun produit n'a de prix barré (la liste de WooCommerce est périmée) | compte revérifié produit par produit ; le lien et la case disparaissent sans promotion et reviennent seuls |
+| Tri « par notes moyennes » sans aucun avis | retiré tant qu'aucun produit n'est noté |
+| E-mail au checkout : « (facultatif) » écrit deux fois | traduction corrigée (FR + AR) |
+| Champs multilignes en derja : « من 9:00 » affiché « ن 9:00 » (octet 0x85 de « م » pris pour un saut de ligne) | `preg_split( '/\R/u' )` dans les pages, la FAQ produit et le référencement |
+
+Retour arrière : `famma-rollback-pages.zip` (état `38140b5`) pour le premier lot ; les deux autres correctifs se retirent en rechargeant les fichiers de `bac1ac5`.
+
+### 8.2 Réglages faits dans l'administration
+
+| Où | Avant | Après |
+|---|---|---|
+| Apparence → Menus → Principal | « Categories », « Nouveautes », liens en `http://` | « Catégories » (classe `famma-menu-categories`), « Nouveautés », liens en `https://` |
+| Widgets de la boutique | titres saisis « Categories », « Disponibilite » (non traduits en arabe) | titres vidés : les libellés du thème s'appliquent (« Catégories / الأقسام », « Disponibilité / التوفّر »…) |
+| FAMMA → Pages → barre supérieure, promesse 4 | « Satisfait ou remboursé / كان ما تخرجش فرحان نرجعولك فلوسك » (aucune politique de retour publiée) | « Livraison en 24 h à 48 h / التوصيل في 24 لـ 48 ساعة », icône horloge |
+| FAMMA → Pages → À propos | « On cherche, on teste, on sélectionne » | « On cherche, on sélectionne » (FR + derja) |
+| FAMMA → Pages → Contact, horaires | « 9h -> 18h », rien en derja | « De 9 h à 18 h » / « من 9:00 لـ 18:00 » |
+
+### 8.3 Vérifié en ligne
+
+404 FR et AR, fil d'Ariane FR (« Fil d'Ariane ») et AR, menu FR/AR sans « Promotions », boutique sans « En promotion » ni tri par notes, titres de filtres FR/AR, barre supérieure FR/AR, À propos, Contact FR/AR : HTTP 200, aucune erreur PHP dans le HTML. Nouvel audit : plus aucun anglais hors textes des fiches produit et noms techniques `utm_*` de la politique de confidentialité.
+
+### 8.4 En attente du propriétaire
+
+- **Textes des 12 fiches produit** : termes anglais (BPA Free, Dry Top, Panoramic View, Brushless, RPM…) et affirmations invérifiables (« أسرع بـ 10 مرات », « آلاف المرّات », « 100 % », « الأصلي »), et la **certification U.S. Coast Guard / Transport Canada du gilet enfant**. Réécriture prête (61 remplacements, textes d'origine sauvegardés dans la méta `_famma_backup_textes_2026_09_25`), non appliquée : elle attend la validation du propriétaire.
+- **CGV et Retours** : les deux pages affichent encore les notes internes (« Points à trancher… », « Clauses à faire rédiger… »), et le texte des CGV est repris au checkout sous la case à cocher. Textes légaux à fournir par le propriétaire.
+- **Marque « Body Glove Paddle Pals »** : à confirmer (produit d'origine ou non).
+- Supprimer les archives `famma-deploy-pages.zip`, `famma-deploy-promos.zip`, `famma-deploy-lignes.zip` à la racine du compte.
