@@ -879,7 +879,7 @@ final class Seo {
 			return array();
 		}
 
-		$lines = preg_split( '/\R/', $raw );
+		$lines = preg_split( '/\R/u', $raw );
 		$lines = is_array( $lines ) ? $lines : array();
 
 		$urls = array();

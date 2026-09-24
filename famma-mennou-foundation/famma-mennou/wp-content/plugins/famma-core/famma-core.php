@@ -930,11 +930,11 @@ final class Product_Faq {
 	 * @return array<int, array<string, string>>
 	 */
 	private function parse( string $raw ): array {
-		$blocks = preg_split( '/\R{2,}/', trim( $raw ) );
+		$blocks = preg_split( '/\R{2,}/u', trim( $raw ) );
 		$pairs  = array();
 
 		foreach ( (array) $blocks as $block ) {
-			$lines = preg_split( '/\R/', trim( (string) $block ) );
+			$lines = preg_split( '/\R/u', trim( (string) $block ) );
 			$lines = array_values( array_filter( array_map( 'trim', (array) $lines ), 'strlen' ) );
 
 			if ( count( $lines ) < 2 ) {
