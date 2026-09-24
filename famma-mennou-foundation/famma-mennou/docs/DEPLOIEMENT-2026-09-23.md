@@ -281,9 +281,22 @@ Retour arrière : `famma-rollback-pages.zip` (état `38140b5`) pour le premier l
 
 404 FR et AR, fil d'Ariane FR (« Fil d'Ariane ») et AR, menu FR/AR sans « Promotions », boutique sans « En promotion » ni tri par notes, titres de filtres FR/AR, barre supérieure FR/AR, À propos, Contact FR/AR : HTTP 200, aucune erreur PHP dans le HTML. Nouvel audit : plus aucun anglais hors textes des fiches produit et noms techniques `utm_*` de la politique de confidentialité.
 
-### 8.4 En attente du propriétaire
+### 8.4 Validé par le propriétaire le 25/09, puis appliqué
 
-- **Textes des 12 fiches produit** : termes anglais (BPA Free, Dry Top, Panoramic View, Brushless, RPM…) et affirmations invérifiables (« أسرع بـ 10 مرات », « آلاف المرّات », « 100 % », « الأصلي »), et la **certification U.S. Coast Guard / Transport Canada du gilet enfant**. Réécriture prête (61 remplacements, textes d'origine sauvegardés dans la méta `_famma_backup_textes_2026_09_25`), non appliquée : elle attend la validation du propriétaire.
-- **CGV et Retours** : les deux pages affichent encore les notes internes (« Points à trancher… », « Clauses à faire rédiger… »), et le texte des CGV est repris au checkout sous la case à cocher. Textes légaux à fournir par le propriétaire.
-- **Marque « Body Glove Paddle Pals »** : à confirmer (produit d'origine ou non).
+- **13 fiches produit** réécrites par l'API WooCommerce, texte d'origine (nom, description, résumé) sauvegardé dans la méta `_famma_backup_textes_2026_09_25` de chaque produit :
+  - anglais → français : « (Salad Pod) » retiré du nom, « Shark » → « Requin », BPA Free, Fresh, Junk Food, Dry Top, Water-Stop, Panoramic View, Brushless, RPM, DIY, Forward & Reverse, Chuck, Power Stack, Adjustable Torque, No Ink / No Paint / Clean Hands, Fine Motor Skills, Reusable, Lightweight & Stable, Red Grid, Express Cleaning, Auto-Rebound, Shoulder Harness, Buckle Strap, Sensitive Skin, LBS ;
+  - affirmations invérifiables retirées : « أسرع بـ 10 مرات », « آلاف المرّات », « 100 % » (étanchéité, PVC, sans BPA), « الأصلي / أصلي », « حتى قطرة ماء ما تدخلش », « تدوم معاك سنين » ;
+  - gilet enfant : certification U.S. Coast Guard / Transport Canada retirée (titre, paragraphe, puce, ligne du tableau), ainsi que « يعوم بكل أمان » et « حماية جبّارة » ; ajout d'un rappel : la sangle aide à flotter mais ne remplace pas la surveillance d'un adulte.
+- **16 photos** (boîte à salade, masque) : texte alternatif et titre sans « Salad Pod » ni « Shark ».
+- **Retours** et **CGV** : notes internes remplacées par un texte d'attente qui annonce la rédaction en cours et ne reprend que des faits déjà publiés (prix en dinars livraison comprise, commande sans compte, appel de confirmation, livraison offerte dans les 24 gouvernorats, paiement en espèces à la réception), FR + derja. Les rappels « À compléter par le propriétaire » restent, visibles des seuls administrateurs. Révisions WordPress conservées.
+- **Livraison** : rubrique « Délai : 24 h à 48 h » ajoutée.
+
+Nouvel audit des 70 pages : aucun anglais visible (hors noms techniques `utm_*`), aucune des promesses listées. « shark » ne subsiste que dans l'adresse de la fiche et les noms de fichiers des photos : changer l'adresse casserait les liens déjà partagés.
+
+### 8.5 Restant
+
+- CGV et politique de retour définitives, avec les informations légales (raison sociale, matricule fiscal, registre du commerce) : à fournir par le propriétaire.
+- Marque « Body Glove Paddle Pals » citée sur le gilet : à confirmer (produit d'origine ou non).
+- Le délai « 24 h à 48 h » est écrit en dur dans les pages Livraison : à changer aussi dans FAMMA → Pages → Contact si le délai évolue.
+- Menus et pages en arabe : les libellés (Accueil, Boutique, Livraison…) restent en français sur /ar/ tant qu'ils ne sont pas traduits dans TranslatePress.
 - Supprimer les archives `famma-deploy-pages.zip`, `famma-deploy-promos.zip`, `famma-deploy-lignes.zip` à la racine du compte.
