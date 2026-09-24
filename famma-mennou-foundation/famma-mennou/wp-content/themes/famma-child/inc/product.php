@@ -94,14 +94,30 @@ add_action( 'wp', 'famma_child_remove_parent_breadcrumb' );
  * @return void
  */
 function famma_child_product_whatsapp_card(): void {
-	if ( '' === famma_child_whatsapp_number() ) {
+	// Libellé saisi dans FAMMA → Pages → Fiche produit ; vidé, le bouton disparaît.
+	$label = famma_child_product_copy( 'whatsapp_card' );
+
+	if ( '' === famma_child_whatsapp_number() || '' === $label ) {
 		return;
 	}
 
 	echo '<div class="famma-product__whatsapp">';
-	echo do_shortcode( '[famma_whatsapp text="' . esc_attr__( 'Une question sur ce produit ?', 'famma-child' ) . '"]' );
+	echo do_shortcode( '[famma_whatsapp text="' . esc_attr( $label ) . '"]' );
 	echo '</div>';
 }
+
+/**
+ * Libellé du bouton « Ajouter au panier » de la fiche, saisi dans l'administration.
+ *
+ * @param string $text Libellé de WooCommerce.
+ * @return string
+ */
+function famma_child_single_add_to_cart_text( $text ) {
+	$label = famma_child_product_copy( 'cta_cart' );
+
+	return '' !== $label ? $label : $text;
+}
+add_filter( 'woocommerce_product_single_add_to_cart_text', 'famma_child_single_add_to_cart_text', 20 );
 add_action( 'woocommerce_single_product_summary', 'famma_child_product_whatsapp_card', 36 );
 
 /**
@@ -249,30 +265,40 @@ add_action( 'woocommerce_after_add_to_cart_button', 'famma_child_product_favouri
  * @return void
  */
 function famma_child_product_benefits(): void {
-	$benefits = array(
-		array(
-			'icon'  => 'card',
-			'title' => __( 'Paiement à la livraison', 'famma-child' ),
-			'text'  => __( 'Vous réglez en espèces, à la réception. Rien avant.', 'famma-child' ),
-		),
-		array(
-			'icon'  => 'truck',
-			'title' => __( 'Livraison offerte', 'famma-child' ),
-			'text'  => __( 'Partout en Tunisie, dans les 24 gouvernorats.', 'famma-child' ),
-		),
-		array(
-			'icon'  => 'user',
-			'title' => __( 'Commande sans compte', 'famma-child' ),
-			'text'  => __( 'Nom, téléphone, gouvernorat et adresse. Rien de plus.', 'famma-child' ),
-		),
+	/*
+	 * Les textes viennent de FAMMA → Pages → Fiche produit ; seules les icônes
+	 * restent ici, elles relèvent du dessin. Un bénéfice sans titre disparaît,
+	 * et le quatrième n'existe que si un numéro WhatsApp est configuré.
+	 */
+	$icons = array(
+		1 => 'card',
+		2 => 'truck',
+		3 => 'user',
+		4 => 'chat',
 	);
 
-	if ( '' !== famma_child_whatsapp_number() ) {
+	$benefits = array();
+
+	foreach ( $icons as $n => $icon ) {
+		if ( 4 === $n && '' === famma_child_whatsapp_number() ) {
+			continue;
+		}
+
+		$title = famma_child_product_copy( 'benefit_' . $n . '_title' );
+
+		if ( '' === $title ) {
+			continue;
+		}
+
 		$benefits[] = array(
-			'icon'  => 'chat',
-			'title' => __( 'Une équipe joignable', 'famma-child' ),
-			'text'  => __( 'Posez vos questions sur WhatsApp avant de commander.', 'famma-child' ),
+			'icon'  => $icon,
+			'title' => $title,
+			'text'  => famma_child_product_copy( 'benefit_' . $n . '_text' ),
 		);
+	}
+
+	if ( empty( $benefits ) ) {
+		return;
 	}
 	?>
 	<ul class="famma-benefits">

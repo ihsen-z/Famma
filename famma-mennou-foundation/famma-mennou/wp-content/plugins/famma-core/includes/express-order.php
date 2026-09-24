@@ -416,10 +416,20 @@ final class Express_Order {
 		if ( ! $product instanceof \WC_Product ) {
 			return;
 		}
+
+		/*
+		 * Libellés saisis dans FAMMA → Pages → Fiche produit. Sur le site
+		 * français, le titre porte aussi sa version derja (« Commander / أطلب
+		 * توا ») ; sur le site arabe, le libellé principal est déjà en derja.
+		 */
+		$order   = Product_Content::text( 'cta_order' );
+		$derja   = Product_Content::derja( 'cta_order' );
+		$title   = ( ! is_rtl() && '' !== $derja && $derja !== $order ) ? $order . ' / ' . $derja : $order;
+		$confirm = Product_Content::text( 'cta_confirm' );
 		?>
 		<section class="famma-express" aria-labelledby="famma-express-title">
 			<h2 class="famma-express__title" id="famma-express-title">
-				<?php esc_html_e( 'Order now / أطلب توا', 'famma-core' ); ?>
+				<?php echo esc_html( $title ); ?>
 			</h2>
 			<?php
 			/*
@@ -456,9 +466,9 @@ final class Express_Order {
 				<input type="hidden" name="famma_product_id" value="<?php echo esc_attr( (string) $product->get_id() ); ?>" />
 
 				<button type="submit" class="famma-express__submit">
-					<span class="famma-express__submit-fr"><?php esc_html_e( 'Confirm my order', 'famma-core' ); ?></span>
+					<span class="famma-express__submit-fr"><?php echo esc_html( $confirm ); ?></span>
 					<?php // Traduction du bouton, et non un autre appel à l'action : masquée sur le site arabe, où le libellé principal est déjà en derja. ?>
-					<span class="famma-express__submit-ar" lang="ar" dir="rtl">أكّد طلبيتك</span>
+					<span class="famma-express__submit-ar" lang="ar" dir="rtl"><?php echo esc_html( Product_Content::derja( 'cta_confirm' ) ); ?></span>
 				</button>
 
 				<?php

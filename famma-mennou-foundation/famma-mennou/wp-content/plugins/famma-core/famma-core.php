@@ -31,6 +31,7 @@ define( 'FAMMA_CORE_VERSION', '0.2.0' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
+require_once __DIR__ . '/includes/product-content.php';
 require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';
 require_once __DIR__ . '/includes/tracking-events.php';

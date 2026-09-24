@@ -247,6 +247,9 @@
 				<element value="famma_child_whatsapp_number"/>
 				<element value="famma_child_is_derja"/>
 				<element value="famma_child_delivery_delay"/>
+				<element value="famma_child_product_copy"/>
+				<element value="famma_child_product_copy_derja"/>
+				<element value="famma_child_single_add_to_cart_text"/>
 				<element value="famma_child_is_mostly_arabic"/>
 				<element value="famma_child_text_dir_attrs"/>
 				<element value="famma_child_short_description_dir"/>

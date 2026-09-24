@@ -1,6 +1,6 @@
 <?php
 /**
- * Contenu éditable des pages institutionnelles — À propos et Contact.
+ * Contenu éditable des pages institutionnelles — À propos, Contact — et de la fiche produit.
  *
  * Règle du projet : aucun contenu éditorial ni coordonnée n'est codé en dur.
  * Tout ce que le client lit sur ces deux pages vient d'un champ que le
@@ -37,6 +37,18 @@ final class Pages_Content {
 	 * Option abritant le contenu de la page Contact.
 	 */
 	public const OPTION_CONTACT = 'famma_page_contact';
+
+	/**
+	 * Option abritant les textes de la fiche produit (schéma : `Product_Content`).
+	 */
+	public const OPTION_PRODUCT = 'famma_page_product';
+
+	/**
+	 * Pages gérées par cet écran, dans leur ordre d'affichage.
+	 *
+	 * @var array<int, string>
+	 */
+	private const PAGES = array( 'about', 'contact', 'product' );
 
 	/**
 	 * Groupe de réglages, au sens de la Settings API.
@@ -329,21 +341,43 @@ final class Pages_Content {
 	/**
 	 * Schéma des champs, par page.
 	 *
-	 * @param string $page `about` ou `contact`.
+	 * @param string $page `about`, `contact` ou `product`.
 	 * @return array<int, array<string, string>>
 	 */
 	public static function schema( string $page ): array {
-		return 'about' === $page ? self::about_schema() : self::contact_schema();
+		return match ( $page ) {
+			'about'   => self::about_schema(),
+			'product' => Product_Content::schema(),
+			default   => self::contact_schema(),
+		};
 	}
 
 	/**
 	 * Nom de l'option abritant une page.
 	 *
-	 * @param string $page `about` ou `contact`.
+	 * @param string $page `about`, `contact` ou `product`.
 	 * @return string
 	 */
 	private static function option_name( string $page ): string {
-		return 'about' === $page ? self::OPTION_ABOUT : self::OPTION_CONTACT;
+		return match ( $page ) {
+			'about'   => self::OPTION_ABOUT,
+			'product' => self::OPTION_PRODUCT,
+			default   => self::OPTION_CONTACT,
+		};
+	}
+
+	/**
+	 * Titre de la section d'une page, sur l'écran d'administration.
+	 *
+	 * @param string $page `about`, `contact` ou `product`.
+	 * @return string
+	 */
+	private static function section_title( string $page ): string {
+		return match ( $page ) {
+			'about'   => __( 'Page À propos', 'famma-core' ),
+			'product' => __( 'Fiche produit', 'famma-core' ),
+			default   => __( 'Page Contact', 'famma-core' ),
+		};
 	}
 
 	/**
@@ -359,20 +393,36 @@ final class Pages_Content {
 	}
 
 	/**
-	 * Lit un champ de contenu, prêt à afficher.
+	 * Lit un champ de contenu, prêt à afficher, dans la langue de la page.
 	 *
-	 * @param string $page `about` ou `contact`.
+	 * @param string $page `about`, `contact` ou `product`.
 	 * @param string $key  Clé du champ, telle que déclarée au schéma.
 	 * @return string Chaîne vide si le champ n'est renseigné dans aucune langue.
 	 */
 	public static function text( string $page, string $key ): string {
+		return self::text_in( $page, $key, self::lang() );
+	}
+
+	/**
+	 * Lit un champ de contenu dans une langue donnée.
+	 *
+	 * La fiche produit française affiche, sous certaines lignes, leur version
+	 * derja : il faut pouvoir lire l'arabe hors d'une page RTL.
+	 *
+	 * @param string $page     `about`, `contact` ou `product`.
+	 * @param string $key      Clé du champ, telle que déclarée au schéma.
+	 * @param string $lang     `fr` ou `ar`.
+	 * @param bool   $fallback Retomber sur le français quand l'arabe est vide.
+	 * @return string
+	 */
+	public static function text_in( string $page, string $key, string $lang, bool $fallback = true ): string {
 		$stored = get_option( self::option_name( $page ), array() );
 		$stored = is_array( $stored ) ? $stored : array();
-		$lang   = self::lang();
+		$lang   = 'ar' === $lang ? 'ar' : 'fr';
 
 		$value = (string) ( $stored[ $key . '_' . $lang ] ?? '' );
 
-		if ( '' === trim( $value ) && 'ar' === $lang ) {
+		if ( $fallback && '' === trim( $value ) && 'ar' === $lang ) {
 			$value = (string) ( $stored[ $key . '_fr' ] ?? '' );
 		}
 
@@ -390,8 +440,13 @@ final class Pages_Content {
 
 		foreach ( self::schema( $page ) as $field ) {
 			if ( $field['key'] === $key ) {
-				$fallback = (string) ( $field[ 'default_' . $lang ] ?? '' );
-				return '' !== trim( $fallback ) ? $fallback : (string) ( $field['default_fr'] ?? '' );
+				$default = (string) ( $field[ 'default_' . $lang ] ?? '' );
+
+				if ( '' !== trim( $default ) || ! $fallback ) {
+					return $default;
+				}
+
+				return (string) ( $field['default_fr'] ?? '' );
 			}
 		}
 
@@ -431,7 +486,7 @@ final class Pages_Content {
 	 * @return void
 	 */
 	public function register_settings(): void {
-		foreach ( array( 'about', 'contact' ) as $page ) {
+		foreach ( self::PAGES as $page ) {
 			$option = self::option_name( $page );
 
 			register_setting(
@@ -448,7 +503,7 @@ final class Pages_Content {
 
 			add_settings_section(
 				'famma_section_' . $page,
-				'about' === $page ? __( 'Page À propos', 'famma-core' ) : __( 'Page Contact', 'famma-core' ),
+				self::section_title( $page ),
 				array( $this, 'section_intro' ),
 				self::SLUG
 			);
@@ -693,7 +748,7 @@ final class Pages_Content {
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 			<p>
-				<?php esc_html_e( 'Contenu des pages À propos et Contact. Rien n’est codé en dur : ce que vous écrivez ici est ce que le client lit.', 'famma-core' ); ?>
+				<?php esc_html_e( 'Contenu des pages À propos et Contact, et textes de la fiche produit. Rien n’est codé en dur : ce que vous écrivez ici est ce que le client lit.', 'famma-core' ); ?>
 			</p>
 			<form action="options.php" method="post">
 				<?php

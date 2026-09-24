@@ -252,26 +252,59 @@ function famma_child_delivery_delay(): string {
 }
 
 /**
+ * Texte de la fiche produit saisi dans FAMMA → Pages, dans la langue de la page.
+ *
+ * Aucun texte commercial de la fiche n'est écrit dans le thème : il vient des
+ * réglages de famma-core. Sans le plugin, le bloc concerné se masque.
+ *
+ * @param string $key Clé du champ (voir `Famma\Core\Product_Content::schema()`).
+ * @return string
+ */
+function famma_child_product_copy( string $key ): string {
+	if ( ! class_exists( '\Famma\Core\Product_Content' ) ) {
+		return '';
+	}
+
+	return \Famma\Core\Product_Content::text( $key );
+}
+
+/**
+ * Version derja d'un texte de la fiche, pour la ligne affichée sous le français.
+ *
+ * @param string $key Clé du champ.
+ * @return string Chaîne vide si la version derja n'est pas remplie.
+ */
+function famma_child_product_copy_derja( string $key ): string {
+	if ( ! class_exists( '\Famma\Core\Product_Content' ) ) {
+		return '';
+	}
+
+	return \Famma\Core\Product_Content::derja( $key );
+}
+
+/**
  * Bloc de réassurance entre le prix et le formulaire de commande (§30, §48).
  *
- * Ne contient que des faits établis : paiement à la livraison, 0 TND de
- * frais, 24 gouvernorats, et le délai **tel que le propriétaire l'a écrit**
- * dans FAMMA → Pages. Tant que ce champ est vide, aucun délai n'est promis
+ * Les lignes sont celles que le propriétaire écrit dans FAMMA → Pages →
+ * Fiche produit, et le délai **tel qu'il l'a saisi** dans la section Contact.
+ * Une ligne vidée disparaît ; tant que le délai est vide, aucun n'est promis
  * (§60). Aucune garantie, aucune statistique.
  *
  * @return void
  */
 function famma_child_product_reassurance(): void {
-	$items = array(
-		array(
-			'fr' => __( 'Paiement à la livraison', 'famma-child' ),
-			'ar' => 'الدفع عند التوصيل',
-		),
-		array(
-			'fr' => __( 'Livraison offerte, partout en Tunisie', 'famma-child' ),
-			'ar' => 'التوصيل بلاش',
-		),
-	);
+	$items = array();
+
+	foreach ( array( 'reassure_payment', 'reassure_shipping' ) as $key ) {
+		$text = famma_child_product_copy( $key );
+
+		if ( '' !== $text ) {
+			$items[] = array(
+				'fr' => $text,
+				'ar' => famma_child_product_copy_derja( $key ),
+			);
+		}
+	}
 
 	$delay = famma_child_delivery_delay();
 
@@ -280,6 +313,11 @@ function famma_child_product_reassurance(): void {
 			'fr' => $delay,
 			'ar' => '',
 		);
+	}
+
+	// Tout vidé dans l'administration : pas de cadre vide sur la fiche.
+	if ( empty( $items ) ) {
+		return;
 	}
 
 	famma_child_reassurance_list( $items );
@@ -622,13 +660,12 @@ function famma_child_sticky_cta(): void {
 	$whatsapp = '';
 
 	if ( class_exists( '\Famma\Core\WhatsApp' ) ) {
-		$whatsapp = \Famma\Core\WhatsApp::link(
-			sprintf(
-				/* translators: %s: nom du produit. */
-				__( 'Bonjour, une question sur : %s', 'famma-child' ),
-				$product->get_name()
-			)
-		);
+		// Message pré-rempli saisi dans FAMMA → Pages → Fiche produit ; vide = conversation vierge.
+		$message = class_exists( '\Famma\Core\Product_Content' )
+			? \Famma\Core\Product_Content::whatsapp_message( $product->get_name() )
+			: '';
+
+		$whatsapp = \Famma\Core\WhatsApp::link( $message );
 	}
 
 	echo '<div class="famma-sticky-cta">';
@@ -643,10 +680,14 @@ function famma_child_sticky_cta(): void {
 		);
 	}
 
+	// Libellé du bouton : FAMMA → Pages → Fiche produit, jamais vide (repli sur le défaut).
+	$label = famma_child_product_copy( 'cta_order' );
+	$label = '' !== $label ? $label : __( 'Commander', 'famma-child' );
+
 	printf(
 		'<button type="button" class="famma-sticky-cta__button">%1$s<span class="famma-sticky-cta__ar" lang="ar" dir="rtl">%2$s</span></button>',
-		esc_html__( 'Commander', 'famma-child' ),
-		esc_html( 'أطلب توا' )
+		esc_html( $label ),
+		esc_html( famma_child_product_copy_derja( 'cta_order' ) )
 	);
 	echo '</div>';
 }
