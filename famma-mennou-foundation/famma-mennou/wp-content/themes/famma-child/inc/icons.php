@@ -58,6 +58,10 @@ function famma_child_icon_paths(): array {
 		'forward'   => '<path d="M9 6l6 6-6 6"/>',
 		'back'      => '<path d="M15 6l-6 6 6 6"/>',
 
+		// Accueil — newsletter et témoignages.
+		'gift'      => '<rect x="3" y="9" width="18" height="12" rx="1.5"/><path d="M2 9h20v4H2zM12 9v12"/><path d="M12 9C10 9 7 8.4 7 6.2A2.2 2.2 0 0 1 12 5.6 2.2 2.2 0 0 1 17 6.2C17 8.4 14 9 12 9z"/>',
+		'quote'     => '<path d="M9 7H6a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h3v1a3 3 0 0 1-3 3M20 7h-3a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h3v1a3 3 0 0 1-3 3"/>',
+
 		// Pied de page — réseaux sociaux.
 		'facebook'  => '<path d="M14 8h3V5h-3a4 4 0 0 0-4 4v2H8v3h2v7h3v-7h3l1-3h-4V9a1 1 0 0 1 1-1z"/>',
 		'instagram' => '<path d="M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM17.5 6.5h.01"/>',

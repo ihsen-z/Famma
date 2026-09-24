@@ -9,7 +9,8 @@
  * l'administration en décor.
  *
  * L'ordre suit la maquette : héros, catégories, nouveautés, puis le contenu
- * rédigé, puis les raisons de choisir FAMMA, les avis et l'appel WhatsApp.
+ * rédigé, puis les raisons de choisir FAMMA, la newsletter, les avis et
+ * l'appel WhatsApp.
  *
  * Chaque section pilotée par la donnée s'efface d'elle-même quand cette donnée
  * n'existe pas — voir inc/home.php.
@@ -52,6 +53,8 @@ get_header();
 	?>
 
 	<?php famma_child_home_why(); ?>
+
+	<?php famma_child_home_newsletter(); ?>
 
 	<?php famma_child_home_reviews(); ?>
 

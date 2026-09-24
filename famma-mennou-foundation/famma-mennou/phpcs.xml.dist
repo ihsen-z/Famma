@@ -313,6 +313,9 @@
 				<element value="famma_child_tunnel_step"/>
 				<element value="famma_child_tunnel_steps"/>
 				<element value="famma_child_tunnel_swap_hero"/>
+				<element value="famma_child_home_copy"/>
+				<element value="famma_child_home_newsletter"/>
+				<element value="famma_child_newsletter_feedback"/>
 				<element value="famma_mo_build"/>
 				<element value="famma_po_parse"/>
 				<element value="famma_po_unquote"/>

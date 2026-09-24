@@ -554,3 +554,16 @@ msgstr[2] "زوز منتجات في القفة"
 msgstr[3] "%d منتجات في القفة"
 msgstr[4] "%d منتج في القفة"
 msgstr[5] "%d منتج في القفة"
+
+# --- Accueil : newsletter (24/09) ---
+msgid "Merci ! Votre inscription est enregistrée."
+msgstr "يعيشك! تسجّلت معانا."
+
+msgid "Cette adresse e-mail ne semble pas valide. Vérifiez-la et réessayez."
+msgstr "الإيميل هذا موش صحيح. ثبّت فيه وعاود."
+
+msgid "L’inscription n’a pas abouti. Réessayez dans un instant."
+msgstr "التسجيل ما تعدّاش. عاود بعد شويّة."
+
+msgid "Ne pas remplir ce champ"
+msgstr "ما تعمّرش الخانة هذي"

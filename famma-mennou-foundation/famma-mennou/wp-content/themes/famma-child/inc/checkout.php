@@ -99,6 +99,7 @@ function famma_child_account_choice(): void {
 	</fieldset>
 	<?php
 }
+
 /*
  * Priorité 5 sur `woocommerce_checkout_billing` : en tête de la colonne du
  * formulaire, juste avant la carte « Vos coordonnées ». Accroché avant les

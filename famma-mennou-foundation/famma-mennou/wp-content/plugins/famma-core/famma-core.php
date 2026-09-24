@@ -32,6 +32,8 @@ define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
 require_once __DIR__ . '/includes/product-content.php';
+require_once __DIR__ . '/includes/home-content.php';
+require_once __DIR__ . '/includes/newsletter.php';
 require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';
 require_once __DIR__ . '/includes/tracking-events.php';
@@ -2435,6 +2437,8 @@ function boot(): void {
 	Product_Video::instance();
 	Seo::instance();
 	Hardening::instance();
+	// Le formulaire public passe par admin-post.php : chargé partout.
+	Newsletter::instance();
 
 	// Le tableau de bord ne sert qu'à l'administration : rien de tout cela
 	// n'est chargé sur le front (règle 10).

@@ -44,11 +44,16 @@ final class Pages_Content {
 	public const OPTION_PRODUCT = 'famma_page_product';
 
 	/**
+	 * Option abritant les textes de l'accueil (schéma : `Home_Content`).
+	 */
+	public const OPTION_HOME = 'famma_page_home';
+
+	/**
 	 * Pages gérées par cet écran, dans leur ordre d'affichage.
 	 *
 	 * @var array<int, string>
 	 */
-	private const PAGES = array( 'about', 'contact', 'product' );
+	private const PAGES = array( 'home', 'about', 'contact', 'product' );
 
 	/**
 	 * Groupe de réglages, au sens de la Settings API.
@@ -348,6 +353,7 @@ final class Pages_Content {
 		return match ( $page ) {
 			'about'   => self::about_schema(),
 			'product' => Product_Content::schema(),
+			'home'    => Home_Content::schema(),
 			default   => self::contact_schema(),
 		};
 	}
@@ -362,6 +368,7 @@ final class Pages_Content {
 		return match ( $page ) {
 			'about'   => self::OPTION_ABOUT,
 			'product' => self::OPTION_PRODUCT,
+			'home'    => self::OPTION_HOME,
 			default   => self::OPTION_CONTACT,
 		};
 	}
@@ -376,6 +383,7 @@ final class Pages_Content {
 		return match ( $page ) {
 			'about'   => __( 'Page À propos', 'famma-core' ),
 			'product' => __( 'Fiche produit', 'famma-core' ),
+			'home'    => __( 'Page d’accueil — newsletter et « Ils nous font confiance »', 'famma-core' ),
 			default   => __( 'Page Contact', 'famma-core' ),
 		};
 	}
@@ -748,7 +756,7 @@ final class Pages_Content {
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 			<p>
-				<?php esc_html_e( 'Contenu des pages À propos et Contact, et textes de la fiche produit. Rien n’est codé en dur : ce que vous écrivez ici est ce que le client lit.', 'famma-core' ); ?>
+				<?php esc_html_e( 'Textes de l’accueil, contenu des pages À propos et Contact, et textes de la fiche produit. Rien n’est codé en dur : ce que vous écrivez ici est ce que le client lit.', 'famma-core' ); ?>
 			</p>
 			<form action="options.php" method="post">
 				<?php

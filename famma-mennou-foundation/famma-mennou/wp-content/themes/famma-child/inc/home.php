@@ -480,41 +480,10 @@ function famma_child_home_review_stats(): array {
 	return $stats;
 }
 
-/**
- * Section « Ils nous font confiance ».
- *
- * **Rien tant qu'il n'y a aucun avis.** La maquette affichait « + 2 500 clients
- * satisfaits », « 4.8/5 » et trois témoignages signés : sur une boutique qui
- * démarre, ce sont des mensonges commerciaux, et le §58 les interdit.
- *
- * @return void
+/*
+ * La section « Ils nous font confiance » vit dans inc/home-social.php, avec la
+ * newsletter : ses textes sont désormais réglables dans FAMMA → Pages.
  */
-function famma_child_home_reviews(): void {
-	$stats = famma_child_home_review_stats();
-
-	if ( 0 === $stats['count'] ) {
-		return;
-	}
-	?>
-	<section class="famma-home__section">
-		<?php famma_child_home_title( __( 'Ils nous font confiance', 'famma-child' ) ); ?>
-
-		<div class="famma-trust">
-			<p class="famma-trust__value"><?php echo esc_html( number_format_i18n( $stats['average'], 1 ) ); ?><span class="famma-trust__max">/5</span></p>
-			<?php echo wp_kses_post( wc_get_rating_html( $stats['average'], $stats['count'] ) ); ?>
-			<p class="famma-trust__count">
-				<?php
-				printf(
-					/* translators: %s: nombre d'avis. */
-					esc_html( _n( 'Basé sur %s avis client', 'Basé sur %s avis clients', $stats['count'], 'famma-child' ) ),
-					esc_html( number_format_i18n( $stats['count'] ) )
-				);
-				?>
-			</p>
-		</div>
-	</section>
-	<?php
-}
 
 /**
  * Vide les agrégats de l'accueil dès qu'un produit ou un avis change.

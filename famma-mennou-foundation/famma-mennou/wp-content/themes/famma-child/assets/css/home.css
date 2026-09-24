@@ -599,40 +599,234 @@
 	text-wrap: pretty;
 }
 
-/* --- Avis --- */
+/* --- Newsletter (maquette : bandeau bleu nuit, cadeau orange) --- */
 
-.famma-trust {
+.famma-newsletter {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 26px;
+	padding: 30px clamp(22px, 4vw, 44px);
+	border-radius: 14px;
+	background: var(--famma-blue);
+	color: var(--famma-white);
+}
+
+.famma-newsletter__intro {
+	display: flex;
+	flex: 1 1 21.25rem;
+	align-items: center;
+	gap: 20px;
+	min-inline-size: 0;
+}
+
+.famma-newsletter__icon {
+	flex-shrink: 0;
+	inline-size: 58px;
+	block-size: 58px;
+	color: var(--famma-orange);
+	stroke-width: 1.6;
+}
+
+.famma-newsletter__text {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
+	gap: 7px;
+	min-inline-size: 0;
+}
+
+.famma-newsletter__title {
+	margin: 0;
+	color: var(--famma-white);
+	font-family: var(--famma-font-ar), var(--famma-font);
+	font-size: clamp(1.1875rem, 2.4vw, 1.5625rem);
+	font-weight: var(--fw-bold);
+	line-height: var(--lh-tight);
+}
+
+.famma-newsletter__sub {
+	margin: 0;
+	color: var(--famma-on-dark-2);
+	font-size: var(--fs-chrome-field);
+	line-height: var(--lh-base);
+	text-wrap: pretty;
+}
+
+.famma-newsletter__form {
+	display: flex;
+	flex: 1 1 20rem;
+	flex-direction: column;
 	gap: var(--sp-2);
-	padding: var(--sp-8) var(--sp-4);
+	min-inline-size: 0;
+	margin: 0;
+}
+
+.famma-newsletter__row {
+	display: flex;
+	overflow: hidden;
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-white);
+}
+
+.famma-newsletter__input {
+	flex: 1;
+	min-inline-size: 0;
+	min-block-size: var(--sp-12);
+	margin: 0;
+	padding: 0 16px;
+	border: 0;
+	border-radius: 0;
+	background: var(--famma-white);
+	color: var(--famma-ink);
+	/* 16px : en dessous, Safari iOS zoome au focus. */
+	font-size: var(--fs-input);
+}
+
+.famma-newsletter__button {
+	flex-shrink: 0;
+	min-block-size: var(--sp-12);
+	padding: 0 22px;
+	border: 0;
+	border-radius: 0;
+	background: var(--famma-orange);
+	/* §44 : bleu sur orange, 6,31:1 (le blanc de la maquette tombe à 2,61:1). */
+	color: var(--famma-blue);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.famma-newsletter__button:hover,
+.famma-newsletter__button:focus-visible {
+	background: var(--famma-orange-600);
+}
+
+.famma-newsletter__note {
+	margin: 0;
+	color: var(--famma-on-dark-muted);
+	font-size: var(--fs-card-meta);
+}
+
+.famma-newsletter__feedback {
+	margin: 0;
+	padding: var(--sp-2) var(--sp-3);
+	border-radius: var(--famma-radius-sm);
+	font-size: var(--fs-chrome-field);
+	font-weight: var(--fw-medium);
+}
+
+.famma-newsletter__feedback.is-success {
+	background: var(--famma-success);
+	color: var(--famma-white);
+}
+
+.famma-newsletter__feedback.is-error {
+	background: var(--famma-warning-bg);
+	color: var(--famma-warning-700);
+}
+
+/* Pot de miel : hors écran, jamais `display: none` (certains robots l'ignorent). */
+.famma-newsletter__trap {
+	position: absolute;
+	inset-inline-start: -9999px;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+}
+
+/* --- Ils nous font confiance --- */
+
+.famma-trust-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 16.875rem), 1fr));
+	align-items: stretch;
+	gap: 18px;
+}
+
+.famma-trust-stats {
+	display: flex;
+	overflow: hidden;
 	border: 1px solid var(--famma-line);
 	border-radius: var(--famma-radius);
+}
+
+.famma-trust-stats__cell {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 24px 16px;
 	text-align: center;
 }
 
-.famma-trust__value {
-	margin: 0;
-	color: var(--famma-blue);
-	font-size: var(--fs-h1);
-	font-weight: var(--fw-bold);
-	line-height: 1;
+.famma-trust-stats__cell + .famma-trust-stats__cell {
+	border-inline-start: 1px solid var(--famma-line);
 }
 
-.famma-trust__max {
+.famma-trust-stats__value {
+	margin: 0;
+	color: var(--famma-ink);
+	font-size: 1.75rem;
+	font-weight: var(--fw-bold);
+	line-height: 1.1;
+}
+
+.famma-trust-stats__max {
 	color: var(--famma-text-3);
 	font-size: var(--fs-lead);
 }
 
-.famma-trust .star-rating {
+.famma-trust-stats .star-rating {
+	margin: 0;
 	color: var(--famma-orange);
 }
 
-.famma-trust__count {
+.famma-trust-stats__label {
 	margin: 0;
 	color: var(--famma-text-2);
-	font-size: var(--fs-small);
+	font-size: var(--fs-chrome-body);
+}
+
+.famma-testimonial {
+	display: flex;
+	flex-direction: column;
+	gap: 11px;
+	margin: 0;
+	padding: 20px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+}
+
+.famma-testimonial__mark {
+	inline-size: 22px;
+	block-size: 22px;
+	color: var(--famma-orange);
+}
+
+.famma-testimonial__text {
+	flex: 1;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	color: var(--famma-text-prose);
+	font-size: var(--fs-chrome-field);
+	font-style: normal;
+	line-height: 1.6;
+	text-wrap: pretty;
+}
+
+.famma-testimonial__text p {
+	margin: 0;
+}
+
+.famma-testimonial__name {
+	color: var(--famma-text-2);
+	font-size: var(--fs-chrome-body);
+	font-weight: var(--fw-medium);
 }
 
 /* ------------------------------------------------------------
