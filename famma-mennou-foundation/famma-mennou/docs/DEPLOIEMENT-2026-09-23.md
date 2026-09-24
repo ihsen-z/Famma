@@ -177,3 +177,38 @@ Déployé par DirectAdmin comme la veille (archive hors du dossier public, extra
 Vérifié en ligne : 7 pages en HTTP 200 sans erreur ; textes FR et AR identiques à la veille, sauf les lignes derja affichées sous le français dans la réassurance, qui reprennent désormais le texte de la version arabe (« الدفع كي يوصلك », « التوصيل فابور، في تونس الكل ») au lieu de deux formulations différentes ; section visible dans l'administration, 30 champs préremplis.
 
 Reste dans le code, volontairement : petits textes d'interface traduits par fichiers `.po` (libellés de champs, erreurs, « Lire la suite »), mise en page, règles de fonctionnement. À traiter plus tard : textes de réassurance du **checkout** (`famma_child_checkout_trust()`), encore dans le code.
+
+---
+
+## 6. Déploiement du 24/09 (soir) : panier et commande selon les maquettes
+
+Maquettes Claude Design « FAMMA Panier » et « FAMMA Commande ». Commit `364555c` (thème `famma-child` uniquement ; famma-core inchangé).
+
+### 6.1 Code déployé
+
+Archive `famma-deploy-tunnel.zip` (13 fichiers du thème, `git archive` de `364555c`), déposée à la racine du compte (hors dossier public) et extraite vers `domains/fammaminnou.tn/public_html/wp-content` avec « fusionner et écraser ». Archive de retour arrière gardée sur le poste : `famma-rollback-tunnel.zip` (état `65b4099` des fichiers modifiés) ; en cas de retour arrière, supprimer aussi les fichiers ajoutés `inc/tunnel.php`, `inc/cart.php`, `inc/checkout-layout.php`, `assets/css/tunnel.css`, `assets/css/cart.css`, `assets/js/cart.js`.
+
+| Écran | Changement |
+|---|---|
+| Panier, commande, confirmation | En-tête commun : fil d'Ariane, étapes Panier → Commande → Confirmation, titre (remplace le bandeau Kadence) |
+| Panier | Lignes en cartes (vignette, réf., stock, prix unitaire, prix barré), sélecteur − / + avec mise à jour automatique, code promo en encadré, récapitulatif collant, « Passer la commande », réassurance de l'administration, encart WhatsApp, carte « panier vide » |
+| Commande | Cartes 1 Vos coordonnées / 2 Adresse de livraison / 3 Mode de livraison, récapitulatif collant avec vignettes, paiement COD en carte, « Confirmer ma commande » |
+
+Écarts assumés avec la maquette : ni frais ni seuil de livraison, ni express, ni frais COD, ni carte/virement, ni code FAMMA10, ni « retour gratuit 7 jours », ni SMS promis ; « Nom complet » conservé.
+
+### 6.2 Réglage fait
+
+- WooCommerce → Réglages → Comptes et confidentialité : textes de confidentialité (commande et inscription) passés de l'anglais au libellé français officiel de WooCommerce.
+
+### 6.3 Vérifié
+
+- En local (WP_DEBUG, `debug.log` propre) : mise à jour auto 2 → 3, suppression jusqu'au panier vide (AJAX), validation du formulaire vide, commande complète jusqu'à la confirmation (commande test #99 mise à la corbeille), AR/RTL, 375 px sans défilement horizontal.
+- En ligne : accueil, boutique, panier, fiche, panier AR en HTTP 200 sans erreur ; `/commande/` redirige vers le panier quand il est vide (normal). Panier et commande 1 536 px conformes ; − en direct 2 → 1, total 58 → 29 DT ; à 375 px (FR et AR) : largeur de page 357 px, aucun défilement horizontal, étapes et boutons corrects (« أكّد طلبيتك », « عدّي الطلبية »).
+- `php -l` et `phpcs` propres sur tout le projet.
+
+### 6.4 Restant
+
+- `famma-deploy-tunnel.zip` à la racine du compte (hors dossier public) peut être supprimée avec les archives précédentes.
+- « Complétez votre commande » n'apparaît que si des ventes croisées sont renseignées sur les fiches produit.
+- Parcours COD réel (confirmé → expédié → livré) toujours à faire avec l'accord du propriétaire.
+
