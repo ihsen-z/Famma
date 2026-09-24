@@ -68,6 +68,49 @@ function famma_child_count_products( array $args, string $key ): int {
 }
 
 /**
+ * Nombre de produits en ligne réellement en promotion.
+ *
+ * `wc_get_product_ids_on_sale()` lit une table de correspondance et un
+ * transient que WooCommerce ne remet pas toujours à jour : constaté le 24/09,
+ * elle renvoyait un identifiant alors qu'aucun produit n'avait de prix barré,
+ * et « En promotion (1) » menait à une page vide. Chaque identifiant est donc
+ * revérifié par `is_on_sale()`, sur les seuls produits publiés et visibles.
+ *
+ * @return int
+ */
+function famma_child_on_sale_count(): int {
+	$cached = get_transient( 'famma_filter_count_onsale' );
+
+	if ( false !== $cached ) {
+		return (int) $cached;
+	}
+
+	$ids   = function_exists( 'wc_get_product_ids_on_sale' ) ? wc_get_product_ids_on_sale() : array();
+	$count = 0;
+
+	if ( is_array( $ids ) && array() !== $ids && function_exists( 'wc_get_products' ) ) {
+		$products = wc_get_products(
+			array(
+				'include'    => array_map( 'absint', $ids ),
+				'status'     => 'publish',
+				'visibility' => 'catalog',
+				'limit'      => -1,
+			)
+		);
+
+		foreach ( (array) $products as $product ) {
+			if ( $product instanceof WC_Product && $product->is_on_sale() ) {
+				++$count;
+			}
+		}
+	}
+
+	set_transient( 'famma_filter_count_onsale', $count, FAMMA_CHILD_FILTER_TTL );
+
+	return $count;
+}
+
+/**
  * Purge tous les compteurs de filtre.
  *
  * @return void
@@ -667,13 +710,7 @@ class Famma_Child_Sale_Filter_Widget extends Famma_Child_Filter_Widget {
 	protected function rows(): array {
 		$checked = '' !== famma_child_filter_active( 'on_sale' );
 
-		/*
-		 * Le compte vient de `wc_get_product_ids_on_sale()`, la fonction du
-		 * cœur qui fait autorité sur ce qu'est une promotion : prix barré,
-		 * planification et variations comprises.
-		 */
-		$ids   = function_exists( 'wc_get_product_ids_on_sale' ) ? wc_get_product_ids_on_sale() : array();
-		$count = is_array( $ids ) ? count( $ids ) : 0;
+		$count = famma_child_on_sale_count();
 
 		/*
 		 * Comme pour les notes : une case qui ne renvoie rien n'est pas rendue.

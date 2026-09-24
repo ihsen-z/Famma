@@ -609,19 +609,14 @@ add_filter( 'wp_nav_menu_objects', 'famma_child_menu_categories', 10, 2 );
  * L'entrée pointe vers `?on_sale=1` : sans prix barré, elle mène à une page
  * vide et annonce des remises qui n'existent pas. Elle revient d'elle-même dès
  * qu'une promotion est enregistrée sur un produit — rien à retoucher dans
- * l'admin. `wc_get_product_ids_on_sale()` est mise en cache par WooCommerce.
+ * l'admin. Le compte, vérifié produit par produit et mis en cache, est celui
+ * du filtre « En promotion » de la boutique (inc/shop-widgets.php).
  *
  * @param array<int, object> $items Entrées du menu.
  * @return array<int, object>
  */
 function famma_child_menu_hide_empty_sale( array $items ): array {
-	if ( ! function_exists( 'wc_get_product_ids_on_sale' ) ) {
-		return $items;
-	}
-
-	$on_sale = wc_get_product_ids_on_sale();
-
-	if ( is_array( $on_sale ) && array() !== $on_sale ) {
+	if ( ! function_exists( 'famma_child_on_sale_count' ) || famma_child_on_sale_count() > 0 ) {
 		return $items;
 	}
 
