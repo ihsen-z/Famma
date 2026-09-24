@@ -391,7 +391,7 @@ final class Seo {
 			|| ( function_exists( 'is_product_category' ) && is_product_category() );
 
 		if ( ! $is_catalog ) {
-			return $title;
+			return self::translated_page_title( (string) $title );
 		}
 
 		$suffix = self::bilingual(
@@ -405,13 +405,70 @@ final class Seo {
 		}
 
 		$name = (string) get_bloginfo( 'name' );
-		$base = self::page_title_base();
+		$base = self::localized_title_base();
 
 		if ( '' === $base ) {
 			return $title;
 		}
 
 		return sprintf( '%s – %s | %s', $base, $suffix, $name );
+	}
+
+	/**
+	 * Titre d'une page ordinaire (Livraison, FAQ…) sur la version arabe.
+	 *
+	 * Sans traduction disponible, le titre calculé par WordPress est rendu
+	 * tel quel.
+	 *
+	 * @param string $title Titre calculé par WordPress.
+	 * @return string
+	 */
+	private static function translated_page_title( string $title ): string {
+		if ( 'ar' !== self::lang() || is_front_page() || 0 === self::queried_post_id() ) {
+			return $title;
+		}
+
+		$base = self::localized_title_base();
+
+		if ( '' === $base || self::page_title_base() === $base ) {
+			return $title;
+		}
+
+		return sprintf( '%s – %s', $base, (string) get_bloginfo( 'name' ) );
+	}
+
+	/**
+	 * Titre nu de la page courante, dans la langue affichée.
+	 *
+	 * TranslatePress ne traite pas la balise `<title>` : constaté le 25/09,
+	 * « Livraison – FAMMA MINNOU » restait en français sur /ar/ alors que le
+	 * titre de la page, le menu et le fil d'Ariane étaient traduits. Le titre
+	 * nu lui est donc soumis par sa fonction publique `trp_translate()` :
+	 * l'onglet suit la traduction saisie dans l'éditeur de TranslatePress,
+	 * sans aucun texte écrit ici. Mémorisé : le titre sert aussi à og:title.
+	 *
+	 * @return string
+	 */
+	private static function localized_title_base(): string {
+		static $cache = null;
+
+		if ( null !== $cache ) {
+			return $cache;
+		}
+
+		$base = self::page_title_base();
+
+		if ( '' !== $base && 'ar' === self::lang() && function_exists( 'trp_translate' ) ) {
+			$translated = trim( wp_strip_all_tags( (string) trp_translate( $base, null, false ) ) );
+
+			if ( '' !== $translated ) {
+				$base = esc_html( $translated );
+			}
+		}
+
+		$cache = $base;
+
+		return $cache;
 	}
 
 	/**

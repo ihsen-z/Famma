@@ -221,7 +221,9 @@ function famma_child_footer_cod(): void {
 		<?php endif; ?>
 		<p class="famma-footer__cod-text">
 			<?php esc_html_e( 'Vous payez uniquement à la réception de votre commande.', 'famma-child' ); ?>
-			<span class="famma-footer__cod-ar" lang="ar" dir="rtl">خلص كي توصل</span>
+			<?php if ( ! famma_child_is_derja() ) : // En derja, la phrase ci-dessus dit déjà la même chose. ?>
+				<span class="famma-footer__cod-ar" lang="ar" dir="rtl">خلص كي توصل</span>
+			<?php endif; ?>
 		</p>
 	</div>
 	<?php

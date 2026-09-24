@@ -122,7 +122,8 @@ function famma_child_home_hero(): void {
 		array(
 			'icon'  => 'card',
 			'title' => __( 'Paiement à la livraison', 'famma-child' ),
-			'sub'   => 'خلص كي توصل',
+			// En derja, le titre traduit dit déjà la même chose : pas de doublon.
+			'sub'   => famma_child_is_derja() ? '' : 'خلص كي توصل',
 		),
 		array(
 			'icon'  => 'truck',
@@ -172,9 +173,11 @@ function famma_child_home_hero(): void {
 						<?php famma_child_the_icon( $perk['icon'] ); ?>
 						<span>
 							<span class="famma-hero2__perk-title"><?php echo esc_html( $perk['title'] ); ?></span>
-							<span class="famma-hero2__perk-sub"<?php echo 'خلص كي توصل' === $perk['sub'] ? ' lang="ar" dir="rtl"' : ''; ?>>
-								<?php echo esc_html( $perk['sub'] ); ?>
-							</span>
+							<?php if ( '' !== $perk['sub'] ) : ?>
+								<span class="famma-hero2__perk-sub"<?php echo 'خلص كي توصل' === $perk['sub'] ? ' lang="ar" dir="rtl"' : ''; ?>>
+									<?php echo esc_html( $perk['sub'] ); ?>
+								</span>
+							<?php endif; ?>
 						</span>
 					</li>
 				<?php endforeach; ?>
