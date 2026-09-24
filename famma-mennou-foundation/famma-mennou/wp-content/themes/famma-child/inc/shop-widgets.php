@@ -672,13 +672,23 @@ class Famma_Child_Sale_Filter_Widget extends Famma_Child_Filter_Widget {
 		 * cœur qui fait autorité sur ce qu'est une promotion : prix barré,
 		 * planification et variations comprises.
 		 */
-		$ids = function_exists( 'wc_get_product_ids_on_sale' ) ? wc_get_product_ids_on_sale() : array();
+		$ids   = function_exists( 'wc_get_product_ids_on_sale' ) ? wc_get_product_ids_on_sale() : array();
+		$count = is_array( $ids ) ? count( $ids ) : 0;
+
+		/*
+		 * Comme pour les notes : une case qui ne renvoie rien n'est pas rendue.
+		 * Sans promotion en cours, « En promotion (0) » annonçait des remises
+		 * qui n'existent pas.
+		 */
+		if ( 0 === $count && ! $checked ) {
+			return array();
+		}
 
 		return array(
 			array(
 				'label'  => __( 'En promotion', 'famma-child' ),
 				'url'    => famma_child_filter_url( 'on_sale', $checked ? '' : '1' ),
-				'count'  => is_array( $ids ) ? count( $ids ) : 0,
+				'count'  => $count,
 				'active' => $checked,
 				'check'  => true,
 			),
@@ -731,3 +741,37 @@ function famma_child_filter_stock( $query ): void {
 	$query->set( 'meta_query', $meta ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- `_stock_status` est indexe par WooCommerce.
 }
 add_action( 'woocommerce_product_query', 'famma_child_filter_stock' );
+
+/**
+ * Retire le tri « par notes moyennes » tant qu'aucun produit n'est noté.
+ *
+ * Sans un seul avis, ce tri laisse croire à des notes clients qui n'existent
+ * pas, et ne change rien à l'ordre affiché. Il revient de lui-même au premier
+ * produit noté. Le compte est celui du filtre « 1 étoile et plus » : même
+ * requête, même clé de cache.
+ *
+ * @param array<string, string> $options Tris proposés.
+ * @return array<string, string>
+ */
+function famma_child_catalog_orderby( $options ) {
+	if ( ! is_array( $options ) || ! isset( $options['rating'] ) ) {
+		return $options;
+	}
+
+	$rated = famma_child_count_products(
+		array(
+			'meta_key'     => '_wc_average_rating', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- resultat mis en cache par transient.
+			'meta_value'   => 1, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- idem.
+			'meta_compare' => '>=',
+			'meta_type'    => 'DECIMAL',
+		),
+		'rating1'
+	);
+
+	if ( 0 === $rated ) {
+		unset( $options['rating'] );
+	}
+
+	return $options;
+}
+add_filter( 'woocommerce_catalog_orderby', 'famma_child_catalog_orderby' );

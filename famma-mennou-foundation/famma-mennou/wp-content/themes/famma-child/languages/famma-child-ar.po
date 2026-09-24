@@ -567,3 +567,10 @@ msgstr "التسجيل ما تعدّاش. عاود بعد شويّة."
 
 msgid "Ne pas remplir ce champ"
 msgstr "ما تعمّرش الخانة هذي"
+
+# --- Page 404 (textes de Kadence réécrits) ---
+msgid "La page demandée est introuvable."
+msgstr "الصفحة هذي ما لقيناهاش."
+
+msgid "Aucun contenu n’a été trouvé à cette adresse. Essayez une recherche :"
+msgstr "ما لقينا حتى شي في العنوان هذا. لوّج هوني:"

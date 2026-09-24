@@ -604,6 +604,42 @@ function famma_child_menu_categories( array $items, $args ): array {
 add_filter( 'wp_nav_menu_objects', 'famma_child_menu_categories', 10, 2 );
 
 /**
+ * Retire des menus le lien « Promotions » tant qu'aucun produit n'est en promotion.
+ *
+ * L'entrée pointe vers `?on_sale=1` : sans prix barré, elle mène à une page
+ * vide et annonce des remises qui n'existent pas. Elle revient d'elle-même dès
+ * qu'une promotion est enregistrée sur un produit — rien à retoucher dans
+ * l'admin. `wc_get_product_ids_on_sale()` est mise en cache par WooCommerce.
+ *
+ * @param array<int, object> $items Entrées du menu.
+ * @return array<int, object>
+ */
+function famma_child_menu_hide_empty_sale( array $items ): array {
+	if ( ! function_exists( 'wc_get_product_ids_on_sale' ) ) {
+		return $items;
+	}
+
+	$on_sale = wc_get_product_ids_on_sale();
+
+	if ( is_array( $on_sale ) && array() !== $on_sale ) {
+		return $items;
+	}
+
+	return array_values(
+		array_filter(
+			$items,
+			static function ( $item ): bool {
+				$vars = array();
+				parse_str( (string) wp_parse_url( (string) $item->url, PHP_URL_QUERY ), $vars );
+
+				return empty( $vars['on_sale'] );
+			}
+		)
+	);
+}
+add_filter( 'wp_nav_menu_objects', 'famma_child_menu_hide_empty_sale', 20 );
+
+/**
  * Trouve l'entrée de menu qui doit porter les rayons.
  *
  * @param array<int, object> $items Entrées du menu.

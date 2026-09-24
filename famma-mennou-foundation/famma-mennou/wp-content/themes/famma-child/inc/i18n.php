@@ -241,6 +241,70 @@ function famma_child_translate_woo_plural_context( $translation, $single, $plura
 add_filter( 'ngettext_with_context', 'famma_child_translate_woo_plural_context', 20, 6 );
 
 /**
+ * Les deux phrases de la page 404 de Kadence, réécrites dans nos domaines.
+ *
+ * Constaté le 24/09 : en arabe, Kadence sortait « عفوا! ’t لا يمكن العثور… »
+ * — traduction cassée — suivi d'une phrase restée en anglais ; en français,
+ * « aucun contenu n'ai été trouvé » (faute d'accord). Deux chaînes, pas une
+ * carte : la page 404 n'en affiche pas d'autres.
+ *
+ * @param string $text Chaîne source de Kadence.
+ * @return string|null Notre texte, ou null si la chaîne n'est pas concernée.
+ */
+function famma_child_kadence_404_text( string $text ): ?string {
+	switch ( $text ) {
+		case 'Oops! That page can&rsquo;t be found.':
+			return __( 'La page demandée est introuvable.', 'famma-child' );
+		case 'It looks like nothing was found at this location. Maybe try a search?':
+			return __( 'Aucun contenu n’a été trouvé à cette adresse. Essayez une recherche :', 'famma-child' );
+	}
+
+	return null;
+}
+
+/**
+ * Substitue nos textes à ceux de la page 404 de Kadence.
+ *
+ * @param string $translation Traduction déjà calculée.
+ * @param string $text        Chaîne source, en anglais.
+ * @param string $domain      Domaine de traduction.
+ * @return string
+ */
+function famma_child_translate_kadence( $translation, $text, $domain ) {
+	if ( 'kadence' !== $domain ) {
+		return $translation;
+	}
+
+	return famma_child_kadence_404_text( (string) $text ) ?? $translation;
+}
+add_filter( 'gettext', 'famma_child_translate_kadence', 20, 3 );
+
+/**
+ * Libellé du fil d'Ariane de WooCommerce, écrit en dur en anglais.
+ *
+ * WooCommerce pose `aria-label="Breadcrumb"` sans passer par `__()` : les
+ * lecteurs d'écran annonçaient de l'anglais sur la boutique, les rayons et
+ * toutes les fiches produit.
+ *
+ * @param array<string, mixed> $defaults Réglages du fil d'Ariane.
+ * @return array<string, mixed>
+ */
+function famma_child_breadcrumb_label( $defaults ) {
+	if ( ! is_array( $defaults ) || ! isset( $defaults['wrap_before'] ) ) {
+		return $defaults;
+	}
+
+	$defaults['wrap_before'] = str_replace(
+		'aria-label="Breadcrumb"',
+		'aria-label="' . esc_attr__( 'Fil d’Ariane', 'famma-child' ) . '"',
+		(string) $defaults['wrap_before']
+	);
+
+	return $defaults;
+}
+add_filter( 'woocommerce_breadcrumb_defaults', 'famma_child_breadcrumb_label' );
+
+/**
  * La page est-elle servie en derja ?
  *
  * @return bool
@@ -286,6 +350,10 @@ function famma_child_skip_translatepress_gettext( $skip, $translation, $text, $d
 	}
 
 	if ( 'woocommerce' === $domain && isset( famma_child_woo_derja()[ $text ] ) ) {
+		return true;
+	}
+
+	if ( 'kadence' === $domain && null !== famma_child_kadence_404_text( (string) $text ) ) {
 		return true;
 	}
 

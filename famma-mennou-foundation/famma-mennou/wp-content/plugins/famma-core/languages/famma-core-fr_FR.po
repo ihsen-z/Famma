@@ -110,7 +110,7 @@ msgid "City / Delegation — المدينة"
 msgstr "Ville / Délégation — المدينة"
 
 msgid "Email (optional) / البريد الإلكتروني"
-msgstr "E-mail (facultatif) / البريد الإلكتروني"
+msgstr "E-mail / البريد الإلكتروني"
 
 msgid "Phone / الهاتف"
 msgstr "Téléphone / الهاتف"

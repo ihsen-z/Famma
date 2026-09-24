@@ -54,7 +54,7 @@ msgid "City / Delegation — المدينة"
 msgstr "المدينة / المعتمدية"
 
 msgid "Email (optional) / البريد الإلكتروني"
-msgstr "الإيميل (اختياري)"
+msgstr "الإيميل"
 
 msgid "Phone / الهاتف"
 msgstr "التليفون"
