@@ -394,3 +394,34 @@ HTTP 200, aucune erreur ; attributs présents dans le HTML ; police servie à 31
 - LiteSpeed Cache : JS Delayed Includes pour gtag / Site Kit, Browser Cache 1 an, CSS/JS Minify (audit §6).
 - `jquery-migrate` (tâche longue de 210 ms) : retrait après test complet.
 - DirectAdmin : PHP 8.3 + OPcache, *faults* LVE (PERF-02, seule piste pour le panier et la commande).
+
+
+## 12. 25/09 (soir) : fiche produit — onglets, boutons et carte WhatsApp selon la maquette « FAMMA Produit »
+
+Commits `b1b4680` et suivant. Archive `famma-deploy-produit-onglets.zip` (13 fichiers : `express-order.php/.css/.js`, `product-content.php`, et dans le thème enfant `inc/product.php`, `inc/assets.php`, `inc/icons.php`, `assets/css/product.css`, `assets/css/tokens.css`, `assets/js/product-tabs.js`, `languages/famma-child-ar.po/.mo`, `woocommerce/single-product/tabs/tabs.php`), extraite dans `wp-content`, puis LiteSpeed → Tout purger. Fichiers CSS/JS en ligne contrôlés identiques au commit avant et après.
+
+### 12.1 Ce qui a changé
+
+- **Onglets** au lieu de l'accordéon : Description · Caractéristiques · Avis clients (N) · FAQ · Livraison & Retours, dans l'ordre et au dessin de la maquette (soulignement orange, panneau bordé). Ce sont les onglets natifs de WooCommerce (clavier, ARIA, `#reviews`) ; `tabs.php` rend la main au gabarit d'origine. `product-accordion.js` n'est plus chargé (le fichier reste sur le serveur, inutilisé).
+- **Boutons** : « Confirmer ma commande » blanc sur orange, rayon 9 px, icône panier ; « Ajouter au panier » juste à côté, en bouton secondaire (contour bleu nuit), qui transmet le clic et la quantité au formulaire de WooCommerce (masqué). Sur mobile, faute de place, le bouton panier n'affiche que son icône (libellé lu par les lecteurs d'écran). Favori 56 px.
+- **Carte WhatsApp** de la maquette (fond vert pâle, pastille, deux lignes, chevron), message pré-rempli avec le nom du produit.
+
+### 12.2 Contenu : seulement du vrai
+
+| Onglet | Source | Affiché quand |
+|---|---|---|
+| Caractéristiques | attributs visibles du produit + poids et dimensions (onglet Expédition) | au moins une valeur saisie |
+| Avis clients (N) | avis WooCommerce | au moins un avis |
+| FAQ | FAQ du produit, sinon questions de la page Livraison | au moins une question |
+| Livraison & Retours | 3 points forts de FAMMA → Pages → Page Livraison + bloc « Retours » (FAMMA → Pages → Fiche produit, nouveau) | au moins un bloc |
+
+Non repris de la maquette : « 128 avis », note 4,8/5, « Réponse rapide garantie », 7 DT / offerte dès 150 DT, 24-72 h, 7 jours pour retourner, remboursement sous 5 jours, garantie 12 mois, caractéristiques du pommeau de douche, « Livré avec 1 filtre offert ».
+
+### 12.3 Vérifié en ligne
+
+FR et AR, ordinateur et 390 px : HTTP 200, aucune erreur, pas de débordement horizontal, RTL correct. Parcours « Ajouter au panier » testé (quantité 2 transmise, message WooCommerce) puis ligne de test retirée du panier.
+
+### 12.4 Restant
+
+- Aucun produit n'a encore d'attribut, de poids ni d'avis : les onglets Caractéristiques et Avis clients n'apparaîtront qu'une fois ces données saisies.
+- Archives de déploiement à la corbeille DirectAdmin (à vider par le propriétaire).

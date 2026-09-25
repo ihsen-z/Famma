@@ -1224,7 +1224,8 @@
    la FAQ de l'accueil (`style.css`).
    ------------------------------------------------------------ */
 
-.famma-product .woocommerce-tabs .woocommerce-Tabs-panel--famma_faq {
+/* Même spécificité que le panneau générique, plus une classe : 8 px en haut, comme la maquette. */
+.woocommerce .famma-product div.product .woocommerce-tabs .panel.woocommerce-Tabs-panel--famma_faq {
 	padding-block: 8px 20px;
 }
 
