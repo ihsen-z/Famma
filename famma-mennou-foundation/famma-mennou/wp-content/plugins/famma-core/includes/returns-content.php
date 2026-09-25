@@ -338,25 +338,23 @@ final class Returns_Content {
 
 		$url = WhatsApp::link( implode( "\n", array_filter( $lines, 'strlen' ) ) );
 
-		if ( '' === $url ) {
+		if ( ! str_starts_with( $url, 'https://wa.me/' ) ) {
 			wp_safe_redirect( (string) get_permalink() );
 			exit;
 		}
 
-		add_filter( 'allowed_redirect_hosts', array( self::class, 'allow_whatsapp' ) );
-		wp_safe_redirect( $url, 303 );
+		/*
+		 * `wp_safe_redirect()` retire de l'adresse tout « %0A » (protection
+		 * contre l'injection d'en-têtes) : les lignes du message arrivaient
+		 * collées dans WhatsApp, mesuré en ligne le 25/09. L'adresse est
+		 * construite ici par `rawurlencode()`, qui ne peut produire aucun
+		 * retour chariot brut, et commence obligatoirement par `https://wa.me/` :
+		 * l'en-tête est donc posé directement, sans perdre les retours à la
+		 * ligne. `nocache_headers()` : la réponse dépend du formulaire, aucun
+		 * cache ne doit la garder.
+		 */
+		nocache_headers();
+		header( 'Location: ' . $url, true, 303 );
 		exit;
-	}
-
-	/**
-	 * Autorise `wa.me` comme destination de redirection.
-	 *
-	 * @param array<int, string> $hosts Hôtes autorisés.
-	 * @return array<int, string>
-	 */
-	public static function allow_whatsapp( array $hosts ): array {
-		$hosts[] = 'wa.me';
-
-		return $hosts;
 	}
 }
