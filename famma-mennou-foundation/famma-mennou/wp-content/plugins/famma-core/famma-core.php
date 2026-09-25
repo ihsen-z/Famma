@@ -43,6 +43,7 @@ require_once __DIR__ . '/includes/product-video.php';
 require_once __DIR__ . '/includes/seo.php';
 require_once __DIR__ . '/includes/seo-admin.php';
 require_once __DIR__ . '/includes/hardening.php';
+require_once __DIR__ . '/includes/performance.php';
 
 /**
  * Reads configuration from env-fed constants and WordPress options.
@@ -2439,6 +2440,7 @@ function boot(): void {
 	Seo::instance();
 	add_filter( 'famma_seo_composed_description', array( Delivery_Content::class, 'seo_description' ), 10, 2 );
 	Hardening::instance();
+	Performance::instance();
 	// Le formulaire public passe par admin-post.php : chargé partout.
 	Newsletter::instance();
 

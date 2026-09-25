@@ -9,9 +9,9 @@ chargée et `famma_child_preload_fonts()` émet les `preload`.
 | `poppins-500.woff2` | Poppins | 500 | latin | 7,6 Ko |
 | `poppins-600.woff2` | Poppins | 600 | latin | 7,8 Ko |
 | `poppins-700.woff2` | Poppins | 700 | latin | 7,6 Ko |
-| `noto-kufi-arabic-var.woff2` | Noto Kufi Arabic | 400 → 700 | arabe | 121 Ko |
+| `noto-kufi-arabic-var.woff2` | Noto Kufi Arabic | 400 → 700 | arabe (réduit) | 31 Ko |
 
-Total : **152 Ko** pour les deux écritures, dont 31 Ko seulement sur une page
+Total : **62 Ko** pour les deux écritures, dont 31 Ko seulement sur une page
 française — l'arabe n'est téléchargé que si un caractère arabe est rendu, grâce
 aux `unicode-range` de `fonts.css`.
 
@@ -37,6 +37,26 @@ latin.
 
 Les `unicode-range` de `fonts.css` sont exactement celles de ces sous-jeux :
 elles ne sont pas approximatives, elles viennent de la même source.
+
+## Réduction de la police arabe (25/09/2026)
+
+Le fichier de Google (121 Ko, axe `wght` 100 à 900, 1 336 glyphes) était
+téléchargé sur toutes les pages, françaises comprises, parce que le slogan et
+les accroches en arabe sont au-dessus de la ligne de flottaison (audit perf du
+23/09, PERF-10). Il est réduit avec fonttools à **31 Ko** :
+
+```
+python -m fontTools.varLib.instancer source.woff2 wght=400:700 -o inst.ttf
+python -m fontTools.subset inst.ttf --layout-features='*' --flavor=woff2   --unicodes="U+0600-06FF,U+200C-200F,U+2010-2011,U+FE70-FE74,U+FE76-FEFC,U+0020-0040,U+00A0"   --output-file=noto-kufi-arabic-var.woff2
+```
+
+L'axe reste variable (400 à 700, les seules graisses du thème) et toutes les
+tables de mise en forme (`GSUB`, `GPOS`) sont gardées : les liaisons et les
+formes contextuelles de l'arabe s'affichent comme avant. Sont écartés les
+blocs arabe étendu et les formes de présentation A (ligatures du type ﷺ),
+absents des textes de la boutique. `unicode-range` dans `fonts.css` suit
+exactement cette liste. Pour rafraîchir le fichier, repartir de la source
+Google ci-dessous et rejouer ces deux commandes.
 
 ## Pourquoi pas Google Fonts en direct
 

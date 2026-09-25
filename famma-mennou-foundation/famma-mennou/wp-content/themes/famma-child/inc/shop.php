@@ -120,7 +120,7 @@ function famma_child_shop_sidebar(): void {
 		<span><?php esc_html_e( 'Filtres', 'famma-child' ); ?></span>
 	</button>
 
-	<aside class="famma-shop__aside" id="famma-shop-filters">
+	<aside class="famma-shop__aside" id="famma-shop-filters" hidden>
 		<div class="famma-filters">
 			<div class="famma-filters__head">
 				<p class="famma-filters__title"><?php esc_html_e( 'Filtres', 'famma-child' ); ?></p>

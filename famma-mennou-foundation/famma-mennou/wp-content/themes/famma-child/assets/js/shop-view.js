@@ -6,8 +6,9 @@
  * le serveur. Ce fichier ne fait que changer une classe et un attribut.
  *
  * Sans ce script, la boutique reste complète : la grille s'affiche, les filtres
- * sont visibles (l'attribut `hidden` n'est posé que par ce script) et tout se
- * navigue au clavier.
+ * sont visibles en desktop et tout se navigue au clavier. Sous 1000px, la
+ * colonne arrive repliée du serveur (`hidden`) : la replier ici, après coup,
+ * faisait remonter toute la grille (CLS 0,49, audit perf du 23/09).
  */
 ( function () {
 	'use strict';

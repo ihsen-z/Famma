@@ -875,8 +875,9 @@ add_filter( 'wp_theme_json_data_theme', 'famma_child_theme_json', 20 );
  * WordPress pour les déclarations de support.
  */
 function famma_child_setup(): void {
-	// Galerie produit WooCommerce — zoom/lightbox/slider natifs (§30).
-	add_theme_support( 'wc-product-gallery-zoom' );
+	// Galerie produit WooCommerce — lightbox et slider natifs (§30). Pas de
+	// zoom au survol : inutile au doigt, il chargeait l'original et
+	// `jquery.zoom` sur chaque fiche (audit perf du 23/09, PERF-04).
 	add_theme_support( 'wc-product-gallery-lightbox' );
 	add_theme_support( 'wc-product-gallery-slider' );
 
@@ -894,3 +895,16 @@ function famma_child_setup(): void {
 	);
 }
 add_action( 'after_setup_theme', 'famma_child_setup' );
+
+/**
+ * Retire le zoom au survol de la galerie produit.
+ *
+ * Kadence le déclare sur `after_setup_theme` à la priorité 10, APRÈS le thème
+ * enfant (le parent est chargé en second) : il faut donc passer derrière lui.
+ * Au doigt, le zoom ne sert à rien, et il chargeait l'original de la photo et
+ * `jquery.zoom` sur chaque fiche (audit perf du 23/09, PERF-04).
+ */
+function famma_child_drop_gallery_zoom(): void {
+	remove_theme_support( 'wc-product-gallery-zoom' );
+}
+add_action( 'after_setup_theme', 'famma_child_drop_gallery_zoom', 11 );

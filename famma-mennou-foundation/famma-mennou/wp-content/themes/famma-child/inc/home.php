@@ -26,6 +26,24 @@ defined( 'ABSPATH' ) || exit;
 const FAMMA_CHILD_HOME_TTL = 15 * MINUTE_IN_SECONDS;
 
 /**
+ * Échappe une balise image en gardant `fetchpriority`.
+ *
+ * `wp_kses_post()` ne connaît pas cet attribut et le retirerait : la priorité
+ * posée sur l'image LCP disparaîtrait sans bruit.
+ *
+ * @param string $html Balise `<img>` produite par WordPress ou WooCommerce.
+ * @return string
+ */
+function famma_child_kses_image( string $html ): string {
+	$allowed = wp_kses_allowed_html( 'post' );
+
+	$allowed['img']['fetchpriority'] = true;
+	$allowed['img']['decoding']      = true;
+
+	return wp_kses( $html, $allowed );
+}
+
+/**
  * Titre de section — le motif « trait orange · titre · trait orange ».
  *
  * @param string $title Libellé du titre.
@@ -202,7 +220,24 @@ function famma_child_home_hero(): void {
 							href="<?php echo esc_url( (string) $product->get_permalink() ); ?>"
 							<?php echo 0 === $index ? '' : 'aria-hidden="true" tabindex="-1"'; ?>
 						>
-							<?php echo wp_kses_post( $product->get_image( 'woocommerce_single' ) ); ?>
+							<?php
+							/*
+							 * La première diapo est l'élément LCP de l'accueil mobile :
+							 * priorité haute, jamais différée. Les suivantes sont
+							 * cachées au chargement et ne doivent pas lui disputer
+							 * la bande passante (audit perf du 23/09, PERF-09).
+							 */
+							$famma_hero_attr = 0 === $index
+								? array(
+									'loading'       => 'eager',
+									'fetchpriority' => 'high',
+								)
+								: array(
+									'loading'       => 'lazy',
+									'fetchpriority' => 'low',
+								);
+							echo famma_child_kses_image( $product->get_image( 'woocommerce_single', $famma_hero_attr ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- échappé par famma_child_kses_image().
+							?>
 							<span class="screen-reader-text"><?php echo esc_html( $product->get_name() ); ?></span>
 						</a>
 					<?php endforeach; ?>
