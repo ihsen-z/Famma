@@ -462,18 +462,18 @@
 	margin-block-end: var(--sp-10);
 }
 
-.famma-faq {
+.famma-qa {
 	margin-block-start: var(--sp-4);
 	border: 1px solid var(--famma-line);
 	border-radius: var(--famma-radius);
 	overflow: hidden;
 }
 
-.famma-faq__item + .famma-faq__item {
+.famma-qa__item + .famma-qa__item {
 	border-block-start: 1px solid var(--famma-line-soft);
 }
 
-.famma-faq__question {
+.famma-qa__question {
 	display: flex;
 	align-items: center;
 	gap: var(--sp-4);
@@ -487,15 +487,15 @@
 	cursor: pointer;
 }
 
-.famma-faq__question::-webkit-details-marker {
+.famma-qa__question::-webkit-details-marker {
 	display: none;
 }
 
-.famma-faq__question > span {
+.famma-qa__question > span {
 	flex: 1;
 }
 
-.famma-faq__chevron {
+.famma-qa__chevron {
 	flex-shrink: 0;
 	inline-size: 17px;
 	block-size: 17px;
@@ -503,11 +503,11 @@
 	transition: transform var(--dur-fast, 120ms) ease;
 }
 
-.famma-faq__item[open] .famma-faq__chevron {
+.famma-qa__item[open] .famma-qa__chevron {
 	transform: rotate(180deg);
 }
 
-.famma-faq__answer {
+.famma-qa__answer {
 	margin: 0;
 	padding: 0 var(--sp-6) var(--sp-4);
 	color: var(--famma-text-2);
@@ -639,11 +639,12 @@
 	line-height: 1.8;
 }
 
-.famma-document__text > * {
+/* .entry-content : passe devant `.entry-content blockquote` de Kadence (marge de 32px). */
+.famma-document__text.entry-content > * {
 	margin-block: 0;
 }
 
-.famma-document__text > * + * {
+.famma-document__text.entry-content > * + * {
 	margin-block-start: var(--sp-4);
 }
 

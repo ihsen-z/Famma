@@ -79,7 +79,7 @@ $famma_delivery = get_page_by_path( 'livraison' );
 
 			<?php if ( '' !== $famma_wa_url ) : ?>
 				<div class="famma-help famma-help--compact">
-					<p class="famma-help__title"><?php esc_html_e( 'Une question sur ces conditions ?', 'famma-child' ); ?></p>
+					<p class="famma-help__title"><?php esc_html_e( 'Une question sur ces conditions ?', 'famma-child' ); ?></p>
 					<p class="famma-help__text">
 						<?php esc_html_e( 'Écrivez-nous sur WhatsApp : nous vous répondons.', 'famma-child' ); ?>
 						<?php if ( array() !== $famma_hours ) : ?>

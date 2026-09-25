@@ -202,14 +202,14 @@ $famma_address = famma_child_setting( 'FAMMA_CONTACT_ADDRESS' );
 		<?php if ( '' !== $famma_faq_title && array() !== $famma_faq ) : ?>
 			<section class="famma-delivery__faq" aria-labelledby="famma-delivery-faq">
 				<h2 class="famma-delivery__heading" id="famma-delivery-faq"><?php echo esc_html( $famma_faq_title ); ?></h2>
-				<div class="famma-faq">
+				<div class="famma-qa">
 					<?php foreach ( $famma_faq as $famma_rank => $famma_pair ) : ?>
-						<details class="famma-faq__item"<?php echo 0 === $famma_rank ? ' open' : ''; ?>>
-							<summary class="famma-faq__question">
+						<details class="famma-qa__item"<?php echo 0 === $famma_rank ? ' open' : ''; ?>>
+							<summary class="famma-qa__question">
 								<span><?php echo esc_html( $famma_pair['question'] ); ?></span>
-								<?php famma_child_the_icon( 'chevron', 'famma-faq__chevron' ); ?>
+								<?php famma_child_the_icon( 'chevron', 'famma-qa__chevron' ); ?>
 							</summary>
-							<p class="famma-faq__answer"><?php echo esc_html( $famma_pair['answer'] ); ?></p>
+							<p class="famma-qa__answer"><?php echo esc_html( $famma_pair['answer'] ); ?></p>
 						</details>
 					<?php endforeach; ?>
 				</div>

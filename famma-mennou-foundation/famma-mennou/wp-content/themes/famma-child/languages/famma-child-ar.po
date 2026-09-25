@@ -589,7 +589,7 @@ msgstr "آخر تحديث: %s"
 msgid "Sommaire"
 msgstr "الفهرس"
 
-msgid "Une question sur ces conditions ?"
+msgid "Une question sur ces conditions ?"
 msgstr "عندك سؤال على الشروط هذي؟"
 
 msgid "Écrivez-nous sur WhatsApp : nous vous répondons."

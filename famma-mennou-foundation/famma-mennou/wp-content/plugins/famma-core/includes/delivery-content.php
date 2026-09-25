@@ -95,11 +95,11 @@ final class Delivery_Content {
 				'textarea',
 				__( 'Livraison — questions et réponses', 'famma-core' ),
 				__( 'Une question par bloc : la question sur la première ligne, la réponse dessous, une ligne vide entre deux questions. N’écrivez que ce qui est vrai.', 'famma-core' ),
-				"Combien coûte la livraison ?\n0 DT. La livraison est comprise dans le prix affiché.\n\nVous livrez où ?\nPartout en Tunisie, dans les 24 gouvernorats.\n\nComment je paie ?\nEn espèces, au livreur, au moment où vous recevez votre commande. Aucun paiement en ligne n’est demandé.\n\nLivrez-vous hors de Tunisie ?\nNon : nous livrons uniquement en Tunisie, dans les 24 gouvernorats.\n\nDois-je créer un compte ?\nNon. La commande se fait avec votre nom, votre téléphone et votre adresse.",
+				"Combien coûte la livraison ?\n0 DT. La livraison est comprise dans le prix affiché.\n\nVous livrez où ?\nPartout en Tunisie, dans les 24 gouvernorats.\n\nComment je paie ?\nEn espèces, au livreur, au moment où vous recevez votre commande. Aucun paiement en ligne n’est demandé.\n\nLivrez-vous hors de Tunisie ?\nNon : nous livrons uniquement en Tunisie, dans les 24 gouvernorats.\n\nDois-je créer un compte ?\nNon. La commande se fait avec votre nom, votre téléphone et votre adresse.",
 				"قدّاش يكلّف التوصيل؟\n0 دينار. التوصيل داخل في السوم المكتوب.\n\nوين توصّلو؟\nفي تونس الكل، في الـ 24 ولاية.\n\nكيفاش نخلّص؟\nكاش، لليفرور، كي توصلك الطلبية. ما نطلبو منك حتى خلاص أونلاين.\n\nتوصّلو برّا تونس؟\nلا: نوصّلو كان في تونس، في الـ 24 ولاية.\n\nلازمني نعمل كونت؟\nلا. تطلب بإسمك، نومرو التليفون والعنوان متاعك."
 			),
 
-			self::field( 'help_title', 'text', __( 'Livraison — encart d’aide, titre', 'famma-core' ), $empty_hides, 'Une question sur votre livraison ?', 'عندك سؤال على التوصيل؟' ),
+			self::field( 'help_title', 'text', __( 'Livraison — encart d’aide, titre', 'famma-core' ), $empty_hides, 'Une question sur votre livraison ?', 'عندك سؤال على التوصيل؟' ),
 			self::field( 'help_text', 'textarea', __( 'Livraison — encart d’aide, texte', 'famma-core' ), '', 'Écrivez-nous sur WhatsApp. Si vous avez déjà commandé, indiquez votre numéro de commande.', 'أكتبلنا على واتساب. كان طلبت قبل، أعطينا نومرو الطلبية.' ),
 			self::field( 'help_whatsapp', 'text', __( 'Livraison — encart d’aide, bouton WhatsApp', 'famma-core' ), __( 'Le bouton n’apparaît que si un numéro WhatsApp est configuré.', 'famma-core' ), 'Écrire sur WhatsApp', 'أكتبلنا على واتساب' ),
 			self::field( 'help_shop', 'text', __( 'Livraison — encart d’aide, bouton boutique', 'famma-core' ), $empty_hides, 'Voir la boutique', 'شوف الحانوت' ),
