@@ -1,9 +1,10 @@
 /*
- * FAMMA — pages Livraison et Conditions générales, selon les maquettes
- * « FAMMA Livraison » et « FAMMA Conditions Generales ».
+ * FAMMA — pages Livraison, Retours et Conditions générales, selon les
+ * maquettes « FAMMA Livraison », « FAMMA Retours Echanges » et
+ * « FAMMA Conditions Generales ».
  *
  * Complète pages.css (ossature .famma-page, titres, bouton) : chargée après
- * elle, sur ces deux pages seulement. Aucune valeur de couleur en dur, tout
+ * elle, sur ces trois pages seulement. Aucune valeur de couleur en dur, tout
  * vient de tokens.css ; propriétés logiques partout, pour que la version
  * arabe se retourne sans feuille dupliquée.
  *
@@ -731,11 +732,454 @@
 	block-size: 15px;
 }
 
+/* ======================================================================
+ * Retours — maquette « FAMMA Retours Echanges »
+ *
+ * Réutilise l'ossature de la page Livraison (bandeau, sections, titres,
+ * étapes numérotées, questions fréquentes, encart d'aide) ; seuls les blocs
+ * propres aux retours sont dessinés ici.
+ * ====================================================================== */
+
+/* Pastille verte de la maquette (la page Livraison a la sienne, orange). */
+.famma-returns .famma-returns__badge {
+	background: var(--famma-success-bg);
+	color: var(--famma-success-700);
+}
+
+/* Encadré « politique en cours de rédaction » : lisible d'un coup d'œil. */
+.famma-returns .famma-returns__notice {
+	max-inline-size: 40rem;
+	margin-block-start: var(--sp-4);
+	padding: 14px var(--sp-4);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-surface-band);
+	color: var(--famma-text-prose);
+}
+
+/* --- Chiffres clés --- */
+
+.famma-returns__highlights {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.375rem), 1fr));
+	gap: 14px;
+	margin: 0 0 var(--sp-10);
+	padding: 0;
+	list-style: none;
+}
+
+.famma-returns__highlight {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-2);
+	padding: 20px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+}
+
+.famma-returns__value {
+	margin: 0;
+	color: var(--famma-accent-text);
+	font-size: 1.5625rem;
+	font-weight: var(--fw-bold);
+	letter-spacing: -0.02em;
+	line-height: 1.2;
+}
+
+.famma-returns__highlight-title {
+	margin: 0;
+	color: var(--famma-ink);
+	font-size: var(--fs-chrome-nav);
+	font-weight: var(--fw-semibold);
+	line-height: 1.35;
+}
+
+.famma-returns__highlight-text {
+	margin: 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-chrome-body);
+	line-height: 1.6;
+}
+
+/* --- Retours acceptés / refusés --- */
+
+.famma-returns__rules {
+	display: grid;
+	gap: var(--sp-4);
+}
+
+.famma-returns__rule {
+	padding: var(--sp-6);
+	border: 1px solid var(--famma-success-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-success-soft);
+	--famma-rule-mark: var(--famma-success-700);
+}
+
+.famma-returns__rule--ko {
+	border-color: var(--famma-danger-line);
+	background: var(--famma-danger-soft);
+	--famma-rule-mark: var(--famma-danger-700);
+}
+
+.famma-returns__rule-title {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0;
+	color: var(--famma-ink);
+	font-size: 1.0625rem;
+	font-weight: var(--fw-semibold);
+	line-height: 1.35;
+}
+
+.famma-returns__rule-title .famma-icon {
+	flex-shrink: 0;
+	inline-size: 20px;
+	block-size: 20px;
+	color: var(--famma-rule-mark);
+	stroke-width: 2.3;
+}
+
+.famma-returns__rule-list {
+	display: flex;
+	flex-direction: column;
+	gap: 11px;
+	margin: 14px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-returns__rule-list li {
+	position: relative;
+	padding-inline-start: 15px;
+	color: var(--famma-text-1);
+	font-size: var(--fs-small);
+	line-height: 1.65;
+}
+
+.famma-returns__rule-list li::before {
+	content: "";
+	position: absolute;
+	inset-block-start: 9px;
+	inset-inline-start: 0;
+	inline-size: 5px;
+	block-size: 5px;
+	border-radius: 50%;
+	background: var(--famma-rule-mark);
+}
+
+/* --- Tableau par situation --- */
+
+.famma-returns__table-wrap {
+	margin-block-start: 18px;
+	overflow-x: auto;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+}
+
+.famma-returns__cases {
+	inline-size: 100%;
+	min-inline-size: 36rem;
+	margin: 0;
+	border: 0;
+	border-collapse: collapse;
+}
+
+.famma-returns__cases th,
+.famma-returns__cases td {
+	padding: var(--sp-4) 20px;
+	border: 0;
+	background: none;
+	color: var(--famma-text-1);
+	font-size: var(--fs-small);
+	text-align: start;
+	vertical-align: middle;
+}
+
+.famma-returns__cases thead th {
+	padding-block: 14px;
+	background: var(--famma-surface-table);
+	color: var(--famma-text-2);
+	font-size: 0.78125rem;
+	font-weight: var(--fw-semibold);
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+}
+
+.famma-returns__cases tbody tr {
+	border-block-start: 1px solid var(--famma-line-soft);
+}
+
+.famma-returns__cases tbody th {
+	color: var(--famma-ink);
+	font-size: var(--fs-chrome-nav);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-returns__cases .famma-returns__cost {
+	color: var(--famma-success-700);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-returns__cases .famma-returns__end {
+	text-align: end;
+}
+
+/* --- Formulaire + colonne d'aide --- */
+
+.famma-returns__split {
+	display: grid;
+	gap: var(--sp-6);
+	align-items: start;
+}
+
+.famma-returns__form {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	margin-block-start: 18px;
+	padding: var(--sp-6);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+}
+
+.famma-returns__pair {
+	display: grid;
+	gap: 14px;
+}
+
+.famma-returns .famma-returns__field {
+	display: flex;
+	flex-direction: column;
+	gap: 7px;
+	margin: 0;
+}
+
+.famma-returns__field label,
+.famma-returns__choice legend {
+	color: var(--famma-text-1);
+	font-size: var(--fs-chrome-body);
+	font-weight: var(--fw-medium);
+}
+
+.famma-returns .famma-returns__field input,
+.famma-returns .famma-returns__field textarea {
+	inline-size: 100%;
+	min-block-size: var(--sp-12);
+	padding: 12px 14px;
+	border: 1px solid var(--famma-line-field);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-white);
+	color: var(--famma-ink);
+	font-family: inherit;
+	/* 16 px : en dessous, Safari iOS zoome au focus. */
+	font-size: 1rem;
+	line-height: 1.6;
+	box-shadow: none;
+}
+
+.famma-returns .famma-returns__field textarea {
+	resize: vertical;
+}
+
+.famma-returns .famma-returns__field input:focus,
+.famma-returns .famma-returns__field textarea:focus {
+	border-color: var(--famma-orange);
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color);
+	outline-offset: 1px;
+}
+
+.famma-returns__choice {
+	display: flex;
+	flex-direction: column;
+	gap: 9px;
+	min-inline-size: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.famma-returns__choice legend {
+	margin-block-end: 9px;
+	padding: 0;
+}
+
+.famma-returns__chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 9px;
+}
+
+.famma-returns__options {
+	display: grid;
+	gap: 10px;
+}
+
+/* Le bouton radio reste dans l'arbre d'accessibilité et au clavier ; seul son dessin natif est retiré. */
+.famma-returns__chip input,
+.famma-returns__option input {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	margin: 0;
+	opacity: 0;
+}
+
+.famma-returns__chip,
+.famma-returns__option {
+	position: relative;
+	cursor: pointer;
+}
+
+.famma-returns__chip span {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: var(--sp-12);
+	padding: 0 var(--sp-4);
+	border: 1.5px solid var(--famma-line-field);
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-white);
+	color: var(--famma-text-1);
+	font-size: var(--fs-chrome-field);
+}
+
+.famma-returns__option-body {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: var(--sp-1);
+	min-block-size: var(--sp-12);
+	padding: 14px var(--sp-4);
+	border: 1.5px solid var(--famma-line-field);
+	border-radius: 10px;
+	background: var(--famma-white);
+	text-align: start;
+}
+
+.famma-returns__option-label {
+	color: var(--famma-ink);
+	font-size: var(--fs-chrome-nav);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-returns__option-sub {
+	color: var(--famma-text-2);
+	font-size: 0.78125rem;
+	line-height: 1.5;
+}
+
+.famma-returns__chip input:checked + span,
+.famma-returns__option input:checked + .famma-returns__option-body {
+	border-color: var(--famma-orange);
+	background: var(--famma-saving-bg);
+}
+
+.famma-returns__chip input:checked + span {
+	color: var(--famma-saving-text);
+}
+
+.famma-returns__chip input:focus-visible + span,
+.famma-returns__option input:focus-visible + .famma-returns__option-body {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color);
+	outline-offset: 2px;
+}
+
+.famma-returns .famma-returns__submit {
+	inline-size: 100%;
+	border-radius: var(--famma-radius-sm);
+	font-size: 0.9375rem;
+}
+
+.famma-returns__legal {
+	margin: 0;
+	color: var(--famma-text-3);
+	font-size: 0.78125rem;
+	line-height: 1.6;
+	text-align: center;
+}
+
+.famma-returns__aside {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-4);
+}
+
+.famma-returns__pack {
+	display: flex;
+	flex-direction: column;
+	gap: 13px;
+	padding: 22px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+}
+
+.famma-returns__pack-title {
+	margin: 0;
+	color: var(--famma-ink);
+	font-size: var(--fs-body);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-returns__pack-list {
+	display: flex;
+	flex-direction: column;
+	gap: 13px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-returns__pack-list li {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	color: var(--famma-text-prose);
+	font-size: var(--fs-chrome-field);
+	line-height: 1.6;
+}
+
+.famma-returns__pack-list .famma-icon {
+	flex-shrink: 0;
+	inline-size: 15px;
+	block-size: 15px;
+	margin-block-start: 3px;
+	color: var(--famma-orange);
+	stroke-width: 2.2;
+}
+
 /* --- Au-delà du mobile --- */
+
+@media (min-width: 37.5rem) {
+	.famma-returns__pair,
+	.famma-returns__options {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	}
+}
 
 @media (min-width: 58.75rem) {
 	.famma-delivery__split {
 		grid-template-columns: minmax(0, 1fr) 20.625rem;
+	}
+
+	.famma-returns__rules {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	}
+
+	/* Formulaire et colonne d'aide : 320 px pour l'aide, comme la maquette. */
+	.famma-returns__split {
+		grid-template-columns: minmax(0, 1fr) 20rem;
+		gap: var(--sp-6);
+	}
+
+	/* Sans formulaire, les encarts d'aide se rangent côte à côte. */
+	.famma-returns__split--aside {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.famma-returns__split--aside .famma-returns__aside {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
 	}
 
 	.famma-document__shell {

@@ -181,6 +181,55 @@ function famma_child_delivery_faq(): array {
 }
 
 /**
+ * Le plugin sait-il servir les textes de la page Retours ?
+ *
+ * @return bool
+ */
+function famma_child_returns_available(): bool {
+	return class_exists( '\Famma\Core\Returns_Content' );
+}
+
+/**
+ * Texte de la page Retours (FAMMA → Pages → Page Retours).
+ *
+ * @param string $key Clé du champ.
+ * @return string Chaîne vide si le bloc n'est pas rempli.
+ */
+function famma_child_returns_text( string $key ): string {
+	return famma_child_returns_available() ? \Famma\Core\Returns_Content::text( $key ) : '';
+}
+
+/**
+ * Champ multiligne de la page Retours, une entrée par ligne.
+ *
+ * @param string $key Clé du champ.
+ * @return array<int, string>
+ */
+function famma_child_returns_lines( string $key ): array {
+	return famma_child_returns_available() ? \Famma\Core\Returns_Content::lines( $key ) : array();
+}
+
+/**
+ * Champ multiligne de la page Retours découpé en colonnes sur « | ».
+ *
+ * @param string $key     Clé du champ.
+ * @param int    $columns Nombre de colonnes.
+ * @return array<int, array<int, string>>
+ */
+function famma_child_returns_rows( string $key, int $columns ): array {
+	return famma_child_returns_available() ? \Famma\Core\Returns_Content::rows( $key, $columns ) : array();
+}
+
+/**
+ * Questions fréquentes de la page Retours.
+ *
+ * @return array<int, array{question: string, answer: string}>
+ */
+function famma_child_returns_faq(): array {
+	return famma_child_returns_available() ? \Famma\Core\Returns_Content::faq() : array();
+}
+
+/**
  * Fil d'Ariane d'une page institutionnelle : Accueil › page courante.
  *
  * Même dessin que celui du tunnel de commande, et libellé traduit : un

@@ -181,31 +181,10 @@ final class Delivery_Content {
 	/**
 	 * Questions fréquentes : blocs séparés par une ligne vide.
 	 *
-	 * Un bloc sans réponse est écarté : un accordéon qui s'ouvre sur du vide
-	 * est un défaut visible par le client.
-	 *
 	 * @return array<int, array{question: string, answer: string}>
 	 */
 	public static function faq(): array {
-		$raw    = self::with_delay( trim( Pages_Content::text( self::PAGE, 'faq' ) ) );
-		$blocks = preg_split( '/\R\s*\R/u', $raw );
-		$pairs  = array();
-
-		foreach ( (array) $blocks as $block ) {
-			$lines = preg_split( '/\R/u', trim( (string) $block ) );
-			$lines = array_values( array_filter( array_map( 'trim', (array) $lines ), 'strlen' ) );
-
-			if ( count( $lines ) < 2 ) {
-				continue;
-			}
-
-			$pairs[] = array(
-				'question' => (string) array_shift( $lines ),
-				'answer'   => implode( ' ', $lines ),
-			);
-		}
-
-		return $pairs;
+		return Pages_Content::qa_pairs( self::with_delay( trim( Pages_Content::text( self::PAGE, 'faq' ) ) ) );
 	}
 
 	/**

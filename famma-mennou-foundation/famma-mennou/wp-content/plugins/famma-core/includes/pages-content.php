@@ -54,11 +54,16 @@ final class Pages_Content {
 	public const OPTION_DELIVERY = 'famma_page_delivery';
 
 	/**
+	 * Option abritant les textes de la page Retours (schéma : `Returns_Content`).
+	 */
+	public const OPTION_RETURNS = 'famma_page_returns';
+
+	/**
 	 * Pages gérées par cet écran, dans leur ordre d'affichage.
 	 *
 	 * @var array<int, string>
 	 */
-	private const PAGES = array( 'home', 'about', 'contact', 'delivery', 'product' );
+	private const PAGES = array( 'home', 'about', 'contact', 'delivery', 'returns', 'product' );
 
 	/**
 	 * Groupe de réglages, au sens de la Settings API.
@@ -360,6 +365,7 @@ final class Pages_Content {
 			'product'  => Product_Content::schema(),
 			'home'     => Home_Content::schema(),
 			'delivery' => Delivery_Content::schema(),
+			'returns'  => Returns_Content::schema(),
 			default    => self::contact_schema(),
 		};
 	}
@@ -376,6 +382,7 @@ final class Pages_Content {
 			'product'  => self::OPTION_PRODUCT,
 			'home'     => self::OPTION_HOME,
 			'delivery' => self::OPTION_DELIVERY,
+			'returns'  => self::OPTION_RETURNS,
 			default    => self::OPTION_CONTACT,
 		};
 	}
@@ -392,6 +399,7 @@ final class Pages_Content {
 			'product'  => __( 'Fiche produit', 'famma-core' ),
 			'home'     => __( 'Page d’accueil — newsletter et « Ils nous font confiance »', 'famma-core' ),
 			'delivery' => __( 'Page Livraison', 'famma-core' ),
+			'returns'  => __( 'Page Retours', 'famma-core' ),
 			default    => __( 'Page Contact', 'famma-core' ),
 		};
 	}
@@ -494,6 +502,38 @@ final class Pages_Content {
 				}
 			)
 		);
+	}
+
+	/**
+	 * Questions / réponses saisies en blocs séparés par une ligne vide :
+	 * la question sur la première ligne, la réponse dessous.
+	 *
+	 * Partagé par les pages Livraison et Retours. Un bloc sans réponse est
+	 * écarté : un accordéon qui s'ouvre sur du vide est un défaut visible par
+	 * le client.
+	 *
+	 * @param string $raw Texte saisi.
+	 * @return array<int, array{question: string, answer: string}>
+	 */
+	public static function qa_pairs( string $raw ): array {
+		$blocks = preg_split( '/\R\s*\R/u', trim( $raw ) );
+		$pairs  = array();
+
+		foreach ( (array) $blocks as $block ) {
+			$lines = preg_split( '/\R/u', trim( (string) $block ) );
+			$lines = array_values( array_filter( array_map( 'trim', (array) $lines ), 'strlen' ) );
+
+			if ( count( $lines ) < 2 ) {
+				continue;
+			}
+
+			$pairs[] = array(
+				'question' => (string) array_shift( $lines ),
+				'answer'   => implode( ' ', $lines ),
+			);
+		}
+
+		return $pairs;
 	}
 
 	/**

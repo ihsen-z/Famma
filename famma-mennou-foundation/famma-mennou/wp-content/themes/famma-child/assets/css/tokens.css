@@ -101,6 +101,16 @@
 	--famma-danger: #D64545;    /* surface — 4,38:1 en texte, sous le seuil */
 	--famma-danger-700: #C13333; /* texte d'erreur · 5,54:1 */
 
+	/* Encadrés teintés de la page Retours — valeurs de la maquette
+	   « FAMMA Retours Echanges ». Surfaces et filets seulement : le texte
+	   posé dessus reste en encre ou en -700. */
+	--famma-success-bg: #E9F7EE;    /* pastille verte au-dessus du titre */
+	--famma-success-soft: #F5FBF7;  /* carte « retours acceptés » */
+	--famma-success-line: #CFE8D8;
+	--famma-danger-soft: #FDF7F7;   /* carte « retours refusés » */
+	--famma-danger-line: #EFD9D9;
+	--famma-surface-table: #F6F8FB; /* en-tête de tableau */
+
 	/* Badge « Nouveau » et coche de filtre : SURFACE, valeur de la maquette.
 	   En texte (« En stock », « Achat vérifié ») elle vaut 3,30:1 — utiliser
 	   --famma-success-700 à la place. */

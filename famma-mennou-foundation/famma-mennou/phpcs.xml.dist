@@ -270,6 +270,11 @@
 				<element value="famma_child_delivery_lines"/>
 				<element value="famma_child_delivery_zones"/>
 				<element value="famma_child_delivery_faq"/>
+				<element value="famma_child_returns_available"/>
+				<element value="famma_child_returns_text"/>
+				<element value="famma_child_returns_lines"/>
+				<element value="famma_child_returns_rows"/>
+				<element value="famma_child_returns_faq"/>
 				<element value="famma_child_page_crumbs"/>
 				<element value="famma_child_document_sections"/>
 				<element value="famma_child_load_textdomain"/>
