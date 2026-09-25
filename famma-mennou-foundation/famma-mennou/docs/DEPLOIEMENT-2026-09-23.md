@@ -330,3 +330,43 @@ Menu, pied de page, H1, titres de section, fil d'Ariane et titre d'onglet en ara
 
 Archive à supprimer à la racine du compte : `famma-deploy-titres-ar.zip`.
 
+---
+
+## 10. 25/09 (après-midi) : pages Livraison et Conditions générales selon les maquettes
+
+Maquettes « FAMMA Livraison » et « FAMMA Conditions Generales » du projet claude.ai/design « Logo Famma e-commerce », lues par DesignSync (lecture seule).
+
+### 10.1 Ce qui n'a pas été repris des maquettes
+
+Les deux maquettes portent des données d'exemple qui contredisent la boutique ou les règles du projet (§4, §58, §60) :
+
+| Maquette | Réalité / règle |
+|---|---|
+| Livraison standard 7 DT, express 12 DT, point relais, tarifs 8,5 à 9,5 DT par zone, « offerte dès 200 DT » | livraison offerte partout (0 DT affiché), un seul mode |
+| Suivi par SMS, expédition avant 15 h, 40 points relais, livraison Algérie/Libye « à l'étude » | aucun de ces services n'existe |
+| « Retour gratuit sous 7 jours », remboursement sous 14 jours | aucune politique de retour publiée |
+| « Support WhatsApp 24/7 », « du lundi au samedi, de 8 h à 20 h » | horaires saisis : 9 h – 18 h |
+| CGV d'exemple : paiement par carte et virement, frais de 2 DT, garantie de 12 mois, siège à Tunis, « Version 1.2 — 1er mars 2024 », FAMMA MENNOU | paiement à la livraison uniquement ; textes légaux à fournir par le propriétaire ; Sousse ; FAMMA MINNOU |
+
+### 10.2 Code déployé (commits `2fe25b4`, `f293095`, `487cef0`)
+
+- **Livraison** (`page-livraison.php`) : pastille, trois points forts, mode de livraison, tableau des zones (7 régions, 24 gouvernorats), 4 étapes, questions fréquentes en accordéon natif (`<details>`), encart d'aide (WhatsApp, boutique, coordonnées du pied de page). Textes : **FAMMA → Pages → Page Livraison** (`Delivery_Content`, FR + derja). Le délai vient du champ « Délai de livraison » de la section Contact via `{delai}` ; tout texte qui le cite disparaît s'il est vide.
+- **Conditions générales** (`page-conditions-generales.php`) : le texte reste dans l'éditeur de la page ; chaque titre de niveau 2 devient un article numéroté avec son entrée au sommaire (collant au-delà de 940 px) ; listes à puce orange ; citations = encadré « info » ; « Dernière mise à jour » = date de dernière modification ; encart « Une question ? » (WhatsApp + horaires) ; lien vers la page Livraison.
+- `assets/css/info-pages.css` chargée sur ces deux pages seulement ; icône `info` ; fil d'Ariane ; traductions derja des libellés.
+- **SEO** : la description Google et les aperçus de partage ne reprennent plus les notes « À compléter par le propriétaire » (elles fuyaient sur les CGV) ; la page Livraison fournit sa description par `famma_seo_composed_description`.
+
+### 10.3 Contenus modifiés
+
+- CGV : texte d'attente découpé en articles (Prix, Commande, Livraison, Paiement, Nous contacter), faits déjà publiés uniquement ; version derja saisie dans TranslatePress (12 chaînes).
+- Livraison : contenu de l'éditeur réduit à la note « À compléter » (réservée aux administrateurs) ; tout le texte vient désormais de FAMMA → Pages.
+
+### 10.4 Vérifié en ligne
+
+FR et AR, en visiteur : HTTP 200, aucune erreur PHP, aucune note interne dans le HTML ; 1 366 px et 390 px sans défilement horizontal ; RTL correct. Cache LiteSpeed : versions servies à jour.
+
+### 10.5 Restant
+
+- CGV définitives (et informations légales) : à fournir ; il suffira de les écrire dans l'éditeur avec un titre de niveau 2 par article.
+- La même mise en page peut servir aux pages Retours, Confidentialité et Cookies (un fichier `page-<adresse>.php` de trois lignes chacune).
+- Archives à supprimer à la racine du compte : `famma-deploy-livraison-cgv.zip`, `famma-deploy-livraison-cgv-2.zip`, `famma-deploy-seo-notes.zip`.
+
