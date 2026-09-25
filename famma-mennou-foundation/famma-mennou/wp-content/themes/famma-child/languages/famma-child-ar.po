@@ -574,3 +574,29 @@ msgstr "الصفحة هذي ما لقيناهاش."
 
 msgid "Aucun contenu n’a été trouvé à cette adresse. Essayez une recherche :"
 msgstr "ما لقينا حتى شي في العنوان هذا. لوّج هوني:"
+
+# --- Pages Livraison et Conditions générales (maquettes du 25/09) ---
+msgid "Zone"
+msgstr "المنطقة"
+
+msgid "Frais"
+msgstr "المصاريف"
+
+#. translators: %s: date of the page's last modification.
+msgid "Dernière mise à jour : %s"
+msgstr "آخر تحديث: %s"
+
+msgid "Sommaire"
+msgstr "الفهرس"
+
+msgid "Une question sur ces conditions ?"
+msgstr "عندك سؤال على الشروط هذي؟"
+
+msgid "Écrivez-nous sur WhatsApp : nous vous répondons."
+msgstr "أكتبلنا على واتساب ونجاوبوك."
+
+msgid "Nous contacter"
+msgstr "اتصل بينا"
+
+msgid "Consulter les conditions de livraison"
+msgstr "شوف شروط التوصيل"

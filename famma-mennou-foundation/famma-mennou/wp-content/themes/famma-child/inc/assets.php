@@ -458,7 +458,7 @@ add_filter( 'woocommerce_add_to_cart_fragments', 'famma_child_cart_fragment' );
 /**
  * Charge la feuille des pages institutionnelles.
  *
- * Seules « À propos » et « Contact » en ont besoin : la charger partout
+ * Seules les pages institutionnelles en ont besoin : la charger partout
  * ajouterait une requête à chaque page pour du style que personne ne lit.
  *
  * Les identifiants sont filtrables parce qu'ils dépendent des permaliens du
@@ -472,7 +472,7 @@ function famma_child_enqueue_pages(): void {
 	 *
 	 * @param array<int, string> $slugs Identifiants de page.
 	 */
-	$slugs = (array) apply_filters( 'famma_child_content_page_slugs', array( 'a-propos', 'contact' ) );
+	$slugs = (array) apply_filters( 'famma_child_content_page_slugs', array( 'a-propos', 'contact', 'livraison', 'conditions-generales' ) );
 
 	if ( ! is_page( $slugs ) ) {
 		return;
@@ -490,5 +490,20 @@ function famma_child_enqueue_pages(): void {
 		array( 'famma-layout' ),
 		(string) filemtime( $path )
 	);
+
+	/*
+	 * Livraison et Conditions générales (maquettes du même nom) : cartes,
+	 * tableau des zones, sommaire et articles numérotés.
+	 */
+	$info = get_stylesheet_directory() . '/assets/css/info-pages.css';
+
+	if ( is_page( array( 'livraison', 'conditions-generales' ) ) && file_exists( $info ) ) {
+		wp_enqueue_style(
+			'famma-info-pages',
+			get_stylesheet_directory_uri() . '/assets/css/info-pages.css',
+			array( 'famma-pages' ),
+			(string) filemtime( $info )
+		);
+	}
 }
 add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_pages', 22 );

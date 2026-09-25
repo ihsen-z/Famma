@@ -1,0 +1,748 @@
+/*
+ * FAMMA — pages Livraison et Conditions générales, selon les maquettes
+ * « FAMMA Livraison » et « FAMMA Conditions Generales ».
+ *
+ * Complète pages.css (ossature .famma-page, titres, bouton) : chargée après
+ * elle, sur ces deux pages seulement. Aucune valeur de couleur en dur, tout
+ * vient de tokens.css ; propriétés logiques partout, pour que la version
+ * arabe se retourne sans feuille dupliquée.
+ *
+ * Contraste : l'orange de la maquette (#FF7A00) n'est employé qu'en surface
+ * et en puce ; les chiffres et liens orange passent en --famma-orange-700
+ * (4,91:1 sur blanc), comme sur le reste du site.
+ *
+ * Mobile d'abord : une colonne, les grilles s'ouvrent au-delà.
+ */
+
+/* --- Fil d'Ariane --- */
+
+.famma-crumbs {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--sp-2);
+	margin-block-end: var(--sp-6);
+	color: var(--famma-text-3);
+	font-size: var(--fs-small);
+}
+
+.famma-crumbs__link {
+	color: var(--famma-text-3);
+	text-decoration: none;
+}
+
+.famma-crumbs__link:hover,
+.famma-crumbs__link:focus-visible {
+	color: var(--famma-orange-700);
+}
+
+.famma-crumbs__sep {
+	inline-size: 12px;
+	block-size: 12px;
+	color: var(--famma-line-field, var(--famma-text-3));
+}
+
+.famma-crumbs__current {
+	color: var(--famma-ink);
+}
+
+[dir="rtl"] .famma-crumbs__sep,
+[dir="rtl"] .famma-document__next .famma-icon {
+	transform: scaleX(-1);
+}
+
+/* --- Encadré d'information (note sous les zones) --- */
+
+.famma-note {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--sp-3);
+	margin: var(--sp-3) 0 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+	line-height: 1.6;
+}
+
+.famma-note .famma-icon {
+	flex-shrink: 0;
+	inline-size: 16px;
+	block-size: 16px;
+	margin-block-start: 2px;
+	color: var(--famma-orange-700);
+}
+
+/* --- Boutons propres à ces pages --- */
+
+.famma-button--whatsapp {
+	background: var(--famma-whatsapp);
+	color: var(--famma-white);
+}
+
+.famma-button--whatsapp:hover,
+.famma-button--whatsapp:focus-visible {
+	background: var(--famma-success);
+	color: var(--famma-white);
+}
+
+.famma-button--outline {
+	border: 1px solid var(--famma-line);
+	background: var(--famma-white);
+	color: var(--famma-ink);
+}
+
+.famma-button--outline:hover,
+.famma-button--outline:focus-visible {
+	border-color: var(--famma-orange);
+	color: var(--famma-orange-700);
+}
+
+/* --- Encart d'aide (Livraison : colonne de droite ; CGV : sous le sommaire) --- */
+
+.famma-help {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-3);
+	padding: var(--sp-6);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+}
+
+.famma-help__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 46px;
+	block-size: 46px;
+	border-radius: 50%;
+	background: var(--famma-whatsapp);
+	color: var(--famma-white);
+}
+
+.famma-help__icon .famma-icon {
+	inline-size: 24px;
+	block-size: 24px;
+}
+
+.famma-help__title {
+	margin: 0;
+	color: var(--famma-ink);
+	font-size: var(--fs-h4);
+	font-weight: var(--fw-semibold);
+	line-height: 1.3;
+}
+
+.famma-help__text {
+	margin: 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+	line-height: 1.65;
+}
+
+.famma-help__hours {
+	display: block;
+	margin-block-start: var(--sp-1);
+	color: var(--famma-text-3);
+}
+
+.famma-help__actions {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-3);
+	padding-block-start: var(--sp-1);
+}
+
+.famma-help__actions .famma-button {
+	inline-size: 100%;
+}
+
+.famma-help__contacts {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-2);
+	margin: 0;
+	padding: var(--sp-4) 0 0;
+	border-block-start: 1px solid var(--famma-line-soft);
+	list-style: none;
+	color: var(--famma-text-prose);
+	font-size: var(--fs-small);
+}
+
+.famma-help__contacts li {
+	display: flex;
+	align-items: center;
+	gap: var(--sp-3);
+}
+
+.famma-help__contacts .famma-icon {
+	flex-shrink: 0;
+	inline-size: 15px;
+	block-size: 15px;
+	color: var(--famma-text-3);
+}
+
+.famma-help__contacts a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.famma-help--compact {
+	padding: var(--sp-4) var(--sp-4) var(--sp-4);
+}
+
+.famma-help--compact .famma-help__title {
+	font-size: var(--fs-body);
+}
+
+/* ======================================================================
+ * Livraison
+ * ====================================================================== */
+
+.famma-delivery__hero {
+	margin-block-end: var(--sp-6);
+}
+
+.famma-delivery__badge {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--sp-2);
+	margin: 0 0 var(--sp-4);
+	padding: 6px 14px;
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-warning-bg);
+	color: var(--famma-orange-700);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-medium);
+}
+
+.famma-delivery__badge .famma-icon {
+	inline-size: 14px;
+	block-size: 14px;
+}
+
+.famma-delivery__highlights {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+	gap: var(--sp-4);
+	margin: 0 0 var(--sp-10);
+	padding: 0;
+	list-style: none;
+}
+
+.famma-delivery__card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-2);
+	padding: var(--sp-6);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+}
+
+.famma-delivery__card-icon {
+	inline-size: 24px;
+	block-size: 24px;
+	color: var(--famma-orange-700);
+}
+
+.famma-delivery__card-title {
+	margin: var(--sp-1) 0 0;
+	color: var(--famma-ink);
+	font-size: var(--fs-body);
+	font-weight: var(--fw-semibold);
+	line-height: 1.35;
+}
+
+.famma-delivery__card-text {
+	margin: 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+	line-height: 1.6;
+}
+
+.famma-delivery__section {
+	margin-block-end: var(--sp-10);
+}
+
+.famma-delivery__heading {
+	margin: 0;
+	color: var(--famma-ink);
+	font-size: var(--fs-h3);
+	font-weight: var(--fw-bold);
+	line-height: 1.25;
+}
+
+.famma-delivery__sub {
+	max-inline-size: 40rem;
+	margin: var(--sp-2) 0 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+	line-height: 1.6;
+}
+
+/* Mode de livraison : la carte mise en avant de la maquette. */
+
+.famma-delivery__option {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-3);
+	max-inline-size: 26rem;
+	margin-block-start: var(--sp-4);
+	padding: var(--sp-6);
+	border: 1.5px solid var(--famma-orange);
+	border-radius: var(--famma-radius);
+	background: var(--famma-warning-bg);
+}
+
+.famma-delivery__option-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--sp-3);
+	padding-block-end: var(--sp-3);
+	border-block-end: 1px solid var(--famma-line-soft);
+}
+
+.famma-delivery__option-name {
+	margin: 0;
+	color: var(--famma-ink);
+	font-size: var(--fs-h4);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-delivery__option-price {
+	margin: 0;
+	color: var(--famma-success-700);
+	font-size: var(--fs-h3);
+	font-weight: var(--fw-bold);
+}
+
+.famma-delivery__points {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-delivery__point {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--sp-2);
+	color: var(--famma-text-prose);
+	font-size: var(--fs-small);
+	line-height: 1.55;
+}
+
+.famma-delivery__point .famma-icon {
+	flex-shrink: 0;
+	inline-size: 15px;
+	block-size: 15px;
+	margin-block-start: 3px;
+	color: var(--famma-success-700);
+	stroke-width: 2.3;
+}
+
+/* Zones : un vrai tableau, lisible par les lecteurs d'écran. */
+
+.famma-delivery__zones {
+	inline-size: 100%;
+	margin-block-start: var(--sp-4);
+	border: 1px solid var(--famma-line);
+	border-collapse: separate;
+	border-spacing: 0;
+	border-radius: var(--famma-radius);
+	overflow: hidden;
+}
+
+.famma-delivery__zones th,
+.famma-delivery__zones td {
+	padding: var(--sp-4) var(--sp-6);
+	border: 0;
+	text-align: start;
+	vertical-align: middle;
+}
+
+.famma-delivery__zones thead th {
+	background: var(--famma-surface-band);
+	color: var(--famma-text-2);
+	font-size: var(--fs-caption);
+	font-weight: var(--fw-semibold);
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+}
+
+.famma-delivery__zones tbody tr > * {
+	border-block-start: 1px solid var(--famma-line-soft);
+}
+
+.famma-delivery__zone-name {
+	display: block;
+	color: var(--famma-ink);
+	font-size: var(--fs-body);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-delivery__zone-detail {
+	display: block;
+	margin-block-start: 2px;
+	color: var(--famma-text-3);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-regular);
+	line-height: 1.5;
+}
+
+.famma-delivery__zones .famma-delivery__zone-price {
+	inline-size: 7rem;
+	color: var(--famma-success-700);
+	font-weight: var(--fw-semibold);
+	text-align: end;
+	white-space: nowrap;
+}
+
+.famma-delivery__zones thead .famma-delivery__zone-price {
+	color: var(--famma-text-2);
+}
+
+/* Étapes : pastille numérotée, filet vers l'étape suivante. */
+
+.famma-delivery__steps {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+	gap: var(--sp-6);
+	margin: var(--sp-6) 0 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: famma-step;
+}
+
+.famma-delivery__step {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-2);
+	counter-increment: famma-step;
+}
+
+.famma-delivery__step::before {
+	content: counter(famma-step);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 34px;
+	block-size: 34px;
+	margin-block-end: var(--sp-1);
+	border-radius: 50%;
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-delivery__step-title {
+	margin: 0;
+	color: var(--famma-ink);
+	font-size: var(--fs-body);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-delivery__step-text {
+	margin: 0;
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+	line-height: 1.6;
+}
+
+/* Questions fréquentes + encart d'aide. */
+
+.famma-delivery__split {
+	display: grid;
+	gap: var(--sp-6);
+	align-items: start;
+	margin-block-end: var(--sp-10);
+}
+
+.famma-faq {
+	margin-block-start: var(--sp-4);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+	overflow: hidden;
+}
+
+.famma-faq__item + .famma-faq__item {
+	border-block-start: 1px solid var(--famma-line-soft);
+}
+
+.famma-faq__question {
+	display: flex;
+	align-items: center;
+	gap: var(--sp-4);
+	min-block-size: var(--sp-12);
+	padding: var(--sp-4) var(--sp-6);
+	color: var(--famma-ink);
+	font-size: var(--fs-body);
+	font-weight: var(--fw-medium);
+	line-height: 1.5;
+	list-style: none;
+	cursor: pointer;
+}
+
+.famma-faq__question::-webkit-details-marker {
+	display: none;
+}
+
+.famma-faq__question > span {
+	flex: 1;
+}
+
+.famma-faq__chevron {
+	flex-shrink: 0;
+	inline-size: 17px;
+	block-size: 17px;
+	color: var(--famma-orange-700);
+	transition: transform var(--dur-fast, 120ms) ease;
+}
+
+.famma-faq__item[open] .famma-faq__chevron {
+	transform: rotate(180deg);
+}
+
+.famma-faq__answer {
+	margin: 0;
+	padding: 0 var(--sp-6) var(--sp-4);
+	color: var(--famma-text-2);
+	font-size: var(--fs-small);
+	line-height: 1.7;
+}
+
+/* ======================================================================
+ * Conditions générales
+ * ====================================================================== */
+
+.famma-document__hero {
+	margin-block-end: var(--sp-8);
+}
+
+.famma-document__meta {
+	margin: 0 0 var(--sp-4);
+	color: var(--famma-text-3);
+	font-size: var(--fs-small);
+}
+
+.famma-document__lede {
+	max-inline-size: 43rem;
+	color: var(--famma-text-2);
+	font-size: var(--fs-body);
+	line-height: 1.7;
+}
+
+.famma-document__lede > :first-child {
+	margin-block-start: 0;
+}
+
+.famma-document__lede > :last-child {
+	margin-block-end: 0;
+}
+
+.famma-document__shell {
+	display: grid;
+	gap: var(--sp-8);
+	align-items: start;
+}
+
+.famma-document__aside {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-4);
+}
+
+.famma-toc {
+	padding: var(--sp-4);
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+}
+
+.famma-toc__title {
+	margin: 0 0 var(--sp-3);
+	color: var(--famma-text-3);
+	font-size: var(--fs-caption);
+	font-weight: var(--fw-semibold);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.famma-toc__list {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-toc__link {
+	display: flex;
+	gap: var(--sp-3);
+	padding: var(--sp-2);
+	border-radius: 6px;
+	color: var(--famma-text-prose);
+	font-size: var(--fs-small);
+	line-height: 1.45;
+	text-decoration: none;
+}
+
+.famma-toc__link:hover,
+.famma-toc__link:focus-visible {
+	background: var(--famma-surface-band);
+	color: var(--famma-orange-700);
+}
+
+.famma-toc__number {
+	flex-shrink: 0;
+	color: var(--famma-text-3);
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-document__body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-8);
+	min-inline-size: 0;
+}
+
+.famma-document__section {
+	scroll-margin-block-start: calc(var(--header-h) + var(--sp-6));
+}
+
+.famma-document__heading {
+	display: flex;
+	align-items: baseline;
+	gap: var(--sp-3);
+	margin: 0;
+	color: var(--famma-ink);
+	font-size: var(--fs-h4);
+	font-weight: var(--fw-semibold);
+	line-height: 1.3;
+}
+
+.famma-document__number {
+	flex-shrink: 0;
+	color: var(--famma-orange-700);
+	font-size: var(--fs-small);
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-document__text {
+	margin-block-start: var(--sp-3);
+	color: var(--famma-text-prose);
+	font-size: var(--fs-body);
+	line-height: 1.8;
+}
+
+.famma-document__text > * {
+	margin-block: 0;
+}
+
+.famma-document__text > * + * {
+	margin-block-start: var(--sp-4);
+}
+
+/* Listes : la puce orange de la maquette. */
+
+.famma-document__text ul {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-2);
+	padding: 0;
+	list-style: none;
+}
+
+.famma-document__text ul > li {
+	position: relative;
+	padding-inline-start: var(--sp-6);
+}
+
+.famma-document__text ul > li::before {
+	content: "";
+	position: absolute;
+	inset-block-start: 0.7em;
+	inset-inline-start: 2px;
+	inline-size: 5px;
+	block-size: 5px;
+	border-radius: 50%;
+	background: var(--famma-orange);
+}
+
+/* Citation = encadré d'information de la maquette. */
+
+.famma-document__text blockquote {
+	display: flex;
+	gap: var(--sp-3);
+	margin-inline: 0;
+	padding: var(--sp-4);
+	border: 0;
+	border-radius: 10px;
+	background: var(--famma-surface-band);
+	color: var(--famma-text-prose);
+	font-size: var(--fs-small);
+	font-style: normal;
+	line-height: 1.7;
+}
+
+.famma-document__text blockquote::before {
+	content: "";
+	flex-shrink: 0;
+	inline-size: 17px;
+	block-size: 17px;
+	margin-block-start: 3px;
+	background: var(--famma-orange-700);
+	/* Même tracé que l'icône « info » du thème (inc/icons.php). */
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5M12 8h.01'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5M12 8h.01'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.famma-document__text blockquote > * {
+	margin: 0;
+}
+
+.famma-document__text a {
+	color: var(--famma-orange-700);
+}
+
+.famma-document__next {
+	margin: 0;
+	padding-block-start: var(--sp-6);
+	border-block-start: 1px solid var(--famma-line-soft);
+}
+
+.famma-document__next a {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--sp-2);
+	color: var(--famma-orange-700);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-medium);
+	text-decoration: none;
+}
+
+.famma-document__next .famma-icon {
+	inline-size: 15px;
+	block-size: 15px;
+}
+
+/* --- Au-delà du mobile --- */
+
+@media (min-width: 58.75rem) {
+	.famma-delivery__split {
+		grid-template-columns: minmax(0, 1fr) 20.625rem;
+	}
+
+	.famma-document__shell {
+		grid-template-columns: 16.75rem minmax(0, 1fr);
+	}
+
+	.famma-document__aside {
+		position: sticky;
+		inset-block-start: calc(var(--header-h) + var(--sp-6));
+	}
+}

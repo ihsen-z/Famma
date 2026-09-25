@@ -49,11 +49,16 @@ final class Pages_Content {
 	public const OPTION_HOME = 'famma_page_home';
 
 	/**
+	 * Option abritant les textes de la page Livraison (schéma : `Delivery_Content`).
+	 */
+	public const OPTION_DELIVERY = 'famma_page_delivery';
+
+	/**
 	 * Pages gérées par cet écran, dans leur ordre d'affichage.
 	 *
 	 * @var array<int, string>
 	 */
-	private const PAGES = array( 'home', 'about', 'contact', 'product' );
+	private const PAGES = array( 'home', 'about', 'contact', 'delivery', 'product' );
 
 	/**
 	 * Groupe de réglages, au sens de la Settings API.
@@ -351,10 +356,11 @@ final class Pages_Content {
 	 */
 	public static function schema( string $page ): array {
 		return match ( $page ) {
-			'about'   => self::about_schema(),
-			'product' => Product_Content::schema(),
-			'home'    => Home_Content::schema(),
-			default   => self::contact_schema(),
+			'about'    => self::about_schema(),
+			'product'  => Product_Content::schema(),
+			'home'     => Home_Content::schema(),
+			'delivery' => Delivery_Content::schema(),
+			default    => self::contact_schema(),
 		};
 	}
 
@@ -366,10 +372,11 @@ final class Pages_Content {
 	 */
 	private static function option_name( string $page ): string {
 		return match ( $page ) {
-			'about'   => self::OPTION_ABOUT,
-			'product' => self::OPTION_PRODUCT,
-			'home'    => self::OPTION_HOME,
-			default   => self::OPTION_CONTACT,
+			'about'    => self::OPTION_ABOUT,
+			'product'  => self::OPTION_PRODUCT,
+			'home'     => self::OPTION_HOME,
+			'delivery' => self::OPTION_DELIVERY,
+			default    => self::OPTION_CONTACT,
 		};
 	}
 
@@ -381,10 +388,11 @@ final class Pages_Content {
 	 */
 	private static function section_title( string $page ): string {
 		return match ( $page ) {
-			'about'   => __( 'Page À propos', 'famma-core' ),
-			'product' => __( 'Fiche produit', 'famma-core' ),
-			'home'    => __( 'Page d’accueil — newsletter et « Ils nous font confiance »', 'famma-core' ),
-			default   => __( 'Page Contact', 'famma-core' ),
+			'about'    => __( 'Page À propos', 'famma-core' ),
+			'product'  => __( 'Fiche produit', 'famma-core' ),
+			'home'     => __( 'Page d’accueil — newsletter et « Ils nous font confiance »', 'famma-core' ),
+			'delivery' => __( 'Page Livraison', 'famma-core' ),
+			default    => __( 'Page Contact', 'famma-core' ),
 		};
 	}
 

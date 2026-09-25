@@ -33,6 +33,7 @@ define( 'FAMMA_CORE_FILE', __FILE__ );
 require_once __DIR__ . '/includes/pages-content.php';
 require_once __DIR__ . '/includes/product-content.php';
 require_once __DIR__ . '/includes/home-content.php';
+require_once __DIR__ . '/includes/delivery-content.php';
 require_once __DIR__ . '/includes/newsletter.php';
 require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';

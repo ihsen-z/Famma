@@ -54,6 +54,8 @@ function famma_child_icon_paths(): array {
 
 		// Panier et commande.
 		'check'     => '<path d="M4 12.5l5 5L20 6.5"/>',
+		// Encadré d'information (pages Livraison et Conditions générales).
+		'info'      => '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
 		'trash'     => '<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/>',
 		'forward'   => '<path d="M9 6l6 6-6 6"/>',
 		'back'      => '<path d="M15 6l-6 6 6 6"/>',

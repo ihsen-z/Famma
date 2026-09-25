@@ -132,3 +132,119 @@ function famma_child_page_whatsapp_url(): string {
 
 	return $url;
 }
+
+/**
+ * Le plugin sait-il servir les textes de la page Livraison ?
+ *
+ * @return bool
+ */
+function famma_child_delivery_available(): bool {
+	return class_exists( '\Famma\Core\Delivery_Content' );
+}
+
+/**
+ * Texte de la page Livraison, délai déjà inséré.
+ *
+ * @param string $key Clé du champ.
+ * @return string Chaîne vide si le bloc n'est pas configuré.
+ */
+function famma_child_delivery_text( string $key ): string {
+	return famma_child_delivery_available() ? \Famma\Core\Delivery_Content::text( $key ) : '';
+}
+
+/**
+ * Champ multiligne de la page Livraison, une entrée par ligne.
+ *
+ * @param string $key Clé du champ.
+ * @return array<int, string>
+ */
+function famma_child_delivery_lines( string $key ): array {
+	return famma_child_delivery_available() ? \Famma\Core\Delivery_Content::lines( $key ) : array();
+}
+
+/**
+ * Zones desservies.
+ *
+ * @return array<int, array{zone: string, detail: string}>
+ */
+function famma_child_delivery_zones(): array {
+	return famma_child_delivery_available() ? \Famma\Core\Delivery_Content::zones() : array();
+}
+
+/**
+ * Questions fréquentes de la page Livraison.
+ *
+ * @return array<int, array{question: string, answer: string}>
+ */
+function famma_child_delivery_faq(): array {
+	return famma_child_delivery_available() ? \Famma\Core\Delivery_Content::faq() : array();
+}
+
+/**
+ * Fil d'Ariane d'une page institutionnelle : Accueil › page courante.
+ *
+ * Même dessin que celui du tunnel de commande, et libellé traduit : un
+ * `aria-label` en dur serait lu en français sur la version arabe.
+ *
+ * @return void
+ */
+function famma_child_page_crumbs(): void {
+	?>
+	<nav class="famma-crumbs" aria-label="<?php esc_attr_e( 'Fil d’Ariane', 'famma-child' ); ?>">
+		<a class="famma-crumbs__link" href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Accueil', 'famma-child' ); ?></a>
+		<?php famma_child_the_icon( 'forward', 'famma-crumbs__sep' ); ?>
+		<span class="famma-crumbs__current" aria-current="page"><?php echo esc_html( get_the_title() ); ?></span>
+	</nav>
+	<?php
+}
+
+/**
+ * Découpe le contenu d'un document (CGV…) en introduction et articles.
+ *
+ * Chaque titre de niveau 2 saisi dans l'éditeur ouvre un article : il reçoit
+ * un numéro, une ancre et une entrée au sommaire. Le propriétaire n'a donc
+ * rien d'autre à faire que rédiger avec des titres — la mise en page de la
+ * maquette suit, quel que soit le nombre d'articles. Ce qui précède le
+ * premier titre sert d'introduction.
+ *
+ * @param string $html Contenu déjà passé par `the_content`.
+ * @return array{intro: string, sections: array<int, array{id: string, number: string, title: string, body: string}>}
+ */
+function famma_child_document_sections( string $html ): array {
+	$parts = preg_split( '#<h2\b[^>]*>(.*?)</h2>#is', $html, -1, PREG_SPLIT_DELIM_CAPTURE );
+	$parts = is_array( $parts ) ? $parts : array( $html );
+
+	$intro    = (string) array_shift( $parts );
+	$sections = array();
+	$used     = array();
+	$count    = count( $parts );
+
+	for ( $i = 0; $i + 1 < $count; $i += 2 ) {
+		$title = trim( wp_strip_all_tags( (string) $parts[ $i ] ) );
+
+		if ( '' === $title ) {
+			continue;
+		}
+
+		$number = str_pad( (string) ( count( $sections ) + 1 ), 2, '0', STR_PAD_LEFT );
+		$id     = 'article-' . sanitize_title( $title );
+
+		// Deux articles de même titre ne partagent pas la même ancre.
+		if ( isset( $used[ $id ] ) ) {
+			$id .= '-' . $number;
+		}
+		$used[ $id ] = true;
+
+		$sections[] = array(
+			'id'     => $id,
+			'number' => $number,
+			'title'  => $title,
+			'body'   => (string) $parts[ $i + 1 ],
+		);
+	}
+
+	return array(
+		'intro'    => $intro,
+		'sections' => $sections,
+	);
+}

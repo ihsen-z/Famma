@@ -260,6 +260,13 @@
 				<element value="famma_child_menu_hide_empty_sale"/>
 				<element value="famma_child_catalog_orderby"/>
 				<element value="famma_child_on_sale_count"/>
+				<element value="famma_child_delivery_available"/>
+				<element value="famma_child_delivery_text"/>
+				<element value="famma_child_delivery_lines"/>
+				<element value="famma_child_delivery_zones"/>
+				<element value="famma_child_delivery_faq"/>
+				<element value="famma_child_page_crumbs"/>
+				<element value="famma_child_document_sections"/>
 				<element value="famma_child_load_textdomain"/>
 				<element value="famma_child_own_textdomains"/>
 				<element value="famma_child_skip_translatepress_gettext"/>
