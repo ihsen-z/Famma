@@ -12,9 +12,10 @@
  * « numéro de téléphone invalide » vient de `Tunisia::validate_phone()`, pas
  * d'un contrôle réécrit ici.
  *
- * Sans JavaScript, le formulaire est inerte — mais le parcours classique
- * (« Ajouter au panier » puis checkout) reste juste en dessous, intact. C'est
- * la raison pour laquelle le formulaire de WooCommerce n'a pas été supprimé.
+ * Sans JavaScript, la validation est inerte — mais « Ajouter au panier », à
+ * côté d'elle, poste encore le produit vers le panier de WooCommerce, et le
+ * parcours classique (panier puis checkout) reste intact. C'est la raison pour
+ * laquelle le formulaire de WooCommerce n'a pas été supprimé, seulement rangé.
  */
 ( function () {
 	'use strict';
@@ -123,6 +124,51 @@
 	if ( qtyInput ) {
 		qtyInput.addEventListener( 'input', syncQuantity );
 		qtyInput.addEventListener( 'change', syncQuantity );
+	}
+
+	/*
+	 * « Ajouter au panier », à côté de la validation. Le clic est transmis au
+	 * bouton du formulaire de WooCommerce, rangé par le thème : c'est lui qui
+	 * porte la quantité synchronisée et le parcours standard du panier.
+	 *
+	 * S'il manque, ce formulaire-ci part tel quel vers la page, avec
+	 * `add-to-cart` et une quantité ajoutée à la volée ; `cartSubmit` écarte
+	 * alors le traitement de commande express ci-dessous.
+	 */
+	var cartSubmit = false;
+	var cartButton = form.querySelector( '.famma-express__cart' );
+
+	if ( cartButton ) {
+		cartButton.addEventListener( 'click', function ( event ) {
+			var wooForm = document.querySelector( 'form.cart' );
+			var wooButton = wooForm ? wooForm.querySelector( 'button[name="add-to-cart"]' ) : null;
+
+			syncQuantity();
+
+			if ( wooButton ) {
+				event.preventDefault();
+
+				if ( 'function' === typeof wooForm.requestSubmit ) {
+					wooForm.requestSubmit( wooButton );
+				} else {
+					wooButton.click();
+				}
+
+				return;
+			}
+
+			var quantity = form.querySelector( 'input[name="quantity"]' );
+
+			if ( ! quantity ) {
+				quantity = document.createElement( 'input' );
+				quantity.type = 'hidden';
+				quantity.name = 'quantity';
+				form.appendChild( quantity );
+			}
+
+			quantity.value = String( currentQuantity() );
+			cartSubmit = true;
+		} );
 	}
 
 	/**
@@ -280,6 +326,10 @@
 	}
 
 	form.addEventListener( 'submit', function ( event ) {
+		if ( cartSubmit ) {
+			return;
+		}
+
 		event.preventDefault();
 
 		if ( busy ) {

@@ -58,6 +58,7 @@ function famma_child_icon_paths(): array {
 		'info'      => '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
 		'trash'     => '<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/>',
 		'forward'   => '<path d="M9 6l6 6-6 6"/>',
+		'return'    => '<path d="M9 14l-4-4 4-4"/><path d="M5 10h9a5 5 0 0 1 0 10h-3"/>',
 		'back'      => '<path d="M15 6l-6 6 6 6"/>',
 
 		// Accueil — newsletter et témoignages.

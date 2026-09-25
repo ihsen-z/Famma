@@ -87,23 +87,52 @@ add_action( 'wp', 'famma_child_remove_parent_breadcrumb' );
 /**
  * Carte WhatsApp sous le bouton d'achat.
  *
- * Séparée de la réassurance, qui est remontée au-dessus du CTA : les deux
- * blocs n'ont plus la même place, ils ne peuvent plus partager la même
- * fonction. Ne rend rien si aucun numéro n'est configuré (§60).
+ * Dessin de la maquette : carte vert pâle, pastille WhatsApp, deux lignes de
+ * texte et un chevron. Elle remplace le bouton vert plein, qui rivalisait
+ * avec « Confirmer ma commande » alors qu'il s'agit d'une aide, pas d'un
+ * achat.
+ *
+ * Les deux lignes viennent de FAMMA → Pages → Fiche produit. La maquette
+ * écrivait « Réponse rapide garantie ! » : une garantie que rien ne tient,
+ * donc absente. Le message pré-rempli nomme le produit, comme dans la barre
+ * du bas. Ne rend rien sans numéro configuré (§60).
  *
  * @return void
  */
 function famma_child_product_whatsapp_card(): void {
-	// Libellé saisi dans FAMMA → Pages → Fiche produit ; vidé, le bouton disparaît.
+	global $product;
+
+	// Vidé dans l'administration, le libellé retire la carte.
 	$label = famma_child_product_copy( 'whatsapp_card' );
 
-	if ( '' === famma_child_whatsapp_number() || '' === $label ) {
+	if ( '' === $label || ! $product instanceof WC_Product || ! class_exists( '\Famma\Core\WhatsApp' ) ) {
 		return;
 	}
 
-	echo '<div class="famma-product__whatsapp">';
-	echo do_shortcode( '[famma_whatsapp text="' . esc_attr( $label ) . '"]' );
-	echo '</div>';
+	$message = class_exists( '\Famma\Core\Product_Content' )
+		? \Famma\Core\Product_Content::whatsapp_message( $product->get_name() )
+		: '';
+	$href    = \Famma\Core\WhatsApp::link( $message );
+
+	if ( '' === $href ) {
+		return;
+	}
+
+	$sub = famma_child_product_copy( 'whatsapp_card_sub' );
+	?>
+	<a class="famma-wa-card" href="<?php echo esc_url( $href ); ?>" target="_blank" rel="noopener nofollow">
+		<span class="famma-wa-card__mark">
+			<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2zm0 2a8 8 0 1 1-4.1 14.9l-.3-.2-2.5.6.7-2.4-.2-.3A8 8 0 0 1 12 4zm-3.3 4c-.2 0-.5 0-.7.4-.3.4-.9 1-.9 2.3s1 2.6 1.1 2.8c.1.2 1.8 3 4.5 4 1.9.7 2.3.6 2.7.5.4 0 1.3-.5 1.5-1.1.2-.6.2-1 .1-1.1l-.5-.3-1.7-.8c-.2-.1-.4-.1-.6.1l-.8 1c-.2.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.3 0-.5.1-.6l.4-.5.3-.5v-.5l-.7-1.7c-.2-.4-.4-.4-.6-.4z"/></svg>
+		</span>
+		<span class="famma-wa-card__text">
+			<span class="famma-wa-card__title"><?php echo esc_html( $label ); ?></span>
+			<?php if ( '' !== $sub ) : ?>
+				<span class="famma-wa-card__sub"><?php echo esc_html( $sub ); ?></span>
+			<?php endif; ?>
+		</span>
+		<?php famma_child_the_icon( 'forward', 'famma-wa-card__chevron' ); ?>
+	</a>
+	<?php
 }
 
 /**
@@ -317,27 +346,78 @@ function famma_child_product_benefits(): void {
 add_action( 'woocommerce_after_single_product_summary', 'famma_child_product_benefits', 6 );
 
 /**
- * Ajoute l'onglet « Livraison » aux onglets produit.
+ * Blocs de l'onglet « Livraison & Retours ».
  *
- * Le contenu vient de la page `/livraison/`, écrite par le propriétaire. Une
- * source unique : si la politique change, elle change à un seul endroit, et la
- * fiche produit suit. Recopier le texte ici garantirait qu'il diverge.
+ * La maquette y pose quatre blocs chiffrés : « 24h à 72h », « 7 DT, offerte
+ * dès 150 DT », « 7 jours pour retourner », « remboursé sous 5 jours ».
+ * Aucun de ces chiffres n'est celui de la boutique. Les blocs reprennent donc
+ * des textes déjà saisis par le propriétaire, à la source où il les tient :
  *
- * L'onglet n'existe pas tant que la page est absente ou vide (§60).
+ * - les trois points forts de la page Livraison (FAMMA → Pages → Page
+ *   Livraison) — livraison offerte, paiement à la livraison, délai ; le délai
+ *   vient du champ de la section Contact, et son bloc disparaît s'il est vide ;
+ * - le bloc Retours de la fiche produit (FAMMA → Pages → Fiche produit), qui
+ *   ne dit que ce que la page Retours dit déjà, en attendant la politique.
+ *
+ * @return array<int, array{icon: string, title: string, text: string}>
+ */
+function famma_child_product_shipping_blocks(): array {
+	$icons  = array(
+		1 => 'truck',
+		2 => 'card',
+		3 => 'clock',
+	);
+	$blocks = array();
+
+	foreach ( $icons as $n => $icon ) {
+		$title = famma_child_delivery_text( 'highlight_' . $n . '_title' );
+
+		if ( '' === $title ) {
+			continue;
+		}
+
+		$blocks[] = array(
+			'icon'  => $icon,
+			'title' => $title,
+			'text'  => famma_child_delivery_text( 'highlight_' . $n . '_text' ),
+		);
+	}
+
+	$returns = famma_child_product_copy( 'returns_title' );
+
+	if ( '' !== $returns ) {
+		$blocks[] = array(
+			'icon'  => 'return',
+			'title' => $returns,
+			'text'  => famma_child_product_copy( 'returns_text' ),
+		);
+	}
+
+	return $blocks;
+}
+
+/**
+ * Ajoute l'onglet « Livraison & Retours » aux onglets produit.
+ *
+ * Intitulé réduit à « Livraison » quand le propriétaire a vidé le bloc
+ * retours : un onglet ne promet pas ce qu'il ne contient pas. Absent si aucun
+ * bloc n'est rempli (§60).
  *
  * @param array<string, array<string, mixed>> $tabs Onglets existants.
  * @return array<string, array<string, mixed>>
  */
 function famma_child_product_shipping_tab( array $tabs ): array {
-	$page = get_page_by_path( 'livraison' );
+	$blocks = famma_child_product_shipping_blocks();
 
-	if ( ! $page instanceof WP_Post || '' === trim( (string) $page->post_content ) ) {
+	if ( array() === $blocks ) {
 		return $tabs;
 	}
 
 	$tabs['famma_shipping'] = array(
-		'title'    => __( 'Livraison', 'famma-child' ),
-		'priority' => 25,
+		'title'    => '' !== famma_child_product_copy( 'returns_title' )
+			? __( 'Livraison & Retours', 'famma-child' )
+			: __( 'Livraison', 'famma-child' ),
+		'priority' => 30,
 		'callback' => 'famma_child_product_shipping_panel',
 	);
 
@@ -346,39 +426,58 @@ function famma_child_product_shipping_tab( array $tabs ): array {
 add_filter( 'woocommerce_product_tabs', 'famma_child_product_shipping_tab' );
 
 /**
- * Contenu de l'onglet « Livraison ».
+ * Contenu de l'onglet « Livraison & Retours » : grille de blocs, puis les
+ * liens vers les pages complètes.
  *
  * @return void
  */
 function famma_child_product_shipping_panel(): void {
-	$page = get_page_by_path( 'livraison' );
+	$blocks = famma_child_product_shipping_blocks();
 
-	if ( ! $page instanceof WP_Post ) {
+	if ( array() === $blocks ) {
 		return;
 	}
 
-	echo '<div class="famma-product__shipping">';
+	echo '<div class="famma-shipping">';
 
-	$delay = famma_child_delivery_delay();
+	foreach ( $blocks as $block ) {
+		echo '<div class="famma-shipping__item">';
+		echo '<p class="famma-shipping__title">';
+		famma_child_the_icon( $block['icon'] );
+		echo '<span>' . esc_html( $block['title'] ) . '</span></p>';
 
-	if ( '' !== $delay ) {
-		printf( '<p class="famma-product__delay"><strong>%s</strong></p>', esc_html( $delay ) );
+		if ( '' !== $block['text'] ) {
+			echo '<p class="famma-shipping__text">' . esc_html( $block['text'] ) . '</p>';
+		}
+
+		echo '</div>';
 	}
 
-	/*
-	 * `the_content` est un filtre du cœur, pas un hook que nous inventons :
-	 * c'est lui qui exécute les blocs, les shortcodes et les paragraphes. Le
-	 * remplacer par un rendu maison ferait perdre la mise en forme saisie par
-	 * le propriétaire. D'où l'exception locale à la règle de préfixe.
-	 */
-	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- filtre du coeur WordPress, applique a dessein.
-	echo wp_kses_post( apply_filters( 'the_content', $page->post_content ) );
-	printf(
-		'<p><a href="%1$s">%2$s</a></p>',
-		esc_url( (string) get_permalink( $page ) ),
-		esc_html__( 'Voir la page Livraison complète', 'famma-child' )
-	);
 	echo '</div>';
+
+	$links = array(
+		'livraison' => __( 'Consulter les conditions de livraison', 'famma-child' ),
+		'retours'   => __( 'Consulter la page Retours et remboursements', 'famma-child' ),
+	);
+
+	echo '<p class="famma-shipping__links">';
+
+	foreach ( $links as $slug => $label ) {
+		$page = get_page_by_path( $slug );
+
+		if ( ! $page instanceof WP_Post || 'publish' !== $page->post_status ) {
+			continue;
+		}
+
+		printf(
+			'<a class="famma-shipping__link" href="%1$s">%2$s%3$s</a>',
+			esc_url( (string) get_permalink( $page ) ),
+			esc_html( $label ),
+			wp_kses( famma_child_icon( 'forward' ), famma_child_svg_allowed_html() )
+		);
+	}
+
+	echo '</p>';
 }
 
 /**
@@ -424,12 +523,32 @@ function famma_child_product_review_summary(): void {
 			</p>
 		</div>
 		<p class="famma-reviews__link">
-			<a href="#reviews"><?php esc_html_e( 'Lire tous les avis', 'famma-child' ); ?></a>
+			<?php // `woocommerce-review-link` : le script de WooCommerce ouvre l'onglet Avis avant de défiler jusqu'à lui. ?>
+			<a class="woocommerce-review-link" href="#reviews"><?php esc_html_e( 'Lire tous les avis', 'famma-child' ); ?></a>
 		</p>
 	</section>
 	<?php
 }
 add_action( 'woocommerce_after_single_product_summary', 'famma_child_product_review_summary', 12 );
+
+/**
+ * Intitulé de l'onglet des avis : « Avis clients (N) », comme la maquette.
+ *
+ * Le nombre est celui de WooCommerce, jamais le « 128 » du prototype ; et
+ * l'onglet n'existe qu'à partir du premier avis (voir
+ * `famma_child_product_tabs_order()`).
+ *
+ * @return string
+ */
+function famma_child_product_reviews_tab_title(): string {
+	global $product;
+
+	$count = $product instanceof WC_Product ? (int) $product->get_review_count() : 0;
+
+	/* translators: %d: nombre d'avis publiés sur le produit. */
+	return sprintf( __( 'Avis clients (%d)', 'famma-child' ), $count );
+}
+add_filter( 'woocommerce_product_reviews_tab_title', 'famma_child_product_reviews_tab_title' );
 
 /**
  * Attributs affichables du produit, mis à plat pour le tableau de specs.
@@ -481,18 +600,38 @@ function famma_child_product_spec_rows( WC_Product $product ): array {
 		);
 	}
 
+	/*
+	 * Poids et dimensions, quand le propriétaire les a saisis dans l'onglet
+	 * « Expédition » du produit : la maquette les range parmi les
+	 * caractéristiques, et WooCommerce les affichait dans l'onglet
+	 * « Informations complémentaires » que celui-ci remplace.
+	 */
+	if ( $product->has_weight() ) {
+		$rows[] = array(
+			'label' => __( 'Poids', 'famma-child' ),
+			'value' => wc_format_weight( (float) $product->get_weight() ),
+		);
+	}
+
+	if ( $product->has_dimensions() ) {
+		$rows[] = array(
+			'label' => __( 'Dimensions', 'famma-child' ),
+			'value' => wc_format_dimensions( $product->get_dimensions( false ) ),
+		);
+	}
+
 	return $rows;
 }
 
 /**
- * Ajoute l'onglet « Spécifications ».
+ * Ajoute l'onglet « Caractéristiques ».
  *
  * Remplace l'onglet « Informations complémentaires » de WooCommerce plutôt
  * que de s'ajouter à côté : les deux liraient les mêmes attributs, et le
  * client verrait deux fois le même tableau sous deux noms différents.
  *
  * L'onglet n'existe pas si le produit n'a aucun attribut visible. Un onglet
- * « Spécifications » vide est pire qu'absent : il promet une information
+ * « Caractéristiques » vide est pire qu'absent : il promet une information
  * précise et livre du blanc.
  *
  * @param array<string, array<string, mixed>> $tabs Onglets existants.
@@ -512,7 +651,7 @@ function famma_child_product_specs_tab( array $tabs ): array {
 	unset( $tabs['additional_information'] );
 
 	$tabs['famma_specs'] = array(
-		'title'    => __( 'Spécifications', 'famma-child' ),
+		'title'    => __( 'Caractéristiques', 'famma-child' ),
 		'priority' => 15,
 		'callback' => 'famma_child_product_specs_panel',
 	);
@@ -522,7 +661,7 @@ function famma_child_product_specs_tab( array $tabs ): array {
 add_filter( 'woocommerce_product_tabs', 'famma_child_product_specs_tab' );
 
 /**
- * Contenu de l'onglet « Spécifications ».
+ * Contenu de l'onglet « Caractéristiques ».
  *
  * Une liste de définitions plutôt qu'un `<table>` : ce sont des paires
  * clé/valeur, pas un tableau de données à deux dimensions. La grille CSS leur
@@ -559,7 +698,7 @@ function famma_child_product_specs_panel(): void {
 /**
  * Impose l'ordre des onglets de la maquette.
  *
- * Description · Spécifications · Avis · FAQ · Livraison.
+ * Description · Caractéristiques · Avis clients · FAQ · Livraison & Retours.
  *
  * Posé en un seul endroit et en fin de chaîne, après toutes les inscriptions :
  * autrement chaque onglet porte sa priorité et l'ordre final devient le
@@ -571,16 +710,18 @@ function famma_child_product_specs_panel(): void {
  */
 function famma_child_product_tabs_order( array $tabs ): array {
 	/*
-	 * Livraison juste après la description et la fiche technique : c'est la
-	 * première objection d'un achat payé à la livraison. Elle arrivait en
-	 * dernier, à 8,8 écrans sur mobile (audit du 23/09, FP-10).
+	 * L'ordre de la maquette, demandé tel quel par le propriétaire le
+	 * 25/09/2026. L'audit du 23/09 (FP-10) avait remonté la livraison en
+	 * troisième position parce que, dans l'accordéon, chaque section repoussait
+	 * la suivante — jusqu'à 8,8 écrans sur mobile. Avec des onglets, tous les
+	 * intitulés tiennent sur la même rangée : la livraison reste à un appui.
 	 */
 	$order = array(
 		'description'    => 10,
 		'famma_specs'    => 15,
-		'famma_shipping' => 20,
+		'reviews'        => 20,
 		'famma_faq'      => 25,
-		'reviews'        => 30,
+		'famma_shipping' => 30,
 	);
 
 	foreach ( $order as $key => $priority ) {
@@ -606,8 +747,8 @@ function famma_child_product_tabs_order( array $tabs ): array {
 /**
  * Retire le titre « Description » répété dans la section du même nom.
  *
- * L'intitulé de l'accordéon dit déjà « Description » : WooCommerce ajoutait
- * un H2 identique juste dessous.
+ * L'onglet dit déjà « Description » : WooCommerce ajoutait un H2 identique
+ * juste dessous.
  *
  * @return string
  */
@@ -660,11 +801,40 @@ function famma_child_product_faq_pairs( WC_Product $product ): array {
 }
 
 /**
+ * Questions affichées dans l'onglet « FAQ ».
+ *
+ * Les questions du produit d'abord, saisies sur sa fiche (méta `_famma_faq`).
+ * À défaut, les questions générales de la page Livraison — paiement, frais,
+ * zones, compte —, écrites par le propriétaire et valables pour tout le
+ * catalogue : c'est aussi ce que mêlait la FAQ de la maquette (« Puis-je
+ * payer à la livraison ? »). Aucune question d'exemple (§60).
+ *
+ * @param \WC_Product $product Produit courant.
+ * @return array<int, array<string, string>> Paires `q` / `a`.
+ */
+function famma_child_product_faq_items( WC_Product $product ): array {
+	$pairs = famma_child_product_faq_pairs( $product );
+
+	if ( array() !== $pairs ) {
+		return $pairs;
+	}
+
+	foreach ( famma_child_delivery_faq() as $entry ) {
+		$pairs[] = array(
+			'q' => $entry['question'],
+			'a' => $entry['answer'],
+		);
+	}
+
+	return $pairs;
+}
+
+/**
  * Ajoute l'onglet « FAQ ».
  *
- * Absent tant que le propriétaire n'a saisi aucune paire : §60 interdit la
- * question d'exemple, et un accordéon vide donne au client l'impression que
- * la page est cassée.
+ * Absent tant qu'aucune question n'est saisie, ni sur le produit ni sur la
+ * page Livraison : un onglet vide donne au client l'impression que la page
+ * est cassée.
  *
  * @param array<string, array<string, mixed>> $tabs Onglets existants.
  * @return array<string, array<string, mixed>>
@@ -676,7 +846,7 @@ function famma_child_product_faq_tab( array $tabs ): array {
 		return $tabs;
 	}
 
-	if ( array() === famma_child_product_faq_pairs( $product ) ) {
+	if ( array() === famma_child_product_faq_items( $product ) ) {
 		return $tabs;
 	}
 
@@ -693,11 +863,13 @@ add_filter( 'woocommerce_product_tabs', 'famma_child_product_faq_tab' );
 /**
  * Contenu de l'onglet « FAQ ».
  *
- * `<details>` / `<summary>` du HTML natif : l'accordéon fonctionne sans une
- * ligne de JavaScript, reste ouvrable au clavier, et le contenu est trouvable
- * par la recherche du navigateur. Un accordéon maison aurait demandé un
- * script, des attributs ARIA à tenir à jour, et se serait cassé si le script
- * ne se chargeait pas — sur mobile tunisien, ce cas arrive.
+ * `<details>` / `<summary>` du HTML natif : ouvrable au clavier, annoncé par
+ * les lecteurs d'écran, trouvable par la recherche du navigateur, et sans
+ * script. La première réponse est ouverte, comme sur la maquette ; le chevron
+ * de la maquette remplace le triangle natif.
+ *
+ * Classe `famma-pfaq` et non `famma-faq` : `style.css` donne à `.famma-faq`
+ * (la FAQ de l'accueil) 32 px de marge haute et basse.
  *
  * @return void
  */
@@ -708,18 +880,20 @@ function famma_child_product_faq_panel(): void {
 		return;
 	}
 
-	$pairs = famma_child_product_faq_pairs( $product );
+	$pairs = famma_child_product_faq_items( $product );
 
 	if ( array() === $pairs ) {
 		return;
 	}
 
-	echo '<div class="famma-faq">';
+	echo '<div class="famma-pfaq">';
 
-	foreach ( $pairs as $pair ) {
+	foreach ( $pairs as $index => $pair ) {
 		printf(
-			'<details class="famma-faq__item"><summary class="famma-faq__question">%1$s</summary><div class="famma-faq__answer">%2$s</div></details>',
+			'<details class="famma-pfaq__item"%1$s><summary class="famma-pfaq__question"><span>%2$s</span>%3$s</summary><div class="famma-pfaq__answer">%4$s</div></details>',
+			0 === $index ? ' open' : '',
 			esc_html( $pair['q'] ),
+			wp_kses( famma_child_icon( 'chevron', 'famma-pfaq__chevron' ), famma_child_svg_allowed_html() ),
 			esc_html( $pair['a'] )
 		);
 	}

@@ -468,7 +468,9 @@ msgstr "وين إنتي"
 msgid "Votre panier est vide"
 msgstr "القفة فارغة"
 
-msgid "Remplissez vos coordonnées : nous vous appelons pour confirmer la commande avant l’expédition."
+msgid ""
+"Remplissez vos coordonnées : nous vous appelons pour confirmer la commande "
+"avant l’expédition."
 msgstr "عمّر معطياتك: نعيطولك باش نأكدو الطلبية قبل ما نبعثوها."
 
 msgid "Écrivez-nous sur WhatsApp."
@@ -600,3 +602,28 @@ msgstr "اتصل بينا"
 
 msgid "Consulter les conditions de livraison"
 msgstr "شوف شروط التوصيل"
+
+#: inc/product.php
+msgid "Caractéristiques"
+msgstr "المواصفات"
+
+#: inc/product.php
+#, php-format
+msgid "Avis clients (%d)"
+msgstr "آراء الحرفاء (%d)"
+
+#: inc/product.php
+msgid "Livraison & Retours"
+msgstr "التوصيل والإرجاع"
+
+#: inc/product.php
+msgid "Consulter la page Retours et remboursements"
+msgstr "شوف صفحة الإرجاع والاسترجاع"
+
+#: inc/product.php
+msgid "Poids"
+msgstr "الوزن"
+
+#: inc/product.php
+msgid "Dimensions"
+msgstr "القياسات"

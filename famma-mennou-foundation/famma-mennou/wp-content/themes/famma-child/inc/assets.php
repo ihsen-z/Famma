@@ -236,19 +236,20 @@ function famma_child_enqueue_product(): void {
 	);
 
 	/*
-	 * L'accordéon des sections de bas de fiche fonctionne sans ce script :
-	 * `<details>` s'ouvre nativement. Le script ne sert qu'aux ancres qui
-	 * pointent DANS une section fermée — « Lire tous les avis » vers
-	 * `#reviews`. Chargé en pied de page, sans dépendance.
+	 * Les onglets sont pilotés par `single-product.js` de WooCommerce. Ce
+	 * script n'ajoute que l'ouverture par ancre des onglets autres que les
+	 * avis, et le recentrage de la rangée sur mobile. Il dépend du script de
+	 * WooCommerce pour s'exécuter après lui : c'est WooCommerce qui choisit
+	 * l'onglet ouvert au chargement.
 	 */
-	$accordion = get_stylesheet_directory() . '/assets/js/product-accordion.js';
+	$tabs = get_stylesheet_directory() . '/assets/js/product-tabs.js';
 
-	if ( file_exists( $accordion ) ) {
+	if ( file_exists( $tabs ) && wp_script_is( 'wc-single-product', 'registered' ) ) {
 		wp_enqueue_script(
-			'famma-product-accordion',
-			get_stylesheet_directory_uri() . '/assets/js/product-accordion.js',
-			array(),
-			(string) filemtime( $accordion ),
+			'famma-product-tabs',
+			get_stylesheet_directory_uri() . '/assets/js/product-tabs.js',
+			array( 'jquery', 'wc-single-product' ),
+			(string) filemtime( $tabs ),
 			true
 		);
 	}

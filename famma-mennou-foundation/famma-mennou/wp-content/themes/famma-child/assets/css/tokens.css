@@ -64,6 +64,9 @@
 	   du lockup et sur le corps de texte long (intro produit, réponses de FAQ).
 	   Une seule couleur, deux rôles nommés : 7,75:1, conservé tel quel. */
 	--famma-text-prose: #46536B;
+	/* Texte des listes et valeurs de la fiche produit (puces de la
+	   description, avis) — valeur de la maquette, 10,4:1 sur blanc. */
+	--famma-text-1: #34405A;
 	--famma-tagline: var(--famma-text-prose);
 	/* Texte tertiaire — valeur exacte de la maquette.
 	   ⚠ Fidélité stricte (18/08/2026) : 3,06:1 sur blanc, sous le seuil AA
@@ -103,6 +106,10 @@
 	   --famma-success-700 à la place. */
 	--famma-new: #16A34A;
 	--famma-whatsapp: #25D366;
+	/* Carte WhatsApp de la fiche produit — couple exact de la maquette
+	   « FAMMA Produit » : fond et filet, sans texte posé dessus en vert. */
+	--famma-whatsapp-bg: #F3FBF5;
+	--famma-whatsapp-line: #D8EFDF;
 
 	/* Pastille « vous économisez » — couple exact de la maquette.
 	   ⚠ Fidélité stricte (18/08/2026) : #C25E00 sur #FFF1E3 vaut 3,87:1,

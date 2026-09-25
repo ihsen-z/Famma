@@ -116,7 +116,7 @@
 	align-items: stretch;
 	align-self: flex-start;
 	overflow: hidden;
-	border: 1px solid var(--famma-line, #DBE1E8);
+	border: 1px solid var(--famma-line-field, #DFE3EA);
 	border-radius: var(--famma-radius-sm, 8px);
 	background: var(--famma-white, #FFF);
 }
@@ -127,11 +127,19 @@
 	padding: 0;
 	border: 0;
 	background: var(--famma-white, #FFF);
-	color: var(--famma-blue, #10275A);
+	color: var(--famma-text-2, #56617A);
 	font-family: inherit;
-	font-size: 1.25rem;
+	font-size: 1.1875rem;
 	line-height: 1;
 	cursor: pointer;
+}
+
+/* Kadence colore tout `button:hover` / `:focus` en bleu : le sélecteur à deux classes l'en empêche. */
+.famma-express .famma-express__qty-btn:hover,
+.famma-express .famma-express__qty-btn:focus {
+	background: var(--famma-white, #FFF);
+	color: var(--famma-blue, #0B1F3A);
+	box-shadow: none;
 }
 
 .famma-express__qty-btn:focus-visible {
@@ -143,7 +151,7 @@
 	inline-size: 3.5rem;
 	padding-inline: 0;
 	border: 0;
-	border-inline: 1px solid var(--famma-line, #DBE1E8);
+	border-inline: 1px solid var(--famma-line-field, #DFE3EA);
 	border-radius: 0;
 	background: var(--famma-white, #FFF);
 	text-align: center;
@@ -201,36 +209,161 @@
 }
 
 /*
- * Bleu sur orange, comme les autres CTA de la boutique : le contraste a été
- * calculé pour cette paire, et du blanc sur cet orange ne passerait pas.
+ * Rangée d'achat : « Confirmer ma commande », et « Ajouter au panier » juste
+ * à côté (demande du propriétaire, 25/09/2026).
+ *
+ * `container-type` : la place disponible dépend de la colonne du résumé, pas
+ * de l'écran — 479 px sur ordinateur, 303 px sur un téléphone de 375 px. Tant
+ * que la rangée est étroite, l'ajout au panier se réduit à un carré de 56 px
+ * portant l'icône, comme le bouton favori de la maquette ; son libellé reste
+ * dans le bouton, lu par les lecteurs d'écran.
  */
-.famma-express__submit {
+.famma-express__actions {
+	container-type: inline-size;
 	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	inline-size: 100%;
-	min-block-size: var(--sp-12, 48px);
-	padding: var(--sp-3, 12px) var(--sp-4, 16px);
-	border: 0;
-	border-radius: var(--famma-radius, 12px);
-	background: var(--famma-orange, #F5A623);
-	color: var(--famma-blue, #10275A);
-	font-family: inherit;
-	font-size: var(--fs-button, 1rem);
-	font-weight: var(--fw-bold, 700);
-	line-height: var(--lh-tight, 1.2);
-	cursor: pointer;
+	align-items: stretch;
+	gap: var(--sp-3, 12px);
 }
 
-.famma-express__submit:disabled {
+/*
+ * Bouton principal de la maquette : aplat orange, texte blanc, rayon 9 px,
+ * 16 px en demi-gras, survol #E86E00.
+ *
+ * Le blanc suit le jeton `--famma-on-orange` du thème, réglé sur la
+ * maquette par le propriétaire (fidélité stricte, 16/08/2026) ; le repli reste
+ * le bleu nuit, lisible (6,3:1), si le thème n'est pas là.
+ */
+.famma-express .famma-express__submit {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	justify-content: center;
+	gap: 11px;
+	min-inline-size: 0;
+	min-block-size: 56px;
+	padding: var(--sp-3, 12px);
+	border: 0;
+	border-radius: 9px;
+	background: var(--famma-orange, #FF7A00);
+	color: var(--famma-on-orange, #0B1F3A);
+	font-family: inherit;
+	font-size: var(--fs-button, 1rem);
+	font-weight: var(--fw-semibold, 600);
+	line-height: var(--lh-tight, 1.2);
+	box-shadow: none;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+.famma-express .famma-express__submit:hover,
+.famma-express .famma-express__submit:focus-visible {
+	background: var(--famma-orange-600, #E86E00);
+	color: var(--famma-on-orange, #0B1F3A);
+	box-shadow: none;
+}
+
+.famma-express .famma-express__submit:focus-visible,
+.famma-express .famma-express__cart:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #2C6BED);
+	outline-offset: 2px;
+}
+
+.famma-express .famma-express__submit:disabled {
 	opacity: 0.7;
 	cursor: progress;
 }
 
-.famma-express__submit-ar {
+.famma-express .famma-express__icon {
+	flex: none;
+	inline-size: 19px;
+	block-size: 19px;
+}
+
+/* L'icône du bouton principal n'apparaît qu'avec la place d'un libellé entier. */
+.famma-express .famma-express__submit .famma-express__icon {
+	display: none;
+}
+
+.famma-express .famma-express__submit-text {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+}
+
+.famma-express .famma-express__submit-ar {
 	font-size: var(--fs-caption, 0.875rem);
 	font-weight: var(--fw-medium, 500);
+}
+
+/*
+ * Action secondaire du design system : contour bleu nuit sur blanc, texte
+ * bleu (16,5:1), rayon et hauteur du bouton principal. Décision du
+ * propriétaire du 23/09/2026 : l'ajout au panier reste présent sans
+ * rivaliser avec la commande.
+ */
+.famma-express .famma-express__cart {
+	position: relative;
+	display: inline-flex;
+	flex: 0 0 56px;
+	align-items: center;
+	justify-content: center;
+	gap: var(--sp-2, 8px);
+	min-inline-size: 56px;
+	min-block-size: 56px;
+	padding: 0;
+	border: 1.5px solid var(--famma-blue, #0B1F3A);
+	border-radius: 9px;
+	background: var(--famma-white, #FFF);
+	color: var(--famma-blue, #0B1F3A);
+	font-family: inherit;
+	font-size: var(--fs-chrome-nav, 0.90625rem);
+	font-weight: var(--fw-semibold, 600);
+	line-height: var(--lh-tight, 1.2);
+	white-space: nowrap;
+	box-shadow: none;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+.famma-express .famma-express__cart:hover,
+.famma-express .famma-express__cart:focus-visible {
+	background: var(--famma-surface-field, #FBFCFD);
+	color: var(--famma-blue, #0B1F3A);
+	box-shadow: none;
+}
+
+/* Libellé retiré de l'affichage, pas de l'arbre d'accessibilité. */
+.famma-express .famma-express__cart-label {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+@container (min-width: 29rem) {
+	.famma-express .famma-express__submit {
+		padding-inline: var(--sp-4, 16px);
+	}
+
+	.famma-express .famma-express__submit .famma-express__icon {
+		display: block;
+	}
+
+	.famma-express .famma-express__cart {
+		flex: 0 0 auto;
+		padding-inline: var(--sp-4, 16px);
+	}
+
+	.famma-express .famma-express__cart-label {
+		position: static;
+		inline-size: auto;
+		block-size: auto;
+		overflow: visible;
+		clip-path: none;
+	}
 }
 
 /* Sur le site arabe, le libellé principal est déjà en derja : la ligne de traduction ferait doublon. */

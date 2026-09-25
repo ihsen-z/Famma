@@ -203,6 +203,9 @@
 				<element value="famma_child_product_categories"/>
 				<element value="famma_child_product_category_url"/>
 				<element value="famma_child_product_faq_pairs"/>
+				<element value="famma_child_product_faq_items"/>
+				<element value="famma_child_product_shipping_blocks"/>
+				<element value="famma_child_product_reviews_tab_title"/>
 				<element value="famma_child_product_faq_panel"/>
 				<element value="famma_child_product_faq_tab"/>
 				<element value="famma_child_product_favourite"/>

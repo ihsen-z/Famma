@@ -406,6 +406,31 @@ final class Express_Order {
 	}
 
 	/**
+	 * Bouton « Ajouter au panier », à côté du bouton de validation.
+	 *
+	 * Demande du propriétaire (25/09/2026) : le client qui préfère continuer ses
+	 * achats trouve l'ajout au panier au même endroit que la commande directe,
+	 * et non plus sous le formulaire.
+	 *
+	 * Il n'ajoute rien lui-même. Le script transmet le clic au formulaire de
+	 * WooCommerce, resté dans la page (masqué par le thème) : même quantité,
+	 * mêmes contrôles de stock, même suivi `AddToCart` côté serveur. Sans
+	 * script, le bouton poste ce formulaire-ci avec `add-to-cart`, que
+	 * WooCommerce traite comme le sien — la quantité revient alors à 1.
+	 *
+	 * @param \WC_Product $product Produit affiché.
+	 * @return void
+	 */
+	private function cart_button( \WC_Product $product ): void {
+		?>
+		<button type="submit" class="famma-express__cart" name="add-to-cart" value="<?php echo esc_attr( (string) $product->get_id() ); ?>">
+			<svg class="famma-express__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 3h3l2.6 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21.5 7H6"/><circle cx="10" cy="21" r="1.4"/><circle cx="18" cy="21" r="1.4"/><path d="M14 9.5v5M11.5 12h5"/></svg>
+			<span class="famma-express__cart-label"><?php echo esc_html( Product_Content::text( 'cta_cart' ) ); ?></span>
+		</button>
+		<?php
+	}
+
+	/**
 	 * Affiche le formulaire de commande express.
 	 *
 	 * @return void
@@ -465,11 +490,17 @@ final class Express_Order {
 				<input type="hidden" name="payment_method" value="cod" />
 				<input type="hidden" name="famma_product_id" value="<?php echo esc_attr( (string) $product->get_id() ); ?>" />
 
-				<button type="submit" class="famma-express__submit">
-					<span class="famma-express__submit-fr"><?php echo esc_html( $confirm ); ?></span>
-					<?php // Traduction du bouton, et non un autre appel à l'action : masquée sur le site arabe, où le libellé principal est déjà en derja. ?>
-					<span class="famma-express__submit-ar" lang="ar" dir="rtl"><?php echo esc_html( Product_Content::derja( 'cta_confirm' ) ); ?></span>
-				</button>
+				<div class="famma-express__actions">
+					<button type="submit" class="famma-express__submit">
+						<svg class="famma-express__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 3h3l2.6 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21.5 7H6"/><circle cx="10" cy="21" r="1.4"/><circle cx="18" cy="21" r="1.4"/></svg>
+						<span class="famma-express__submit-text">
+							<span class="famma-express__submit-fr"><?php echo esc_html( $confirm ); ?></span>
+							<?php // Traduction du bouton, et non un autre appel à l'action : masquée sur le site arabe, où le libellé principal est déjà en derja. ?>
+							<span class="famma-express__submit-ar" lang="ar" dir="rtl"><?php echo esc_html( Product_Content::derja( 'cta_confirm' ) ); ?></span>
+						</span>
+					</button>
+					<?php $this->cart_button( $product ); ?>
+				</div>
 
 				<?php
 				/*

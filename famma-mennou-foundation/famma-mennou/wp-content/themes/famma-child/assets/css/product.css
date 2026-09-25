@@ -104,7 +104,7 @@
 
 	/* Les blocs pleine largeur (sections, avis, produits liés) traversent
 	   les deux colonnes au lieu de se tasser sous la galerie. */
-	.famma-product div.product > .famma-accordion,
+	.famma-product div.product > .woocommerce-tabs,
 	.famma-product div.product > .famma-product-video,
 	.famma-product div.product > .famma-benefits,
 	.famma-product div.product > .famma-reviews,
@@ -410,62 +410,106 @@
 }
 
 /*
- * Fiche avec commande express (classe posée par famma-core) : « Ajouter au
- * panier » devient l'action secondaire.
+ * Fiche avec commande express (classe posée par famma-core).
  *
- * Décision du propriétaire du 23/09/2026 : garder l'ajout au panier, mais en
- * petit bouton, aux couleurs de la charte. Contour bleu nuit sur blanc, texte
- * bleu (16,5:1), et non plus blanc sur orange (2,61:1), qui rivalisait avec le
- * bouton « Confirmer ma commande ». 48 px de haut : c'est la cible tactile
- * minimale du projet, « petit » tient à la largeur et au poids visuel.
+ * « Ajouter au panier » est désormais dessiné par famma-core, juste à côté
+ * de « Confirmer ma commande » (demande du propriétaire, 25/09/2026). Le
+ * bouton de WooCommerce reste dans la page — c'est à lui que le clic est
+ * transmis, avec sa quantité synchronisée — mais n'est plus affiché : deux
+ * boutons « Ajouter au panier » pour le même produit, c'était une question
+ * posée deux fois.
  *
- * La quantité du panier est rangée : le formulaire express porte la seule
- * quantité visible, et son script aligne celle-ci dessus. Le champ reste
- * dans le formulaire, donc envoyé avec la bonne valeur.
+ * La quantité du panier est rangée pour la même raison : le formulaire
+ * express porte la seule quantité visible. Restent sur la ligne la
+ * disponibilité et le favori.
  */
-.famma-has-express .famma-product div.product form.cart .famma-qty {
+.famma-has-express .famma-product div.product form.cart .famma-qty,
+.famma-has-express .famma-product div.product form.cart button.single_add_to_cart_button {
 	display: none;
 }
 
+.famma-has-express .famma-product div.product form.cart {
+	justify-content: space-between;
+}
+
 .famma-has-express .famma-product div.product form.cart .famma-stock {
-	flex-basis: 100%;
+	flex: 1 1 auto;
 }
 
-.famma-has-express .famma-product div.product form.cart button.single_add_to_cart_button {
-	display: inline-flex;
-	flex: 0 1 auto;
+/* --- Carte WhatsApp de la maquette, sous le bouton d'achat --- */
+
+.famma-product .famma-wa-card {
+	display: flex;
 	align-items: center;
-	gap: var(--sp-2);
-	padding: 0 var(--sp-4);
-	border: 1.5px solid var(--famma-blue);
-	background: var(--famma-white);
+	gap: 14px;
+	padding: 15px 18px;
+	border: 1px solid var(--famma-whatsapp-line);
+	border-radius: 10px;
+	background: var(--famma-whatsapp-bg);
 	color: var(--famma-blue);
+	text-decoration: none;
+	transition: border-color var(--dur-base) var(--ease-out);
+}
+
+.famma-product .famma-wa-card:hover,
+.famma-product .famma-wa-card:focus-visible {
+	border-color: var(--famma-whatsapp);
+	color: var(--famma-blue);
+}
+
+.famma-product .famma-wa-card:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color);
+	outline-offset: 2px;
+}
+
+.famma-product .famma-wa-card__mark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	inline-size: 38px;
+	block-size: 38px;
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-whatsapp);
+	color: var(--famma-white);
+}
+
+.famma-product .famma-wa-card__mark svg {
+	inline-size: 21px;
+	block-size: 21px;
+}
+
+.famma-product .famma-wa-card__text {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 2px;
+	min-inline-size: 0;
+}
+
+.famma-product .famma-wa-card__title {
 	font-size: var(--fs-chrome-nav);
+	font-weight: var(--fw-medium);
+	line-height: 1.35;
 }
 
-.famma-has-express .famma-product div.product form.cart button.single_add_to_cart_button::before {
-	content: "";
-	inline-size: 1.125rem;
-	block-size: 1.125rem;
-	flex: none;
-	background: currentColor;
-	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='20' r='1.5'/%3E%3Ccircle cx='18' cy='20' r='1.5'/%3E%3Cpath d='M2 3h3l2.7 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6'/%3E%3C/svg%3E") center / contain no-repeat;
-	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='20' r='1.5'/%3E%3Ccircle cx='18' cy='20' r='1.5'/%3E%3Cpath d='M2 3h3l2.7 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6'/%3E%3C/svg%3E") center / contain no-repeat;
+.famma-product .famma-wa-card__sub {
+	color: var(--famma-text-2);
+	font-size: 0.78125rem;
+	line-height: 1.4;
 }
 
-.famma-has-express .famma-product div.product form.cart button.single_add_to_cart_button:hover,
-.famma-has-express .famma-product div.product form.cart button.single_add_to_cart_button:focus-visible {
-	background: var(--famma-surface-field);
-	color: var(--famma-blue);
+.famma-product .famma-wa-card__chevron {
+	flex-shrink: 0;
+	inline-size: 16px;
+	block-size: 16px;
+	color: var(--famma-text-3);
+	stroke-width: 2.2;
 }
 
-.famma-product .famma-product__whatsapp {
-	margin: 0;
-}
-
-.famma-product .famma-product__delay {
-	margin-block: 0 var(--sp-3);
-	color: var(--famma-blue);
+/* Le chevron montre la sortie, donc la fin de la ligne : à gauche en arabe. */
+.rtl .famma-product .famma-wa-card__chevron {
+	transform: scaleX(-1);
 }
 
 /* Le bandeau de bénéfices répète la réassurance du résumé : sur mobile, où
@@ -526,43 +570,64 @@
 	line-height: var(--lh-base);
 }
 
-/* --- Onglets --- */
+/* ------------------------------------------------------------
+   Onglets de bas de fiche — maquette « FAMMA Produit »
 
-.famma-product .woocommerce-tabs {
-	margin-block-start: var(--sp-8);
+   Balisage natif de WooCommerce (`ul.tabs`, `.wc-tab`), piloté par
+   son script : un seul panneau visible, rôles ARIA, clavier. Cette
+   feuille ne fait que le dessin de la maquette :
+
+   - rangée d'intitulés sur un filet #E7EAF0, qui défile latéralement
+     quand elle ne tient pas (mobile) ;
+   - intitulé 14,5 px, 15 × 22 px de marge, souligné de 2 px ;
+     actif : orange et demi-gras, inactif : #56617A ;
+   - panneau bordé sur trois côtés, coins bas de 14 px, 26 px d'air.
+
+   `.woocommerce` et `div.product` en tête : Kadence pose ses propres
+   onglets (bordures, fond, `overflow: hidden`, centrage) avec des
+   sélecteurs de spécificité (0,4,3). Sans cette surenchère, la rangée
+   ne défilait plus et les derniers onglets sortaient de l'écran.
+   ------------------------------------------------------------ */
+
+.woocommerce .famma-product div.product .woocommerce-tabs {
+	margin: 30px 0 0;
+	padding: 0;
+	border: 0;
+	/* Une ancre `#tab-…` ne doit pas finir sous l'en-tête collant. */
+	scroll-margin-block-start: calc(var(--header-h) + var(--sp-4));
 }
 
-/*
- * `.woocommerce` et `div.product` en tete : Kadence pose
- * `overflow: hidden` sur cette liste avec une specificite de (0,4,3), que
- * `.famma-product .woocommerce-tabs ul.tabs` (0,3,2) n'atteignait pas. Notre
- * `overflow-x: auto` etait donc mort, et sur un telephone de 320px les trois
- * derniers onglets — informations, avis, livraison — etaient coupes sans aucun
- * moyen de les atteindre : 601px de contenu dans 230px de large.
- *
- * `overscroll-behavior-x: contain` empeche le glissement lateral de la barre
- * de declencher la navigation arriere du navigateur.
- */
 .woocommerce .famma-product div.product .woocommerce-tabs ul.tabs {
 	display: flex;
 	flex-wrap: nowrap;
-	gap: var(--sp-1);
+	gap: 6px;
 	margin: 0;
 	padding: 0;
 	overflow-x: auto;
 	overscroll-behavior-x: contain;
+	scrollbar-width: none;
+	border: 0;
 	border-block-end: 1px solid var(--famma-line);
+	text-align: start;
 	list-style: none;
 }
 
-.famma-product .woocommerce-tabs ul.tabs::before,
-.famma-product .woocommerce-tabs ul.tabs::after,
-.famma-product .woocommerce-tabs ul.tabs li::before,
-.famma-product .woocommerce-tabs ul.tabs li::after {
-	content: none;
+.woocommerce .famma-product div.product .woocommerce-tabs ul.tabs::-webkit-scrollbar {
+	display: none;
 }
 
-.famma-product .woocommerce-tabs ul.tabs li {
+.woocommerce .famma-product div.product .woocommerce-tabs ul.tabs::before,
+.woocommerce .famma-product div.product .woocommerce-tabs ul.tabs::after,
+.woocommerce .famma-product div.product .woocommerce-tabs ul.tabs li::before,
+.woocommerce .famma-product div.product .woocommerce-tabs ul.tabs li::after {
+	content: none;
+	display: none;
+}
+
+.woocommerce .famma-product div.product .woocommerce-tabs ul.tabs li,
+.woocommerce .famma-product div.product .woocommerce-tabs ul.tabs li.active {
+	display: block;
+	flex: none;
 	margin: 0;
 	padding: 0;
 	border: 0;
@@ -570,34 +635,297 @@
 	background: none;
 }
 
-.famma-product .woocommerce-tabs ul.tabs li a {
-	display: inline-flex;
-	align-items: center;
-	min-block-size: var(--sp-12);
-	padding-inline: var(--sp-4);
+.woocommerce .famma-product div.product .woocommerce-tabs ul.tabs li a {
+	display: block;
+	/* 15 + 14,5 × 1,15 + 15 + 2 = 49 px : la cible tactile du §9 est tenue. */
+	padding: 15px 22px;
 	border-block-end: 2px solid transparent;
 	color: var(--famma-text-2);
+	font-size: var(--fs-chrome-nav);
+	font-weight: var(--fw-regular);
+	line-height: var(--lh-tight);
+	text-decoration: none;
+	white-space: nowrap;
+	opacity: 1;
+}
+
+.woocommerce .famma-product div.product .woocommerce-tabs ul.tabs li a:hover {
+	color: var(--famma-blue);
+}
+
+/* Orange de la maquette, par le jeton d'accent textuel (fidélité stricte). */
+.woocommerce .famma-product div.product .woocommerce-tabs ul.tabs li.active a {
+	border-block-end-color: var(--famma-orange);
+	color: var(--famma-accent-text);
+	font-weight: var(--fw-semibold);
+}
+
+.woocommerce .famma-product div.product .woocommerce-tabs ul.tabs li a:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color);
+	outline-offset: -2px;
+}
+
+.woocommerce .famma-product div.product .woocommerce-tabs .panel {
+	margin: 0;
+	padding: 26px;
+	border: 1px solid var(--famma-line);
+	border-block-start: 0;
+	border-radius: 0 0 14px 14px;
+	background: var(--famma-white);
+	color: var(--famma-text-prose);
+	font-size: var(--fs-chrome-field);
+	line-height: 1.75;
+}
+
+@media (max-width: 599px) {
+	.woocommerce .famma-product div.product .woocommerce-tabs ul.tabs li a {
+		padding-inline: var(--sp-4);
+	}
+
+	.woocommerce .famma-product div.product .woocommerce-tabs .panel {
+		padding: 20px 16px;
+	}
+}
+
+.famma-product .woocommerce-tabs .panel > :first-child {
+	margin-block-start: 0;
+}
+
+.famma-product .woocommerce-tabs .panel > :last-child {
+	margin-block-end: 0;
+}
+
+/* --- Description : typographie de la maquette sur le texte saisi --- */
+
+.famma-product .woocommerce-Tabs-panel--description h2,
+.famma-product .woocommerce-Tabs-panel--description h3,
+.famma-product .woocommerce-Tabs-panel--description h4 {
+	margin: 1.4em 0 0.6em;
+	color: var(--famma-blue);
+	font-size: 1.0625rem;
+	font-weight: var(--fw-semibold);
+	line-height: 1.4;
+}
+
+.famma-product .woocommerce-Tabs-panel--description p {
+	margin: 0 0 0.9em;
+}
+
+.famma-product .woocommerce-Tabs-panel--description strong {
+	color: var(--famma-blue);
+}
+
+/* Puces de la maquette : cercle coché orange de 18 px, texte #34405A. */
+.famma-product .woocommerce-Tabs-panel--description ul {
+	display: flex;
+	flex-direction: column;
+	gap: 13px;
+	margin: 0 0 1.2em;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-product .woocommerce-Tabs-panel--description ul li {
+	position: relative;
+	padding-inline-start: 28px;
+	color: var(--famma-text-1);
+	line-height: 1.5;
+}
+
+.famma-product .woocommerce-Tabs-panel--description ul li::before {
+	content: "";
+	position: absolute;
+	inset-block-start: 1px;
+	inset-inline-start: 0;
+	inline-size: 18px;
+	block-size: 18px;
+	background: var(--famma-orange);
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M8 12.5l2.5 2.5L16 9.5'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M8 12.5l2.5 2.5L16 9.5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.famma-product .woocommerce-Tabs-panel--description ol {
+	margin: 0 0 1.2em;
+	padding-inline-start: 1.4em;
+	color: var(--famma-text-1);
+}
+
+/* --- Livraison & Retours : grille de blocs de la maquette --- */
+
+.famma-product .famma-shipping {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 17.5rem), 1fr));
+	gap: 26px;
+}
+
+.famma-product .famma-shipping__item {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-2);
+}
+
+.famma-product .famma-shipping__title {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0;
+	color: var(--famma-blue);
+	font-size: var(--fs-chrome-nav);
+	font-weight: var(--fw-semibold);
+	line-height: 1.35;
+}
+
+.famma-product .famma-shipping__title .famma-icon {
+	flex-shrink: 0;
+	inline-size: 20px;
+	block-size: 20px;
+	color: var(--famma-orange);
+	stroke-width: 1.7;
+}
+
+.famma-product .famma-shipping__text {
+	margin: 0;
+	color: var(--famma-text-prose);
+	font-size: var(--fs-chrome-field);
+	line-height: 1.6;
+	white-space: pre-line;
+}
+
+.famma-product .famma-shipping__links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0 var(--sp-6);
+	margin: 26px 0 0;
+	padding-block-start: 10px;
+	border-block-start: 1px solid var(--famma-line-soft);
+}
+
+.famma-product .famma-shipping__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	min-block-size: var(--sp-12);
+	color: var(--famma-accent-text);
+	font-size: var(--fs-chrome-field);
 	font-weight: var(--fw-medium);
 	text-decoration: none;
+}
+
+.famma-product .famma-shipping__link .famma-icon {
+	inline-size: 13px;
+	block-size: 13px;
+	stroke-width: 2.4;
+}
+
+.rtl .famma-product .famma-shipping__link .famma-icon {
+	transform: scaleX(-1);
+}
+
+/* --- Avis clients : la liste de WooCommerce au dessin de la maquette --- */
+
+/* L'onglet dit déjà « Avis clients (N) » ; le titre reste pour les lecteurs d'écran. */
+.famma-product .woocommerce-Reviews-title {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
 	white-space: nowrap;
 }
 
-.famma-product .woocommerce-tabs ul.tabs li.active a {
-	border-block-end-color: var(--famma-orange);
+.woocommerce .famma-product div.product #reviews #comments ol.commentlist {
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-4);
+	margin: 0;
+	padding: 0;
+}
+
+.woocommerce .famma-product div.product #reviews #comments ol.commentlist li {
+	margin: 0;
+	padding: 0 0 var(--sp-4);
+	border-block-end: 1px solid var(--famma-line-soft);
+}
+
+.woocommerce .famma-product div.product #reviews #comments ol.commentlist li .comment_container {
+	display: flex;
+	gap: 14px;
+}
+
+.woocommerce .famma-product div.product #reviews #comments ol.commentlist li img.avatar {
+	position: static;
+	flex-shrink: 0;
+	inline-size: 44px;
+	block-size: 44px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-surface-media);
+}
+
+.woocommerce .famma-product div.product #reviews #comments ol.commentlist li .comment-text {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 6px;
+	min-inline-size: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.woocommerce .famma-product div.product #reviews #comments ol.commentlist li .comment-text .star-rating {
+	float: none;
+	order: 2;
+	margin: 0;
+	color: var(--famma-orange);
+	font-size: 0.8125rem;
+}
+
+.woocommerce .famma-product div.product #reviews #comments ol.commentlist li .comment-text p.meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 10px;
+	order: 1;
+	margin: 0;
+	color: var(--famma-text-3);
+	font-size: var(--fs-chrome-caption);
+}
+
+.famma-product #reviews .woocommerce-review__author {
 	color: var(--famma-blue);
+	font-size: 0.875rem;
 	font-weight: var(--fw-semibold);
 }
 
-.famma-product div.product .woocommerce-tabs .woocommerce-Tabs-panel {
-	color: var(--famma-text-2);
+.famma-product #reviews .woocommerce-review__verified {
+	color: var(--famma-success-700);
+	font-style: normal;
+}
+
+.famma-product #reviews .woocommerce-review__dash {
+	display: none;
+}
+
+.famma-product #reviews .woocommerce-review__published-date {
+	flex-basis: 100%;
+}
+
+.woocommerce .famma-product div.product #reviews #comments ol.commentlist li .comment-text .description {
+	order: 3;
+	color: var(--famma-text-1);
 	font-size: var(--fs-chrome-field);
-	line-height: var(--lh-base);
+	line-height: 1.6;
 }
 
-.famma-product .woocommerce-tabs .woocommerce-Tabs-panel h2 {
-	color: var(--famma-blue);
-	font-size: var(--fs-h4);
-	font-weight: var(--fw-semibold);
+.famma-product #reviews .comment-text .description p {
+	margin: 0;
+}
+
+.famma-product #review_form_wrapper {
+	margin-block-start: var(--sp-6);
 }
 
 /* --- Résumé des avis --- */
@@ -688,163 +1016,6 @@
 	z-index: var(--z-sticky-cta);
 }
 
-/* ------------------------------------------------------------
-   Sections de bas de fiche — accordeon (§B14-15)
-
-   Remplace les onglets de WooCommerce. Le pourquoi est dans
-   `woocommerce/single-product/tabs/tabs.php` : une rangee d'onglets
-   ne tient pas sur 375px, et ce sont les onglets qui levent les
-   objections d'achat (livraison, FAQ) qui passent hors ecran.
-
-   Proprietes logiques partout (`border-inline`, `padding-inline`,
-   `margin-inline-start`) : la meme feuille doit tenir en arabe RTL
-   sans etre dupliquee.
-   ------------------------------------------------------------ */
-
-.famma-product .famma-accordion {
-	display: flex;
-	flex-direction: column;
-	gap: var(--sp-2);
-	inline-size: 100%;
-	margin-block-start: var(--sp-6);
-}
-
-.famma-product .famma-accordion__item {
-	border: 1px solid var(--famma-line);
-	border-radius: 14px;
-	background: var(--famma-white);
-	/* Le panneau depasserait les coins arrondis a l'ouverture. */
-	overflow: hidden;
-}
-
-/*
- * `list-item` est le display par defaut de `<summary>` : il ajoute une
- * puce triangulaire, en plus de notre chevron. `display: flex` la retire,
- * et `::-webkit-details-marker` couvre les anciens WebKit qui l'ignorent.
- */
-.famma-product .famma-accordion__head {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--sp-3);
-	/* Cible tactile : 48px minimum (regle 9). */
-	min-block-size: var(--sp-12);
-	padding: var(--sp-4);
-	cursor: pointer;
-	font-size: var(--fs-chrome-nav);
-	font-weight: var(--fw-bold);
-	color: var(--famma-blue);
-	/* Un appui long sur mobile ne doit pas selectionner l'intitule. */
-	user-select: none;
-}
-
-.famma-product .famma-accordion__head::-webkit-details-marker {
-	display: none;
-}
-
-/*
- * Survol seulement la ou il existe un vrai pointeur : sur mobile, un
- * `:hover` reste « collé » apres l'appui et l'intitule garde un fond
- * grise qui fait croire a une section active.
- */
-@media (hover: hover) {
-	.famma-product .famma-accordion__head:hover {
-		background: var(--famma-surface-field);
-	}
-}
-
-/*
- * L'anneau de focus vit sur `<summary>`, pas sur `<details>` : c'est
- * `<summary>` qui recoit le clavier. Sans cette regle, la navigation au
- * clavier n'affiche plus rien une fois `outline` neutralise par le theme.
- */
-.famma-product .famma-accordion__head:focus-visible {
-	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color);
-	outline-offset: -2px;
-}
-
-/*
- * Chevron en bordures tournees plutot qu'une image : pas de requete
- * reseau, et il suit la couleur du texte.
- */
-.famma-product .famma-accordion__chevron {
-	flex: 0 0 auto;
-	inline-size: 0.5rem;
-	block-size: 0.5rem;
-	border-inline-end: 2px solid currentColor;
-	border-block-end: 2px solid currentColor;
-	transform: rotate(45deg);
-	/* Recentre la fleche dans sa boite apres rotation. */
-	margin-block-end: 2px;
-	transition: transform var(--dur-base) var(--ease-out);
-}
-
-.famma-product .famma-accordion__item[open] .famma-accordion__chevron {
-	transform: rotate(-135deg);
-	margin-block-end: -2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.famma-product .famma-accordion__chevron {
-		transition: none;
-	}
-}
-
-.famma-product .famma-accordion__panel {
-	padding: 0 var(--sp-4) var(--sp-4);
-}
-
-/*
- * Le premier enfant du panneau porte souvent sa propre marge haute
- * (`<p>`, `<h2>` d'une extension d'avis), ce qui doublait l'ecart avec
- * l'intitule.
- */
-.famma-product .famma-accordion__panel > :first-child {
-	margin-block-start: 0;
-}
-
-/*
- * Description repliée par `product-accordion.js` (FP-10) : le début reste
- * lisible, un fondu signale la suite. Sans le script, la classe n'est jamais
- * posée et tout le texte s'affiche.
- */
-.famma-product .famma-accordion__panel.is-clamped {
-	max-block-size: 26rem;
-	overflow: hidden;
-	-webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
-	mask-image: linear-gradient(to bottom, #000 70%, transparent);
-}
-
-.famma-product .famma-accordion__more {
-	display: block;
-	min-block-size: var(--sp-12);
-	margin: 0 var(--sp-4) var(--sp-4);
-	padding: 0 var(--sp-4);
-	border: 1.5px solid var(--famma-blue);
-	border-radius: 9px;
-	background: var(--famma-white);
-	color: var(--famma-blue);
-	font-family: inherit;
-	font-size: var(--fs-chrome-nav);
-	font-weight: var(--fw-semibold);
-	cursor: pointer;
-}
-
-.famma-product .famma-accordion__more:focus-visible {
-	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color);
-	outline-offset: 2px;
-}
-
-@media (min-width: 768px) {
-	.famma-product .famma-accordion__head {
-		padding: var(--sp-4) 26px;
-	}
-
-	.famma-product .famma-accordion__panel {
-		padding: 0 26px 26px;
-	}
-}
-
 /* --- Ligne de disponibilite, a cote de la quantite --- */
 
 .famma-product .famma-stock {
@@ -882,11 +1053,14 @@
 
 /* --- Bouton favori, a cote du CTA --- */
 
-/* 48 px, comme le bouton qu'il accompagne : à 56 px, l'action secondaire dominait l'action d'achat (UX-33). */
+/*
+ * 56 px de la maquette. Le favori était passé à 48 px quand il côtoyait un
+ * bouton d'achat de 48 px (UX-33) ; les boutons d'achat font désormais 56 px.
+ */
 .famma-product .summary .famma-fav {
 	position: static;
-	inline-size: var(--sp-12);
-	block-size: var(--sp-12);
+	inline-size: 56px;
+	block-size: 56px;
 	min-inline-size: 0;
 	min-block-size: 0;
 	flex: none;
@@ -1004,7 +1178,7 @@
 }
 
 /* ------------------------------------------------------------
-   Onglet « Spécifications » (P-2)
+   Onglet « Caractéristiques » (P-2)
 
    Grille de paires clé/valeur : deux colonnes dès que la largeur
    le permet, une seule en dessous de 280px utiles. Aucune taille
@@ -1041,34 +1215,70 @@
 }
 
 /* ------------------------------------------------------------
-   Onglet « FAQ » — accordéon natif (P-2)
+   Onglet « FAQ » — maquette « FAMMA Produit »
 
-   `<details>` / `<summary>` : aucun script, ouvrable au clavier,
-   et le texte replié reste trouvable par la recherche du
-   navigateur. Le marqueur natif est conservé — c'est la seule
-   affordance qui dit au client que la ligne s'ouvre, et la
-   maquette n'en spécifie pas d'autre.
+   `<details>` / `<summary>` : aucun script, ouvrable au clavier, et
+   le texte replié reste trouvable par la recherche du navigateur. Le
+   chevron de 16 px de la maquette, qui pivote à l'ouverture, remplace
+   le triangle natif. Classe `famma-pfaq` : `.famma-faq` appartient à
+   la FAQ de l'accueil (`style.css`).
    ------------------------------------------------------------ */
 
-.famma-product .famma-faq__item {
+.famma-product .woocommerce-tabs .woocommerce-Tabs-panel--famma_faq {
+	padding-block: 8px 20px;
+}
+
+.famma-product .famma-pfaq__item {
 	border-block-end: 1px solid var(--famma-line-soft);
 }
 
-.famma-product .famma-faq__question {
-	/* 17px de part et d'autre d'une ligne de 14,5px donnent 54px, donc la
-	   cible tactile du §9 est tenue ; `min-block-size` la rend explicite
-	   plutôt que dérivée d'un calcul de padding. */
+.famma-product .famma-pfaq__question {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-4);
 	min-block-size: var(--sp-12);
 	padding-block: 17px;
 	color: var(--famma-blue);
 	font-size: var(--fs-chrome-nav);
 	font-weight: var(--fw-medium);
+	line-height: 1.4;
+	text-align: start;
+	list-style: none;
 	cursor: pointer;
 }
 
-.famma-product .famma-faq__answer {
+.famma-product .famma-pfaq__question::-webkit-details-marker {
+	display: none;
+}
+
+.famma-product .famma-pfaq__question:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color);
+	outline-offset: 2px;
+}
+
+.famma-product .famma-pfaq__chevron {
+	flex-shrink: 0;
+	inline-size: 16px;
+	block-size: 16px;
+	color: var(--famma-text-3);
+	stroke-width: 2.4;
+	transition: transform 200ms ease;
+}
+
+.famma-product .famma-pfaq__item[open] .famma-pfaq__chevron {
+	transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-product .famma-pfaq__chevron {
+		transition: none;
+	}
+}
+
+.famma-product .famma-pfaq__answer {
 	max-inline-size: 760px;
-	padding-block-end: 17px;
+	padding-block-end: 18px;
 	color: var(--famma-text-prose);
 	font-size: var(--fs-chrome-field);
 	line-height: 1.65;
