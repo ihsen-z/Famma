@@ -425,3 +425,29 @@ FR et AR, ordinateur et 390 px : HTTP 200, aucune erreur, pas de débordement ho
 
 - Aucun produit n'a encore d'attribut, de poids ni d'avis : les onglets Caractéristiques et Avis clients n'apparaîtront qu'une fois ces données saisies.
 - Archives de déploiement à la corbeille DirectAdmin (à vider par le propriétaire).
+
+
+## 13. 25/09 (soir) : page Retours selon la maquette « FAMMA Retours Echanges »
+
+Commits `241c1c2` (page, plugin) et `c914c40` (retours à la ligne du message WhatsApp). Archives `famma-deploy-retours.zip` (9 fichiers) puis `famma-deploy-retours-2.zip` (`returns-content.php`), extraites dans `wp-content` ; LiteSpeed → Tout purger.
+
+### 13.1 Décisions du propriétaire (25/09)
+
+- **Politique** : « sections vides à remplir ». Tous les blocs qui portent un engagement sont livrés vides et masqués : pastille, 4 chiffres clés, retours acceptés / refusés, tableau « Selon votre situation », conseils d'emballage, 4ᵉ étape.
+- **Formulaire** : « vers WhatsApp ». Il poste vers la page ; `Returns_Content::handle_request()` compose le message et renvoie (303) vers `wa.me` ; rien n'est stocké, aucun e-mail. Pas de nonce : aucune écriture, et la page est servie par le cache 7 jours.
+
+### 13.2 Ce qui est affiché aujourd'hui
+
+Titre, introduction, encadré « politique en cours de rédaction », 3 étapes (écrire, joindre une photo, attendre la réponse avant de renvoyer), formulaire (commande, téléphone, 4 motifs, remboursement / échange, précisions), encart d'aide WhatsApp avec les horaires de la section Contact et lien vers les CGV, 2 questions fréquentes. Tout se modifie dans **FAMMA → Pages → Page Retours** (55 champs, français et derja).
+
+Contenu de l'éditeur de la page (id 17) remplacé par une note `famma-todo` visible des seuls administrateurs ; l'ancien texte d'attente est repris dans l'encadré et reste dans les révisions WordPress.
+
+### 13.3 Vérifié en ligne
+
+FR et AR : HTTP 200, aucune erreur, aucune note interne visible, description Google = introduction. Mobile 390 px sans débordement, RTL correct. Formulaire : 303 vers `wa.me/216…`, message sur 6 lignes, `Cache-Control: no-store`.
+
+### 13.4 Restant
+
+- Le propriétaire remplit sa politique (délais, frais, remboursement, conditions) puis vide l'encadré « en cours de rédaction ».
+- Le bloc « Retours et remboursements » de l'onglet produit se règle à part (FAMMA → Pages → Fiche produit).
+- Archives de déploiement à supprimer à la racine du compte DirectAdmin.
