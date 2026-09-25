@@ -232,17 +232,49 @@ final class Seo {
 					return self::trim_description( (string) $post->post_excerpt );
 				}
 
-				if ( '' !== trim( (string) $post->post_content ) ) {
-					$trimmed = self::trim_description( (string) $post->post_content );
+				$content = self::without_owner_notes( (string) $post->post_content );
+
+				if ( '' !== trim( $content ) ) {
+					$trimmed = self::trim_description( $content );
 
 					if ( '' !== $trimmed ) {
 						return $trimmed;
 					}
 				}
+
+				/**
+				 * Description d'une page composée depuis FAMMA → Pages.
+				 *
+				 * La page Livraison n'a presque rien dans l'éditeur : son texte
+				 * vit dans les réglages (`Delivery_Content`), qui répond ici.
+				 *
+				 * @param string   $description Description proposée (vide).
+				 * @param \WP_Post $post        Page affichée.
+				 */
+				$composed = trim( (string) apply_filters( 'famma_seo_composed_description', '', $post ) );
+
+				if ( '' !== $composed ) {
+					return self::trim_description( $composed );
+				}
 			}
 		}
 
 		return self::trim_description( (string) get_bloginfo( 'description' ) );
+	}
+
+	/**
+	 * Retire du contenu les notes de chantier réservées au propriétaire.
+	 *
+	 * Les encarts `.famma-todo` ne sont montrés qu'aux administrateurs ; la
+	 * description était pourtant tirée du contenu brut. Constaté le 25/09 :
+	 * « À compléter par le propriétaire… » était servi à Google et aux aperçus
+	 * de partage des pages Conditions générales et Livraison.
+	 *
+	 * @param string $html Contenu brut de l'éditeur.
+	 * @return string
+	 */
+	private static function without_owner_notes( string $html ): string {
+		return (string) preg_replace( '#<(p|div)[^>]*class="[^"]*\bfamma-todo\b[^"]*"[^>]*>.*?</\1>\s*#is', '', $html );
 	}
 
 	/**

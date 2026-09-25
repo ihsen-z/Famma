@@ -209,6 +209,24 @@ final class Delivery_Content {
 	}
 
 	/**
+	 * Description Google de la page Livraison : son texte d'introduction.
+	 *
+	 * Branché sur `famma_seo_composed_description` (includes/seo.php) : la page
+	 * n'a presque rien dans l'éditeur, son texte vit dans FAMMA → Pages.
+	 *
+	 * @param string $description Description proposée.
+	 * @param mixed  $post        Page affichée.
+	 * @return string
+	 */
+	public static function seo_description( $description, $post ): string {
+		if ( '' !== trim( (string) $description ) || ! $post instanceof \WP_Post || 'livraison' !== $post->post_name ) {
+			return (string) $description;
+		}
+
+		return self::text( 'lede' );
+	}
+
+	/**
 	 * Remplace le marqueur de délai.
 	 *
 	 * @param string $text Texte saisi.

@@ -2437,6 +2437,7 @@ function boot(): void {
 	WhatsApp::instance();
 	Product_Video::instance();
 	Seo::instance();
+	add_filter( 'famma_seo_composed_description', array( Delivery_Content::class, 'seo_description' ), 10, 2 );
 	Hardening::instance();
 	// Le formulaire public passe par admin-post.php : chargé partout.
 	Newsletter::instance();
