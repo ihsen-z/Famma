@@ -370,3 +370,27 @@ FR et AR, en visiteur : HTTP 200, aucune erreur PHP, aucune note interne dans le
 - La même mise en page peut servir aux pages Retours, Confidentialité et Cookies (un fichier `page-<adresse>.php` de trois lignes chacune).
 - Archives à supprimer à la racine du compte : `famma-deploy-livraison-cgv.zip`, `famma-deploy-livraison-cgv-2.zip`, `famma-deploy-seo-notes.zip`.
 
+
+## 11. Performance front-end — 25/09 (commit `bf4df15`)
+
+Correctifs code de `audit-2026-09-23/audit-performance.md`, sans toucher au tunnel COD ni aux statuts.
+
+### 11.1 Déployé
+
+Archive `git archive` de 9 fichiers (`famma-core.php`, `includes/performance.php`, et dans le thème enfant `functions.php`, `inc/home.php`, `inc/shop.php`, `assets/js/shop-view.js`, `assets/css/fonts.css`, `assets/fonts/noto-kufi-arabic-var.woff2`, `assets/fonts/README.md`), extraite dans `wp-content` (« Merge and overwrite »), archive mise à la corbeille, puis LiteSpeed Cache → Boîte à outils → Tout purger.
+
+- PERF-09 : diapo 1 du hero en `fetchpriority="high"`, suivantes en `lazy` + `low`.
+- PERF-05 : filtres de la boutique rendus `hidden` par le serveur.
+- PERF-04 : `sizes="auto"` désactivé, zoom de la galerie retiré (Kadence le redéclare : `remove_theme_support` à la priorité 11).
+- PERF-10 : Noto Kufi Arabic 121 → 31 Ko.
+- PERF-11, PERF-08, PERF-12, PERF-19 : emojis retirés, indicateur de mot de passe déchargé quand inutile, WebP à l'envoi, préchargement `moderate` (panier, commande, compte exclus).
+
+### 11.2 Vérifié en ligne
+
+HTTP 200, aucune erreur ; attributs présents dans le HTML ; police servie à 31 288 octets. Lighthouse mobile (accueil) : score **45 → 55-57**, TBT 1 110 → 590-610 ms, poids 911 → 815 Kio, LCP simulé 9,3 → 7,7-8,0 s (LCP observé 1,4 s). L'image LCP se télécharge en < 0,8 s ; le reste du LCP simulé est du délai de rendu (CSS et JS bloquants, pixel Meta).
+
+### 11.3 Restant (réglages, à valider un par un avec test du parcours COD)
+
+- LiteSpeed Cache : JS Delayed Includes pour gtag / Site Kit, Browser Cache 1 an, CSS/JS Minify (audit §6).
+- `jquery-migrate` (tâche longue de 210 ms) : retrait après test complet.
+- DirectAdmin : PHP 8.3 + OPcache, *faults* LVE (PERF-02, seule piste pour le panier et la commande).
