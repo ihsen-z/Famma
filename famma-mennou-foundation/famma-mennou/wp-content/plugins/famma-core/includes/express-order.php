@@ -487,6 +487,7 @@ final class Express_Order {
 				 * panier — voir `send_nonce()`.
 				 */
 				?>
+				<?php Anti_Abuse::trap_field(); ?>
 				<input type="hidden" name="payment_method" value="cod" />
 				<input type="hidden" name="famma_product_id" value="<?php echo esc_attr( (string) $product->get_id() ); ?>" />
 

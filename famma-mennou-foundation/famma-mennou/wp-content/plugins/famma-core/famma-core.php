@@ -40,6 +40,7 @@ require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';
 require_once __DIR__ . '/includes/tracking-events.php';
 require_once __DIR__ . '/includes/express-order.php';
+require_once __DIR__ . '/includes/anti-abuse.php';
 require_once __DIR__ . '/includes/product-video.php';
 require_once __DIR__ . '/includes/seo.php';
 require_once __DIR__ . '/includes/seo-listing.php';
@@ -2459,6 +2460,7 @@ function boot(): void {
 	Tracking::instance();
 	Tracking_Events::instance();
 	Express_Order::instance();
+	Anti_Abuse::instance();
 	Capi::instance();
 	WhatsApp::instance();
 	Product_Video::instance();
