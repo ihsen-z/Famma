@@ -107,7 +107,8 @@ function famma_child_home_newsletter(): void {
 			</div>
 		</div>
 
-		<form class="famma-newsletter__form" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" novalidate>
+		<?php wp_enqueue_script( \Famma\Core\Newsletter::SCRIPT ); ?>
+		<form class="famma-newsletter__form" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" novalidate data-famma-nl-nonce-url="<?php echo esc_url( \Famma\Core\Newsletter::nonce_endpoint() ); ?>" data-famma-nl-nonce-field="<?php echo esc_attr( \Famma\Core\Newsletter::NONCE ); ?>">
 			<input type="hidden" name="action" value="<?php echo esc_attr( \Famma\Core\Newsletter::ACTION ); ?>" />
 			<input type="hidden" name="<?php echo esc_attr( \Famma\Core\Newsletter::FIELD_LANG ); ?>" value="<?php echo esc_attr( is_rtl() ? 'ar' : 'fr' ); ?>" />
 			<?php wp_nonce_field( \Famma\Core\Newsletter::ACTION, \Famma\Core\Newsletter::NONCE ); ?>

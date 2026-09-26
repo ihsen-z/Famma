@@ -385,7 +385,7 @@ final class Seo {
 	 *
 	 * @return bool
 	 */
-	private static function delegated(): bool {
+	public static function delegated(): bool {
 		return defined( 'WPSEO_VERSION' ) || defined( 'RANK_MATH_VERSION' ) || defined( 'SEOPRESS_VERSION' );
 	}
 
@@ -674,27 +674,47 @@ final class Seo {
 			return $output;
 		}
 
-		// WordPress termine sa sortie par la ligne `Sitemap:`. Reprendre
-		// directement avec des `Disallow:` les détacherait de leur groupe :
-		// on rouvre donc explicitement un groupe `User-agent: *`.
-		$lines = array( (string) $output, '', 'User-agent: *' );
+		/*
+		 * Un robot n'applique que le groupe qui le nomme : les règles posées
+		 * par WordPress et WooCommerce (`/wp-admin/`, `?add-to-cart=`,
+		 * journaux) sont donc recopiées dans chaque groupe, avec les nôtres.
+		 * Audit du 25/09 (SEO-17) : les agents nommés, Bingbot compris,
+		 * échappaient à ces règles, et deux groupes `*` coexistaient.
+		 */
+		$rules    = array();
+		$sitemaps = array();
 
-		$lines[] = 'Disallow: /panier/';
-		$lines[] = 'Disallow: /commande/';
-		$lines[] = 'Disallow: /mon-compte/';
-		$lines[] = 'Disallow: /author/';
-		$lines[] = '';
+		foreach ( (array) preg_split( '/\R/', (string) $output ) as $line ) {
+			$line = trim( (string) $line );
 
-		foreach ( self::ai_agents() as $agent ) {
-			$lines[] = 'User-agent: ' . $agent;
-			$lines[] = 'Allow: /';
-			$lines[] = 'Disallow: /panier/';
-			$lines[] = 'Disallow: /commande/';
-			$lines[] = 'Disallow: /mon-compte/';
-			$lines[] = '';
+			if ( preg_match( '/^(dis)?allow\s*:/i', $line ) ) {
+				$rules[] = $line;
+			} elseif ( preg_match( '/^sitemap\s*:/i', $line ) ) {
+				$sitemaps[] = $line;
+			}
 		}
 
-		return implode( "\n", $lines ) . "\n";
+		foreach ( self::private_paths() as $path ) {
+			$rules[] = 'Disallow: ' . $path;
+		}
+
+		$rules = array_values( array_unique( $rules ) );
+		$lines = array_merge( array( 'User-agent: *' ), $rules, array( '' ) );
+
+		foreach ( self::ai_agents() as $agent ) {
+			$lines = array_merge( $lines, array( 'User-agent: ' . $agent, 'Allow: /' ), $rules, array( '' ) );
+		}
+
+		return implode( "\n", array_merge( $lines, $sitemaps ) ) . "\n";
+	}
+
+	/**
+	 * Étapes de tunnel et archives sans valeur de recherche, en français et en arabe.
+	 *
+	 * @return array<int, string>
+	 */
+	private static function private_paths(): array {
+		return array( '/panier/', '/commande/', '/mon-compte/', '/author/', '/ar/panier/', '/ar/commande/', '/ar/mon-compte/' );
 	}
 
 	/**
@@ -714,7 +734,6 @@ final class Seo {
 			'Perplexity-User',
 			'Google-Extended',
 			'Applebot-Extended',
-			'Bingbot',
 			'CCBot',
 			'meta-externalagent',
 		);
@@ -840,6 +859,9 @@ final class Seo {
 			}
 
 			$url = isset( $language['current_page_url'] ) ? (string) $language['current_page_url'] : '';
+
+			// Sans ses paramètres : une variante triée ne doit pas devenir la version par défaut (SEO-16).
+			$url = explode( '?', $url, 2 )[0];
 
 			if ( '' === $url ) {
 				continue;

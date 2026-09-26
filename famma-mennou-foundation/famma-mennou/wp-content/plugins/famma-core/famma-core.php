@@ -42,6 +42,7 @@ require_once __DIR__ . '/includes/tracking-events.php';
 require_once __DIR__ . '/includes/express-order.php';
 require_once __DIR__ . '/includes/product-video.php';
 require_once __DIR__ . '/includes/seo.php';
+require_once __DIR__ . '/includes/seo-listing.php';
 require_once __DIR__ . '/includes/seo-admin.php';
 require_once __DIR__ . '/includes/hardening.php';
 require_once __DIR__ . '/includes/performance.php';
@@ -1121,6 +1122,14 @@ final class Tunisia {
 		add_filter( 'woocommerce_checkout_posted_data', array( $this, 'force_country' ) );
 
 		/*
+		 * The store's base location pre-filled « Tunis » as every guest's
+		 * governorate (audit 25/09, UX-43): a hurried customer from Sfax
+		 * confirmed the wrong one. The country stays, the governorate is left
+		 * for the customer to choose, as on the express form.
+		 */
+		add_filter( 'woocommerce_customer_default_location_array', array( $this, 'blank_default_state' ) );
+
+		/*
 		 * One "full name" field instead of first + last name, and an optional
 		 * city (owner's decision, 23/09/2026): the governorate is enough to
 		 * route a parcel, and every extra field on mobile costs orders.
@@ -1209,6 +1218,21 @@ final class Tunisia {
 	 */
 	public function default_country(): string {
 		return 'TN';
+	}
+
+	/**
+	 * Keeps Tunisia as the default location, without a governorate.
+	 *
+	 * @param array<string,string> $location Default location (`country`, `state`).
+	 * @return array<string,string>
+	 */
+	public function blank_default_state( $location ): array {
+		$location = (array) $location;
+
+		return array(
+			'country' => isset( $location['country'] ) && '' !== $location['country'] ? (string) $location['country'] : 'TN',
+			'state'   => '',
+		);
 	}
 
 	/**
@@ -2439,6 +2463,7 @@ function boot(): void {
 	WhatsApp::instance();
 	Product_Video::instance();
 	Seo::instance();
+	Seo_Listing::instance();
 	add_filter( 'famma_seo_composed_description', array( Delivery_Content::class, 'seo_description' ), 10, 2 );
 	add_filter( 'famma_seo_composed_description', array( Returns_Content::class, 'seo_description' ), 10, 2 );
 	Returns_Content::hooks();

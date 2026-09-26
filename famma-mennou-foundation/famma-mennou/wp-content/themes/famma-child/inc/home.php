@@ -40,6 +40,10 @@ function famma_child_kses_image( string $html ): string {
 	$allowed['img']['fetchpriority'] = true;
 	$allowed['img']['decoding']      = true;
 
+	// Sans eux, l'image LCP partait en 600 × 600 sur tous les écrans (CODE-34).
+	$allowed['img']['srcset'] = true;
+	$allowed['img']['sizes']  = true;
+
 	return wp_kses( $html, $allowed );
 }
 

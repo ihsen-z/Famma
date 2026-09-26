@@ -64,6 +64,11 @@ final class Newsletter {
 	public const QUERY = 'famma_nl';
 
 	/**
+	 * Script qui rafraîchit le jeton avant l'envoi, mis en file par le thème.
+	 */
+	public const SCRIPT = 'famma-newsletter';
+
+	/**
 	 * Action de l'export CSV.
 	 */
 	private const EXPORT = 'famma_newsletter_export';
@@ -102,6 +107,14 @@ final class Newsletter {
 		add_action( 'init', array( $this, 'register_post_type' ) );
 		add_action( 'admin_post_nopriv_' . self::ACTION, array( $this, 'handle' ) );
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle' ) );
+
+		/*
+		 * Audit du 25/09 (CODE-31) : l'accueil est servi par le cache de page
+		 * jusqu'à 7 jours, alors qu'un jeton vit 12 à 24 h. Le formulaire
+		 * demande donc un jeton frais à ce point non caché juste avant l'envoi.
+		 */
+		add_action( 'wc_ajax_famma_newsletter_nonce', array( $this, 'send_nonce' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'register_script' ) );
 		add_action( 'admin_post_' . self::EXPORT, array( $this, 'export' ) );
 		add_filter( 'views_edit-' . self::POST_TYPE, array( $this, 'export_link' ) );
 		add_filter( 'manage_' . self::POST_TYPE . '_posts_columns', array( $this, 'columns' ) );
@@ -153,6 +166,56 @@ final class Newsletter {
 				'capability_type' => 'post',
 			)
 		);
+	}
+
+	/**
+	 * Enregistre le script du formulaire, sans le charger.
+	 *
+	 * Le thème le met en file en imprimant le formulaire : il n'est servi que
+	 * sur la page qui en a besoin, en pied de page.
+	 *
+	 * @return void
+	 */
+	public function register_script(): void {
+		$file = plugin_dir_path( __DIR__ ) . 'assets/js/newsletter.js';
+
+		if ( ! file_exists( $file ) ) {
+			return;
+		}
+
+		wp_register_script(
+			self::SCRIPT,
+			plugin_dir_url( __DIR__ ) . 'assets/js/newsletter.js',
+			array(),
+			(string) filemtime( $file ),
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
+		);
+	}
+
+	/**
+	 * Renvoie un jeton neuf pour le formulaire.
+	 *
+	 * Rien n'est écrit ici : le jeton ne sert qu'à l'envoi, qui garde ses
+	 * propres défenses (pot de miel, limite par adresse IP).
+	 *
+	 * @return void
+	 */
+	public function send_nonce(): void {
+		wp_send_json_success(
+			array( 'nonce' => wp_create_nonce( self::ACTION ) )
+		);
+	}
+
+	/**
+	 * Point d'entrée du jeton, à imprimer sur le formulaire.
+	 *
+	 * @return string
+	 */
+	public static function nonce_endpoint(): string {
+		return class_exists( '\WC_AJAX' ) ? (string) \WC_AJAX::get_endpoint( 'famma_newsletter_nonce' ) : '';
 	}
 
 	/**

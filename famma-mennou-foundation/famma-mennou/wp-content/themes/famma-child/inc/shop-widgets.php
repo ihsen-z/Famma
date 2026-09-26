@@ -154,6 +154,15 @@ function famma_child_filter_url( string $param, string $value ): string {
 		$current[ $param ] = $value;
 	}
 
+	// Une catégorie seule a sa vraie page : le lien la vise plutôt qu'un doublon à paramètre (SEO-01).
+	if ( array( 'product_cat' ) === array_keys( $current ) ) {
+		$term_link = get_term_link( (string) $current['product_cat'], 'product_cat' );
+
+		if ( ! is_wp_error( $term_link ) ) {
+			return $term_link;
+		}
+	}
+
 	return array() === $current ? (string) $base : add_query_arg( $current, (string) $base );
 }
 

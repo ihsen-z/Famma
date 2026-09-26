@@ -55,6 +55,27 @@ final class Hardening {
 		add_filter( 'xmlrpc_methods', array( $this, 'drop_pingback_methods' ) );
 		add_filter( 'wp_headers', array( $this, 'drop_pingback_header' ) );
 		add_filter( 'rest_pre_dispatch', array( $this, 'guard_users_route' ), 10, 3 );
+
+		// Audit du 25/09 (SEC-20, SEC-14) : l'identifiant et les versions fuyaient ailleurs.
+		add_filter( 'oembed_response_data', array( $this, 'drop_oembed_author' ) );
+		add_filter( 'the_generator', '__return_empty_string' );
+	}
+
+	/**
+	 * Retire l'auteur des réponses oEmbed.
+	 *
+	 * `/wp-json/oembed/1.0/embed` renvoyait `author_name` et `author_url` :
+	 * l'identifiant masqué sur `/wp/v2/users` restait lisible en une requête.
+	 *
+	 * @param array<string, mixed> $data Réponse oEmbed.
+	 * @return array<string, mixed>
+	 */
+	public function drop_oembed_author( $data ): array {
+		$data = (array) $data;
+
+		unset( $data['author_name'], $data['author_url'] );
+
+		return $data;
 	}
 
 	/**
@@ -102,7 +123,8 @@ final class Hardening {
 			return $result;
 		}
 
-		if ( ! str_starts_with( $request->get_route(), '/wp/v2/users' ) || current_user_can( 'list_users' ) ) {
+		// Le routeur REST ignore la casse (`/wp/v2/Users` atteint le même contrôleur) : SEC-21.
+		if ( ! str_starts_with( strtolower( $request->get_route() ), '/wp/v2/users' ) || current_user_can( 'list_users' ) ) {
 			return $result;
 		}
 
