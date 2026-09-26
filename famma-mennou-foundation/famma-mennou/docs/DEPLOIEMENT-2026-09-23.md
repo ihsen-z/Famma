@@ -451,3 +451,30 @@ FR et AR : HTTP 200, aucune erreur, aucune note interne visible, description Goo
 - Le propriétaire remplit sa politique (délais, frais, remboursement, conditions) puis vide l'encadré « en cours de rédaction ».
 - Le bloc « Retours et remboursements » de l'onglet produit se règle à part (FAMMA → Pages → Fiche produit).
 - Archives de déploiement à supprimer à la racine du compte DirectAdmin.
+
+## 14. 26/09 (soir) : correctifs issus du second audit (25/09)
+
+Commit `1e98ac6`. Archive `famma-deploy-audit2.zip` (9 fichiers) extraite dans `wp-content` (« Merge and overwrite »), puis mise à la corbeille DirectAdmin ; LiteSpeed → Tout purger, puis réchauffage de 24 pages (accueil FR/AR, boutique FR/AR, 5 rayons, 14 fiches, `robots.txt`) avec 5 s entre deux requêtes. Archive de retour arrière prête (versions de `e08e55a`). Rapports : `docs/audit-2026-09-25/`.
+
+### 14.1 Ce qui a changé
+
+- **Newsletter (CODE-31)** : le formulaire demande un jeton neuf à `/?wc-ajax=famma_newsletter_nonce` juste avant l'envoi (`assets/js/newsletter.js`, chargé seulement avec le formulaire). L'accueil peut rester 7 jours en cache sans casser l'inscription.
+- **Durcissement (SEC-14, SEC-20, SEC-21)** : auteur retiré des réponses oEmbed, garde `/wp/v2/users` insensible à la casse, balises `generator` de WordPress et WooCommerce retirées (celle de Site Kit reste, imprimée par l'extension).
+- **SEO des listes (SEO-02, SEO-07, SEO-16, SEO-17, SEO-01)** : nouveau fichier `includes/seo-listing.php`. Canonique sur la boutique et les rayons (URL demandée sans paramètres, langue et pagination comprises) ; `noindex, follow` sans canonique sur les tris, filtres, `?product_cat=` et rayons vides. `robots.txt` : un seul groupe `*`, règles WordPress/WooCommerce recopiées dans chaque groupe d'agent IA, Bingbot retiré de ces groupes, chemins `/ar/` du tunnel ajoutés. `x-default` sans paramètres. Filtre « Catégories » vers `/categorie/…`.
+- **Commande (UX-43)** : plus de gouvernorat « Tunis » présélectionné.
+- **Accueil (CODE-34)** : `srcset` et `sizes` conservés sur l'image LCP.
+
+### 14.2 Réglages faits dans wp-admin (26/09)
+
+- LiteSpeed Cache → Drop Query String : ajout de `ttclid`, `gbraid`, `wbraid`, `_gl`, `srsltid`, `igshid`, `msclkid`, `mc_cid`, `mc_eid` (PERF-20). Un clic TikTok est servi par le cache en 0,11 s au lieu de 3 s.
+- WooCommerce → Livraison → Options : calculateur de frais d'expédition du panier désactivé (PERF-08).
+- TTL de la page d'accueil : passé à 12 h le temps du déploiement, remis à 604 800 s une fois le jeton de la newsletter vérifié.
+
+### 14.3 Vérifié en ligne
+
+24 pages en HTTP 200, aucune erreur, journal d'erreurs du domaine vide. `robots.txt` : 13 groupes, un seul `*`, aucun Bingbot. Canonique propre sur `/boutique/`, `/ar/boutique/`, `/categorie/cuisine/`. `noindex, follow` et aucune canonique sur `?orderby=price`, `?product_cat=cuisine` et `/categorie/electronique/`. `/?wc-ajax=famma_newsletter_nonce` → jeton, `no-store`. oEmbed sans `author_name`. `/wp-json/wp/v2/Users` → 401. Page de commande (panier de test en session) : aucun gouvernorat présélectionné. 0 lien `?product_cat=` sur la boutique.
+
+### 14.4 Restant
+
+- Une inscription réelle à la newsletter reste à faire par le propriétaire pour confirmer le parcours de bout en bout (aucun formulaire n'a été envoyé pendant le déploiement).
+- Balise `generator` de Site Kit, bouton « Confirmer ma commande » en blanc sur orange (choix de la maquette, à trancher par le propriétaire), anti-abus de la commande express (SEC-01) et API Store (SEC-08).
