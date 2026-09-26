@@ -41,6 +41,7 @@ require_once __DIR__ . '/includes/tracking-settings.php';
 require_once __DIR__ . '/includes/tracking-events.php';
 require_once __DIR__ . '/includes/express-order.php';
 require_once __DIR__ . '/includes/anti-abuse.php';
+require_once __DIR__ . '/includes/checkout-lite.php';
 require_once __DIR__ . '/includes/product-video.php';
 require_once __DIR__ . '/includes/seo.php';
 require_once __DIR__ . '/includes/seo-listing.php';
@@ -1516,7 +1517,7 @@ final class WhatsApp {
 	 * @return void
 	 */
 	public function styles(): void {
-		if ( '' === Config::instance()->whatsapp_number() ) {
+		if ( '' === Config::instance()->whatsapp_number() || ! self::show_float() ) {
 			return;
 		}
 
@@ -1535,11 +1536,28 @@ final class WhatsApp {
 	}
 
 	/**
+	 * Should the floating button be shown on this page?
+	 *
+	 * The theme answers false where the page already carries its own WhatsApp
+	 * card and the floating button would cover form fields (cart, checkout:
+	 * audit 25/09, UX-49).
+	 *
+	 * @return bool
+	 */
+	public static function show_float(): bool {
+		return (bool) apply_filters( 'famma_whatsapp_show_float', true );
+	}
+
+	/**
 	 * Prints the floating button in the footer.
 	 *
 	 * @return void
 	 */
 	public function render_float(): void {
+		if ( ! self::show_float() ) {
+			return;
+		}
+
 		$href = self::link( get_bloginfo( 'name' ) . ' — ' . __( "Bonjour, j'ai une question 🙂 / سلام، عندي سؤال", 'famma-core' ) );
 		if ( '' === $href ) {
 			return;
@@ -2461,6 +2479,7 @@ function boot(): void {
 	Tracking_Events::instance();
 	Express_Order::instance();
 	Anti_Abuse::instance();
+	Checkout_Lite::instance();
 	Capi::instance();
 	WhatsApp::instance();
 	Product_Video::instance();

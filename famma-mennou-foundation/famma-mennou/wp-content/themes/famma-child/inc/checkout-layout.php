@@ -130,9 +130,10 @@ function famma_child_checkout_cards( $checkout ): void {
 /**
  * Création de compte facultative, telle que la rend `checkout/form-billing.php`.
  *
- * Reproduite à l'identique (mêmes identifiants, mêmes actions) : le relais
- * « avec / sans compte » de `checkout-account.js` et le script de WooCommerce
- * s'appuient sur `#createaccount` et `.create-account`.
+ * Reproduite à l'identique (mêmes identifiants, mêmes actions) : le script de
+ * WooCommerce s'appuie sur `#createaccount` et `.create-account`. Rien n'est
+ * rendu tant que la création de compte au checkout est désactivée dans
+ * WooCommerce → Réglages → Comptes (état voulu depuis le 27/09, UX-17).
  *
  * @param \WC_Checkout $checkout Instance de commande.
  * @return void

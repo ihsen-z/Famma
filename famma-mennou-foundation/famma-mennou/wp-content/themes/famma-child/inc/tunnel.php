@@ -76,6 +76,28 @@ function famma_child_tunnel_body_class( array $classes ): array {
 add_filter( 'body_class', 'famma_child_tunnel_body_class' );
 
 /**
+ * Pas de bouton WhatsApp flottant là où l'encart WhatsApp du parcours s'affiche.
+ *
+ * Sur le panier rempli et la commande, le bouton de 56 px recouvrait les
+ * champs et les cartes au moment de valider, alors que l'encart
+ * (`famma_child_tunnel_help()`) est déjà dans la page (audit du 25/09, UX-49).
+ * Le panier vide et la confirmation n'ont pas d'encart : le bouton y reste.
+ *
+ * @param bool $show Réponse reçue de famma-core.
+ * @return bool
+ */
+function famma_child_tunnel_whatsapp_float( $show ): bool {
+	$step = famma_child_tunnel_step();
+
+	if ( 2 === $step || ( 1 === $step && WC()->cart && ! WC()->cart->is_empty() ) ) {
+		return false;
+	}
+
+	return (bool) $show;
+}
+add_filter( 'famma_whatsapp_show_float', 'famma_child_tunnel_whatsapp_float' );
+
+/**
  * Libellé du nombre d'articles, au singulier ou au pluriel.
  *
  * @param int $count Nombre d'articles (quantités cumulées).
