@@ -498,3 +498,24 @@ Commit `ff68092`. Archive `famma-deploy-antiabus.zip` (3 fichiers : `includes/an
 ### 15.3 Non testé en ligne
 
 Le refus par le piège et les limites par connexion et par téléphone n'ont pas été déclenchés : il aurait fallu envoyer des commandes. À tester, si le propriétaire le souhaite, avec une commande de test supprimée ensuite.
+
+## 16. 27/09 : commande allégée (UX-16/17, UX-49)
+
+Commit `10b0c94`. Archive `lot3-checkout-2709.zip` (7 fichiers : `famma-core.php`, `includes/checkout-lite.php`, et dans le thème `inc/checkout.php`, `inc/checkout-layout.php`, `inc/tunnel.php`, `assets/css/checkout.css`, `assets/css/tunnel.css`) extraite dans `wp-content`, puis mise à la corbeille DirectAdmin ; LiteSpeed → Tout purger - LSCache, puis réchauffage des 24 pages du § 14. `assets/js/checkout-account.js` reste sur le serveur mais n'est plus chargé.
+
+### 16.1 Ce qui a changé
+
+- **Code promo** (`Checkout_Lite`, filtre `woocommerce_coupons_enabled`) : proposé au panier et à la commande seulement si un code est publié. Aucun code au 27/09, donc l'encart a disparu ; il revient dès qu'un code est publié. L'administration n'est pas concernée.
+- **Notes de commande** (`woocommerce_enable_order_notes_field`) : retirées côté boutique ; l'écran d'une commande garde la note client. Filtre `famma_checkout_order_notes` pour les remettre.
+- **Choix « Commander sans compte / Créer un compte »** retiré du thème avec son script. Le compte reste proposé sur la page de confirmation, dont l'encart a maintenant son style (déplacé de `checkout.css` vers `tunnel.css`).
+- **WhatsApp flottant** : filtre `famma_whatsapp_show_float` dans famma-core ; le thème le coupe sur le panier rempli et la commande, qui ont leur encart WhatsApp.
+
+### 16.2 Vérifié en ligne
+
+24 pages en HTTP 200, aucune erreur PHP (une ligne INFO LiteSpeed à 00:52 : requête abandonnée par le navigateur pendant la mesure). Panier de test anonyme (curl, aucune commande) : ni encart de code promo, ni choix de compte, ni notes, ni bouton flottant sur le panier et la commande ; champ piège et encart WhatsApp présents. Bouton flottant toujours présent sur l'accueil, les fiches et le panier vide ; jeton express en 200. Mesure à 390 × 842 (connecté, sans message d'ajout au panier) : bouton « Confirmer ma commande » à 2 232 px, soit 2,65 écrans, contre 2 500 px (2,97) avant le lot.
+
+### 16.3 Réglages laissés au propriétaire
+
+L'outil a refusé la modification des réglages de la boutique. Restent à faire dans WooCommerce → Réglages :
+- *Comptes et confidentialité* : décocher « Création de compte : lors de la validation de la commande ». Tant que la case est cochée, la case native « Créer un compte ? » s'affiche dans la carte « Vos coordonnées ». Garder cochée la création sur « Mon compte » : la proposition après commande en dépend.
+- *Expédition → Options d'expédition* → Destination de l'expédition : « Forcer la livraison à l'adresse de facturation client ». Retire « Expédier à une adresse différente ? » (62 px) ; WooCommerce recopie alors l'adresse de facturation dans la commande (`WC_Checkout::get_posted_data()`).
