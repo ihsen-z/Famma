@@ -478,3 +478,23 @@ Commit `1e98ac6`. Archive `famma-deploy-audit2.zip` (9 fichiers) extraite dans `
 
 - Une inscription réelle à la newsletter reste à faire par le propriétaire pour confirmer le parcours de bout en bout (aucun formulaire n'a été envoyé pendant le déploiement).
 - Balise `generator` de Site Kit, bouton « Confirmer ma commande » en blanc sur orange (choix de la maquette, à trancher par le propriétaire), anti-abus de la commande express (SEC-01) et API Store (SEC-08).
+
+## 15. 27/09 : anti-abus de la commande express et de l'API Store (SEC-01, SEC-08)
+
+Commit `ff68092`. Archive `famma-deploy-antiabus.zip` (3 fichiers : `includes/anti-abuse.php`, `includes/express-order.php`, `famma-core.php`) extraite dans `wp-content`, puis mise à la corbeille DirectAdmin ; LiteSpeed → Tout purger, puis réchauffage des 24 mêmes pages qu'au § 14. Archive de retour arrière prête (versions de `ac34510`).
+
+### 15.1 Ce qui a changé
+
+- **Champ piège** `famma_hp_site` (attribut `hidden`, hors tabulation) dans le formulaire express et dans la page de commande (`woocommerce_after_checkout_billing_form`). Rempli : commande refusée avec un message neutre.
+- **Limites** (`woocommerce_after_checkout_validation`, compteurs en transients, empreinte salée de l'IP ou du numéro) : 5 commandes par heure et par connexion, 3 par jour et par téléphone (numéro normalisé en +216), 40 jetons express par heure et par connexion (erreur 429 avant `send_nonce()`).
+- **Plafond de 10 par article** : `woocommerce_quantity_input_max`, ajout au panier, mise à jour du panier, validation de la commande.
+- **API Store** : routes `/wc/store/v1/checkout` et `/wc/store/checkout` retirées (`rest_endpoints`). La limite de débit native de l'API Store n'est pas activée : elle repose sur le cache objet, absent chez OXA.
+- Seuils réglables par le filtre `famma_anti_abuse_limits` ; les comptes `manage_woocommerce` ne sont pas limités. Messages en français puis en derja, avec renvoi vers WhatsApp.
+
+### 15.2 Vérifié en ligne
+
+24 pages en HTTP 200, aucune erreur PHP (une ligne INFO LiteSpeed : requête du panier interrompue à 17 s pendant un pic de lenteur, PERF-02). Champ piège présent sur les 14 fiches et sur la page de commande. Champ quantité express `max="10"`. Panier de test : ajout de 11 refusé (`"error":true`), ajout de 2 accepté. `/wp-json/wc/store/v1/checkout` et `/wp-json/wc/store/checkout` → 404 `rest_no_route` ; `/wp-json/wc/store/v1/cart` → 200. `/?wc-ajax=famma_express_nonce` → jeton.
+
+### 15.3 Non testé en ligne
+
+Le refus par le piège et les limites par connexion et par téléphone n'ont pas été déclenchés : il aurait fallu envoyer des commandes. À tester, si le propriétaire le souhaite, avec une commande de test supprimée ensuite.
