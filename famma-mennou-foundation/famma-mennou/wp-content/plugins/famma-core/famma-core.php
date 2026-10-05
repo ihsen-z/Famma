@@ -48,6 +48,7 @@ require_once __DIR__ . '/includes/seo-listing.php';
 require_once __DIR__ . '/includes/seo-admin.php';
 require_once __DIR__ . '/includes/hardening.php';
 require_once __DIR__ . '/includes/performance.php';
+require_once __DIR__ . '/includes/cache-warmup.php';
 
 /**
  * Reads configuration from env-fed constants and WordPress options.
@@ -2507,6 +2508,7 @@ function boot(): void {
 	Returns_Content::hooks();
 	Hardening::instance();
 	Performance::instance();
+	Cache_Warmup::instance();
 	// Le formulaire public passe par admin-post.php : chargé partout.
 	Newsletter::instance();
 
