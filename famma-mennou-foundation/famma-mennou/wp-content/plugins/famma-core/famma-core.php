@@ -2092,7 +2092,10 @@ final class Dashboard {
 	 * @return void
 	 */
 	private function hooks(): void {
-		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		// Priority 9: the parent must exist before the newsletter post type
+		// (priority 10) attaches its submenu, or WordPress leaves the
+		// dashboard out of the menu and the FAMMA link opens the newsletter.
+		add_action( 'admin_menu', array( $this, 'register_menu' ), 9 );
 		add_action( 'admin_post_famma_refresh_stats', array( $this, 'refresh' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'styles' ) );
 	}
@@ -2111,6 +2114,16 @@ final class Dashboard {
 			array( $this, 'render' ),
 			'dashicons-chart-area',
 			56
+		);
+
+		// Same slug as the parent: the first submenu entry, labelled for the page.
+		add_submenu_page(
+			'famma-dashboard',
+			__( 'FAMMA — tableau de bord', 'famma-core' ),
+			__( 'Tableau de bord', 'famma-core' ),
+			'manage_woocommerce',
+			'famma-dashboard',
+			array( $this, 'render' )
 		);
 	}
 
