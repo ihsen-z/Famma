@@ -13,11 +13,11 @@
  * champ. Il **ne réimplémente pas le checkout** — c'est la condition posée par
  * le plan UX pour que l'option C soit acceptable (§27, §61).
  *
- * Le formulaire poste vers les deux points d'entrée AJAX de WooCommerce :
- * `?wc-ajax=add_to_cart`, puis `?wc-ajax=checkout`. Le second exécute
- * `WC_Checkout::process_checkout()`, exactement comme le bouton « Commander »
- * de la page checkout classique. Tout ce qui pend à ce traitement continue
- * donc de s'appliquer, sans une ligne de code en plus :
+ * Le formulaire poste vers un seul point d'entrée, `?wc-ajax=famma_express_checkout`
+ * (`Express_Checkout`, audit PERF-03), qui met le produit au panier puis
+ * exécute `WC_Checkout::process_checkout()`, exactement comme le bouton
+ * « Commander » de la page checkout classique. Tout ce qui pend à ce
+ * traitement continue donc de s'appliquer, sans une ligne de code en plus :
  *
  * - la validation du téléphone tunisien et du gouvernorat (`Tunisia`) ;
  * - le contrôle du stock, et sa réservation ;
@@ -146,9 +146,23 @@ final class Express_Order {
 	 * navigateur, et aucune écriture n'a lieu ici. C'est le même principe que
 	 * les jetons distribués par la Store API de WooCommerce.
 	 *
+	 * ── Session ouverte ici (PERF-03) ───────────────────────────────────────
+	 *
+	 * Le jeton est désormais demandé dès la première interaction avec le
+	 * formulaire, donc AVANT l'ajout au panier. Pour qu'il soit calculé sur la
+	 * session qui servira à commander, ce point d'entrée pose lui-même le
+	 * cookie de session WooCommerce s'il manque. Seule cette réponse AJAX (un
+	 * POST, jamais mis en cache) porte le cookie : la fiche produit reste
+	 * cachable. Aucune donnée de session n'est écrite, donc aucune ligne en
+	 * base tant que rien n'est mis au panier.
+	 *
 	 * @return void
 	 */
 	public function send_nonce(): void {
+		if ( function_exists( 'WC' ) && WC()->session && ! WC()->session->has_session() ) {
+			WC()->session->set_customer_session_cookie( true );
+		}
+
 		wp_send_json_success(
 			array( 'nonce' => wp_create_nonce( 'woocommerce-process_checkout' ) )
 		);
@@ -205,7 +219,7 @@ final class Express_Order {
 		wp_enqueue_script( 'famma-express', $url . 'assets/js/express-order.js', array(), (string) filemtime( $js ), true );
 
 		/*
-		 * Les deux points d'entrée sont demandés à WooCommerce plutôt que
+		 * Les points d'entrée sont demandés à WooCommerce plutôt que
 		 * reconstruits : `get_endpoint()` tient compte des permaliens et du
 		 * préfixe de la boutique, qu'une URL écrite à la main manquerait.
 		 */
@@ -213,8 +227,7 @@ final class Express_Order {
 			'famma-express',
 			'fammaExpress',
 			array(
-				'addToCartUrl' => \WC_AJAX::get_endpoint( 'add_to_cart' ),
-				'checkoutUrl'  => \WC_AJAX::get_endpoint( 'checkout' ),
+				'expressUrl'   => \WC_AJAX::get_endpoint( Express_Checkout::ENDPOINT ),
 				'nonceUrl'     => \WC_AJAX::get_endpoint( 'famma_express_nonce' ),
 				'currency'     => get_woocommerce_currency(),
 				'genericError' => __( 'The order could not go through. Please check the form and try again.', 'famma-core' ),
@@ -481,10 +494,10 @@ final class Express_Order {
 
 				<?php
 				/*
-				 * Aucun jeton de checkout ici : il serait calculé avant que la
-				 * session du visiteur existe, donc invalide au moment de
-				 * commander. Le script en demande un frais après l'ajout au
-				 * panier — voir `send_nonce()`.
+				 * Aucun jeton de checkout ici : la page est servie par le cache,
+				 * le jeton serait celui d'un autre visiteur. Le script en demande
+				 * un dès la première interaction avec le formulaire — voir
+				 * `send_nonce()` et `Express_Checkout`.
 				 */
 				?>
 				<?php Anti_Abuse::trap_field(); ?>

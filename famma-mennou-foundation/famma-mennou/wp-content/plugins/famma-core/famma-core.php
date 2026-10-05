@@ -40,6 +40,8 @@ require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';
 require_once __DIR__ . '/includes/tracking-events.php';
 require_once __DIR__ . '/includes/express-order.php';
+require_once __DIR__ . '/includes/express-checkout.php';
+require_once __DIR__ . '/includes/order-emails.php';
 require_once __DIR__ . '/includes/anti-abuse.php';
 require_once __DIR__ . '/includes/checkout-lite.php';
 require_once __DIR__ . '/includes/product-video.php';
@@ -324,47 +326,10 @@ final class Order_Statuses {
 
 		/*
 		 * Conséquence du point précédent : WooCommerce ne rattache ses e-mails
-		 * « Nouvelle commande » (admin) et « Commande reçue » (client) qu'aux
-		 * transitions pending → processing / on-hold / completed. Une commande
-		 * qui démarre en « pending-confirm » ne déclenchait donc AUCUN e-mail :
-		 * le marchand n'était pas prévenu (audit du 23/09, CODE-01).
+		 * « Nouvelle commande » qu'aux transitions vers processing / on-hold /
+		 * completed. Leur envoi, hors du checkout, vit dans `Order_Emails`
+		 * (audit du 23/09 CODE-01, puis PERF-23).
 		 */
-		add_action( 'woocommerce_order_status_pending_to_pending-confirm', array( $this, 'send_new_order_emails' ), 10, 2 );
-		add_action( 'woocommerce_order_status_failed_to_pending-confirm', array( $this, 'send_new_order_emails' ), 10, 2 );
-	}
-
-	/**
-	 * Sends the "new order" (admin) and "order received" (customer) emails.
-	 *
-	 * Uses WooCommerce's own email classes, so the templates, the recipient set
-	 * in WooCommerce → Settings → Emails and the on/off switches all still
-	 * apply. WC_Email_New_Order guards against a second send by itself.
-	 *
-	 * @param int            $order_id Order ID.
-	 * @param \WC_Order|null $order    Order object when WooCommerce passes it.
-	 * @return void
-	 */
-	public function send_new_order_emails( int $order_id, $order = null ): void {
-		if ( ! function_exists( 'WC' ) || ! WC()->mailer() ) {
-			return;
-		}
-
-		$order = $order instanceof \WC_Order ? $order : wc_get_order( $order_id );
-
-		if ( ! $order instanceof \WC_Order ) {
-			return;
-		}
-
-		$emails = WC()->mailer()->get_emails();
-
-		if ( isset( $emails['WC_Email_New_Order'] ) ) {
-			$emails['WC_Email_New_Order']->trigger( $order_id, $order );
-		}
-
-		// E-mail client facultatif au checkout : WooCommerce ne l'envoie que s'il existe.
-		if ( isset( $emails['WC_Email_Customer_Processing_Order'] ) && '' !== $order->get_billing_email() ) {
-			$emails['WC_Email_Customer_Processing_Order']->trigger( $order_id, $order );
-		}
 	}
 
 	/**
@@ -2496,6 +2461,8 @@ function boot(): void {
 	Tracking::instance();
 	Tracking_Events::instance();
 	Express_Order::instance();
+	Express_Checkout::instance();
+	Order_Emails::instance();
 	Anti_Abuse::instance();
 	Checkout_Lite::instance();
 	Capi::instance();

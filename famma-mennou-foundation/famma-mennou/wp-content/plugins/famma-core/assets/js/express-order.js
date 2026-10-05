@@ -1,16 +1,22 @@
 /**
- * Commande express — enchaînement des deux points d'entrée de WooCommerce.
+ * Commande express — un seul appel au clic (audit PERF-03).
  *
- * Ce script n'invente aucun parcours. Il fait, en deux requêtes, ce que le
- * client ferait en deux pages :
+ * Ce script n'invente aucun parcours. Il prépare puis envoie :
  *
- *   1. `?wc-ajax=add_to_cart`  — met le produit au panier ;
- *   2. `?wc-ajax=checkout`     — exécute `WC_Checkout::process_checkout()`.
+ *   0. `?wc-ajax=famma_express_nonce`    — dès la première interaction avec le
+ *      formulaire, en parallèle de la saisie : jeton de checkout et session ;
+ *   1. `?wc-ajax=famma_express_checkout` — au clic : met le produit au panier
+ *      puis exécute `WC_Checkout::process_checkout()` (`Express_Checkout`).
  *
  * La commande, ses validations et son statut restent donc entièrement l'affaire
  * de WooCommerce. En cas d'échec, ce sont ses propres messages qui s'affichent :
  * « numéro de téléphone invalide » vient de `Tunisia::validate_phone()`, pas
  * d'un contrôle réécrit ici.
+ *
+ * Aucune commande n'est renvoyée automatiquement après une erreur réseau ou
+ * HTTP : le client voit le message d'erreur et décide. Seul cas de renvoi : le
+ * serveur répond `famma_token: expired`, ce qu'il fait AVANT toute écriture —
+ * un nouveau jeton est alors demandé, et la commande renvoyée une seule fois.
  *
  * Sans JavaScript, la validation est inerte — mais « Ajouter au panier », à
  * côté d'elle, poste encore le produit vers le panier de WooCommerce, et le
@@ -283,9 +289,9 @@
 	/**
 	 * Poste un jeu de données à un point d'entrée `wc-ajax`.
 	 *
-	 * `credentials: 'same-origin'` est indispensable : sans les cookies, le
-	 * panier et la session WooCommerce du second appel ne seraient pas ceux
-	 * du premier, et le checkout porterait sur un panier vide.
+	 * `credentials: 'same-origin'` est indispensable : sans les cookies, la
+	 * session WooCommerce de la commande ne serait pas celle pour laquelle le
+	 * jeton a été calculé, et le checkout le refuserait.
 	 *
 	 * @param {string}   url  Point d'entrée.
 	 * @param {FormData} data Données à poster.
@@ -325,6 +331,86 @@
 		} );
 	}
 
+	/*
+	 * Jeton de checkout, demandé une seule fois et partagé. La requête part à
+	 * la première interaction avec le formulaire : le temps que le client le
+	 * remplisse, la réponse est arrivée, et le clic n'attend plus qu'un appel.
+	 * Voir `Express_Order::send_nonce()`.
+	 */
+	var tokenRequest = null;
+
+	/**
+	 * Renvoie le jeton de checkout, en le demandant si besoin.
+	 *
+	 * @param {boolean} fresh Vrai pour ignorer le jeton déjà obtenu.
+	 * @return {Promise<string>} Jeton, ou chaîne vide en cas d'échec.
+	 */
+	function checkoutToken( fresh ) {
+		if ( tokenRequest && ! fresh ) {
+			return tokenRequest;
+		}
+
+		tokenRequest = post( fammaExpress.nonceUrl, new FormData() ).then( function ( token ) {
+			if ( token && token.success && token.data && token.data.nonce ) {
+				return String( token.data.nonce );
+			}
+
+			tokenRequest = null;
+			return '';
+		} ).catch( function () {
+			tokenRequest = null;
+			return '';
+		} );
+
+		return tokenRequest;
+	}
+
+	/**
+	 * Prépare le jeton à la première interaction, une seule fois.
+	 *
+	 * @return {void}
+	 */
+	function prepareToken() {
+		form.removeEventListener( 'focusin', prepareToken );
+		form.removeEventListener( 'pointerdown', prepareToken );
+		checkoutToken( false );
+	}
+
+	form.addEventListener( 'focusin', prepareToken );
+	form.addEventListener( 'pointerdown', prepareToken );
+
+	/**
+	 * Envoie la commande au point d'entrée unique.
+	 *
+	 * @param {string}  token    Jeton de checkout.
+	 * @param {boolean} canRetry Vrai si un jeton périmé peut être renouvelé.
+	 * @return {Promise<Object|null>} Réponse décodée.
+	 */
+	function sendOrder( token, canRetry ) {
+		var order = new FormData( form );
+
+		order.append( 'woocommerce-process-checkout-nonce', token );
+
+		return post( fammaExpress.expressUrl, order ).then( function ( result ) {
+			/*
+			 * Jeton refusé : le serveur l'a dit avant d'écrire quoi que ce
+			 * soit (ni panier, ni commande). Renvoyer ne peut donc pas créer
+			 * de doublon — une fois, pas davantage.
+			 */
+			if ( result && 'expired' === result.famma_token ) {
+				if ( ! canRetry ) {
+					return null;
+				}
+
+				return checkoutToken( true ).then( function ( fresh ) {
+					return fresh ? sendOrder( fresh, false ) : null;
+				} );
+			}
+
+			return result;
+		} );
+	}
+
 	form.addEventListener( 'submit', function ( event ) {
 		if ( cartSubmit ) {
 			return;
@@ -360,102 +446,63 @@
 		}
 
 		var productId = form.querySelector( '[name="famma_product_id"]' ).value;
-		var qtyField = form.querySelector( '[name="famma_quantity"]' );
-		var quantity = qtyField && qtyField.value ? qtyField.value : '1';
+		var quantity = String( currentQuantity() );
 		var unit = form.querySelector( '.famma-express__total' );
 		var unitPrice = unit ? parseFloat( unit.getAttribute( 'data-unit-price' ) || '0' ) : 0;
 
-		var cart = new FormData();
-		cart.append( 'product_id', productId );
-		cart.append( 'quantity', quantity );
+		if ( qtyInput ) {
+			qtyInput.value = quantity;
+		}
 
-		post( fammaExpress.addToCartUrl, cart ).then( function ( added ) {
-			if ( ! added || added.error ) {
-				/*
-				 * `add_to_cart` signale un refus par `error: true` et renvoie
-				 * l'URL du produit. Le motif exact (stock, variation) n'est
-				 * pas dans la réponse : on ouvre donc le parcours classique
-				 * plutôt que d'inventer une explication.
-				 */
-				release();
-				showError( fammaExpress.genericError );
+		pixel( 'AddToCart', {
+			content_type: 'product',
+			content_ids: [ String( productId ) ],
+			contents: [ { id: String( productId ), quantity: parseFloat( quantity ) } ],
+			value: unitPrice * parseFloat( quantity ),
+			currency: fammaExpress.currency,
+		} );
+
+		pixel( 'InitiateCheckout', {
+			content_type: 'product',
+			content_ids: [ String( productId ) ],
+			num_items: parseFloat( quantity ),
+			value: unitPrice * parseFloat( quantity ),
+			currency: fammaExpress.currency,
+		} );
+
+		checkoutToken( false ).then( function ( token ) {
+			if ( ! token ) {
+				return null;
+			}
+
+			return sendOrder( token, true );
+		} ).then( function ( result ) {
+			if ( result && 'success' === result.result && result.redirect ) {
+				// Page de remerciement : c'est WooCommerce qui décide où.
+				window.location.href = result.redirect;
 				return;
 			}
 
-			pixel( 'AddToCart', {
-				content_type: 'product',
-				content_ids: [ String( productId ) ],
-				contents: [ { id: String( productId ), quantity: parseFloat( quantity ) } ],
-				value: unitPrice * parseFloat( quantity ),
-				currency: fammaExpress.currency,
-			} );
+			release();
 
-			var order = new FormData( form );
+			if ( result && result.messages ) {
+				showError( result.messages );
+				return;
+			}
 
 			/*
-			 * Ces deux champs pilotent le formulaire, pas la commande :
-			 * la quantité a déjà servi à l'ajout au panier, et l'identifiant
-			 * produit n'a rien à dire à `process_checkout()`.
+			 * `reload` demandé par WooCommerce : la session est
+			 * désynchronisée (panier expiré, jeton périmé). Recharger est
+			 * sa réponse habituelle, et la seule qui remette d'aplomb.
 			 */
-			order.delete( 'famma_quantity' );
-			order.delete( 'famma_product_id' );
+			if ( result && result.reload ) {
+				window.location.reload();
+				return;
+			}
 
-			pixel( 'InitiateCheckout', {
-				content_type: 'product',
-				content_ids: [ String( productId ) ],
-				num_items: parseFloat( quantity ),
-				value: unitPrice * parseFloat( quantity ),
-				currency: fammaExpress.currency,
-			} );
-
-			/*
-			 * Le jeton n'est demandé qu'ICI, et l'ordre est impératif : il
-			 * n'est valable qu'une fois la session du visiteur créée, ce que
-			 * fait l'ajout au panier qui précède. Demandé plus tôt, il serait
-			 * calculé sur une session qui n'existe pas encore et le checkout
-			 * le refuserait. Voir `Express_Order::send_nonce()`.
-			 */
-			return post( fammaExpress.nonceUrl, new FormData() ).then( function ( token ) {
-				if ( ! token || ! token.success || ! token.data || ! token.data.nonce ) {
-					release();
-					showError( fammaExpress.genericError );
-					return;
-				}
-
-				order.append( 'woocommerce-process-checkout-nonce', token.data.nonce );
-
-				return post( fammaExpress.checkoutUrl, order );
-			} ).then( function ( result ) {
-				if ( 'undefined' === typeof result ) {
-					// Le jeton a échoué : le message est déjà affiché.
-					return;
-				}
-				if ( result && 'success' === result.result && result.redirect ) {
-					// Page de remerciement : c'est WooCommerce qui décide où.
-					window.location.href = result.redirect;
-					return;
-				}
-
-				release();
-
-				if ( result && result.messages ) {
-					showError( result.messages );
-					return;
-				}
-
-				/*
-				 * `reload` demandé par WooCommerce : la session est
-				 * désynchronisée (panier expiré, jeton périmé). Recharger est
-				 * sa réponse habituelle, et la seule qui remette d'aplomb.
-				 */
-				if ( result && result.reload ) {
-					window.location.reload();
-					return;
-				}
-
-				showError( fammaExpress.genericError );
-			} );
+			showError( fammaExpress.genericError );
 		} ).catch( function () {
+			// Erreur réseau : pas de renvoi automatique, le client décide.
 			release();
 			showError( fammaExpress.genericError );
 		} );

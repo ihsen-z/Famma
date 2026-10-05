@@ -14,7 +14,9 @@
  *   dans la page de commande ;
  * - une limite de commandes par connexion (heure) et par téléphone (24 h) ;
  * - un plafond de quantité par article ;
- * - une limite sur le point qui distribue le jeton de la commande express ;
+ * - une limite sur le point qui distribue le jeton de la commande express,
+ *   et une autre sur le point qui l'encaisse (`famma_express_checkout`), où
+ *   le piège est aussi contrôlé avant toute écriture dans le panier ;
  * - la route de commande de l'API Store fermée : la boutique passe par le
  *   checkout classique (ADR-003).
  *
@@ -49,6 +51,7 @@ final class Anti_Abuse {
 		'orders_per_ip_hour'   => 5,
 		'orders_per_phone_day' => 3,
 		'nonces_per_ip_hour'   => 40,
+		'express_per_ip_hour'  => 40,
 		'max_quantity'         => 10,
 	);
 
@@ -95,6 +98,9 @@ final class Anti_Abuse {
 
 		// Avant `Express_Order::send_nonce()`, qui est à la priorité 10.
 		add_action( 'wc_ajax_famma_express_nonce', array( $this, 'throttle_nonce' ), 1 );
+
+		// Avant `Express_Checkout::handle()`, qui est à la priorité 10.
+		add_action( 'wc_ajax_' . Express_Checkout::ENDPOINT, array( $this, 'throttle_express' ), 1 );
 
 		add_filter( 'rest_endpoints', array( $this, 'close_store_checkout' ) );
 	}
@@ -270,6 +276,61 @@ final class Anti_Abuse {
 		}
 
 		self::bump( $key, HOUR_IN_SECONDS );
+	}
+
+	/**
+	 * Garde le point d'entrée unique de la commande express (PERF-03).
+	 *
+	 * Chaque appel est compté par connexion, qu'il aboutisse ou non : c'est la
+	 * même limite que pour les jetons, appliquée au point qui les encaisse.
+	 * Le piège est contrôlé ici, avant que le panier ne soit touché ;
+	 * `validate_checkout()` le contrôle de nouveau dans `process_checkout()`,
+	 * avec les limites par connexion et par téléphone et le plafond.
+	 *
+	 * La réponse a la forme d'un échec de `process_checkout()` : le script
+	 * affiche `messages` comme n'importe quel refus de WooCommerce.
+	 *
+	 * @return void
+	 */
+	public function throttle_express(): void {
+		if ( self::exempt() ) {
+			return;
+		}
+
+		$key = self::key( 'express', self::client_ip() );
+
+		if ( self::count( $key ) >= self::limit( 'express_per_ip_hour' ) ) {
+			self::refuse_express( 'ip', 429 );
+			return;
+		}
+
+		self::bump( $key, HOUR_IN_SECONDS );
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- lecture seule pour refuser ; le jeton est vérifié ensuite par Express_Checkout::handle().
+		$trap = isset( $_POST[ self::TRAP_FIELD ] ) ? trim( sanitize_text_field( wp_unslash( $_POST[ self::TRAP_FIELD ] ) ) ) : '';
+
+		if ( '' !== $trap ) {
+			self::refuse_express( 'refused', 200 );
+		}
+	}
+
+	/**
+	 * Répond par un refus, au format d'échec du checkout de WooCommerce.
+	 *
+	 * @param string $reason Motif du refus (voir `message()`).
+	 * @param int    $status Code HTTP.
+	 * @return void
+	 */
+	private static function refuse_express( string $reason, int $status ): void {
+		wp_send_json(
+			array(
+				'result'   => 'failure',
+				'messages' => '<ul class="woocommerce-error" role="alert"><li>' . esc_html( self::message( $reason ) ) . '</li></ul>',
+				'refresh'  => false,
+				'reload'   => false,
+			),
+			$status
+		);
 	}
 
 	/**
