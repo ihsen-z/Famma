@@ -1661,17 +1661,34 @@ final class Tracking {
 		wp_register_script( 'famma-pixels', false, array(), FAMMA_CORE_VERSION, true );
 		wp_enqueue_script( 'famma-pixels' );
 
+		/*
+		 * Les files fbq / ttq sont créées tout de suite, mais le téléchargement
+		 * des bibliothèques tierces (~190 Kio pour Meta) attend la fin du
+		 * chargement et un moment d'inactivité : il ne concurrence plus le
+		 * premier affichage (PERF-07). Aucun événement n'est perdu, la file
+		 * est rejouée quand la bibliothèque arrive.
+		 *
+		 * Filtre `famma_defer_pixels` : false pour revenir au chargement immédiat.
+		 */
+		$defer = (bool) apply_filters( 'famma_defer_pixels', true );
+		wp_add_inline_script(
+			'famma-pixels',
+			$defer
+				? 'window.fammaDefer=window.fammaDefer||function(f){var r=function(){"requestIdleCallback" in window?requestIdleCallback(f,{timeout:3000}):setTimeout(f,1);};"complete"===document.readyState?r():addEventListener("load",r,{once:true});};'
+				: 'window.fammaDefer=window.fammaDefer||function(f){f();};'
+		);
+
 		if ( '' !== $pixel ) {
 			wp_add_inline_script(
 				'famma-pixels',
-				"!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init'," . wp_json_encode( $pixel ) . ");fbq('track','PageView');"
+				"!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];fammaDefer(function(){t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)})}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init'," . wp_json_encode( $pixel ) . ");fbq('track','PageView');"
 			);
 		}
 
 		if ( '' !== $ttk ) {
 			wp_add_inline_script(
 				'famma-pixels',
-				'!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"];ttq.setAndDefer=function(e,n){e[n]=function(){e.push([n].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.load=function(e){var n="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=n;ttq._t=ttq._t||{};ttq._t[e]=+new Date;var o=d.createElement("script");o.type="text/javascript";o.async=!0;o.src=n+"?sdkid="+e;var a=d.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};ttq.load(' . wp_json_encode( $ttk ) . ');ttq.page()}(window,document,"ttq");'
+				'!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"];ttq.setAndDefer=function(e,n){e[n]=function(){e.push([n].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.load=function(e){var n="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=n;ttq._t=ttq._t||{};ttq._t[e]=+new Date;var o=d.createElement("script");o.type="text/javascript";o.async=!0;o.src=n+"?sdkid="+e;var a=d.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};fammaDefer(function(){ttq.load(' . wp_json_encode( $ttk ) . ')});ttq.page()}(window,document,"ttq");'
 			);
 		}
 
