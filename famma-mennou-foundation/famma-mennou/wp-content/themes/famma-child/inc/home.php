@@ -44,7 +44,26 @@ function famma_child_kses_image( string $html ): string {
 	$allowed['img']['srcset'] = true;
 	$allowed['img']['sizes']  = true;
 
+	// Diapos du héros chargées après `load` (PERF-09, voir hero.js).
+	$allowed['img']['data-src']    = true;
+	$allowed['img']['data-srcset'] = true;
+
 	return wp_kses( $html, $allowed );
+}
+
+/**
+ * Diffère le téléchargement d'une image : `src` et `srcset` passent en
+ * `data-src` et `data-srcset`, que hero.js rétablit après l'événement `load`.
+ *
+ * `loading="lazy"` ne suffit pas pour les diapos du héros : empilées dans la
+ * fenêtre (position absolue, opacité nulle), le navigateur les juge visibles
+ * et les télécharge d'emblée, au détriment de l'image LCP (PERF-09).
+ *
+ * @param string $html Balise `<img>` produite par WooCommerce.
+ * @return string
+ */
+function famma_child_defer_image( string $html ): string {
+	return (string) preg_replace( '/\s(src|srcset)=/', ' data-$1=', $html );
 }
 
 /**
@@ -240,7 +259,11 @@ function famma_child_home_hero(): void {
 									'loading'       => 'lazy',
 									'fetchpriority' => 'low',
 								);
-							echo famma_child_kses_image( $product->get_image( 'woocommerce_single', $famma_hero_attr ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- échappé par famma_child_kses_image().
+							$famma_hero_img  = $product->get_image( 'woocommerce_single', $famma_hero_attr );
+							if ( 0 !== $index ) {
+								$famma_hero_img = famma_child_defer_image( $famma_hero_img );
+							}
+							echo famma_child_kses_image( $famma_hero_img ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- échappé par famma_child_kses_image().
 							?>
 							<span class="screen-reader-text"><?php echo esc_html( $product->get_name() ); ?></span>
 						</a>

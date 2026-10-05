@@ -26,6 +26,29 @@
 		return;
 	}
 
+	/*
+	 * Les diapos 2 et suivantes arrivent sans `src` (`data-src`, voir
+	 * famma_child_defer_image) : elles ne disputent plus la bande passante à
+	 * l'image LCP. On les rétablit après `load`, bien avant la première
+	 * rotation, et au plus tard au premier clic sur un point.
+	 */
+	function hydrate() {
+		Array.prototype.forEach.call( track.querySelectorAll( 'img[data-src]' ), function ( img ) {
+			if ( img.dataset.srcset ) {
+				img.srcset = img.dataset.srcset;
+				img.removeAttribute( 'data-srcset' );
+			}
+			img.src = img.dataset.src;
+			img.removeAttribute( 'data-src' );
+		} );
+	}
+
+	if ( 'complete' === document.readyState ) {
+		hydrate();
+	} else {
+		window.addEventListener( 'load', hydrate, { once: true } );
+	}
+
 	var INTERVAL = 6000;
 	var current = 0;
 	var timer = null;
@@ -33,6 +56,10 @@
 
 	function show( index ) {
 		current = ( index + slides.length ) % slides.length;
+
+		if ( 0 !== current ) {
+			hydrate();
+		}
 
 		Array.prototype.forEach.call( slides, function ( slide, i ) {
 			var active = i === current;
