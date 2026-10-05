@@ -116,6 +116,9 @@
 				<element value="famma_child_drop_gallery_zoom"/>
 				<element value="famma_child_kses_image"/>
 				<element value="famma_child_defer_image"/>
+				<element value="famma_child_remove_parent_callback"/>
+				<element value="famma_child_swap_scrollbar_script"/>
+				<element value="famma_child_scrollbar_offset_script"/>
 				<element value="famma_child_account_choice"/>
 				<element value="famma_child_account_offer_after_order"/>
 				<element value="famma_child_can_offer_account"/>
