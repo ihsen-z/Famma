@@ -92,10 +92,12 @@ function famma_child_enqueue_fonts(): void {
 add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_fonts', 19 );
 
 /**
- * Précharge les deux graisses du premier écran.
+ * Précharge les trois graisses du premier écran.
  *
- * Seulement deux : Poppins 400 pour le corps et 600 pour les titres et le
- * mot-symbole. Précharger les six ferait descendre en priorité haute des
+ * Poppins 400 pour le corps, 600 pour les titres, 700 pour le logo
+ * « FAMMA » de l'en-tête, présent sur toutes les pages : sans préchargement,
+ * il n'était découvert qu'à la lecture du CSS, après les deux autres
+ * (PERF-10). Précharger les six ferait descendre en priorité haute des
  * fichiers dont la page n'a pas besoin, et retarderait l'affichage au lieu
  * de l'avancer. La graisse arabe n'est préchargée que sur une page arabe.
  *
@@ -107,7 +109,7 @@ function famma_child_preload_fonts(): void {
 	}
 
 	$base  = get_stylesheet_directory_uri() . '/assets/fonts/';
-	$files = array( 'poppins-400.woff2', 'poppins-600.woff2' );
+	$files = array( 'poppins-400.woff2', 'poppins-600.woff2', 'poppins-700.woff2' );
 
 	if ( is_rtl() ) {
 		$files[] = 'noto-kufi-arabic-var.woff2';
