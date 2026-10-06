@@ -483,8 +483,8 @@ final class Express_Order {
 					$this->text_field( 'billing_first_name', __( 'Full name / الاسم واللقب', 'famma-core' ), 'text', 'name', true );
 					$this->text_field( 'billing_phone', __( 'Phone / الهاتف', 'famma-core' ), 'tel', 'tel' );
 					$this->governorate_field();
-					$this->text_field( 'billing_city', __( 'City / Delegation — المدينة', 'famma-core' ), 'text', 'address-level2', false, false );
 					$this->text_field( 'billing_address_1', __( 'Address / العنوان', 'famma-core' ), 'text', 'street-address', true );
+					$this->text_field( 'billing_city', __( 'City / Delegation — المدينة', 'famma-core' ), 'text', 'address-level2', false, false );
 					$this->quantity_field( $product );
 					$this->terms_field();
 					?>

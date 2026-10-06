@@ -186,6 +186,30 @@ function famma_child_product_new_badge(): void {
 add_action( 'woocommerce_before_single_product_summary', 'famma_child_product_new_badge', 11 );
 
 /**
+ * Ouvre la colonne de la galerie.
+ *
+ * Une galerie collante n'est bornée que par la grille entière, pas par sa
+ * ligne : elle recouvrait les sections pleine largeur en bas de page. Cette
+ * colonne s'étire sur la hauteur du résumé et sert de borne à la galerie.
+ *
+ * @return void
+ */
+function famma_child_gallery_column_open(): void {
+	echo '<div class="famma-gallery-col">';
+}
+add_action( 'woocommerce_before_single_product_summary', 'famma_child_gallery_column_open', 1 );
+
+/**
+ * Ferme la colonne de la galerie.
+ *
+ * @return void
+ */
+function famma_child_gallery_column_close(): void {
+	echo '</div>';
+}
+add_action( 'woocommerce_before_single_product_summary', 'famma_child_gallery_column_close', 99 );
+
+/**
  * Encadre le champ de quantité pour reproduire le sélecteur MOINS / PLUS.
  *
  * La maquette pose un bloc unique bordé : « MOINS », la valeur, « PLUS ».

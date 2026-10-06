@@ -102,6 +102,25 @@
 		gap: 34px;
 	}
 
+	/*
+	 * Le résumé (formulaire de commande) est bien plus haut que la galerie :
+	 * sans cela, la colonne de gauche restait vide sous les vignettes. La
+	 * galerie suit désormais le défilement tant que le formulaire est visible.
+	 * Le décalage vaut l'en-tête collant (~72 px) + une respiration.
+	 * Elle est bornée par `.famma-gallery-col` (étirée sur la ligne du résumé) :
+	 * collante directement dans la grille, elle recouvrait les sections du bas.
+	 */
+	.famma-product div.product > .famma-gallery-col {
+		align-self: stretch;
+		min-inline-size: 0;
+	}
+
+	.famma-product div.product div.images.woocommerce-product-gallery {
+		position: sticky;
+		inset-block-start: calc(var(--famma-header-h, 72px) + var(--sp-4));
+		align-self: start;
+	}
+
 	/* Les blocs pleine largeur (sections, avis, produits liés) traversent
 	   les deux colonnes au lieu de se tasser sous la galerie. */
 	.famma-product div.product > .woocommerce-tabs,
