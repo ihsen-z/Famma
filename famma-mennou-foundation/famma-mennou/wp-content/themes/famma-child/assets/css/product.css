@@ -1135,7 +1135,7 @@
  */
 .famma-product .related ul.products.famma-cards li.product .product-details,
 .famma-product .upsells ul.products.famma-cards li.product .product-details {
-	--card-row-title: 2.375rem;
+	--card-row-title: calc(2 * var(--card-lh-title) * var(--fs-card-name-sm));
 	--card-row-price: calc(2 * 1.6 * var(--fs-card-price-sm));
 }
 

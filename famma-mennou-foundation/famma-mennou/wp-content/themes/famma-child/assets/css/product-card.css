@@ -84,8 +84,10 @@ ul.products.famma-cards li.product:focus-within {
  * lignes plus bas, donc seul le prix peut encore grandir.
  */
 ul.products.famma-cards li.product .product-details {
-	--card-row-title: calc(2 * 1.4 * var(--fs-card-name));
-	--card-row-benefit: calc(2 * 1.55 * var(--fs-chrome-body));
+	--card-lh-title: 1.35;
+	--card-lh-benefit: 1.55;
+	--card-row-title: calc(2 * var(--card-lh-title) * var(--fs-card-name));
+	--card-row-benefit: calc(2 * var(--card-lh-benefit) * var(--fs-card-meta));
 	--card-row-rating: 1.375rem;
 	--card-row-price: calc(2 * 1.6 * var(--fs-card-price));
 
@@ -185,28 +187,42 @@ ul.products.famma-cards li.product .onsale.famma-badge--new {
 /* --- Nom, résumé --- */
 
 /*
- * Nom : exactement deux lignes, toujours.
+ * Nom : exactement deux lignes, toujours. La hauteur est fermee des deux
+ * cotes (un nom de trois lignes poussait note, prix et bouton : +16px sur le
+ * prix) et vaut exactement deux interlignes.
  *
- * `min-block-size` seul ne suffisait pas — un nom de trois lignes poussait
- * note, prix et bouton vers le bas (mesure : +16px sur le prix). La hauteur est
- * donc fermee des deux cotes, et le debordement coupe.
+ * Le titre lui-meme est un element de grille, donc « blockifie » : un
+ * `-webkit-line-clamp` pose sur lui ne s'applique pas.
  *
- * Pas de `-webkit-line-clamp` ici : un element de grille est « blockifie », son
- * `display: -webkit-box` devient `flow-root` et la coupure legere ne s'applique
- * plus (verifie au rendu : 55px au lieu de 39px). `line-clamp`, la propriete
- * standard, est declaree pour l'ellipse la ou elle existe ; la hauteur fermee
- * fait le travail partout. Comme la boite vaut exactement deux interlignes, la
- * troisieme ligne est coupee en entier — jamais a mi-hauteur de glyphe.
+ * `padding: 0` : Kadence pose `padding: .5em 0` sur ce titre. Dans une boite
+ * fermee a deux interlignes, ces 8px decalaient le texte vers le bas et la
+ * deuxieme ligne sortait coupee a mi-hauteur (mesure en production : contenu
+ * 55px pour une boite de 39px).
+ *
+ * L'ellipse est posee sur le lien interieur : lui n'est pas un element de
+ * grille, donc `display: -webkit-box` y fonctionne et un nom trop long finit
+ * par « … » au lieu d'etre tronque net.
  */
 ul.products.famma-cards li.product .woocommerce-loop-product__title {
 	grid-row: 1;
 	block-size: var(--card-row-title);
 	overflow: hidden;
 	margin: 0;
+	padding: 0;
+	color: var(--famma-blue);
 	font-size: var(--fs-card-name);
-	font-weight: var(--fw-medium);
-	line-height: 1.4;
+	font-weight: var(--fw-semibold);
+	line-height: var(--card-lh-title);
+	letter-spacing: -0.005em;
 	line-clamp: 2;
+}
+
+ul.products.famma-cards li.product .woocommerce-loop-product__title a {
+	display: -webkit-box;
+	overflow: hidden;
+	color: inherit;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
 }
 
 /*
@@ -220,8 +236,9 @@ ul.products.famma-cards li.product .famma-card__benefit {
 	block-size: var(--card-row-benefit);
 	overflow: hidden;
 	margin: 0;
-	font-size: var(--fs-chrome-body);
-	line-height: 1.55;
+	color: var(--famma-text-2);
+	font-size: var(--fs-card-meta);
+	line-height: var(--card-lh-benefit);
 	line-clamp: 2;
 }
 

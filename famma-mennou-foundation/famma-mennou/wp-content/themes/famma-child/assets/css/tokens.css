@@ -193,14 +193,14 @@
 	   répétition, là où il passerait inaperçu dans un paragraphe. */
 	--fs-card-badge: 0.71875rem;    /* 11,5px — badge « -20% », « Nouveau » */
 	--fs-card-meta: 0.78125rem;     /* 12,5px — compteurs, sous-textes */
-	--fs-card-name: 0.875rem;       /* 14px — nom du produit */
+	--fs-card-name: 0.9375rem;      /* 15px — nom du produit (14px coupait et se confondait avec le resume) */
 	--fs-card-price: 1.1875rem;     /* 19px — prix de la carte */
 
 	/* La fiche produit reprend la même carte en plus compact : la maquette y
 	   descend le nom à 13,5px et le prix à 17px pour que quatre cartes tiennent
 	   sous la fiche sans écraser le CTA principal. Le barré retombe sur
 	   --fs-card-meta (12,5px), déjà juste. */
-	--fs-card-name-sm: 0.84375rem;  /* 13,5px — nom, variante « Produits similaires » */
+	--fs-card-name-sm: 0.875rem;    /* 14px — nom, variante « Produits similaires » */
 	--fs-card-price-sm: 1.0625rem;  /* 17px — prix, même variante */
 
 	/* Rayons propres à la carte, hors échelle générale. */
