@@ -314,8 +314,20 @@
 	gap: 14px;
 	margin: 0;
 	color: var(--famma-blue);
-	font-size: clamp(1.875rem, 3.6vw, 2.375rem);
+	font-size: clamp(1.5rem, 3vw, 1.875rem);
 	font-weight: var(--fw-bold);
+}
+
+/*
+ * Le titre et le prix se lisaient comme une seule phrase : même couleur, même
+ * graisse, et un prix plus grand que le titre. Le titre garde la première
+ * place ; le prix passe en dessous, plus petit, dans sa propre rangée bordée
+ * d'un filet (--famma-line) qui l'isole du titre et de ce qui suit.
+ */
+.famma-product div.product .summary p.price {
+	margin-block-start: var(--sp-1);
+	padding-block: var(--sp-3);
+	border-block: 1px solid var(--famma-line);
 }
 
 .famma-product div.product .summary p.price del {
