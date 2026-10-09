@@ -140,10 +140,35 @@ final class Express_Checkout {
 			return;
 		}
 
+		// Le formulaire express ne demande que nom, téléphone et gouvernorat.
+		add_filter( 'woocommerce_checkout_fields', array( $this, 'relax_address_fields' ), 99 );
+
 		// Comme `WC_AJAX::checkout()` : la suite est entièrement celle de WooCommerce.
 		wc_maybe_define_constant( 'WOOCOMMERCE_CHECKOUT', true );
 		WC()->checkout()->process_checkout();
 		wp_die( 0 );
+	}
+
+	/**
+	 * Rend facultatifs l'adresse, la ville et le code postal.
+	 *
+	 * Posé uniquement dans cette requête, après la vérification du jeton, et à
+	 * une priorité tardive : le checkout classique garde ses champs. L'adresse
+	 * est recueillie par téléphone à la confirmation de la commande.
+	 *
+	 * @param array<string,array<string,array<string,mixed>>> $fields Champs du checkout.
+	 * @return array<string,array<string,array<string,mixed>>>
+	 */
+	public function relax_address_fields( array $fields ): array {
+		foreach ( array( 'billing', 'shipping' ) as $group ) {
+			foreach ( array( 'address_1', 'city', 'postcode' ) as $key ) {
+				if ( isset( $fields[ $group ][ $group . '_' . $key ] ) ) {
+					$fields[ $group ][ $group . '_' . $key ]['required'] = false;
+				}
+			}
+		}
+
+		return $fields;
 	}
 
 	/**

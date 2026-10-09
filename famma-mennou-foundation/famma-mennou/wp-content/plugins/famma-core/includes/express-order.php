@@ -233,6 +233,9 @@ final class Express_Order {
 				'genericError' => __( 'The order could not go through. Please check the form and try again.', 'famma-core' ),
 				'sending'      => __( 'Sending…', 'famma-core' ),
 				'phoneError'   => __( 'Check the number: 8 digits (XX XXX XXX).', 'famma-core' ),
+				'stateError'   => __( 'Pick your governorate from the list.', 'famma-core' ),
+				'noMatch'      => __( 'No governorate found', 'famma-core' ),
+				'stateHint'    => __( 'Type to search…', 'famma-core' ),
 
 				/*
 				 * Format de prix de la boutique, pour recalculer le total quand
@@ -346,20 +349,58 @@ final class Express_Order {
 	private function governorate_field(): void {
 		$states = WC()->countries->get_states( 'TN' );
 		$states = is_array( $states ) ? $states : array();
+		$arabic = self::governorate_arabic_names();
 		?>
 		<p class="famma-express__field">
 			<label for="famma-express-billing-state">
 				<?php esc_html_e( 'Governorate / الولاية', 'famma-core' ); ?>
 				<abbr class="required" title="<?php esc_attr_e( 'required', 'famma-core' ); ?>">*</abbr>
 			</label>
-			<select id="famma-express-billing-state" name="billing_state" autocomplete="address-level1" required>
+			<select id="famma-express-billing-state" name="billing_state" autocomplete="address-level1" data-famma-combo required>
 				<option value=""><?php esc_html_e( 'Choose… / اختار', 'famma-core' ); ?></option>
 				<?php foreach ( $states as $code => $label ) : ?>
-					<option value="<?php echo esc_attr( $code ); ?>"><?php echo esc_html( $label ); ?></option>
+					<option value="<?php echo esc_attr( $code ); ?>" data-alt="<?php echo esc_attr( $arabic[ $code ] ?? '' ); ?>"><?php echo esc_html( $label ); ?></option>
 				<?php endforeach; ?>
 			</select>
 		</p>
 		<?php
+	}
+
+	/**
+	 * Noms arabes des gouvernorats, pour la recherche du menu intelligent.
+	 *
+	 * Le client peut taper « صفاقس » comme « Sfax » : le nom arabe sert de mot
+	 * clé, il n'est pas affiché. La liste officielle reste celle de `Tunisia`.
+	 *
+	 * @return array<string,string>
+	 */
+	private static function governorate_arabic_names(): array {
+		return array(
+			'TN-11' => 'تونس',
+			'TN-12' => 'أريانة',
+			'TN-13' => 'بن عروس',
+			'TN-14' => 'منوبة',
+			'TN-21' => 'نابل',
+			'TN-22' => 'زغوان',
+			'TN-23' => 'بنزرت',
+			'TN-31' => 'باجة',
+			'TN-32' => 'جندوبة',
+			'TN-33' => 'الكاف',
+			'TN-34' => 'سليانة',
+			'TN-41' => 'القيروان',
+			'TN-42' => 'القصرين',
+			'TN-43' => 'سيدي بوزيد',
+			'TN-51' => 'سوسة',
+			'TN-52' => 'المنستير',
+			'TN-53' => 'المهدية',
+			'TN-61' => 'صفاقس',
+			'TN-71' => 'قفصة',
+			'TN-72' => 'توزر',
+			'TN-73' => 'قبلي',
+			'TN-81' => 'قابس',
+			'TN-82' => 'مدنين',
+			'TN-83' => 'تطاوين',
+		);
 	}
 
 	/**
@@ -372,7 +413,7 @@ final class Express_Order {
 			return;
 		}
 		?>
-		<p class="famma-express__field famma-express__field--wide famma-express__terms">
+		<p class="famma-express__field famma-express__terms">
 			<label for="famma-express-terms">
 				<input type="checkbox" id="famma-express-terms" name="terms" value="1" required />
 				<span><?php wc_terms_and_conditions_checkbox_text(); ?></span>
@@ -478,19 +519,34 @@ final class Express_Order {
 			?>
 
 			<form class="famma-express__form" method="post" novalidate>
-				<div class="famma-express__grid">
-					<?php
-					$this->text_field( 'billing_first_name', __( 'Full name / الاسم واللقب', 'famma-core' ), 'text', 'name', true );
-					$this->text_field( 'billing_phone', __( 'Phone / الهاتف', 'famma-core' ), 'tel', 'tel' );
-					$this->governorate_field();
-					$this->text_field( 'billing_address_1', __( 'Address / العنوان', 'famma-core' ), 'text', 'street-address', true );
-					$this->text_field( 'billing_city', __( 'City / Delegation — المدينة', 'famma-core' ), 'text', 'address-level2', false, false );
-					$this->quantity_field( $product );
-					$this->terms_field();
-					?>
-				</div>
+				<?php
+				/*
+				 * Deux sections, chacune avec son titre : « coordonnées » (ce qu'on saisit)
+				 * puis « commande » (ce qu'on paie). Le total vit à côté de la quantité qui
+				 * le fait varier, et non plus dans un bandeau séparé.
+				 */
+				?>
+				<fieldset class="famma-express__group">
+					<legend class="famma-express__legend"><?php esc_html_e( 'Your details / معلوماتك', 'famma-core' ); ?></legend>
+					<div class="famma-express__grid">
+						<?php
+						$this->text_field( 'billing_first_name', __( 'Full name / الاسم واللقب', 'famma-core' ), 'text', 'name', true );
+						$this->text_field( 'billing_phone', __( 'Phone / الهاتف', 'famma-core' ), 'tel', 'tel' );
+						$this->governorate_field();
+						?>
+					</div>
+				</fieldset>
 
-				<?php $this->summary( $product ); ?>
+				<div class="famma-express__group" role="group" aria-labelledby="famma-express-order-title">
+					<p class="famma-express__legend" id="famma-express-order-title"><?php esc_html_e( 'Your order / طلبيتك', 'famma-core' ); ?></p>
+					<div class="famma-express__order">
+						<?php
+						$this->quantity_field( $product );
+						$this->summary( $product );
+						?>
+					</div>
+					<?php $this->terms_field(); ?>
+				</div>
 
 				<?php
 				/*

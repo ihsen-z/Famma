@@ -411,6 +411,244 @@
 		} );
 	}
 
+	/**
+	 * Gouvernorat : menu déroulant à recherche.
+	 *
+	 * Le `<select>` natif reste dans le formulaire et porte la valeur envoyée ;
+	 * sans script, c'est lui qui s'affiche. Le champ de saisie le remplace : on
+	 * tape « sfa » ou « صفاقس », la liste se réduit, et seule une valeur de la
+	 * liste est acceptée (aucun gouvernorat inventé).
+	 *
+	 * @param {HTMLSelectElement} select Liste native des gouvernorats.
+	 */
+	function initCombo( select ) {
+		var listId = select.id + '-list';
+		var options = [];
+
+		function norm( text ) {
+			return String( text )
+				.normalize( 'NFD' )
+				.replace( /[̀-ًͯ-ٟ]/g, '' )
+				.replace( /[أإآ]/g, 'ا' )
+				.toLowerCase()
+				.trim();
+		}
+
+		Array.prototype.forEach.call( select.options, function ( option ) {
+			if ( ! option.value ) {
+				return;
+			}
+
+			options.push( {
+				value: option.value,
+				label: option.textContent,
+				alt: option.getAttribute( 'data-alt' ) || '',
+				key: norm( option.textContent ),
+				altKey: norm( option.getAttribute( 'data-alt' ) || '' ),
+			} );
+		} );
+
+		var wrap = document.createElement( 'div' );
+		var input = document.createElement( 'input' );
+		var list = document.createElement( 'ul' );
+		var active = -1;
+		var shown = [];
+
+		wrap.className = 'famma-express__combo';
+		input.type = 'text';
+		input.id = select.id;
+		input.required = true;
+		input.setAttribute( 'role', 'combobox' );
+		input.setAttribute( 'aria-autocomplete', 'list' );
+		input.setAttribute( 'aria-expanded', 'false' );
+		input.setAttribute( 'aria-controls', listId );
+		input.setAttribute( 'autocomplete', 'off' );
+		input.setAttribute( 'autocapitalize', 'off' );
+		input.setAttribute( 'spellcheck', 'false' );
+		input.setAttribute( 'placeholder', fammaExpress.stateHint || '' );
+		list.id = listId;
+		list.className = 'famma-express__combo-list';
+		list.setAttribute( 'role', 'listbox' );
+		list.hidden = true;
+
+		select.id = select.id + '-native';
+		select.tabIndex = -1;
+		select.required = false;
+		select.setAttribute( 'aria-hidden', 'true' );
+		select.removeAttribute( 'autocomplete' );
+		select.classList.add( 'famma-express__native' );
+
+		select.parentNode.insertBefore( wrap, select );
+		wrap.appendChild( input );
+		wrap.appendChild( list );
+		wrap.appendChild( select );
+
+		function chosen() {
+			for ( var i = 0; i < options.length; i++ ) {
+				if ( options[ i ].value === select.value ) {
+					return options[ i ];
+				}
+			}
+
+			return null;
+		}
+
+		function validity() {
+			var current = chosen();
+
+			input.setCustomValidity( '' === input.value || current ? '' : ( fammaExpress.stateError || '' ) );
+			input.setAttribute( 'aria-invalid', '' !== input.value && ! current ? 'true' : 'false' );
+		}
+
+		function close() {
+			list.hidden = true;
+			input.setAttribute( 'aria-expanded', 'false' );
+			input.removeAttribute( 'aria-activedescendant' );
+			active = -1;
+		}
+
+		function highlight( index ) {
+			var items = list.children;
+
+			if ( active >= 0 && items[ active ] ) {
+				items[ active ].removeAttribute( 'aria-selected' );
+			}
+
+			active = index;
+
+			if ( active >= 0 && items[ active ] ) {
+				items[ active ].setAttribute( 'aria-selected', 'true' );
+				input.setAttribute( 'aria-activedescendant', items[ active ].id );
+				items[ active ].scrollIntoView( { block: 'nearest' } );
+			}
+		}
+
+		function pick( option ) {
+			select.value = option.value;
+			input.value = option.label;
+			validity();
+			close();
+			select.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+		}
+
+		function render( term ) {
+			var q = norm( term );
+
+			shown = options.filter( function ( o ) {
+				return '' === q || -1 !== o.key.indexOf( q ) || -1 !== o.altKey.indexOf( q );
+			} ).sort( function ( a, b ) {
+				var aStart = 0 === a.key.indexOf( q ) || 0 === a.altKey.indexOf( q ) ? 0 : 1;
+				var bStart = 0 === b.key.indexOf( q ) || 0 === b.altKey.indexOf( q ) ? 0 : 1;
+
+				return aStart - bStart;
+			} );
+
+			list.innerHTML = '';
+
+			shown.forEach( function ( o, i ) {
+				var item = document.createElement( 'li' );
+				var name = document.createElement( 'span' );
+
+				item.id = listId + '-' + i;
+				item.setAttribute( 'role', 'option' );
+				name.textContent = o.label;
+				item.appendChild( name );
+
+				if ( o.alt ) {
+					var alt = document.createElement( 'span' );
+
+					alt.lang = 'ar';
+					alt.dir = 'rtl';
+					alt.textContent = o.alt;
+					item.appendChild( alt );
+				}
+
+				item.addEventListener( 'mousedown', function ( event ) {
+					// Garde le focus dans le champ : le blur fermerait la liste avant le clic.
+					event.preventDefault();
+					pick( o );
+				} );
+				list.appendChild( item );
+			} );
+
+			if ( ! shown.length ) {
+				var empty = document.createElement( 'li' );
+
+				empty.className = 'famma-express__combo-empty';
+				empty.textContent = fammaExpress.noMatch || '';
+				list.appendChild( empty );
+			}
+
+			list.hidden = false;
+			input.setAttribute( 'aria-expanded', 'true' );
+			active = -1;
+			highlight( shown.length && '' !== q ? 0 : -1 );
+		}
+
+		input.addEventListener( 'input', function () {
+			select.value = '';
+			validity();
+			render( input.value );
+		} );
+
+		input.addEventListener( 'focus', function () {
+			input.select();
+			render( chosen() ? '' : input.value );
+		} );
+
+		input.addEventListener( 'blur', function () {
+			// Un seul résultat possible : on le retient au lieu de laisser un champ « invalide ».
+			if ( ! chosen() && '' !== input.value ) {
+				var q = norm( input.value );
+				var exact = options.filter( function ( o ) {
+					return o.key === q || o.altKey === q;
+				} );
+				var found = exact[ 0 ] || ( 1 === shown.length ? shown[ 0 ] : null );
+
+				if ( found ) {
+					pick( found );
+					return;
+				}
+			}
+
+			validity();
+			close();
+		} );
+
+		input.addEventListener( 'keydown', function ( event ) {
+			var key = event.key;
+
+			if ( 'ArrowDown' === key || 'ArrowUp' === key ) {
+				event.preventDefault();
+
+				if ( list.hidden ) {
+					render( input.value );
+					return;
+				}
+
+				if ( shown.length ) {
+					var step = 'ArrowDown' === key ? 1 : -1;
+
+					highlight( ( active + step + shown.length ) % shown.length );
+				}
+			} else if ( 'Enter' === key && ! list.hidden && active >= 0 && shown[ active ] ) {
+				event.preventDefault();
+				pick( shown[ active ] );
+			} else if ( 'Escape' === key && ! list.hidden ) {
+				event.preventDefault();
+				close();
+			}
+		} );
+
+		var initial = chosen();
+
+		if ( initial ) {
+			input.value = initial.label;
+		}
+	}
+
+	Array.prototype.forEach.call( form.querySelectorAll( 'select[data-famma-combo]' ), initCombo );
+
 	form.addEventListener( 'submit', function ( event ) {
 		if ( cartSubmit ) {
 			return;

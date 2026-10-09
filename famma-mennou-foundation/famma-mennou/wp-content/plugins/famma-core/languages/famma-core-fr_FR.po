@@ -313,3 +313,18 @@ msgstr "Augmenter la quantité"
 
 msgid "Check the number: 8 digits (XX XXX XXX)."
 msgstr "Vérifiez le numéro : 8 chiffres (XX XXX XXX)."
+
+msgid "Your details / معلوماتك"
+msgstr "Vos coordonnées / معلوماتك"
+
+msgid "Your order / طلبيتك"
+msgstr "Votre commande / طلبيتك"
+
+msgid "Pick your governorate from the list."
+msgstr "Choisissez votre gouvernorat dans la liste. / اختار الولاية من القائمة"
+
+msgid "No governorate found"
+msgstr "Aucun gouvernorat trouvé"
+
+msgid "Type to search…"
+msgstr "Rechercher… / لوّج"

@@ -27,7 +27,7 @@
 }
 
 .famma-express__title {
-	margin-block: 0 var(--sp-3, 12px);
+	margin-block: 0 var(--sp-4, 16px);
 	font-size: var(--fs-h3, 1.25rem);
 	font-weight: var(--fw-bold, 700);
 	color: var(--famma-blue, #10275A);
@@ -110,6 +110,79 @@
 	outline-offset: 1px;
 }
 
+/*
+ * Gouvernorat : menu à recherche. Le <select> natif reste dans le formulaire
+ * (valeur envoyée) mais n'est plus affiché ; il n'est pas en `display: none`
+ * pour que sa valeur reste lisible par le formulaire.
+ */
+.famma-express__combo {
+	position: relative;
+}
+
+.famma-express__combo > input {
+	inline-size: 100%;
+}
+
+.famma-express__native {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	border: 0;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.famma-express__combo-list {
+	position: absolute;
+	inset-inline: 0;
+	inset-block-start: calc(100% + 4px);
+	z-index: 20;
+	max-block-size: 15rem;
+	margin: 0;
+	padding: var(--sp-1, 4px);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	list-style: none;
+	border: 1px solid var(--famma-line, #DBE1E8);
+	border-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-white, #FFF);
+	box-shadow: 0 8px 24px rgb(16 39 90 / 12%);
+}
+
+.famma-express__combo-list li {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-3, 12px);
+	/* 48px : cible tactile minimale du projet. */
+	min-block-size: 48px;
+	margin: 0;
+	padding-inline: var(--sp-3, 12px);
+	border-radius: var(--famma-radius-sm, 8px);
+	color: var(--famma-blue, #10275A);
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.famma-express__combo-list li > span:nth-child(2) {
+	color: var(--famma-ink-muted, #55606E);
+	font-size: var(--fs-caption, 0.875rem);
+}
+
+.famma-express__combo-list li[aria-selected="true"],
+.famma-express__combo-list li:hover {
+	background: var(--famma-surface-field, #EEF3FB);
+}
+
+.famma-express__combo-list .famma-express__combo-empty {
+	color: var(--famma-ink-muted, #55606E);
+	cursor: default;
+}
+
 /* Quantité : un bloc bordé « − valeur + », boutons de 48 px. */
 .famma-express__qty {
 	display: inline-flex;
@@ -179,14 +252,18 @@
 	flex: 0 0 auto;
 }
 
+/*
+ * Total : à droite de la quantité qui le fait varier. Aligné en fin de ligne
+ * (`end`, donc à gauche en RTL), et libre de passer à la ligne sur 303 px.
+ */
 .famma-express__summary {
 	display: flex;
-	flex-wrap: wrap;
-	align-items: baseline;
-	gap: var(--sp-2, 8px);
-	margin-block: var(--sp-4, 16px) var(--sp-3, 12px);
-	padding-block: var(--sp-3, 12px);
-	border-block-start: 1px solid var(--famma-line, #DBE1E8);
+	flex: 1 1 9rem;
+	flex-direction: column;
+	align-items: flex-end;
+	min-inline-size: 0;
+	gap: var(--sp-1, 4px);
+	text-align: end;
 }
 
 .famma-express__total-label {
@@ -203,7 +280,6 @@
 }
 
 .famma-express__cart-note {
-	flex-basis: 100%;
 	font-size: var(--fs-caption, 0.875rem);
 	color: var(--famma-ink-muted, #55606E);
 }
@@ -386,18 +462,62 @@ html[lang^="ar"] .famma-express__submit-ar {
 	padding-inline-start: var(--sp-4, 16px);
 }
 
+/*
+ * Sections du formulaire : « coordonnées », puis « commande ». Chaque section a
+ * son titre, un filet sous le titre, et 24 px d'air avant la suivante : le
+ * regard sait où il en est sans qu'aucun bloc ne soit encadré une seconde fois.
+ * Le fieldset est remis à zéro : Kadence lui donne bordure et marge.
+ */
+.famma-express__form {
+	/* La largeur de la colonne, et non celle de l'écran, décide des colonnes de la grille. */
+	container: famma-express / inline-size;
+}
+
+.famma-express .famma-express__group {
+	min-inline-size: 0;
+	margin: 0 0 var(--sp-6, 24px);
+	padding: 0;
+	border: 0;
+}
+
+.famma-express .famma-express__legend {
+	display: block;
+	inline-size: 100%;
+	margin: 0 0 var(--sp-3, 12px);
+	padding: 0 0 var(--sp-2, 8px);
+	border-block-end: 1px solid var(--famma-line, #DBE1E8);
+	color: var(--famma-blue, #10275A);
+	font-size: var(--fs-small, 0.875rem);
+	font-weight: var(--fw-semibold, 600);
+	line-height: var(--lh-tight, 1.2);
+}
+
+/* Quantité à gauche, total à droite ; le total passe dessous quand la place manque. */
+.famma-express__order {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: var(--sp-3, 12px) var(--sp-4, 16px);
+}
+
+.famma-express__order + .famma-express__terms {
+	margin-block-start: var(--sp-4, 16px);
+}
+
 @media (min-width: 600px) {
 	.famma-express {
 		padding: var(--sp-6, 24px);
 	}
+}
 
-	/* Deux colonnes dès qu'il y a la place ; l'adresse garde toute la largeur. */
+/* Téléphone et gouvernorat côte à côte dès que la colonne fait 416 px : 202 px chacun, assez pour « Ben Arous / بن عروس ». */
+@container famma-express (min-width: 26rem) {
 	.famma-express__grid {
 		grid-template-columns: 1fr 1fr;
 	}
 
-	.famma-express__field--wide,
-	.famma-express__terms {
+	.famma-express__field--wide {
 		grid-column: 1 / -1;
 	}
 }

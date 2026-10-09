@@ -142,3 +142,18 @@ msgstr "ثبّت في النمرة: 8 أرقام (XX XXX XXX)."
 
 msgid "Délai de livraison"
 msgstr "مدة التوصيل"
+
+msgid "Your details / معلوماتك"
+msgstr "معلوماتك"
+
+msgid "Your order / طلبيتك"
+msgstr "طلبيتك"
+
+msgid "Pick your governorate from the list."
+msgstr "اختار الولاية من القائمة."
+
+msgid "No governorate found"
+msgstr "ما لقينا حتى ولاية"
+
+msgid "Type to search…"
+msgstr "لوّج…"
