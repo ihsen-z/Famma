@@ -1,0 +1,49 @@
+name: famma-integration-20261010
+services:
+  db:
+    image: mariadb:11.8
+    environment:
+      MARIADB_DATABASE: famma_integration
+      MARIADB_USER: fixture
+      MARIADB_PASSWORD: fixture-local-only
+      MARIADB_ROOT_PASSWORD: fixture-local-root-only
+    volumes:
+      - integration_db:/var/lib/mysql
+  wordpress:
+    image: wordpress:7.1-php8.3-apache
+    ports:
+      - "127.0.0.1:8980:80"
+    environment: &wp_environment
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: famma_integration
+      WORDPRESS_DB_USER: fixture
+      WORDPRESS_DB_PASSWORD: fixture-local-only
+      WORDPRESS_DEBUG: "1"
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_ENVIRONMENT_TYPE', 'local');
+        define('WP_HOME', 'http://localhost:8980');
+        define('WP_SITEURL', 'http://localhost:8980');
+        if (!defined('WP_DEBUG')) { define('WP_DEBUG', true); }
+        define('WP_DEBUG_LOG', true);
+        define('WP_DEBUG_DISPLAY', false);
+        define('FAMMA_META_PIXEL_ID', '');
+        define('FAMMA_META_ACCESS_TOKEN', '');
+        define('FAMMA_META_TEST_EVENT_CODE', '');
+    volumes: &wp_volumes
+      - integration_wp:/var/www/html
+      - ../wp-content/plugins/famma-core:/var/www/html/wp-content/plugins/famma-core:ro
+      - ../wp-content/themes/famma-child:/var/www/html/wp-content/themes/famma-child:ro
+      - ./integration-browser-guard.php:/var/www/html/wp-content/mu-plugins/integration-browser-guard.php:ro
+      - .:/tests:ro
+    depends_on:
+      - db
+  cli:
+    image: wordpress:cli-php8.3
+    user: "33:33"
+    environment: *wp_environment
+    volumes: *wp_volumes
+    entrypoint: wp
+    profiles: [cli]
+volumes:
+  integration_db:
+  integration_wp:

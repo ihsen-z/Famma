@@ -1,0 +1,100 @@
+/** Actual frontend in a VM with isolated DOM, storage, transport and Pixel mocks. */
+'use strict';
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const source = fs.readFileSync(path.join(__dirname, '../wp-content/plugins/famma-core/assets/js/express-order.js'), 'utf8');
+const renderedFormSource = fs.readFileSync(path.join(__dirname, '../wp-content/plugins/famma-core/includes/express-order.php'), 'utf8');
+const countryField = renderedFormSource.match(/<input\s+type="hidden"\s+name="billing_country"\s+value="([^"]+)"\s*\/>/);
+let sequence = 0;
+function element(value = '', attrs = {}) {
+  const node = { value, attrs, handlers: {}, textContent: '', disabled: false, children: [], hidden: true,
+    addEventListener(k, cb) { this.handlers[k] = cb; }, removeEventListener(k) { delete this.handlers[k]; },
+    getAttribute(k) { return this.attrs[k] || ''; }, setAttribute(k,v) { this.attrs[k] = v; },
+    setCustomValidity(v) { this.invalid = v; }, scrollIntoView() {}, dispatchEvent() {}, focus() { this.focused=true; },
+    appendChild(child) { this.children.push(child); return child; } };
+  Object.defineProperty(node, 'innerHTML', {get() {return this.html || '';},set(v) {this.html=v;this.children=[];}});
+  return node;
+}
+function setup(responses = [], options = {}) {
+  const storage = options.storage || new Map();
+  const qty = element(options.qty || '1', { min: '1', max: options.max || '' });
+  const phone = element(options.phone === undefined ? '56 261 412' : options.phone);
+  const state = element('TN-11'); const name = element('Synthetic customer'); const trap = element();
+  const total = element('', { 'data-unit-price': '79' });
+  const button = element(); button.innerHTML = 'Vérifier ma commande';
+  const notices = element(), id = element('123'), cartQty = element('1'), recap = element(), recapContent = element();
+  const map = { '.famma-express__submit': button, '.famma-express__notices': notices,
+    '[name="famma_quantity"]': qty, '.famma-express__total': total, '[name="billing_state"]': state,
+    '[name="billing_phone"]': phone, '[name="famma_product_id"]': id, '[name="famma_hp_site"]': trap,
+    '.famma-express__recap': recap, '.famma-express__recap-content': recapContent };
+  const inputs = { famma_quantity: qty, billing_phone: phone, billing_first_name: name, billing_state: state, famma_product_id: id, famma_hp_site: trap };
+  // Derive this hidden field from the actual PHP form, rather than inventing it in the fixture.
+  if (countryField) inputs.billing_country = element(countryField[1]);
+  const form = element(); form.querySelector = s => map[s] || null;
+  form.querySelectorAll = s => s === 'input, select, textarea, button' ? [...Object.values(inputs), button] : [];
+  form.reportValidity = () => !phone.invalid && phone.value !== '' && options.valid !== false;
+  const calls = [], events = [];
+  const window = { location: { href: '', reload() { this.reloaded = true; } },
+    sessionStorage: { getItem(k) { if(options.storageBlocked) throw Error('blocked'); return storage.get(k) || null; }, setItem(k,v) {if(options.storageBlocked) throw Error('blocked'); storage.set(k,v);} } };
+  if(options.crypto !== false) window.crypto = { randomUUID: () => '00000000-0000-4000-8000-' + String(++sequence).padStart(12,'0') };
+  if(options.pixel !== false) window.fbq = (...args) => {if(options.pixelThrows) throw Error('Pixel blocked'); events.push(args);};
+  class MockFormData {
+    constructor(target) {this.values=[]; if(target===form) Object.entries(inputs).forEach(([k,v])=>{if(!v.disabled)this.values.push([k,v.value]);});}
+    append(...args) {this.values.push(args);}
+    forEach(cb) {this.values.forEach(([k,v])=>cb(v,k));}
+  }
+  const sandbox = { document: {querySelector(s) {return s === '.famma-express__form' ? form : s === 'form.cart input.qty' ? cartQty : null;}, getElementById() {return null;}, createElement() {return element();}},
+    window, fammaExpress: { nonceUrl:'/nonce', prepareUrl:'/prepare', expressUrl:'/express', statusUrl:'/status', currency:'TND', genericError:'Erreur', phoneError:'Téléphone invalide', sending:'Envoi', prepareLabel:'Vérifier', confirmLabel:'Confirmer', retryLabel:'Retrouver', storageError:'Stockage indisponible', changed:'Panier modifié', pending:'En cours', recovery:'Résultat inconnu',
+      recapLabels:{product:'Article',quantity:'Quantité',amount:'Montant',subtotal:'Sous-total',discount:'Remises',shipping:'Livraison',fees:'Frais',tax:'Taxes',total:'Total à payer'}, price:{decimals:3,decimal:',',thousand:' ',format:'%2$s %1$s',symbol:'DT'} },
+    FormData:MockFormData, Event:class {}, Uint8Array, Date,
+    fetch(url, init) { const call={url,values:init.body.values,init}; calls.push(call); if(!responses.length) return Promise.reject(Error('Unexpected request '+url)); const next=responses.shift(); if(next instanceof Error)return Promise.reject(next); if(next instanceof Promise)return next; const result=typeof next==='function'?next(call):next; return Promise.resolve({text:()=>Promise.resolve(typeof result==='string'?result:JSON.stringify(result))}); }
+  };
+  vm.runInNewContext(source,sandbox,{filename:'express-order.js'});
+  const submit=()=>form.handlers.submit({preventDefault(){}});
+  return {qty,phone,total,button,notices,form,window,calls,events,cartQty,submit,recap,recapContent,storage,record:()=>JSON.parse(storage.get('famma_express_intent_123'))};
+}
+const flush=()=>new Promise(resolve=>setImmediate(resolve));
+const token={success:true,data:{nonce:'isolated-nonce'}};
+const field=(call,name)=>(call.values.find(e=>e[0]===name)||[])[1];
+function prepared(call) {
+  return {result:'success',preparation_id:field(call,'famma_preparation_id'),cart_hash:'cart-a',
+    summary:{items:[{product_id:123,name:'Product A',quantity:1,line_total_html:'79 DT'},{product_id:456,name:'Other product',quantity:2,line_total_html:'60 DT'}],currency:'TND',total:'139',total_html:'139 DT',subtotal_html:'139 DT',discount_html:'',shipping_html:'0 DT',fees_html:'',tax_html:'',item_count:3},
+    tracking:{add_to_cart:{emit:true,event_id:'server-add-a',params:{value:79,currency:'TND',contents:[{id:'123',quantity:1}]}},initiate_checkout:{event_id:'server-check-a',params:{value:139,currency:'TND',content_ids:['123','456'],num_items:3}}}};
+}
+const accepted={result:'success',redirect:'/thanks',famma_state:'accepted',order_id:900};
+let checks=0;
+async function test(name,run){await run();checks++;console.log('PASS '+name);}
+(async()=>{
+  await test('Invalid phone blocks HTTP and Pixel',async()=>{const s=setup([],{phone:'123'});s.submit();await flush();assert.equal(s.calls.length,0);assert.equal(s.events.length,0);});
+  await test('Invalid required fields block HTTP and Pixel',async()=>{const s=setup([],{valid:false});s.submit();await flush();assert.equal(s.calls.length,0);});
+  await test('First click prepares complete recap and creates no order; double click ignored',async()=>{const s=setup([token,prepared]);s.submit();s.submit();await flush();assert.deepEqual(s.calls.map(c=>c.url),['/nonce','/prepare']);assert.equal(s.recap.hidden,false);assert.equal(s.button.textContent,'Confirmer');assert.equal(s.events[1][2].value,139);assert.equal(s.events[1][2].num_items,3);assert.equal(s.events[0][3].eventID,'server-add-a');assert.equal(s.recapContent.children[0].children[1].children.length,2);});
+  await test('Second explicit confirmation submits once and redirects',async()=>{const s=setup([token,prepared,accepted]);s.submit();await flush();s.submit();s.submit();await flush();assert.equal(s.calls.filter(c=>c.url==='/express').length,1);assert.equal(s.window.location.href,'/thanks');assert.equal(s.events.length,2);assert.equal(s.record().phase,'accepted');assert.equal(s.record().fields,undefined);});
+  await test('Rendered form sends the same Tunisian country in preparation and final snapshot',async()=>{const s=setup([token,prepared,accepted]);s.submit();await flush();s.submit();await flush();assert.equal(field(s.calls.find(c=>c.url==='/prepare'),'billing_country'),'TN');assert.equal(field(s.calls.find(c=>c.url==='/express'),'billing_country'),'TN');});
+  await test('Nonce rejected sends no cart or checkout events',async()=>{const s=setup([{success:false}]);s.submit();await flush();assert.equal(s.events.length,0);assert.deepEqual(s.calls.map(c=>c.url),['/nonce']);});
+  await test('Preparation stock refusal sends no Pixel or final request',async()=>{const s=setup([token,{result:'failure',messages:'Stock insuffisant'}]);s.submit();await flush();assert.equal(s.events.length,0);assert.equal(s.recap.hidden,true);assert.equal(s.button.disabled,false);});
+  await test('Quantity change invalidates recap; next click prepares rather than orders',async()=>{const s=setup([token,prepared,prepared]);s.submit();await flush();const first=s.record().preparation_id;s.qty.value='3';s.qty.handlers.input();assert.equal(s.recap.hidden,true);s.submit();await flush();assert.deepEqual(s.calls.map(c=>c.url),['/nonce','/prepare','/prepare']);assert.notEqual(s.record().preparation_id,first);assert.equal(s.events.filter(e=>e[1]==='InitiateCheckout').length,1);});
+  await test('Final network error does not auto-retry; status acceptance recovers',async()=>{const s=setup([token,prepared,new Error('lost response'),accepted]);s.submit();await flush();s.submit();await flush();const key=s.record().request_id;assert.equal(s.record().phase,'unknown');assert.equal(s.phone.disabled,true);assert.equal(s.calls.filter(c=>c.url==='/express').length,1);s.submit();await flush();assert.equal(s.calls.at(-1).url,'/status');assert.equal(field(s.calls.at(-1),'famma_request_id'),key);assert.equal(s.window.location.href,'/thanks');});
+  await test('Unknown status replays identical final payload and request ID',async()=>{const s=setup([token,prepared,new Error('lost'),{result:'failure',famma_code:'unknown_intent'},accepted]);s.submit();await flush();s.submit();await flush();s.submit();await flush();const final=s.calls.filter(c=>c.url==='/express');assert.equal(final.length,2);assert.deepEqual(final[0].values,final[1].values);assert.equal(s.events.length,2);});
+  await test('Reload with unknown result checks old request instead of new checkout',async()=>{const store=new Map();const s=setup([token,prepared,new Error('lost')],{storage:store});s.submit();await flush();s.submit();await flush();const key=s.record().request_id;const reloaded=setup([token,accepted],{storage:store,phone:''});reloaded.submit();await flush();assert.deepEqual(reloaded.calls.map(c=>c.url),['/nonce','/status']);assert.equal(field(reloaded.calls[1],'famma_request_id'),key);assert.equal(reloaded.window.location.href,'/thanks');});
+  await test('Reload unknown intent replays persisted original fields',async()=>{const store=new Map();const s=setup([token,prepared,new Error('lost')],{storage:store});s.submit();await flush();s.submit();await flush();const original=s.calls.find(c=>c.url==='/express').values;const r=setup([token,{result:'failure',famma_code:'unknown_intent'},accepted],{storage:store,phone:''});r.submit();await flush();assert.deepEqual(r.calls.find(c=>c.url==='/express').values,original);});
+  await test('Only proven validation failure unlocks fields and allows fresh intent',async()=>{const s=setup([token,prepared,{result:'failure',messages:'Invalid'},{result:'failure',famma_state:'failed',famma_code:'validation_failed'}]);s.submit();await flush();const key=s.record().request_id;s.submit();await flush();assert.notEqual(s.record().request_id,key);assert.equal(s.record().phase,'draft');assert.equal(s.phone.disabled,false);assert.equal(s.recap.hidden,true);});
+  await test('Changed cart requires new recap and explicit confirmation',async()=>{const s=setup([token,prepared,{result:'failure',famma_code:'cart_changed'},prepared,accepted]);s.submit();await flush();s.submit();await flush();assert.equal(s.recap.hidden,true);assert.equal(s.record().phase,'draft');s.submit();await flush();assert.equal(s.calls.at(-1).url,'/prepare');assert.equal(s.calls.filter(c=>c.url==='/express').length,1);s.submit();await flush();assert.equal(s.window.location.href,'/thanks');});
+  await test('Blocked storage refuses final flow safely',async()=>{const s=setup([],{storageBlocked:true});s.submit();await flush();assert.equal(s.calls.length,0);assert.equal(s.notices.textContent,'Stockage indisponible');});
+  await test('No secure random source refuses final flow safely',async()=>{const s=setup([],{crypto:false});s.submit();await flush();assert.equal(s.calls.length,0);assert.equal(s.notices.textContent,'Stockage indisponible');});
+  await test('Blocked Pixel never prevents preparation and confirmation',async()=>{const s=setup([token,prepared,accepted],{pixel:false});s.submit();await flush();s.submit();await flush();assert.equal(s.events.length,0);assert.equal(s.window.location.href,'/thanks');});
+  await test('Same customer may explicitly place a new order with a new intent',async()=>{const store=new Map();const s=setup([token,prepared,accepted],{storage:store});s.submit();await flush();s.submit();await flush();const key=s.record().request_id;const n=setup([token,prepared,accepted],{storage:store});n.submit();await flush();n.submit();await flush();assert.notEqual(n.record().request_id,key);assert.equal(n.window.location.href,'/thanks');});
+  await test('Expired nonce renews once without changing intent or payload',async()=>{const s=setup([token,prepared,{famma_token:'expired'},{success:true,data:{nonce:'fresh'}},accepted]);s.submit();await flush();s.submit();await flush();const final=s.calls.filter(c=>c.url==='/express');assert.equal(final.length,2);assert.equal(field(final[0],'famma_request_id'),field(final[1],'famma_request_id'));assert.equal(field(final[1],'woocommerce-process-checkout-nonce'),'fresh');assert.equal(s.events.length,2);});
+  await test('No cart increment acknowledgement means no AddToCart',async()=>{const s=setup([token,c=>{const p=prepared(c);p.tracking.add_to_cart.emit=false;return p;}]);s.submit();await flush();assert.deepEqual(s.events.map(e=>e[1]),['InitiateCheckout']);});
+  await test('Processing result keeps form locked and request identity stable',async()=>{const s=setup([token,prepared,{result:'processing',famma_state:'processing'},{result:'processing',famma_state:'processing'}]);s.submit();await flush();const key=s.record().request_id;s.submit();await flush();s.submit();await flush();assert.equal(s.phone.disabled,true);assert.equal(s.record().request_id,key);assert.equal(s.record().phase,'processing');assert.equal(s.calls.filter(c=>c.url==='/express').length,1);});
+  await test('Server warning before valid JSON is tolerated',async()=>{const s=setup([token,c=>'Warning: synthetic\n'+JSON.stringify(prepared(c))]);s.submit();await flush();assert.equal(s.recap.hidden,false);});
+  await test('Quantity clamp synchronises standard cart',async()=>{const s=setup([],{qty:'12',max:'10'});s.qty.handlers.input();assert.equal(s.cartQty.value,'10');assert.equal(s.total.textContent,'790,000 DT');});
+  await test('Server delta quantity is sent exactly; client does not replace it with target quantity',async()=>{const s=setup([token,c=>{const p=prepared(c);p.tracking.add_to_cart.params.contents[0].quantity=2;p.tracking.add_to_cart.params.value=158;return p;}],{qty:'3'});s.submit();await flush();assert.equal(s.events[0][2].contents[0].quantity,2);assert.equal(s.events[0][2].value,158);});
+  await test('Changed contact fields invalidate recap before final confirmation',async()=>{const s=setup([token,prepared,prepared]);s.submit();await flush();s.phone.value='+216 20 000 001';s.form.handlers.change();assert.equal(s.recap.hidden,true);s.submit();await flush();assert.equal(s.calls.at(-1).url,'/prepare');assert.equal(s.calls.filter(c=>c.url==='/express').length,0);});
+  await test('Preparation interrupted then replayed keeps its UUID and acknowledges events once',async()=>{const s=setup([token,new Error('prepare response lost'),prepared]);s.submit();await flush();s.submit();await flush();const prep=s.calls.filter(c=>c.url==='/prepare');assert.equal(field(prep[0],'famma_preparation_id'),field(prep[1],'famma_preparation_id'));assert.equal(s.events.length,2);});
+  await test('Quantity edited after lost preparation response gets a fresh preparation, preserving final intent',async()=>{const s=setup([token,new Error('prepare response lost'),prepared]);s.submit();await flush();const key=s.record().request_id;s.qty.value='3';s.qty.handlers.input();s.submit();await flush();const prep=s.calls.filter(c=>c.url==='/prepare');assert.notEqual(field(prep[0],'famma_preparation_id'),field(prep[1],'famma_preparation_id'));assert.equal(field(prep[1],'famma_quantity'),'3');assert.equal(s.record().request_id,key);});
+  await test('Throwing third-party Pixel does not prevent explicit checkout',async()=>{const s=setup([token,prepared,accepted],{pixelThrows:true});s.submit();await flush();assert.equal(s.button.textContent,'Confirmer');s.submit();await flush();assert.equal(s.window.location.href,'/thanks');assert.equal(s.events.length,0);assert.equal(s.record().fields,undefined);});
+  await test('Storage becomes unavailable after recap: no final HTTP can start',async()=>{const opts={};const s=setup([token,prepared],opts);s.submit();await flush();opts.storageBlocked=true;s.submit();await flush();assert.equal(s.calls.filter(c=>c.url==='/express').length,0);assert.equal(s.notices.textContent,'Stockage indisponible');});
+  console.log(`RESULT ${checks}/${checks} isolated frontend scenarios passed. No WooCommerce or Meta network was used.`);
+})().catch(e=>{console.error(e);process.exitCode=1;});
