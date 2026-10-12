@@ -96,6 +96,17 @@
 	 */
 	function syncQuantity() {
 		invalidateQuote();
+		renderQuantity();
+	}
+
+	/**
+	 * Reporte la quantité sur le total affiché et sur le formulaire WooCommerce,
+	 * sans toucher au devis : le récapitulatif l'utilise après une modification
+	 * de ligne, déjà validée par le serveur.
+	 *
+	 * @return {void}
+	 */
+	function renderQuantity() {
 		var quantity = currentQuantity();
 
 		if ( totalNode ) {
@@ -523,9 +534,49 @@
 			node.setAttribute( 'scope', 'col' );
 		}
 		row.appendChild( node );
+		return node;
 	}
 
-	function renderSummary( summary ) {
+	var editing = false;
+	var recapButtons = [];
+
+	function recapButton( className, label, text, onClick ) {
+		var node = document.createElement( 'button' );
+		node.type = 'button';
+		node.className = className;
+		node.setAttribute( 'aria-label', label );
+		node.textContent = text;
+		node.addEventListener( 'click', onClick );
+		recapButtons.push( node );
+		return node;
+	}
+
+	/** Les lignes éditables viennent du serveur : clé de ligne, quantité, maximum. */
+	function quantityControl( item ) {
+		var names = fammaExpress.recapLabels;
+		var wrap = document.createElement( 'div' );
+		var value = document.createElement( 'span' );
+		var less = recapButton( 'famma-express__qty-btn', String( names.decrease ).replace( '%s', item.name ), '−', function () {
+			editCart( item, 'set', item.quantity - 1, 'less' );
+		} );
+		var more = recapButton( 'famma-express__qty-btn', String( names.increase ).replace( '%s', item.name ), '+', function () {
+			editCart( item, 'set', item.quantity + 1, 'more' );
+		} );
+
+		wrap.className = 'famma-express__qty famma-express__qty--line';
+		value.className = 'famma-express__qty-value';
+		value.textContent = String( item.quantity );
+		less.disabled = item.quantity <= 1;
+		more.disabled = item.max > 0 && item.quantity >= item.max;
+		less.setAttribute( 'data-recap', item.key + ':less' );
+		more.setAttribute( 'data-recap', item.key + ':more' );
+		wrap.appendChild( less );
+		wrap.appendChild( value );
+		wrap.appendChild( more );
+		return wrap;
+	}
+
+	function renderSummary( summary, focus ) {
 		if ( ! recap || ! recapContent || ! summary || ! Array.isArray( summary.items ) || ! summary.total_html ) {
 			throw new Error( 'Incomplete recap' );
 		}
@@ -533,6 +584,8 @@
 		var table = document.createElement( 'table' );
 		var head = document.createElement( 'thead' );
 		var title = document.createElement( 'tr' );
+		var target = null;
+		recapButtons = [];
 		cell( title, names.product, false, true );
 		cell( title, names.quantity, false, true );
 		cell( title, names.amount, false, true );
@@ -541,13 +594,24 @@
 		var body = document.createElement( 'tbody' );
 		summary.items.forEach( function ( item ) {
 			var row = document.createElement( 'tr' );
-			cell( row, item.name, false );
-			cell( row, item.quantity, false );
+			var nameCell = cell( row, item.name, false );
+			if ( item.key ) {
+				var remove = recapButton( 'famma-express__remove', String( names.remove ).replace( '%s', item.name ), names.removeText, function () {
+					editCart( item, 'remove', 0, 'remove' );
+				} );
+				remove.setAttribute( 'data-recap', item.key + ':remove' );
+				nameCell.appendChild( remove );
+				var qtyCell = cell( row, '', false );
+				qtyCell.appendChild( quantityControl( item ) );
+			} else {
+				cell( row, item.quantity, false );
+			}
 			cell( row, item.line_total_html, true );
 			body.appendChild( row );
 		} );
 		table.appendChild( body );
 		var foot = document.createElement( 'tfoot' );
+		// Une ligne à zéro (réduction, livraison, frais, taxes) n'apprend rien au client : le serveur ne l'envoie pas.
 		[ 'subtotal', 'discount', 'shipping', 'fees', 'tax', 'total' ].forEach( function ( key ) {
 			if ( ! summary[ key + '_html' ] ) {
 				return;
@@ -562,8 +626,109 @@
 		recapContent.innerHTML = '';
 		recapContent.appendChild( table );
 		recap.hidden = false;
+		recapButtons.forEach( function ( node ) {
+			if ( focus && node.getAttribute( 'data-recap' ) === focus && ! node.disabled ) {
+				target = node;
+			}
+		} );
+		if ( 'string' === typeof focus ) {
+			// Modification en place : le focus reste sur le bouton utilisé (ou sur le bloc), la page ne bouge pas.
+			( target || recap ).focus( { preventScroll: true } );
+			return;
+		}
 		recap.focus();
 		recap.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+	}
+
+	var busyStates = [];
+
+	function setRecapBusy( on ) {
+		editing = on;
+		if ( recap ) {
+			recap.setAttribute( 'aria-busy', on ? 'true' : 'false' );
+		}
+		if ( on ) {
+			busyStates = recapButtons.map( function ( node ) { return node.disabled; } );
+			recapButtons.forEach( function ( node ) { node.disabled = true; } );
+		} else {
+			recapButtons.forEach( function ( node, index ) { node.disabled = !! busyStates[ index ]; } );
+			busyStates = [];
+		}
+	}
+
+	/** Le panier a changé ailleurs, ou la préparation a expiré : un nouveau récapitulatif est nécessaire. */
+	function requireNewRecap( text ) {
+		record.phase = 'draft';
+		record.preparation_id = uuid();
+		record.cart_hash = '';
+		delete record.fields;
+		saveRecord();
+		quoted = false;
+		recap.hidden = true;
+		label();
+		message( text );
+	}
+
+	/**
+	 * Retire une ligne ou change sa quantité dans le vrai panier.
+	 *
+	 * Le serveur contrôle stock, maximum et empreinte du panier, puis renvoie le
+	 * récapitulatif exact : le client n'affiche jamais un montant qu'il a calculé.
+	 *
+	 * @param {Object} item     Ligne du récapitulatif.
+	 * @param {string} action   `set` ou `remove`.
+	 * @param {number} quantity Nouvelle quantité (ignorée pour `remove`).
+	 * @param {string} focus    Bouton à refocaliser après la mise à jour.
+	 */
+	function editCart( item, action, quantity, focus ) {
+		if ( busy || editing || ! quoted || unresolved() || ! record || ! item.key ) {
+			return;
+		}
+		var state = form.querySelector( '[name="billing_state"]' );
+		var trap = form.querySelector( '[name="famma_hp_site"]' );
+		var formQuantity = currentQuantity();
+		var isMain = String( item.product_id ) === String( productId );
+		if ( isMain && 'set' === action ) {
+			formQuantity = quantity;
+		}
+		setRecapBusy( true );
+		request( fammaExpress.cartUrl, [
+			[ 'famma_preparation_id', record.preparation_id ], [ 'famma_cart_hash', record.cart_hash ],
+			[ 'famma_cart_key', item.key ], [ 'famma_cart_action', action ], [ 'famma_cart_quantity', String( quantity ) ],
+			[ 'famma_product_id', productId ], [ 'famma_quantity', String( formQuantity ) ], [ 'billing_country', 'TN' ],
+			[ 'billing_state', state ? state.value : '' ], [ 'famma_hp_site', trap ? trap.value : '' ],
+		], true ).then( function ( result ) {
+			setRecapBusy( false );
+			if ( result && 'success' === result.result && result.summary && result.cart_hash && result.preparation_id === record.preparation_id ) {
+				record.cart_hash = result.cart_hash;
+				saveRecord();
+				if ( isMain && qtyInput ) {
+					// Le formulaire suit le récapitulatif ; la signature de la préparation a été mise à jour côté serveur.
+					qtyInput.value = String( 'remove' === action ? formQuantity : quantity );
+					renderQuantity();
+				}
+				if ( ! result.summary.items.length ) {
+					requireNewRecap( fammaExpress.cartEmpty );
+					return;
+				}
+				renderSummary( result.summary, 'remove' === action ? '' : item.key + ':' + focus );
+				return;
+			}
+			if ( result && ( 'cart_changed' === result.famma_code || 'preparation_missing' === result.famma_code ) ) {
+				requireNewRecap( fammaExpress.changed );
+				return;
+			}
+			if ( result && result.summary && result.cart_hash && result.cart_hash === record.cart_hash ) {
+				// Refus avant toute modification (stock, maximum) : le récapitulatif reste valable.
+				renderSummary( result.summary, item.key + ':' + focus );
+				message( fammaExpress.cartRefused );
+				return;
+			}
+			requireNewRecap( fammaExpress.cartRefused );
+		} ).catch( function () {
+			setRecapBusy( false );
+			message( fammaExpress.genericError );
+		} );
 	}
 
 	/** Refresh only the nonce; IDs and final payload are never regenerated. */

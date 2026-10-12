@@ -230,6 +230,7 @@ final class Express_Order {
 				'expressUrl'   => \WC_AJAX::get_endpoint( Express_Checkout::ENDPOINT ),
 				'prepareUrl'   => \WC_AJAX::get_endpoint( 'famma_express_prepare' ),
 				'statusUrl'    => \WC_AJAX::get_endpoint( 'famma_express_status' ),
+				'cartUrl'      => \WC_AJAX::get_endpoint( 'famma_express_cart' ),
 				'nonceUrl'     => \WC_AJAX::get_endpoint( 'famma_express_nonce' ),
 				'currency'     => get_woocommerce_currency(),
 				'genericError' => __( 'The order could not go through. Please check the form and try again.', 'famma-core' ),
@@ -245,16 +246,25 @@ final class Express_Order {
 				'pending'      => __( 'Votre commande est en cours de vérification. Utilisez ce bouton pour retrouver son résultat. طلبيتك قاعدين نثبتو فيها، اضغط باش تعرف النتيجة.', 'famma-core' ),
 				'recovery'     => __( 'Nous n’avons pas encore reçu le résultat de votre commande. Vérifiez son état avec ce bouton avant de recommencer. مازال ما وصلتناش النتيجة، ثبت حالة طلبيتك قبل ما تعاود.', 'famma-core' ),
 				'storageError' => __( 'Pour commander en toute sécurité, autorisez le stockage de cette page ou utilisez Ajouter au panier. باش تطلب بأمان، فعل التخزين ولا زيد للسلة.', 'famma-core' ),
+				'cartEmpty'    => __( 'Votre panier est vide. Choisissez la quantité pour recommencer. السلة فارغة، اختار الكمية باش تعاود.', 'famma-core' ),
+				'cartRefused'  => __( 'Cette modification n’est pas possible (stock ou quantité maximale). Vérifiez le récapitulatif. التعديل هذا ما ينجمش، راجع الملخص.', 'famma-core' ),
 				'recapLabels'  => array(
-					'product'  => __( 'Article / المنتوج', 'famma-core' ),
-					'quantity' => __( 'Quantité / الكمية', 'famma-core' ),
-					'amount'   => __( 'Montant / المبلغ', 'famma-core' ),
-					'subtotal' => __( 'Sous-total / المجموع', 'famma-core' ),
-					'discount' => __( 'Réductions / التخفيض', 'famma-core' ),
-					'shipping' => __( 'Livraison / التوصيل', 'famma-core' ),
-					'fees'     => __( 'Frais / المصاريف', 'famma-core' ),
-					'tax'      => __( 'Taxes / الأداءات', 'famma-core' ),
-					'total'    => __( 'Total à payer à la livraison / المجموع عند التسليم', 'famma-core' ),
+					/* translators: %s: product name. */
+					'decrease'   => __( 'Diminuer la quantité de %s', 'famma-core' ),
+					/* translators: %s: product name. */
+					'increase'   => __( 'Augmenter la quantité de %s', 'famma-core' ),
+					/* translators: %s: product name. */
+					'remove'     => __( 'Retirer %s / حذف', 'famma-core' ),
+					'removeText' => __( 'Retirer / حذف', 'famma-core' ),
+					'product'    => __( 'Article / المنتوج', 'famma-core' ),
+					'quantity'   => __( 'Quantité / الكمية', 'famma-core' ),
+					'amount'     => __( 'Montant / المبلغ', 'famma-core' ),
+					'subtotal'   => __( 'Sous-total / المجموع', 'famma-core' ),
+					'discount'   => __( 'Réductions / التخفيض', 'famma-core' ),
+					'shipping'   => __( 'Livraison / التوصيل', 'famma-core' ),
+					'fees'       => __( 'Frais / المصاريف', 'famma-core' ),
+					'tax'        => __( 'Taxes / الأداءات', 'famma-core' ),
+					'total'      => __( 'Total à payer à la livraison / المجموع عند التسليم', 'famma-core' ),
 				),
 
 				/*

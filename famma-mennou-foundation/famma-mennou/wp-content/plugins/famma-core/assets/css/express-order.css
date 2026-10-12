@@ -553,8 +553,9 @@ html[lang^="ar"] .famma-express__submit-ar {
 
 .famma-express__recap thead th:nth-child(2),
 .famma-express__recap tbody td:nth-child(2) {
-	inline-size: 4.5em;
-	min-inline-size: 4.5em;
+	/* Place du sélecteur − / + de la ligne (44 + 32 + 44 px). */
+	inline-size: 7.5rem;
+	min-inline-size: 7.5rem;
 	overflow-wrap: normal;
 	word-break: normal;
 }
@@ -569,6 +570,138 @@ html[lang^="ar"] .famma-express__submit-ar {
 
 .famma-express__recap tfoot tr:last-child {
 	font-weight: 700;
+}
+
+/*
+ * Lignes modifiables du récapitulatif : quantité − / + et « Retirer ».
+ * Même sélecteur de quantité que le formulaire, en cibles de 44 px ; les
+ * montants restent ceux du serveur, jamais recalculés ici.
+ */
+.famma-express__recap {
+	container: famma-recap / inline-size;
+}
+
+.famma-express__recap[aria-busy="true"] {
+	opacity: 0.6;
+	pointer-events: none;
+}
+
+.famma-express__qty--line .famma-express__qty-btn {
+	inline-size: 44px;
+	min-block-size: 44px;
+}
+
+.famma-express__qty--line .famma-express__qty-btn:disabled {
+	color: var(--famma-line-field, #DFE3EA);
+	cursor: not-allowed;
+}
+
+.famma-express__qty-value {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-inline-size: 2rem;
+	border-inline: 1px solid var(--famma-line-field, #DFE3EA);
+	background: var(--famma-white, #FFF);
+	color: var(--famma-blue, #10275A);
+	font-weight: var(--fw-semibold, 600);
+}
+
+/* Kadence colore tout `button:hover` : deux classes pour garder un lien discret. */
+.famma-express .famma-express__remove {
+	display: flex;
+	align-items: center;
+	min-block-size: 44px;
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	color: var(--famma-text-2, #56617A);
+	font-family: inherit;
+	font-size: var(--fs-caption, 0.875rem);
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.famma-express .famma-express__remove:hover,
+.famma-express .famma-express__remove:focus {
+	background: none;
+	box-shadow: none;
+	color: var(--famma-danger, #C0392B);
+}
+
+.famma-express__remove:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #2C6BED);
+	outline-offset: 2px;
+}
+
+.famma-express__remove:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+/*
+ * Récapitulatif étroit (téléphone) : chaque ligne devient une carte — nom en
+ * haut, quantité à gauche, montant à droite. Les en-têtes restent pour les
+ * lecteurs d'écran, sans occuper de place.
+ */
+@container famma-recap (max-width: 30rem) {
+	.famma-express__recap table,
+	.famma-express__recap tbody,
+	.famma-express__recap tfoot {
+		display: block;
+	}
+
+	.famma-express__recap thead {
+		position: absolute;
+		inline-size: 1px;
+		block-size: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+	}
+
+	.famma-express__recap tbody tr {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		grid-template-areas: "name name" "qty amount";
+		align-items: center;
+		gap: 0 var(--sp-3, 12px);
+		padding-block: var(--sp-2, 8px);
+		border-block-end: 1px solid var(--famma-line, #DBE1E8);
+	}
+
+	.famma-express__recap tbody td:nth-child(n) {
+		inline-size: auto;
+		min-inline-size: 0;
+		padding: 0;
+	}
+
+	.famma-express__recap tbody td:nth-child(1) {
+		grid-area: name;
+	}
+
+	.famma-express__recap tbody td:nth-child(2) {
+		grid-area: qty;
+	}
+
+	.famma-express__recap tbody td:nth-child(3) {
+		grid-area: amount;
+		text-align: end;
+	}
+
+	/* Totaux : libellé à gauche, montant à droite, sans colonnes de tableau. */
+	.famma-express__recap tfoot tr {
+		display: flex;
+		justify-content: space-between;
+		gap: var(--sp-3, 12px);
+		padding-block: var(--sp-2, 8px);
+	}
+
+	.famma-express__recap tfoot th:nth-child(n),
+	.famma-express__recap tfoot td:nth-child(n) {
+		inline-size: auto;
+		padding: 0;
+	}
 }
 
 @media (min-width: 600px) {
