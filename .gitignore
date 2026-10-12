@@ -31,3 +31,10 @@ vendor/
 
 # Journaux
 *.log
+
+# Médias produits, archives de déploiement et preuves d'audit (hors dépôt)
+/audit-preuves/
+/deploy-lot*/
+/videos trancheuse/
+/zinger product/
+/zinger product optimises/
