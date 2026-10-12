@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.2.0
+ * Version:           0.2.5
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.2.0' );
+define( 'FAMMA_CORE_VERSION', '0.2.5' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -41,6 +41,9 @@ require_once __DIR__ . '/includes/tracking-settings.php';
 require_once __DIR__ . '/includes/tracking-events.php';
 require_once __DIR__ . '/includes/express-order.php';
 require_once __DIR__ . '/includes/express-checkout.php';
+require_once __DIR__ . '/includes/express-idempotency.php';
+require_once __DIR__ . '/includes/express-preparation.php';
+require_once __DIR__ . '/includes/capi-delivery-registry.php';
 require_once __DIR__ . '/includes/order-emails.php';
 require_once __DIR__ . '/includes/anti-abuse.php';
 require_once __DIR__ . '/includes/checkout-lite.php';
@@ -1741,20 +1744,17 @@ final class Tracking {
 	 */
 	public function fire_purchase_on_delivery( int $order_id ): void {
 		$order = wc_get_order( $order_id );
-		if ( ! $order instanceof \WC_Order || $order->get_meta( '_famma_purchase_sent' ) ) {
+		if ( ! $order instanceof \WC_Order || ! $order->has_status( 'delivered' ) || $order->get_meta( '_famma_purchase_sent' ) ) {
 			return;
 		}
 
 		/*
-		 * L'identifiant d'événement est posé maintenant, mais le marqueur
-		 * `_famma_purchase_sent` ne l'est PAS : il n'appartient qu'à
-		 * l'émetteur, qui l'écrit après un envoi réellement réussi. Le poser
-		 * ici consommerait définitivement le droit d'émettre sur un simple
-		 * incident réseau, sans aucune trace côté Meta.
+		 * The dispatcher owns persistence of event identity, delivery time and
+		 * the success marker under its atomic delivery claim. This hook never
+		 * consumes the right to send merely because delivery was requested.
 		 */
 		$event_id = 'famma_purchase_' . $order_id;
-		$order->update_meta_data( '_famma_purchase_event_id', $event_id );
-		$order->save();
+		// Event identity and time are persisted by the atomic transport owner.
 
 		/**
 		 * Fires when a delivered COD order should be reported as a Purchase.
@@ -1823,6 +1823,99 @@ final class Capi {
 	 */
 	private function hooks(): void {
 		add_action( 'famma_capi_purchase', array( $this, 'send_purchase' ), 10, 2 );
+		add_filter( 'woocommerce_payment_successful_result', array( $this, 'order_placed_after_checkout' ), 999, 2 );
+		add_filter( 'woocommerce_checkout_no_payment_needed_redirect', array( $this, 'order_placed_without_payment' ), 999, 2 );
+		add_action( 'famma_capi_orderplaced_send', array( $this, 'send_queued_order_placed' ) );
+	}
+
+	/**
+	 * Report an accepted storefront checkout, never merely order creation.
+	 *
+	 * @param array $result   WooCommerce successful gateway result.
+	 * @param int   $order_id Persisted order identifier.
+	 * @return array Unchanged gateway result.
+	 */
+	public function order_placed_after_checkout( array $result, int $order_id ): array {
+		if ( 'success' === ( $result['result'] ?? '' ) ) {
+			$order = wc_get_order( $order_id );
+			if ( $order instanceof \WC_Order ) {
+				$this->queue_order_placed( $order );
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * Report a successful zero-total checkout without modifying its redirect.
+	 *
+	 * @param string    $redirect Checkout return URL.
+	 * @param \WC_Order $order    Persisted order.
+	 * @return string Unchanged redirect.
+	 */
+	public function order_placed_without_payment( string $redirect, \WC_Order $order ): string {
+		$this->queue_order_placed( $order );
+		return $redirect;
+	}
+
+	/**
+	 * Persist checkout acceptance and enqueue once without delaying the customer.
+	 *
+	 * @param \WC_Order $order Accepted storefront checkout.
+	 */
+	private function queue_order_placed( \WC_Order $order ): void {
+		if ( ! get_option( 'famma_meta_orderplaced_enabled', false ) || ! $this->eligible_order_placed( $order ) || $order->get_meta( '_famma_orderplaced_sent' ) ) {
+			return;
+		}
+		$order->update_meta_data( '_famma_orderplaced_checkout_accepted', 1 );
+		if ( ! $order->get_meta( '_famma_orderplaced_event_time' ) ) {
+			$created = $order->get_date_created();
+			$order->update_meta_data( '_famma_orderplaced_event_time', $created ? $created->getTimestamp() : time() );
+			$order->update_meta_data( '_famma_orderplaced_event_id', 'famma_orderplaced_' . $order->get_id() );
+		}
+		$order->save();
+		$args = array( 'order_id' => $order->get_id() );
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			as_enqueue_async_action( 'famma_capi_orderplaced_send', $args, 'famma-capi', true );
+		} elseif ( ! wp_next_scheduled( 'famma_capi_orderplaced_send', $args ) ) {
+			wp_schedule_single_event( time() + 1, 'famma_capi_orderplaced_send', $args );
+		}
+	}
+
+	/**
+	 * Execute the queued event; recheck settings and current order status.
+	 *
+	 * @param int $order_id Persisted checkout order identifier.
+	 */
+	public function send_queued_order_placed( int $order_id ): void {
+		$order = wc_get_order( $order_id );
+		if ( $order instanceof \WC_Order ) {
+			$this->send_order_placed( $order );
+		}
+	}
+
+	/**
+	 * Exclude admin orders, unsaved orders, drafts and rejected orders.
+	 *
+	 * @param \WC_Order $order Checkout order.
+	 * @return bool Whether its source and current status are eligible.
+	 */
+	private function eligible_order_placed( \WC_Order $order ): bool {
+		return $order->get_id() > 0 && 'checkout' === $order->get_created_via() && ! $order->has_status( array( 'checkout-draft', 'draft', 'failed', 'cancelled', 'trash', 'refused', 'returned', 'failed-delivery' ) );
+	}
+
+	/**
+	 * Send a placed order separately from its later delivered Purchase.
+	 *
+	 * @param \WC_Order $order Accepted storefront checkout order.
+	 */
+	public function send_order_placed( \WC_Order $order ): void {
+		if ( ! get_option( 'famma_meta_orderplaced_enabled', false ) ) {
+			return;
+		}
+		if ( ! $this->eligible_order_placed( $order ) || ! $order->get_meta( '_famma_orderplaced_checkout_accepted' ) ) {
+			return;
+		}
+		$this->send_order_event( $order, 'OrderPlaced', 'famma_orderplaced_' . $order->get_id() );
 	}
 
 	/**
@@ -1925,6 +2018,20 @@ final class Capi {
 	 * @return void
 	 */
 	public function send_purchase( \WC_Order $order, string $event_id ): void {
+		if ( ! $order->has_status( 'delivered' ) ) {
+			return;
+		}
+		$this->send_order_event( $order, 'Purchase', $event_id );
+	}
+
+	/**
+	 * Shared server dispatch with separate identifiers and markers per event.
+	 *
+	 * @param \WC_Order $order      Persisted order.
+	 * @param string    $event_name OrderPlaced or Purchase.
+	 * @param string    $event_id   Stable deduplication identifier.
+	 */
+	private function send_order_event( \WC_Order $order, string $event_name, string $event_id ): void {
 		$cfg   = Config::instance();
 		$pixel = $cfg->meta_pixel_id();
 		$token = $cfg->meta_access_token();
@@ -1934,21 +2041,59 @@ final class Capi {
 			return;
 		}
 
-		if ( $order->get_meta( '_famma_purchase_sent' ) ) {
+		$is_purchase = 'Purchase' === $event_name;
+		$sent_key    = $is_purchase ? '_famma_purchase_sent' : '_famma_orderplaced_sent';
+		$time_key    = $is_purchase ? '_famma_purchase_event_time' : '_famma_orderplaced_event_time';
+		$attempt_key = $is_purchase ? '_famma_capi_attempts' : '_famma_orderplaced_attempts';
+		if ( $order->get_meta( $sent_key ) ) {
 			return;
 		}
 
-		$attempts = (int) $order->get_meta( '_famma_capi_attempts' );
-		if ( $attempts >= self::MAX_ATTEMPTS ) {
+		$event_time = (int) $order->get_meta( $time_key );
+		if ( $event_time <= 0 ) {
+			$created    = $order->get_date_created();
+			$event_time = ! $is_purchase && $created ? $created->getTimestamp() : time();
+		}
+		$registry = Capi_Delivery_Registry::instance();
+		$claim    = $registry->acquire( $pixel, $event_name, $event_id, $order->get_id(), $event_time, self::MAX_ATTEMPTS, (int) $order->get_meta( $attempt_key ) );
+		if ( 'accepted' === $claim['state'] ) {
+			$this->persist_event_success( $order->get_id(), $event_name, $event_id, false );
 			return;
 		}
+		if ( empty( $claim['owned'] ) ) {
+			return;
+		}
+		// Refresh metadata under ownership: another execution may have saved it.
+		$order = wc_get_order( $order->get_id() );
+		if ( ! $order instanceof \WC_Order ) {
+			$registry->finish( $claim, 'uncertain', 0, 0 );
+			return;
+		}
+		$order->read_meta_data( true );
+		if ( $order->get_meta( $sent_key ) ) {
+			$registry->finish( $claim, 'accepted', 0, 0 );
+			return;
+		}
+		if ( $is_purchase && ! $order->has_status( 'delivered' ) ) {
+			$registry->finish( $claim, 'rejected', 0, 0 );
+			return;
+		}
+		$event_time = (int) $claim['event_time'];
+		$attempts   = (int) $claim['attempt'];
+		$order->update_meta_data( $time_key, $event_time );
+		$order->update_meta_data( $is_purchase ? '_famma_purchase_event_id' : '_famma_orderplaced_event_id', $event_id );
+		$order->update_meta_data( $attempt_key, $attempts );
+		/* translators: 1: event name, 2: stable event identifier, 3: attempt number. */
+		$order->add_order_note( sprintf( __( 'Meta %1$s dispatch started (%2$s, attempt %3$d).', 'famma-core' ), $event_name, $event_id, $attempts ) );
+		$order->save();
+		do_action( 'famma_capi_delivery_claimed', $claim, $order, $event_name );
 
 		$event = array(
-			'event_name'       => 'Purchase',
-			'event_time'       => $order->get_date_created() ? $order->get_date_created()->getTimestamp() : time(),
+			'event_name'       => $event_name,
+			'event_time'       => $event_time,
 			'event_id'         => $event_id,
 			'action_source'    => 'website',
-			'event_source_url' => $order->get_checkout_order_received_url(),
+			'event_source_url' => wc_get_checkout_url(),
 			'user_data'        => $this->user_data( $order ),
 			'custom_data'      => array(
 				'currency'     => $order->get_currency(),
@@ -1959,12 +2104,13 @@ final class Capi {
 			),
 		);
 
+		if ( ! $is_purchase ) {
+			$event['custom_data']['famma_stage'] = 'order_placed';
+		}
 		$payload = array( 'data' => array( $event ) );
 
-		$test_code = $cfg->meta_test_event_code();
-		if ( '' !== $test_code ) {
-			$payload['test_event_code'] = $test_code;
-		}
+		// Real delivered orders always remain live conversions. Tests use the
+		// dedicated administration tool, without touching an order or its metadata.
 
 		$version = (string) apply_filters( 'famma_capi_graph_version', self::GRAPH_VERSION );
 		$url     = 'https://graph.facebook.com/' . rawurlencode( $version ) . '/' . rawurlencode( $pixel ) . '/events';
@@ -1984,50 +2130,83 @@ final class Capi {
 			)
 		);
 
-		++$attempts;
-		$order->update_meta_data( '_famma_capi_attempts', $attempts );
-
 		if ( is_wp_error( $response ) ) {
-			$this->record_failure( $order, $response->get_error_message(), $attempts );
+			$registry->finish( $claim, 'uncertain', 0, 0 );
+			$this->record_failure( $order, 'transport_uncertain; ' . $event_id, $attempts, $event_name );
 			return;
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
 
 		if ( $code < 200 || $code >= 300 ) {
-			$body    = json_decode( (string) wp_remote_retrieve_body( $response ), true );
-			$message = is_array( $body ) && isset( $body['error']['message'] )
-				? (string) $body['error']['message']
-				: 'HTTP ' . $code;
-
-			$this->record_failure( $order, $message, $attempts );
+			$body     = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+			$rejected = $code >= 400 && $code < 500 && 408 !== $code && is_array( $body ) && isset( $body['error']['code'] ) && is_numeric( $body['error']['code'] );
+			$state    = $rejected ? 'rejected' : 'uncertain';
+			$registry->finish( $claim, $state, $code, 0 );
+			$this->record_failure( $order, $state . '; HTTP ' . $code . '; ' . $event_id, $attempts, $event_name );
 			return;
 		}
 
-		$order->update_meta_data( '_famma_purchase_sent', current_time( 'mysql' ) );
-		$order->add_order_note(
-			sprintf(
-				/* translators: %s: deduplication event identifier. */
-				__( 'Purchase event sent to Meta (event id %s).', 'famma-core' ),
-				$event_id
-			)
-		);
+		$body = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+		if ( ! is_array( $body ) || 1 !== (int) ( $body['events_received'] ?? 0 ) || isset( $body['error'] ) ) {
+			$registry->finish( $claim, 'uncertain', $code, 0 );
+			$this->record_failure( $order, 'ack_uncertain; ' . $event_id, $attempts, $event_name );
+			return;
+		}
+		if ( ! $registry->finish( $claim, 'accepted', $code, 1 ) ) {
+			$this->record_failure( $order, 'ack_persistence_uncertain; ' . $event_id, $attempts, $event_name );
+			return;
+		}
+		do_action( 'famma_capi_delivery_acknowledged', $claim, $order, $event_name );
+		$this->persist_event_success( $order->get_id(), $event_name, $event_id );
+	}
+
+	/** Restore an acknowledged delivery without issuing another transport.
+	 *
+	 * @param int    $order_id Order identifier.
+	 * @param string $event_name Event name.
+	 * @param string $event_id Stable deduplication identifier.
+	 * @param bool   $record_note Whether this execution owns the transport.
+	 */
+	private function persist_event_success( int $order_id, string $event_name, string $event_id, bool $record_note = true ): void {
+		$order = wc_get_order( $order_id );
+		if ( ! $order instanceof \WC_Order ) {
+			return;
+		}
+		$order->read_meta_data( true );
+		$sent_key = 'Purchase' === $event_name ? '_famma_purchase_sent' : '_famma_orderplaced_sent';
+		if ( $order->get_meta( $sent_key ) ) {
+			return;
+		}
+		$order->update_meta_data( $sent_key, current_time( 'mysql' ) );
+		if ( $record_note ) {
+			$order->add_order_note(
+				sprintf(
+				/* translators: 1: event name, 2: deduplication event identifier. */
+					__( '%1$s event sent to Meta (event id %2$s).', 'famma-core' ),
+					$event_name,
+					$event_id
+				)
+			);
+		}
 		$order->save();
 	}
 
 	/**
 	 * Records a failed attempt on the order, without ever exposing the token.
 	 *
-	 * @param \WC_Order $order    Order concerned.
-	 * @param string    $message  Message returned by Meta or by the HTTP layer.
-	 * @param int       $attempts Attempts made so far.
+	 * @param \WC_Order $order      Order concerned.
+	 * @param string    $message    Message returned by Meta or by the HTTP layer.
+	 * @param int       $attempts   Attempts made so far.
+	 * @param string    $event_name Event being sent.
 	 * @return void
 	 */
-	private function record_failure( \WC_Order $order, string $message, int $attempts ): void {
+	private function record_failure( \WC_Order $order, string $message, int $attempts, string $event_name ): void {
 		$order->add_order_note(
 			sprintf(
-				/* translators: 1: error message, 2: attempts made, 3: maximum attempts. */
-				__( 'Meta Purchase event failed: %1$s (attempt %2$d of %3$d).', 'famma-core' ),
+				/* translators: 1: event name, 2: error message, 3: attempts made, 4: maximum attempts. */
+				__( 'Meta %1$s event failed: %2$s (attempt %3$d of %4$d).', 'famma-core' ),
+				$event_name,
 				$message,
 				$attempts,
 				self::MAX_ATTEMPTS
@@ -2474,11 +2653,14 @@ function boot(): void {
 	Tracking::instance();
 	Tracking_Events::instance();
 	Express_Order::instance();
+	Express_Idempotency::instance();
+	Express_Preparation::instance();
 	Express_Checkout::instance();
 	Order_Emails::instance();
 	Anti_Abuse::instance();
 	Checkout_Lite::instance();
 	Capi::instance();
+	Capi_Delivery_Registry::instance();
 	WhatsApp::instance();
 	Product_Video::instance();
 	Seo::instance();

@@ -118,6 +118,16 @@ Une tâche n'est pas finie tant que ces points ne sont pas verts :
 * Commits clairs, un par étape logique. Jamais `.env`, secrets, ou `backups/` (données clients) dans un commit.
 * Aucune donnée fictive : pas de faux produits, faux avis, fausses commandes, faux textes légaux. Le catalogue démarre vide. Si des données de test sont nécessaires en local, les marquer clairement et les supprimer avant toute remise/mise en production.
 
+## 13. Personnalisation des thèmes & plugins WordPress : jamais dans le code d'origine
+
+* **Thème** : ne jamais éditer un thème tiers (Kadence / Blocksy / Astra) directement — une mise à jour écraserait tout. Passer par un **thème enfant** (`style.css` + `functions.php` avec `Template:` renseigné) ou par les hooks/filtres du thème parent. Surcharger un template en le copiant dans le thème enfant en respectant la hiérarchie de templates WordPress, et n'y garder que le strict nécessaire.
+* **WooCommerce** : surcharger un template via `wp-content/themes/<enfant>/woocommerce/...` uniquement si aucun hook ne suffit. Toujours préférer `add_action`/`add_filter` (`woocommerce_before_add_to_cart_button`, `woocommerce_get_price_html`…) à la copie d'un template — un template copié devient une dette à resynchroniser à chaque version de Woo.
+* **Plugins tiers** : ne jamais modifier le code d'un plugin installé. Étendre via ses hooks, ses filtres ou son API depuis `famma-core`. Si un plugin n'expose pas de hook, ouvrir un ticket amont ou encapsuler le besoin dans `famma-core` — pas de patch local silencieux.
+* **Logique métier FAMMA** : elle reste dans le plugin `famma-core`. Le thème enfant ne contient que présentation (CSS, gabarits, `wp_enqueue_*`). Un site doit rester fonctionnel après changement de thème.
+* **Mises à jour** : garder WordPress, WooCommerce, thèmes et plugins à jour ; vérifier après chaque mise à jour que les surcharges du thème enfant et les hooks de `famma-core` tiennent toujours (`debug.log` propre, parcours COD testé).
+* **Ajouts « éditeur »** : blocs, patterns, `theme.json`, options du Customizer — préférer ces mécanismes natifs au CSS forcé en `!important`. Toute valeur éditable par le propriétaire doit l'être depuis l'admin (cf. règle « tout paramétrable depuis l'admin »).
+
+
 ---
 
 ## Contexte
