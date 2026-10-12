@@ -84,6 +84,7 @@ final class Tracking_Settings {
 	private function hooks(): void {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		add_action( 'admin_post_famma_capi_test', array( $this, 'send_test_event' ) );
 	}
 
 	/**
@@ -112,7 +113,7 @@ final class Tracking_Settings {
 				'option'   => 'famma_meta_test_event_code',
 				'constant' => 'FAMMA_META_TEST_EVENT_CODE',
 				'label'    => __( 'Meta — code d’événement de test', 'famma-core' ),
-				'help'     => __( 'Temporaire, le temps de vérifier les événements dans Meta. À vider une fois la validation faite, sinon vos vraies conversions restent marquées comme des tests.', 'famma-core' ),
+				'help'     => __( 'Utilisé uniquement par le test dédié ci-dessous. Les achats réellement livrés restent des conversions réelles et ne sont jamais envoyés comme tests.', 'famma-core' ),
 			),
 			array(
 				'option'   => 'famma_ga4_measurement_id',
@@ -147,6 +148,22 @@ final class Tracking_Settings {
 			__( 'Identifiants de mesure', 'famma-core' ),
 			array( $this, 'section_intro' ),
 			self::SLUG
+		);
+		register_setting(
+			self::GROUP,
+			'famma_meta_orderplaced_enabled',
+			array(
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => false,
+			)
+		);
+		add_settings_field(
+			'famma_meta_orderplaced_enabled',
+			__( 'Meta — commande enregistrée (OrderPlaced)', 'famma-core' ),
+			array( $this, 'render_orderplaced_toggle' ),
+			self::SLUG,
+			'famma_section_tracking'
 		);
 
 		foreach ( $this->fields() as $field ) {
@@ -187,6 +204,18 @@ final class Tracking_Settings {
 		$clean = preg_replace( '/[^A-Za-z0-9_-]/', '', (string) wp_unslash( (string) $value ) );
 
 		return (string) $clean;
+	}
+
+	/** Explain and display the optional pre-delivery server event switch. */
+	public function render_orderplaced_toggle(): void {
+		?>
+		<input type="hidden" name="famma_meta_orderplaced_enabled" value="0" />
+		<label>
+			<input type="checkbox" name="famma_meta_orderplaced_enabled" value="1" <?php checked( (bool) get_option( 'famma_meta_orderplaced_enabled', false ) ); ?> />
+			<?php esc_html_e( 'Envoyer OrderPlaced après une commande acceptée sur le site.', 'famma-core' ); ?>
+		</label>
+		<p class="description"><?php esc_html_e( 'Désactivé par défaut. En l’activant, les identifiants client déjà collectés pour Meta sont transmis dès la commande, avant livraison. OrderPlaced mesure une demande enregistrée ; Purchase reste réservé à la livraison encaissée. Le test synthétique fonctionne même lorsque cette option est désactivée.', 'famma-core' ); ?></p>
+		<?php
 	}
 
 	/**
@@ -316,6 +345,7 @@ final class Tracking_Settings {
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+			<?php $this->render_test_result(); ?>
 			<form action="options.php" method="post" autocomplete="off">
 				<?php
 				settings_fields( self::GROUP );
@@ -323,7 +353,122 @@ final class Tracking_Settings {
 				submit_button( __( 'Enregistrer', 'famma-core' ) );
 				?>
 			</form>
+			<?php if ( current_user_can( 'manage_woocommerce' ) ) : ?>
+				<h2><?php esc_html_e( 'Tester les événements sans créer de commande', 'famma-core' ); ?></h2>
+				<p><?php esc_html_e( 'Envoie un seul événement synthétique dans les événements de test Meta. Aucune commande, vente, donnée client ou modification de stock. Le code de test est obligatoire.', 'famma-core' ); ?></p>
+				<form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post">
+					<input type="hidden" name="action" value="famma_capi_test" />
+					<?php wp_nonce_field( 'famma_capi_test' ); ?>
+					<label for="famma_capi_test_event"><?php esc_html_e( 'Événement à tester', 'famma-core' ); ?></label>
+					<select id="famma_capi_test_event" name="famma_capi_test_event" required>
+						<option value="OrderPlaced"><?php esc_html_e( 'OrderPlaced — commande enregistrée', 'famma-core' ); ?></option>
+						<option value="Purchase"><?php esc_html_e( 'Purchase — achat livré', 'famma-core' ); ?></option>
+					</select>
+					<label for="famma_capi_test_code"><?php esc_html_e( 'Code des événements de test Meta', 'famma-core' ); ?></label>
+					<input id="famma_capi_test_code" name="famma_capi_test_code" type="text" required value="<?php echo esc_attr( Config::instance()->meta_test_event_code() ); ?>" autocomplete="off" />
+					<label for="famma_capi_test_value"><?php esc_html_e( 'Montant du test', 'famma-core' ); ?></label>
+					<input id="famma_capi_test_value" name="famma_capi_test_value" type="text" inputmode="decimal" pattern="[0-9]+([.,][0-9]{1,3})?" placeholder="25.000" required aria-describedby="famma_capi_test_value_help" autocomplete="off" />
+					<p id="famma_capi_test_value_help">
+					<?php
+						/* translators: %s: configured shop currency. */
+						echo esc_html( sprintf( __( 'Montant de simulation uniquement, en %s : au moins 0.001, avec trois décimales maximum (point ou virgule). Aucune vente réelle.', 'famma-core' ), get_woocommerce_currency() ) );
+					?>
+					</p>
+					<?php submit_button( __( 'Envoyer l’événement de test', 'famma-core' ), 'secondary' ); ?>
+				</form>
+			<?php endif; ?>
 		</div>
 		<?php
+	}
+
+	/** Send a synthetic test only; never create or modify a WooCommerce order. */
+	public function send_test_event(): void {
+		check_admin_referer( 'famma_capi_test' );
+		if ( ! current_user_can( 'manage_options' ) || ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_die( esc_html__( 'Accès refusé.', 'famma-core' ), '', array( 'response' => 403 ) );
+		}
+		$test_code = isset( $_POST['famma_capi_test_code'] ) ? sanitize_text_field( wp_unslash( $_POST['famma_capi_test_code'] ) ) : '';
+		$event     = isset( $_POST['famma_capi_test_event'] ) ? sanitize_text_field( wp_unslash( $_POST['famma_capi_test_event'] ) ) : '';
+		$cfg       = Config::instance();
+		if ( ! in_array( $event, array( 'OrderPlaced', 'Purchase' ), true ) || ! preg_match( '/^TEST[A-Za-z0-9_-]+$/', $test_code ) || '' === $cfg->meta_pixel_id() || '' === $cfg->meta_access_token() ) {
+			$this->redirect_test_result( 'configuration' );
+		}
+		$raw_value = isset( $_POST['famma_capi_test_value'] ) && is_string( $_POST['famma_capi_test_value'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['famma_capi_test_value'] ) ) ) : '';
+		if ( ! preg_match( '/^[0-9]+(?:[.,][0-9]{1,3})?$/D', $raw_value ) ) {
+			$this->redirect_test_result( 'amount' );
+		}
+		$value = (float) wc_format_decimal( str_replace( ',', '.', $raw_value ), 3 );
+		if ( ! is_finite( $value ) || $value < 0.001 ) {
+			$this->redirect_test_result( 'amount' );
+		}
+		$currency = get_woocommerce_currency();
+		if ( ! preg_match( '/^[A-Z]{3}$/D', $currency ) || ! array_key_exists( $currency, get_woocommerce_currencies() ) ) {
+			$this->redirect_test_result( 'currency' );
+		}
+		$payload = array(
+			'access_token'    => $cfg->meta_access_token(),
+			'test_event_code' => $test_code,
+			'data'            => array(
+				array(
+					'event_name'       => $event,
+					'event_time'       => time(),
+					'event_id'         => 'famma_test_' . wp_generate_uuid4(),
+					'action_source'    => 'website',
+					'event_source_url' => home_url( '/' ),
+					'user_data'        => array( 'em' => hash( 'sha256', 'famma-capi-test@example.invalid' ) ),
+					'custom_data'      => array(
+						'currency' => $currency,
+						'value'    => $value,
+					),
+				),
+			),
+		);
+		if ( 'OrderPlaced' === $event ) {
+			$payload['data'][0]['custom_data']['famma_stage'] = 'order_placed';
+		}
+		$version  = (string) apply_filters( 'famma_capi_graph_version', 'v21.0' );
+		$response = wp_remote_post(
+			'https://graph.facebook.com/' . rawurlencode( $version ) . '/' . rawurlencode( $cfg->meta_pixel_id() ) . '/events',
+			array(
+				'timeout'     => 8,
+				'redirection' => 0,
+				'headers'     => array( 'Content-Type' => 'application/json' ),
+				'body'        => wp_json_encode( $payload ),
+			)
+		);
+		if ( is_wp_error( $response ) ) {
+			$this->redirect_test_result( 'network' );
+		}
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		$body = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+		$ok   = $code >= 200 && $code < 300 && is_array( $body ) && 1 === (int) ( $body['events_received'] ?? 0 ) && ! isset( $body['error'] );
+		$this->redirect_test_result( $ok ? 'accepted' : 'rejected' );
+	}
+
+	/**
+	 * Redirect with a fixed result identifier, never a response body or secret.
+	 *
+	 * @param string $result Fixed status identifier.
+	 */
+	private function redirect_test_result( string $result ): void {
+		wp_safe_redirect( add_query_arg( 'famma_capi_result', $result, admin_url( 'admin.php?page=' . self::SLUG ) ) );
+		exit;
+	}
+
+	/** Display fixed, escaped status text. */
+	private function render_test_result(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only fixed notice.
+		$result   = isset( $_GET['famma_capi_result'] ) ? sanitize_key( wp_unslash( $_GET['famma_capi_result'] ) ) : '';
+		$messages = array(
+			'accepted'      => __( 'Meta a accepté l’événement de test. Vérifiez son nom et sa réception dans Tester les événements. Aucun achat réel n’a été créé.', 'famma-core' ),
+			'configuration' => __( 'Test non envoyé : renseignez le Pixel, le token CAPI et un code de test Meta valide.', 'famma-core' ),
+			'amount'        => __( 'Test non envoyé : saisissez un montant positif d’au moins 0.001, avec trois décimales maximum et un point ou une virgule.', 'famma-core' ),
+			'currency'      => __( 'Test non envoyé : la devise configurée dans WooCommerce est invalide.', 'famma-core' ),
+			'network'       => __( 'Test non reçu : la connexion du serveur à Meta a échoué.', 'famma-core' ),
+			'rejected'      => __( 'Meta n’a pas confirmé la réception du test. Vérifiez le token, le Pixel et le code de test.', 'famma-core' ),
+		);
+		if ( isset( $messages[ $result ] ) ) {
+			echo '<div class="notice notice-' . ( 'accepted' === $result ? 'success' : 'error' ) . '"><p>' . esc_html( $messages[ $result ] ) . '</p></div>';
+		}
 	}
 }
