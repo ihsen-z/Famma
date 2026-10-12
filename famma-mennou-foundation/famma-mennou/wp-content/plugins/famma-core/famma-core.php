@@ -41,6 +41,8 @@ require_once __DIR__ . '/includes/tracking-settings.php';
 require_once __DIR__ . '/includes/tracking-events.php';
 require_once __DIR__ . '/includes/express-order.php';
 require_once __DIR__ . '/includes/express-checkout.php';
+require_once __DIR__ . '/includes/express-idempotency.php';
+require_once __DIR__ . '/includes/express-preparation.php';
 require_once __DIR__ . '/includes/order-emails.php';
 require_once __DIR__ . '/includes/anti-abuse.php';
 require_once __DIR__ . '/includes/checkout-lite.php';
@@ -2474,6 +2476,8 @@ function boot(): void {
 	Tracking::instance();
 	Tracking_Events::instance();
 	Express_Order::instance();
+	Express_Idempotency::instance();
+	Express_Preparation::instance();
 	Express_Checkout::instance();
 	Order_Emails::instance();
 	Anti_Abuse::instance();

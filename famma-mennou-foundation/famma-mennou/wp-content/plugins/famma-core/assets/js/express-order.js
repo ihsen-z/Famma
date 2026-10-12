@@ -1,12 +1,13 @@
 /**
- * Commande express — un seul appel au clic (audit PERF-03).
+ * Commande express : préparer le panier, vérifier le récapitulatif, confirmer.
  *
  * Ce script n'invente aucun parcours. Il prépare puis envoie :
  *
  *   0. `?wc-ajax=famma_express_nonce`    — dès la première interaction avec le
  *      formulaire, en parallèle de la saisie : jeton de checkout et session ;
- *   1. `?wc-ajax=famma_express_checkout` — au clic : met le produit au panier
- *      puis exécute `WC_Checkout::process_checkout()` (`Express_Checkout`).
+ *   1. `?wc-ajax=famma_express_prepare` — prépare le vrai panier et son total ;
+ *   2. `?wc-ajax=famma_express_checkout` — confirme la même intention une fois ;
+ *   3. `?wc-ajax=famma_express_status` — retrouve un résultat après interruption.
  *
  * La commande, ses validations et son statut restent donc entièrement l'affaire
  * de WooCommerce. En cas d'échec, ce sont ses propres messages qui s'affichent :
@@ -34,7 +35,6 @@
 
 	var button = form.querySelector( '.famma-express__submit' );
 	var notices = form.querySelector( '.famma-express__notices' );
-	var buttonLabel = button ? button.innerHTML : '';
 	var busy = false;
 
 	var qtyInput = form.querySelector( '[name="famma_quantity"]' );
@@ -95,6 +95,7 @@
 	 * @return {void}
 	 */
 	function syncQuantity() {
+		invalidateQuote();
 		var quantity = currentQuantity();
 
 		if ( totalNode ) {
@@ -262,11 +263,13 @@
 	 */
 	function release() {
 		busy = false;
-
 		if ( button ) {
 			button.disabled = false;
-			button.innerHTML = buttonLabel;
 		}
+		if ( ! unresolved() ) {
+			unlockFields();
+		}
+		label();
 	}
 
 	/**
@@ -276,14 +279,17 @@
 	 * @param {Object} params Paramètres de l'événement.
 	 * @return {void}
 	 */
-	function pixel( name, params ) {
-		if ( ! window.fbq ) {
-			return;
+	function pixel( name, params, id ) {
+		if ( ! window.fbq || ! id || ! params ) {
+			return false;
 		}
-
-		var id = ( window.crypto && crypto.randomUUID ) ? crypto.randomUUID() : String( Date.now() );
-
-		window.fbq( 'track', name, params, { eventID: id } );
+		try {
+			window.fbq( 'track', name, params, { eventID: id } );
+			return true;
+		} catch ( error ) {
+			// A third-party tracking failure must never block a valid checkout.
+			return false;
+		}
 	}
 
 	/**
@@ -379,37 +385,332 @@
 	form.addEventListener( 'focusin', prepareToken );
 	form.addEventListener( 'pointerdown', prepareToken );
 
-	/**
-	 * Envoie la commande au point d'entrée unique.
-	 *
-	 * @param {string}  token    Jeton de checkout.
-	 * @param {boolean} canRetry Vrai si un jeton périmé peut être renouvelé.
-	 * @return {Promise<Object|null>} Réponse décodée.
-	 */
-	function sendOrder( token, canRetry ) {
-		var order = new FormData( form );
+	var recap = form.querySelector( '.famma-express__recap' );
+	var recapContent = form.querySelector( '.famma-express__recap-content' );
+	var productId = form.querySelector( '[name="famma_product_id"]' ).value;
+	var storageKey = 'famma_express_intent_' + productId;
+	var record = null;
+	var storageReady = false;
+	var quoted = false;
+	var lockedFields = [];
+	var emitted = {};
 
-		order.append( 'woocommerce-process-checkout-nonce', token );
+	/** Secure IDs and session persistence are required before final submission. */
+	function uuid() {
+		if ( ! window.crypto ) {
+			return '';
+		}
+		if ( window.crypto.randomUUID ) {
+			return window.crypto.randomUUID();
+		}
+		if ( ! window.crypto.getRandomValues ) {
+			return '';
+		}
+		var bytes = new Uint8Array( 16 );
+		window.crypto.getRandomValues( bytes );
+		bytes[ 6 ] = ( bytes[ 6 ] & 15 ) | 64;
+		bytes[ 8 ] = ( bytes[ 8 ] & 63 ) | 128;
+		var hex = Array.prototype.map.call( bytes, function ( value ) {
+			return ( '0' + value.toString( 16 ) ).slice( -2 );
+		} ).join( '' );
+		return hex.slice( 0, 8 ) + '-' + hex.slice( 8, 12 ) + '-' + hex.slice( 12, 16 ) + '-' + hex.slice( 16, 20 ) + '-' + hex.slice( 20 );
+	}
 
-		return post( fammaExpress.expressUrl, order ).then( function ( result ) {
-			/*
-			 * Jeton refusé : le serveur l'a dit avant d'écrire quoi que ce
-			 * soit (ni panier, ni commande). Renvoyer ne peut donc pas créer
-			 * de doublon — une fois, pas davantage.
-			 */
-			if ( result && 'expired' === result.famma_token ) {
-				if ( ! canRetry ) {
-					return null;
-				}
+	function saveRecord() {
+		try {
+			window.sessionStorage.setItem( storageKey, JSON.stringify( record ) );
+			storageReady = window.sessionStorage.getItem( storageKey ) === JSON.stringify( record );
+		} catch ( error ) {
+			storageReady = false;
+		}
+		return storageReady;
+	}
 
+	function newRecord() {
+		var requestId = uuid();
+		var preparationId = uuid();
+		if ( ! requestId || ! preparationId ) {
+			storageReady = false;
+			return false;
+		}
+		record = { version: 1, product: productId, request_id: requestId, preparation_id: preparationId, phase: 'draft', cart_hash: '', events: [] };
+		return saveRecord();
+	}
+
+	function unresolved() {
+		return record && ( 'submitted' === record.phase || 'unknown' === record.phase || 'processing' === record.phase );
+	}
+
+	function label() {
+		if ( button ) {
+			button.textContent = unresolved() ? fammaExpress.retryLabel : quoted ? fammaExpress.confirmLabel : fammaExpress.prepareLabel;
+		}
+	}
+
+	function lockFields() {
+		if ( lockedFields.length ) {
+			return;
+		}
+		Array.prototype.forEach.call( form.querySelectorAll( 'input, select, textarea, button' ), function ( field ) {
+			if ( field !== button ) {
+				lockedFields.push( { field: field, disabled: field.disabled } );
+				field.disabled = true;
+			}
+		} );
+	}
+
+	function unlockFields() {
+		lockedFields.forEach( function ( entry ) { entry.field.disabled = entry.disabled; } );
+		lockedFields = [];
+	}
+
+	function message( text ) {
+		if ( notices ) {
+			notices.textContent = text || fammaExpress.genericError;
+			notices.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+		}
+	}
+
+	/** Never generate a new intent while a previous final result is unknown. */
+	function invalidateQuote() {
+		if ( busy || unresolved() || ! record ) {
+			return;
+		}
+		quoted = false;
+		recap.hidden = true;
+		record.preparation_id = uuid();
+		record.cart_hash = '';
+		record.phase = 'draft';
+		saveRecord();
+		label();
+	}
+
+	form.addEventListener( 'input', invalidateQuote );
+	form.addEventListener( 'change', invalidateQuote );
+
+	/** Use the exact server acknowledgement and event ID, including replays. */
+	function acknowledgedEvents( tracking ) {
+		if ( ! tracking ) {
+			return;
+		}
+		[ [ 'AddToCart', tracking.add_to_cart ], [ 'InitiateCheckout', tracking.initiate_checkout ] ].forEach( function ( entry ) {
+			var data = entry[ 1 ];
+			if ( ! data || false === data.emit || ! data.event_id || emitted[ data.event_id ] || ! window.fbq || ( 'InitiateCheckout' === entry[ 0 ] && record.checkout_emitted ) ) {
+				return;
+			}
+			if ( ! pixel( entry[ 0 ], data.params, data.event_id ) ) {
+				return;
+			}
+			if ( 'InitiateCheckout' === entry[ 0 ] ) {
+				record.checkout_emitted = true;
+			}
+			emitted[ data.event_id ] = true;
+			record.events.push( data.event_id );
+			record.events = record.events.slice( -100 );
+			saveRecord();
+		} );
+	}
+
+	function cell( row, text, price, heading ) {
+		var node = document.createElement( heading ? 'th' : 'td' );
+		if ( price ) {
+			// These amount fragments come only from WooCommerce's server recap.
+			node.innerHTML = text;
+		} else {
+			node.textContent = String( text );
+		}
+		if ( heading ) {
+			node.setAttribute( 'scope', 'col' );
+		}
+		row.appendChild( node );
+	}
+
+	function renderSummary( summary ) {
+		if ( ! recap || ! recapContent || ! summary || ! Array.isArray( summary.items ) || ! summary.total_html ) {
+			throw new Error( 'Incomplete recap' );
+		}
+		var names = fammaExpress.recapLabels;
+		var table = document.createElement( 'table' );
+		var head = document.createElement( 'thead' );
+		var title = document.createElement( 'tr' );
+		cell( title, names.product, false, true );
+		cell( title, names.quantity, false, true );
+		cell( title, names.amount, false, true );
+		head.appendChild( title );
+		table.appendChild( head );
+		var body = document.createElement( 'tbody' );
+		summary.items.forEach( function ( item ) {
+			var row = document.createElement( 'tr' );
+			cell( row, item.name, false );
+			cell( row, item.quantity, false );
+			cell( row, item.line_total_html, true );
+			body.appendChild( row );
+		} );
+		table.appendChild( body );
+		var foot = document.createElement( 'tfoot' );
+		[ 'subtotal', 'discount', 'shipping', 'fees', 'tax', 'total' ].forEach( function ( key ) {
+			if ( ! summary[ key + '_html' ] ) {
+				return;
+			}
+			var row = document.createElement( 'tr' );
+			cell( row, names[ key ], false );
+			row.children[ 0 ].setAttribute( 'colspan', '2' );
+			cell( row, summary[ key + '_html' ], true );
+			foot.appendChild( row );
+		} );
+		table.appendChild( foot );
+		recapContent.innerHTML = '';
+		recapContent.appendChild( table );
+		recap.hidden = false;
+		recap.focus();
+		recap.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+	}
+
+	/** Refresh only the nonce; IDs and final payload are never regenerated. */
+	function request( url, fields, canRetry ) {
+		return checkoutToken( false ).then( function ( token ) {
+			if ( ! token ) {
+				return null;
+			}
+			var data = new FormData();
+			fields.forEach( function ( entry ) { data.append( entry[ 0 ], entry[ 1 ] ); } );
+			data.append( 'woocommerce-process-checkout-nonce', token );
+			return post( url, data );
+		} ).then( function ( result ) {
+			if ( result && 'expired' === result.famma_token && canRetry ) {
 				return checkoutToken( true ).then( function ( fresh ) {
-					return fresh ? sendOrder( fresh, false ) : null;
+					return fresh ? request( url, fields, false ) : null;
 				} );
 			}
-
 			return result;
 		} );
 	}
+
+	function snapshot() {
+		var fields = [];
+		new FormData( form ).forEach( function ( value, name ) {
+			if ( 'woocommerce-process-checkout-nonce' !== name && 'string' === typeof value ) {
+				fields.push( [ name, value ] );
+			}
+		} );
+		return fields;
+	}
+
+	function prepare() {
+		var state = form.querySelector( '[name="billing_state"]' );
+		var trap = form.querySelector( '[name="famma_hp_site"]' );
+		return request( fammaExpress.prepareUrl, [
+			[ 'famma_product_id', productId ], [ 'famma_quantity', String( currentQuantity() ) ],
+			[ 'famma_preparation_id', record.preparation_id ], [ 'billing_country', 'TN' ],
+			[ 'billing_state', state ? state.value : '' ], [ 'famma_hp_site', trap ? trap.value : '' ],
+		], true ).then( function ( result ) {
+			if ( result && 'success' === result.result && result.summary && result.cart_hash && result.preparation_id === record.preparation_id ) {
+				renderSummary( result.summary );
+				record.preparation_id = result.preparation_id;
+				record.cart_hash = result.cart_hash;
+				record.phase = 'quoted';
+				quoted = true;
+				saveRecord();
+				acknowledgedEvents( result.tracking );
+			} else if ( result && result.messages ) {
+				showError( result.messages );
+			} else {
+				message( fammaExpress.genericError );
+			}
+		} );
+	}
+
+	function status() {
+		return request( fammaExpress.statusUrl, [ [ 'famma_request_id', record.request_id ] ], true );
+	}
+
+	function accepted( result ) {
+		record.phase = 'accepted';
+		delete record.fields;
+		saveRecord();
+		window.location.href = result.redirect;
+	}
+
+	function resolve( result ) {
+		if ( result && 'success' === result.result && result.redirect ) {
+			accepted( result );
+			return;
+		}
+		if ( result && 'failed' === result.famma_state && 'validation_failed' === result.famma_code ) {
+			newRecord();
+			quoted = false;
+			recap.hidden = true;
+			unlockFields();
+			if ( result.messages ) {
+				showError( result.messages );
+			} else {
+				message( fammaExpress.genericError );
+			}
+			return;
+		}
+		record.phase = result && 'processing' === result.result ? 'processing' : 'unknown';
+		saveRecord();
+		lockFields();
+		message( 'processing' === record.phase ? fammaExpress.pending : fammaExpress.recovery );
+	}
+
+	function sendFinal() {
+		return request( fammaExpress.expressUrl, record.fields, true ).then( function ( result ) {
+			if ( result && ( 'cart_changed' === result.famma_code || 'preparation_missing' === result.famma_code ) ) {
+				// The backend guarantees these guards ran before intent reservation.
+				record.phase = 'draft';
+				record.preparation_id = uuid();
+				record.cart_hash = '';
+				delete record.fields;
+				saveRecord();
+				quoted = false;
+				recap.hidden = true;
+				unlockFields();
+				message( fammaExpress.changed );
+				return;
+			}
+			if ( result && ( 'success' === result.result || 'processing' === result.result || 'failed' === result.famma_state ) ) {
+				resolve( result );
+				return;
+			}
+			// A WooCommerce failure alone does not prove that no order was created.
+			return status().then( resolve );
+		} );
+	}
+
+	function recover() {
+		return status().then( function ( result ) {
+			if ( result && 'unknown_intent' === result.famma_code && record.fields ) {
+				// Retry the identical snapshot and ID, never create a fresh intent.
+				return sendFinal();
+			}
+			resolve( result );
+		} );
+	}
+
+	try {
+		var saved = JSON.parse( window.sessionStorage.getItem( storageKey ) || 'null' );
+		if ( saved && 1 === saved.version && saved.product === productId && saved.request_id && saved.preparation_id && 'accepted' !== saved.phase ) {
+			record = saved;
+			record.events = Array.isArray( record.events ) ? record.events : [];
+			record.events.forEach( function ( id ) { emitted[ id ] = true; } );
+			storageReady = saveRecord();
+		} else {
+			newRecord();
+		}
+	} catch ( error ) {
+		storageReady = false;
+	}
+	if ( unresolved() ) {
+		message( fammaExpress.recovery );
+	} else if ( record ) {
+		// Reload requires a fresh recap; no stale quoted amount can be confirmed.
+		record.phase = 'draft';
+		record.preparation_id = uuid();
+		record.cart_hash = '';
+		saveRecord();
+	}
+	label();
 
 	/**
 	 * Gouvernorat : menu déroulant à recherche.
@@ -648,6 +949,10 @@
 	}
 
 	Array.prototype.forEach.call( form.querySelectorAll( 'select[data-famma-combo]' ), initCombo );
+	if ( unresolved() ) {
+		// Include the search input created by initCombo in the recovery lock.
+		lockFields();
+	}
 
 	form.addEventListener( 'submit', function ( event ) {
 		if ( cartSubmit ) {
@@ -660,89 +965,55 @@
 			return;
 		}
 
-		/*
-		 * Le formulaire porte `novalidate` : la validation du navigateur est
-		 * déclenchée ici pour garder la main sur le moment où elle se produit,
-		 * sans perdre les messages natifs — traduits, et lus par les lecteurs
-		 * d'écran.
-		 */
-		checkPhone( true );
-
-		if ( ! form.reportValidity() ) {
+		if ( ! unresolved() ) {
+			checkPhone( true );
+			if ( ! form.reportValidity() ) {
+				return;
+			}
+		}
+		if ( ! record || ! saveRecord() ) {
+			message( fammaExpress.storageError );
 			return;
+		}
+		if ( qtyInput && ! unresolved() ) {
+			qtyInput.value = String( currentQuantity() );
+		}
+
+		var operation;
+		if ( unresolved() ) {
+			operation = recover;
+		} else if ( quoted ) {
+			record.fields = snapshot();
+			record.fields.push( [ 'famma_request_id', record.request_id ], [ 'famma_preparation_id', record.preparation_id ], [ 'famma_cart_hash', record.cart_hash ] );
+			record.phase = 'submitted';
+			// Persist before any HTTP. A response lost after creation replays this snapshot.
+			if ( ! saveRecord() ) {
+				record.phase = 'quoted';
+				message( fammaExpress.storageError );
+				return;
+			}
+			operation = sendFinal;
+		} else {
+			operation = prepare;
 		}
 
 		busy = true;
-
 		if ( notices ) {
 			notices.innerHTML = '';
 		}
-
+		lockFields();
 		if ( button ) {
 			button.disabled = true;
 			button.textContent = fammaExpress.sending;
 		}
-
-		var productId = form.querySelector( '[name="famma_product_id"]' ).value;
-		var quantity = String( currentQuantity() );
-		var unit = form.querySelector( '.famma-express__total' );
-		var unitPrice = unit ? parseFloat( unit.getAttribute( 'data-unit-price' ) || '0' ) : 0;
-
-		if ( qtyInput ) {
-			qtyInput.value = quantity;
-		}
-
-		pixel( 'AddToCart', {
-			content_type: 'product',
-			content_ids: [ String( productId ) ],
-			contents: [ { id: String( productId ), quantity: parseFloat( quantity ) } ],
-			value: unitPrice * parseFloat( quantity ),
-			currency: fammaExpress.currency,
-		} );
-
-		pixel( 'InitiateCheckout', {
-			content_type: 'product',
-			content_ids: [ String( productId ) ],
-			num_items: parseFloat( quantity ),
-			value: unitPrice * parseFloat( quantity ),
-			currency: fammaExpress.currency,
-		} );
-
-		checkoutToken( false ).then( function ( token ) {
-			if ( ! token ) {
-				return null;
+		operation().catch( function () {
+			if ( unresolved() ) {
+				record.phase = 'unknown';
+				saveRecord();
+				message( fammaExpress.recovery );
+			} else {
+				message( fammaExpress.genericError );
 			}
-
-			return sendOrder( token, true );
-		} ).then( function ( result ) {
-			if ( result && 'success' === result.result && result.redirect ) {
-				// Page de remerciement : c'est WooCommerce qui décide où.
-				window.location.href = result.redirect;
-				return;
-			}
-
-			release();
-
-			if ( result && result.messages ) {
-				showError( result.messages );
-				return;
-			}
-
-			/*
-			 * `reload` demandé par WooCommerce : la session est
-			 * désynchronisée (panier expiré, jeton périmé). Recharger est
-			 * sa réponse habituelle, et la seule qui remette d'aplomb.
-			 */
-			if ( result && result.reload ) {
-				window.location.reload();
-				return;
-			}
-
-			showError( fammaExpress.genericError );
-		} ).catch( function () {
-			// Erreur réseau : pas de renvoi automatique, le client décide.
-			release();
-			showError( fammaExpress.genericError );
-		} );
+		} ).then( release );
 	} );
 } )();

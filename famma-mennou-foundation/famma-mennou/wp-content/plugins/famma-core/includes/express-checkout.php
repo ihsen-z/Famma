@@ -90,6 +90,7 @@ final class Express_Checkout {
 	 */
 	private function hooks(): void {
 		add_action( 'wc_ajax_' . self::ENDPOINT, array( $this, 'handle' ) );
+		add_action( 'wc_ajax_famma_express_status', array( $this, 'status' ) );
 	}
 
 	/**
@@ -103,40 +104,41 @@ final class Express_Checkout {
 	 * @return void
 	 */
 	public function handle(): void {
-		if ( ! function_exists( 'WC' ) || ! WC()->cart || ! WC()->session ) {
-			$this->fail();
+		if ( ! Express_Preparation::guard() ) {
 			return;
 		}
-
-		$nonce = isset( $_POST['woocommerce-process-checkout-nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['woocommerce-process-checkout-nonce'] ) ) : '';
-
-		if ( '' === $nonce || ! wp_verify_nonce( $nonce, 'woocommerce-process_checkout' ) ) {
-			// Rien n'a été écrit : le script peut redemander un jeton et renvoyer.
+		$id = strtolower( Express_Preparation::posted( 'famma_request_id' ) );
+		if ( ! Express_Idempotency::valid_id( $id ) ) {
 			wp_send_json(
 				array(
-					'result'      => 'failure',
-					'famma_token' => 'expired',
+					'result'     => 'failure',
+					'famma_code' => 'intent_invalid',
 				)
 			);
 			return;
 		}
-
-		$product_id = isset( $_POST['famma_product_id'] ) ? absint( wp_unslash( $_POST['famma_product_id'] ) ) : 0;
-		$quantity   = isset( $_POST['famma_quantity'] ) ? (float) wc_stock_amount( sanitize_text_field( wp_unslash( $_POST['famma_quantity'] ) ) ) : 1.0;
-		$quantity   = max( 1.0, $quantity );
-
-		/** This filter is documented in woocommerce/includes/class-wc-ajax.php */
-		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- filtre natif de WooCommerce, appliqué comme WC_AJAX::add_to_cart().
-		$product_id = absint( apply_filters( 'woocommerce_add_to_cart_product_id', $product_id ) );
-		$product    = wc_get_product( $product_id );
-
-		if ( ! $product instanceof \WC_Product || $product->is_type( array( 'variable', 'variation' ) ) || 'publish' !== get_post_status( $product_id ) ) {
-			$this->fail();
+		$registry = Express_Idempotency::instance();
+		$payload  = Express_Idempotency::payload_hash();
+		$row      = $registry->get( $id );
+		if ( $row ) {
+			$this->reply( $row, $payload );
 			return;
 		}
-
-		if ( ! $this->put_in_cart( $product_id, $quantity ) ) {
-			$this->fail();
+		if ( ! Express_Preparation::instance()->verify() ) {
+			return;
+		}
+		if ( ! $registry->reserve( $id, $payload ) ) {
+			$row = $registry->get( $id );
+			if ( $row ) {
+				$this->reply( $row, $payload );
+			} else {
+				wp_send_json(
+					array(
+						'result'     => 'failure',
+						'famma_code' => 'registry_unavailable',
+					)
+				);
+			}
 			return;
 		}
 
@@ -147,6 +149,48 @@ final class Express_Checkout {
 		wc_maybe_define_constant( 'WOOCOMMERCE_CHECKOUT', true );
 		WC()->checkout()->process_checkout();
 		wp_die( 0 );
+	}
+
+	/** Return only the current session's known outcome; no order mutations. */
+	public function status(): void {
+		if ( ! Express_Preparation::guard() ) {
+			return;
+		}
+		$id  = strtolower( Express_Preparation::posted( 'famma_request_id' ) );
+		$row = Express_Idempotency::valid_id( $id ) ? Express_Idempotency::instance()->get( $id ) : null;
+		wp_send_json(
+			$row ? Express_Idempotency::instance()->response( $row ) : array(
+				'result'     => 'failure',
+				'famma_code' => 'unknown_intent',
+			)
+		);
+	}
+
+	/** Protect replay against changed data or a different Woo session.
+	 *
+	 * @param array  $row Existing intention.
+	 * @param string $payload Canonical request digest.
+	 */
+	private function reply( array $row, string $payload ): void {
+		if ( Express_Idempotency::session_hash() !== $row['session_hash'] ) {
+			wp_send_json(
+				array(
+					'result'     => 'failure',
+					'famma_code' => 'unknown_intent',
+				)
+			);
+			return;
+		}
+		if ( $payload !== $row['payload_hash'] ) {
+			wp_send_json(
+				array(
+					'result'     => 'failure',
+					'famma_code' => 'intent_conflict',
+				)
+			);
+			return;
+		}
+		wp_send_json( Express_Idempotency::instance()->response( $row ) );
 	}
 
 	/**
@@ -188,7 +232,7 @@ final class Express_Checkout {
 	 * @param float $quantity   Quantité demandée.
 	 * @return bool
 	 */
-	private function put_in_cart( int $product_id, float $quantity ): bool {
+	public function put_in_cart( int $product_id, float $quantity ): bool {
 		$cart    = WC()->cart;
 		$removed = array();
 

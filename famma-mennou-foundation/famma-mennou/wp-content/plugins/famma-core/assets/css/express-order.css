@@ -505,6 +505,72 @@ html[lang^="ar"] .famma-express__submit-ar {
 	margin-block-start: var(--sp-4, 16px);
 }
 
+/* Le récapitulatif serveur est lisible avant la confirmation finale. */
+.famma-express__recap {
+	margin-block: var(--sp-4, 16px);
+	padding: var(--sp-4, 16px);
+	border: 1px solid var(--famma-line, #DBE1E8);
+	border-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-surface, #fff);
+}
+
+.famma-express__recap[hidden] {
+	display: none;
+}
+
+.famma-express__recap h3 {
+	margin-block: 0 var(--sp-3, 12px);
+	font-size: 1rem;
+}
+
+.famma-express__recap table {
+	inline-size: 100%;
+	margin-block: 0;
+	border-collapse: collapse;
+	font-size: 0.9375rem;
+}
+
+.famma-express__recap th,
+.famma-express__recap td {
+	padding-block: var(--sp-2, 8px);
+	padding-inline: var(--sp-2, 8px);
+	text-align: start;
+	vertical-align: top;
+	overflow-wrap: anywhere;
+}
+
+/* Keep each WooCommerce amount together; product names may wrap on mobile. */
+.famma-express__recap th:last-child,
+.famma-express__recap td:last-child {
+	inline-size: 1%;
+}
+
+.famma-express__recap td:last-child {
+	white-space: nowrap;
+	overflow-wrap: normal;
+	word-break: normal;
+}
+
+.famma-express__recap thead th:nth-child(2),
+.famma-express__recap tbody td:nth-child(2) {
+	inline-size: 4.5em;
+	min-inline-size: 4.5em;
+	overflow-wrap: normal;
+	word-break: normal;
+}
+
+.famma-express__recap tbody td:nth-child(2) {
+	white-space: nowrap;
+}
+
+.famma-express__recap tfoot {
+	border-block-start: 1px solid var(--famma-line, #DBE1E8);
+}
+
+.famma-express__recap tfoot tr:last-child {
+	font-weight: 700;
+}
+
 @media (min-width: 600px) {
 	.famma-express {
 		padding: var(--sp-6, 24px);

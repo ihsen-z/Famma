@@ -228,6 +228,8 @@ final class Express_Order {
 			'fammaExpress',
 			array(
 				'expressUrl'   => \WC_AJAX::get_endpoint( Express_Checkout::ENDPOINT ),
+				'prepareUrl'   => \WC_AJAX::get_endpoint( 'famma_express_prepare' ),
+				'statusUrl'    => \WC_AJAX::get_endpoint( 'famma_express_status' ),
 				'nonceUrl'     => \WC_AJAX::get_endpoint( 'famma_express_nonce' ),
 				'currency'     => get_woocommerce_currency(),
 				'genericError' => __( 'The order could not go through. Please check the form and try again.', 'famma-core' ),
@@ -236,6 +238,24 @@ final class Express_Order {
 				'stateError'   => __( 'Pick your governorate from the list.', 'famma-core' ),
 				'noMatch'      => __( 'No governorate found', 'famma-core' ),
 				'stateHint'    => __( 'Type to search…', 'famma-core' ),
+				'prepareLabel' => __( 'Vérifier ma commande / راجع طلبيتك', 'famma-core' ),
+				'confirmLabel' => __( 'Confirmer ma commande / أكد طلبيتك', 'famma-core' ),
+				'retryLabel'   => __( 'Vérifier ma commande en cours / ثبت طلبيتك', 'famma-core' ),
+				'changed'      => __( 'Votre panier a changé. Vérifiez à nouveau les articles et le total avant de confirmer. تبدلت السلة، راجع المنتوجات والمجموع.', 'famma-core' ),
+				'pending'      => __( 'Votre commande est en cours de vérification. Utilisez ce bouton pour retrouver son résultat. طلبيتك قاعدين نثبتو فيها، اضغط باش تعرف النتيجة.', 'famma-core' ),
+				'recovery'     => __( 'Nous n’avons pas encore reçu le résultat de votre commande. Vérifiez son état avec ce bouton avant de recommencer. مازال ما وصلتناش النتيجة، ثبت حالة طلبيتك قبل ما تعاود.', 'famma-core' ),
+				'storageError' => __( 'Pour commander en toute sécurité, autorisez le stockage de cette page ou utilisez Ajouter au panier. باش تطلب بأمان، فعل التخزين ولا زيد للسلة.', 'famma-core' ),
+				'recapLabels'  => array(
+					'product'  => __( 'Article / المنتوج', 'famma-core' ),
+					'quantity' => __( 'Quantité / الكمية', 'famma-core' ),
+					'amount'   => __( 'Montant / المبلغ', 'famma-core' ),
+					'subtotal' => __( 'Sous-total / المجموع', 'famma-core' ),
+					'discount' => __( 'Réductions / التخفيض', 'famma-core' ),
+					'shipping' => __( 'Livraison / التوصيل', 'famma-core' ),
+					'fees'     => __( 'Frais / المصاريف', 'famma-core' ),
+					'tax'      => __( 'Taxes / الأداءات', 'famma-core' ),
+					'total'    => __( 'Total à payer à la livraison / المجموع عند التسليم', 'famma-core' ),
+				),
 
 				/*
 				 * Format de prix de la boutique, pour recalculer le total quand
@@ -435,26 +455,15 @@ final class Express_Order {
 	 * @return void
 	 */
 	private function summary( \WC_Product $product ): void {
-		$already = WC()->cart ? (int) WC()->cart->get_cart_contents_count() : 0;
 		?>
 		<div class="famma-express__summary">
-			<span class="famma-express__total-label"><?php esc_html_e( 'Total to pay on delivery', 'famma-core' ); ?></span>
+			<span class="famma-express__total-label"><?php esc_html_e( 'Sous-total de cet article / مجموع هذا المنتوج', 'famma-core' ); ?></span>
 			<span
 				class="famma-express__total"
 				data-unit-price="<?php echo esc_attr( (string) wc_get_price_to_display( $product ) ); ?>"
 			><?php echo wp_kses_post( wc_price( wc_get_price_to_display( $product ) ) ); ?></span>
 
-			<?php if ( $already > 0 ) : ?>
-				<span class="famma-express__cart-note">
-					<?php
-					printf(
-						/* translators: %d: number of items already in the cart. */
-						esc_html( _n( 'Plus %d item already in your cart.', 'Plus %d items already in your cart.', $already, 'famma-core' ) ),
-						(int) $already
-					);
-					?>
-				</span>
-			<?php endif; ?>
+			<span class="famma-express__cart-note"><?php esc_html_e( 'Vous pourrez vérifier tous vos articles et le total avant de confirmer. راجع المنتوجات والمجموع قبل ما تأكد.', 'famma-core' ); ?></span>
 		</div>
 		<?php
 	}
@@ -501,10 +510,9 @@ final class Express_Order {
 		 * français, le titre porte aussi sa version derja (« Commander / أطلب
 		 * توا ») ; sur le site arabe, le libellé principal est déjà en derja.
 		 */
-		$order   = Product_Content::text( 'cta_order' );
-		$derja   = Product_Content::derja( 'cta_order' );
-		$title   = ( ! is_rtl() && '' !== $derja && $derja !== $order ) ? $order . ' / ' . $derja : $order;
-		$confirm = Product_Content::text( 'cta_confirm' );
+		$order = Product_Content::text( 'cta_order' );
+		$derja = Product_Content::derja( 'cta_order' );
+		$title = ( ! is_rtl() && '' !== $derja && $derja !== $order ) ? $order . ' / ' . $derja : $order;
 		?>
 		<section class="famma-express" aria-labelledby="famma-express-title">
 			<h2 class="famma-express__title" id="famma-express-title">
@@ -558,15 +566,20 @@ final class Express_Order {
 				?>
 				<?php Anti_Abuse::trap_field(); ?>
 				<input type="hidden" name="payment_method" value="cod" />
+				<input type="hidden" name="billing_country" value="TN" />
 				<input type="hidden" name="famma_product_id" value="<?php echo esc_attr( (string) $product->get_id() ); ?>" />
+				<div class="famma-express__recap" hidden tabindex="-1" role="region" aria-labelledby="famma-express-recap-title">
+					<h3 id="famma-express-recap-title"><?php esc_html_e( 'Vérifiez votre commande / راجع طلبيتك', 'famma-core' ); ?></h3>
+					<div class="famma-express__recap-content"></div>
+				</div>
 
 				<div class="famma-express__actions">
 					<button type="submit" class="famma-express__submit">
 						<svg class="famma-express__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 3h3l2.6 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21.5 7H6"/><circle cx="10" cy="21" r="1.4"/><circle cx="18" cy="21" r="1.4"/></svg>
 						<span class="famma-express__submit-text">
-							<span class="famma-express__submit-fr"><?php echo esc_html( $confirm ); ?></span>
+							<span class="famma-express__submit-fr"><?php esc_html_e( 'Vérifier ma commande', 'famma-core' ); ?></span>
 							<?php // Traduction du bouton, et non un autre appel à l'action : masquée sur le site arabe, où le libellé principal est déjà en derja. ?>
-							<span class="famma-express__submit-ar" lang="ar" dir="rtl"><?php echo esc_html( Product_Content::derja( 'cta_confirm' ) ); ?></span>
+							<span class="famma-express__submit-ar" lang="ar" dir="rtl"><?php esc_html_e( 'راجع طلبيتك', 'famma-core' ); ?></span>
 						</span>
 					</button>
 					<?php $this->cart_button( $product ); ?>
