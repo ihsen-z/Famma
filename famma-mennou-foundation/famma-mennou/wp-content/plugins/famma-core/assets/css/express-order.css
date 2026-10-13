@@ -123,10 +123,13 @@
 	inline-size: 100%;
 }
 
-.famma-express__native {
+/* Deux classes + l'élément : plus fort que `.famma-express__field select` (pleine largeur), sinon le <select> masqué dépasse du formulaire et crée un défilement horizontal. */
+.famma-express__field select.famma-express__native {
 	position: absolute;
 	inline-size: 1px;
+	min-inline-size: 0;
 	block-size: 1px;
+	min-block-size: 0;
 	margin: -1px;
 	padding: 0;
 	overflow: hidden;
