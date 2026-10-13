@@ -78,7 +78,11 @@ final class Famma_Capi_Fbc_Integration {
 			$bad = array( '', 'garbage', 'fb.1.abc.IwAR', 'fb.1.1760000000000.', 'fb.1.1760000000000.<script>', 'fb.1.1760000000000.a b', 'xx.1.1760000000000.IwAR' );
 			self::check( 'format-invalid', array() === array_filter( array_map( array( $s, 'clean_cookie' ), $bad ) ), 'Valeurs hors format rejetées.' );
 			self::check( 'ip-invalid', '' === $s::clean_ip( '1.2.3.999' ) && '2001:db8::1' === $s::clean_ip( '2001:db8::1' ), 'IP validée (IPv4/IPv6).' );
-			self::check( 'script', str_contains( $s::fbc_bootstrap_script(), 'max-age=7776000' ) && str_contains( $s::fbc_bootstrap_script(), '"fb.1."+Date.now()' ), 'Script _fbc : format fb.1.<ms> et 90 jours.' );
+			self::check( 'script', str_contains( $s::fbc_bootstrap_script(), 'max-age=7776000' ) && str_contains( $s::fbc_bootstrap_script(), 'put("_fbc","fb.1."+Date.now()' ) && str_contains( $s::fbc_bootstrap_script(), 'put("_fbp","fb.1."+Date.now()+"."+(1e9+Math.floor(Math.random()*9e9))' ), 'Script : _fbc et _fbp au format fb.1.<ms>, 90 jours.' );
+			$attrs = $s::instance()->no_optimize_attributes( array( 'id' => 'famma-fbc-js-after' ) );
+			$other = $s::instance()->no_optimize_attributes( array( 'id' => 'famma-pixels-js-after' ) );
+			self::check( 'no-optimize', '1' === ( $attrs['data-no-optimize'] ?? '' ) && '1' === ( $attrs['data-no-defer'] ?? '' ) && ! isset( $other['data-no-optimize'] ), 'Attributs anti-optimisation sur famma-fbc seulement.' );
+			self::check( 'litespeed-exclude', in_array( 'famma-fbc', $s::instance()->litespeed_exclude( array( 'jquery' ) ), true ) && array( 'famma-fbc' ) === $s::instance()->litespeed_exclude( '' ), 'famma-fbc ajouté aux exclusions LiteSpeed.' );
 
 			$product = new WC_Product_Simple();
 			$product->set_name( '[TEST LOCAL] CAPI fbc fixture' );

@@ -1649,8 +1649,6 @@ final class Tracking {
 		);
 
 		if ( '' !== $pixel ) {
-			// Crée _fbc dès l'arrivée depuis une annonce, sans attendre le Pixel différé.
-			wp_add_inline_script( 'famma-pixels', Capi_Signals::fbc_bootstrap_script() );
 			wp_add_inline_script(
 				'famma-pixels',
 				"!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];fammaDefer(function(){t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)})}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init'," . wp_json_encode( $pixel ) . ");fbq('track','PageView');"
