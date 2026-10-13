@@ -227,28 +227,28 @@ final class Express_Order {
 			'famma-express',
 			'fammaExpress',
 			array(
-				'expressUrl'   => \WC_AJAX::get_endpoint( Express_Checkout::ENDPOINT ),
-				'prepareUrl'   => \WC_AJAX::get_endpoint( 'famma_express_prepare' ),
-				'statusUrl'    => \WC_AJAX::get_endpoint( 'famma_express_status' ),
-				'cartUrl'      => \WC_AJAX::get_endpoint( 'famma_express_cart' ),
-				'nonceUrl'     => \WC_AJAX::get_endpoint( 'famma_express_nonce' ),
-				'currency'     => get_woocommerce_currency(),
-				'genericError' => __( 'The order could not go through. Please check the form and try again.', 'famma-core' ),
-				'sending'      => __( 'Sending…', 'famma-core' ),
-				'phoneError'   => __( 'Check the number: 8 digits (XX XXX XXX).', 'famma-core' ),
-				'stateError'   => __( 'Pick your governorate from the list.', 'famma-core' ),
-				'noMatch'      => __( 'No governorate found', 'famma-core' ),
-				'stateHint'    => __( 'Type to search…', 'famma-core' ),
-				'prepareLabel' => __( 'Vérifier ma commande / راجع طلبيتك', 'famma-core' ),
-				'confirmLabel' => __( 'Confirmer ma commande / أكد طلبيتك', 'famma-core' ),
-				'retryLabel'   => __( 'Vérifier ma commande en cours / ثبت طلبيتك', 'famma-core' ),
-				'changed'      => __( 'Votre panier a changé. Vérifiez à nouveau les articles et le total avant de confirmer. تبدلت السلة، راجع المنتوجات والمجموع.', 'famma-core' ),
-				'pending'      => __( 'Votre commande est en cours de vérification. Utilisez ce bouton pour retrouver son résultat. طلبيتك قاعدين نثبتو فيها، اضغط باش تعرف النتيجة.', 'famma-core' ),
-				'recovery'     => __( 'Nous n’avons pas encore reçu le résultat de votre commande. Vérifiez son état avec ce bouton avant de recommencer. مازال ما وصلتناش النتيجة، ثبت حالة طلبيتك قبل ما تعاود.', 'famma-core' ),
-				'storageError' => __( 'Pour commander en toute sécurité, autorisez le stockage de cette page ou utilisez Ajouter au panier. باش تطلب بأمان، فعل التخزين ولا زيد للسلة.', 'famma-core' ),
-				'cartEmpty'    => __( 'Votre panier est vide. Choisissez la quantité pour recommencer. السلة فارغة، اختار الكمية باش تعاود.', 'famma-core' ),
-				'cartRefused'  => __( 'Cette modification n’est pas possible (stock ou quantité maximale). Vérifiez le récapitulatif. التعديل هذا ما ينجمش، راجع الملخص.', 'famma-core' ),
-				'recapLabels'  => array(
+				'expressUrl'    => \WC_AJAX::get_endpoint( Express_Checkout::ENDPOINT ),
+				'prepareUrl'    => \WC_AJAX::get_endpoint( 'famma_express_prepare' ),
+				'statusUrl'     => \WC_AJAX::get_endpoint( 'famma_express_status' ),
+				'cartUrl'       => \WC_AJAX::get_endpoint( 'famma_express_cart' ),
+				'nonceUrl'      => \WC_AJAX::get_endpoint( 'famma_express_nonce' ),
+				'currency'      => get_woocommerce_currency(),
+				'genericError'  => __( 'The order could not go through. Please check the form and try again.', 'famma-core' ),
+				'sending'       => __( 'Sending…', 'famma-core' ),
+				'phoneError'    => __( 'Check the number: 8 digits (XX XXX XXX).', 'famma-core' ),
+				'stateError'    => __( 'Pick your governorate from the list.', 'famma-core' ),
+				'noMatch'       => __( 'No governorate found', 'famma-core' ),
+				'stateHint'     => __( 'Type to search…', 'famma-core' ),
+				'confirmLabel'  => __( 'Confirmer ma commande / أكد طلبيتك', 'famma-core' ),
+				'retryLabel'    => __( 'Vérifier ma commande en cours / ثبت طلبيتك', 'famma-core' ),
+				'amountChanged' => __( 'Le montant a été mis à jour. Vérifiez le récapitulatif puis confirmez. تبدل المبلغ، راجع المجموع ثم أكد.', 'famma-core' ),
+				'changed'       => __( 'Votre panier a changé. Vérifiez à nouveau les articles et le total avant de confirmer. تبدلت السلة، راجع المنتوجات والمجموع.', 'famma-core' ),
+				'pending'       => __( 'Votre commande est en cours de vérification. Utilisez ce bouton pour retrouver son résultat. طلبيتك قاعدين نثبتو فيها، اضغط باش تعرف النتيجة.', 'famma-core' ),
+				'recovery'      => __( 'Nous n’avons pas encore reçu le résultat de votre commande. Vérifiez son état avec ce bouton avant de recommencer. مازال ما وصلتناش النتيجة، ثبت حالة طلبيتك قبل ما تعاود.', 'famma-core' ),
+				'storageError'  => __( 'Pour commander en toute sécurité, autorisez le stockage de cette page ou utilisez Ajouter au panier. باش تطلب بأمان، فعل التخزين ولا زيد للسلة.', 'famma-core' ),
+				'cartEmpty'     => __( 'Votre panier est vide. Choisissez la quantité pour recommencer. السلة فارغة، اختار الكمية باش تعاود.', 'famma-core' ),
+				'cartRefused'   => __( 'Cette modification n’est pas possible (stock ou quantité maximale). Vérifiez le récapitulatif. التعديل هذا ما ينجمش، راجع الملخص.', 'famma-core' ),
+				'recapLabels'   => array(
 					/* translators: %s: product name. */
 					'decrease'   => __( 'Diminuer la quantité de %s', 'famma-core' ),
 					/* translators: %s: product name. */
@@ -272,7 +272,7 @@ final class Express_Order {
 				 * la quantité change. Le symbole passe par le même filtre que
 				 * `wc_price()` : « DT » en français, « د.ت » en arabe.
 				 */
-				'price'        => array(
+				'price'         => array(
 					'decimals' => wc_get_price_decimals(),
 					'decimal'  => wc_get_price_decimal_separator(),
 					'thousand' => wc_get_price_thousand_separator(),

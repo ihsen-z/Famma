@@ -142,6 +142,8 @@ final class Express_Preparation {
 					'emit'     => $delta > 0,
 					'event_id' => 'famma_add_' . $id,
 					'params'   => $params,
+					'previous' => $previous,
+					'unit'     => (float) wc_get_price_to_display( $product ),
 				),
 				'initiate_checkout' => array(
 					'event_id' => 'famma_checkout_' . $id,
