@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.2.5
+ * Version:           0.2.6
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.2.5' );
+define( 'FAMMA_CORE_VERSION', '0.2.6' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -44,6 +44,7 @@ require_once __DIR__ . '/includes/express-checkout.php';
 require_once __DIR__ . '/includes/express-idempotency.php';
 require_once __DIR__ . '/includes/express-preparation.php';
 require_once __DIR__ . '/includes/capi-delivery-registry.php';
+require_once __DIR__ . '/includes/capi-signals.php';
 require_once __DIR__ . '/includes/order-emails.php';
 require_once __DIR__ . '/includes/anti-abuse.php';
 require_once __DIR__ . '/includes/checkout-lite.php';
@@ -1648,6 +1649,8 @@ final class Tracking {
 		);
 
 		if ( '' !== $pixel ) {
+			// Crée _fbc dès l'arrivée depuis une annonce, sans attendre le Pixel différé.
+			wp_add_inline_script( 'famma-pixels', Capi_Signals::fbc_bootstrap_script() );
 			wp_add_inline_script(
 				'famma-pixels',
 				"!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];fammaDefer(function(){t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)})}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init'," . wp_json_encode( $pixel ) . ");fbq('track','PageView');"
@@ -1708,27 +1711,18 @@ final class Tracking {
 	 * @return void
 	 */
 	public function stamp_capi_signals( \WC_Order $order ): void {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- lecture seule d'un contexte de visite, pas une action.
-		$cookie_map = array(
-			'_fbp' => '_famma_fbp',
-			'_fbc' => '_famma_fbc',
+		// Seules les valeurs au format Meta sont gardées : un cookie forgé ou
+		// tronqué ne doit jamais atteindre la Conversions API.
+		$signals = array(
+			'_famma_fbp'       => Capi_Signals::cookie( '_fbp' ),
+			'_famma_fbc'       => Capi_Signals::cookie( '_fbc' ),
+			'_famma_client_ip' => Capi_Signals::client_ip(),
+			'_famma_client_ua' => Capi_Signals::client_user_agent(),
 		);
-		foreach ( $cookie_map as $cookie => $meta ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- idem.
-			if ( ! empty( $_COOKIE[ $cookie ] ) ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- idem.
-				$order->update_meta_data( $meta, substr( sanitize_text_field( wp_unslash( $_COOKIE[ $cookie ] ) ), 0, 255 ) );
+		foreach ( $signals as $meta => $value ) {
+			if ( '' !== $value ) {
+				$order->update_meta_data( $meta, $value );
 			}
-		}
-
-		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
-		if ( '' !== $ip && filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-			$order->update_meta_data( '_famma_client_ip', $ip );
-		}
-
-		$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
-		if ( '' !== $ua ) {
-			$order->update_meta_data( '_famma_client_ua', substr( $ua, 0, 400 ) );
 		}
 	}
 
@@ -1958,19 +1952,25 @@ final class Capi {
 			)
 		);
 
-		// Ces trois-là ne sont PAS hachés : Meta les attend en clair.
+		/*
+		 * Ces quatre-là ne sont PAS hachés : Meta les attend en clair. Ils
+		 * viennent toujours des métadonnées figées à la commande — jamais de
+		 * la requête courante, qui pour Purchase est celle de l'admin. Ils
+		 * sont revalidés ici car une commande antérieure à 0.2.6 a pu les
+		 * enregistrer sans contrôle de format ; absents, ils sont omis.
+		 */
 		$raw_meta_map = array(
 			'fbp' => '_famma_fbp',
 			'fbc' => '_famma_fbc',
 		);
 		foreach ( $raw_meta_map as $key => $meta ) {
-			$value = (string) $order->get_meta( $meta );
+			$value = Capi_Signals::clean_cookie( (string) $order->get_meta( $meta ) );
 			if ( '' !== $value ) {
 				$data[ $key ] = $value;
 			}
 		}
 
-		$ip = (string) $order->get_meta( '_famma_client_ip' );
+		$ip = Capi_Signals::clean_ip( (string) $order->get_meta( '_famma_client_ip' ) );
 		if ( '' !== $ip ) {
 			$data['client_ip_address'] = $ip;
 		}
@@ -2109,8 +2109,12 @@ final class Capi {
 		}
 		$payload = array( 'data' => array( $event ) );
 
-		// Real delivered orders always remain live conversions. Tests use the
-		// dedicated administration tool, without touching an order or its metadata.
+		// Les vraies commandes restent des conversions réelles, sauf mode test
+		// explicitement activé (constante ou option, éteint par défaut).
+		$test_code = Capi_Signals::test_event_code();
+		if ( '' !== $test_code ) {
+			$payload['test_event_code'] = $test_code;
+		}
 
 		$version = (string) apply_filters( 'famma_capi_graph_version', self::GRAPH_VERSION );
 		$url     = 'https://graph.facebook.com/' . rawurlencode( $version ) . '/' . rawurlencode( $pixel ) . '/events';
@@ -2661,6 +2665,7 @@ function boot(): void {
 	Checkout_Lite::instance();
 	Capi::instance();
 	Capi_Delivery_Registry::instance();
+	Capi_Signals::instance();
 	WhatsApp::instance();
 	Product_Video::instance();
 	Seo::instance();
