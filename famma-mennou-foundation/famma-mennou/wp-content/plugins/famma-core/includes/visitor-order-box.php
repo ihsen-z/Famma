@@ -125,7 +125,11 @@ final class Visitor_Order_Box {
 		echo '<ol class="famma-vj-box__events">';
 		foreach ( array_slice( $rows, -self::SHOWN ) as $row ) {
 			$what = $labels[ $row['event'] ] ?? $row['event'];
-			$page = 'form_field' === $row['event'] ? $row['label'] : $row['path'];
+			if ( 'form_field' === $row['event'] ) {
+				$page = Visitor_Admin_Views::field_label( $row['label'] );
+			} else {
+				$page = (int) $row['product_id'] ? get_the_title( (int) $row['product_id'] ) : $row['path'];
+			}
 			echo '<li><time>' . esc_html( wp_date( 'H:i', strtotime( $row['created_at'] . ' UTC' ) ) ) . '</time> ' . esc_html( $what ) . ( '' !== $page ? ' <code>' . esc_html( $page ) . '</code>' : '' ) . '</li>';
 		}
 		echo '</ol>';

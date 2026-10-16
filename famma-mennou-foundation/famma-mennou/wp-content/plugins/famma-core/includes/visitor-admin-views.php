@@ -34,9 +34,9 @@ final class Visitor_Admin_Views {
 	 * @param string $name Nom technique du champ.
 	 * @return string
 	 */
-	private static function field_label( string $name ): string {
+	public static function field_label( string $name ): string {
 		$labels = array(
-			'billing_first_name' => __( 'Prénom', 'famma-core' ),
+			'billing_first_name' => __( 'Nom complet / prénom', 'famma-core' ),
 			'billing_last_name'  => __( 'Nom', 'famma-core' ),
 			'billing_phone'      => __( 'Téléphone', 'famma-core' ),
 			'billing_state'      => __( 'Gouvernorat', 'famma-core' ),
@@ -58,12 +58,13 @@ final class Visitor_Admin_Views {
 	public static function summary( array $s ): void {
 		$sessions = (int) ( $s['sessions'] ?? 0 );
 		$tiles    = array(
-			__( 'Visiteurs uniques', 'famma-core' ) => number_format_i18n( (int) ( $s['visitors'] ?? 0 ) ),
-			__( 'Sessions', 'famma-core' )          => number_format_i18n( $sessions ),
-			__( 'Pages vues', 'famma-core' )        => number_format_i18n( (int) ( $s['page_views'] ?? 0 ) ),
-			__( 'Commandes suivies', 'famma-core' ) => number_format_i18n( (int) ( $s['orders'] ?? 0 ) ),
-			__( 'Conversion', 'famma-core' )        => self::pct( (int) ( $s['ordered'] ?? 0 ), $sessions ),
-			__( 'Clics WhatsApp', 'famma-core' )    => number_format_i18n( (int) ( $s['whatsapp'] ?? 0 ) ),
+			__( 'Visiteurs uniques', 'famma-core' )    => number_format_i18n( (int) ( $s['visitors'] ?? 0 ) ),
+			__( 'Sessions', 'famma-core' )             => number_format_i18n( $sessions ),
+			__( 'Pages vues', 'famma-core' )           => number_format_i18n( (int) ( $s['page_views'] ?? 0 ) ),
+			__( 'Commandes suivies', 'famma-core' )    => number_format_i18n( (int) ( $s['orders'] ?? 0 ) ),
+			__( 'Conversion', 'famma-core' )           => self::pct( (int) ( $s['ordered'] ?? 0 ), $sessions ),
+			__( 'Sessions avec panier', 'famma-core' ) => number_format_i18n( (int) ( $s['cart'] ?? 0 ) ),
+			__( 'Clics WhatsApp', 'famma-core' )       => number_format_i18n( (int) ( $s['whatsapp'] ?? 0 ) ),
 		);
 		echo '<div class="famma-vj__tiles">';
 		foreach ( $tiles as $label => $value ) {
@@ -71,10 +72,12 @@ final class Visitor_Admin_Views {
 		}
 		echo '</div>';
 
+		// Le panier n'est pas une marche : la commande express le remplit à
+		// l'envoi du formulaire, après « Formulaire commencé ». Le placer ici
+		// donnait des passages supérieurs à 100 %. Il figure dans les tuiles.
 		$steps = array(
 			'sessions' => __( 'Sessions', 'famma-core' ),
 			'product'  => __( 'Fiche produit vue', 'famma-core' ),
-			'cart'     => __( 'Ajout au panier', 'famma-core' ),
 			'form'     => __( 'Formulaire commencé', 'famma-core' ),
 			'submit'   => __( 'Formulaire envoyé', 'famma-core' ),
 			'ordered'  => __( 'Commande passée', 'famma-core' ),
