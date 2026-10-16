@@ -978,18 +978,26 @@
 		message( 'processing' === record.phase ? fammaExpress.pending : fammaExpress.recovery );
 	}
 
+	/**
+	 * Aucune commande n'existe pour cette intention : retour au repos, nouveau
+	 * devis au prochain clic (même request_id, rien n'a été réservé).
+	 */
+	function backToDraft() {
+		record.phase = 'draft';
+		record.preparation_id = uuid();
+		record.cart_hash = '';
+		delete record.fields;
+		saveRecord();
+		quoted = false;
+		reviewedTotal = null;
+		unlockFields();
+	}
+
 	function sendFinal() {
 		return request( fammaExpress.expressUrl, record.fields, true ).then( function ( result ) {
 			if ( result && ( 'cart_changed' === result.famma_code || 'preparation_missing' === result.famma_code ) ) {
 				// The backend guarantees these guards ran before intent reservation.
-				record.phase = 'draft';
-				record.preparation_id = uuid();
-				record.cart_hash = '';
-				delete record.fields;
-				saveRecord();
-				quoted = false;
-				reviewedTotal = null;
-				unlockFields();
+				backToDraft();
 				message( fammaExpress.changed );
 				return;
 			}
@@ -999,6 +1007,22 @@
 			}
 			// A WooCommerce failure alone does not prove that no order was created.
 			return status().then( function ( state ) {
+				/*
+				 * Refus explicite (plafond, jeton, panier, registre) et aucune
+				 * intention connue dans cette session : rien n'a été réservé,
+				 * donc aucune commande. Retour au repos plutôt qu'un état
+				 * « à vérifier » qui rejouerait l'envoi à chaque clic.
+				 * Une réponse perdue ou illisible (`result` nul) reste ambiguë.
+				 */
+				if ( result && 'failure' === result.result && state && 'unknown_intent' === state.famma_code ) {
+					backToDraft();
+					if ( result.messages ) {
+						showError( result.messages );
+					} else {
+						message( fammaExpress.genericError );
+					}
+					return;
+				}
 				resolve( state, result );
 			} );
 		} );
