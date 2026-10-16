@@ -1,5 +1,61 @@
 # Changelog — FAMMA Core
 
+## 0.2.7 — 2026-10-16
+
+### Commande express en un clic (fiche produit, mobile)
+
+- **Un clic = une commande** : « Confirmer ma commande / أكد طلبيتك » enchaîne
+  `famma_express_prepare` puis `famma_express_checkout` et redirige vers la page
+  de remerciement WooCommerce (order-received). Plus de bloc « Vérifiez votre
+  commande » inséré au-dessus du bouton.
+- **Commande isolée** : la commande ne contient que le produit de la fiche, à la
+  quantité choisie (− / +). Les autres articles du panier ne sont ni commandés,
+  ni supprimés, ni modifiés ; codes promo mis de côté puis remis. Nouvelle classe
+  `Express_Cart_Isolation`.
+- **Modale de contrôle** uniquement si le total calculé par le serveur diffère du
+  total affiché : fenêtre centrée, bouton final « Valider ma commande – XX DT /
+  أكّد نهائيا » visible sans défiler.
+- **Pendant l'envoi** : bouton désactivé, « Envoi en cours… / قاعد نبعث… »,
+  indicateur de chargement. Double clic = une seule commande ; reprise par
+  `famma_express_status` conservée ; aucun renvoi automatique après erreur
+  (un refus avant réservation ramène au repos avec son message).
+- **Erreurs visibles** : message WooCommerce juste au-dessus du bouton,
+  défilement jusqu'à lui, champ fautif en rouge (`aria-invalid`). Jamais
+  d'échec sans message.
+- **Conditions générales** : case obligatoire supprimée, remplacée par « En
+  commandant, vous acceptez nos conditions générales » (lien) sous le bouton.
+  Côté serveur, `woocommerce_checkout_show_terms` est à false pour la seule
+  requête express ; le checkout classique est inchangé.
+- **Page de remerciement** d'une commande express : numéro de commande et « On
+  vous appelle pour confirmer / باش نكلموك باش نأكدو ». Le panier restant n'y est
+  jamais vidé.
+- **Bouton collant** (thème enfant, `sticky-cta.js`) : défile jusqu'au formulaire
+  et place le curseur dans le champ Nom.
+- **Script et CSS du formulaire** marqués `data-no-optimize`, `data-no-defer`,
+  `data-cfasync="false"` et exclus des optimisations LiteSpeed.
+- **Compatibilité cache** : le nouveau script reste sûr face à l'ancien HTML
+  servi par LiteSpeed avant purge (case CGV rendue facultative, contrôle forcé).
+
+### Téléphone tunisien
+
+- `Tunisia::normalize_phone()` : 20123456, « 20 123 456 », « +216 20123456 »,
+  0021620123456, « 216 20 123 456 », « (+216) … », chiffres arabes et espaces
+  insécables sont acceptés et **enregistrés sur 8 chiffres**. Les numéros
+  216xxxxx (ex. 21612345) ne sont plus refusés à tort. Même règle côté
+  navigateur, anti-abus et hash Meta.
+
+### Meta
+
+- **Journal `famma-capi`** (WooCommerce > État > Journaux) : une ligne par envoi
+  OrderPlaced / Purchase avec event_id, valeur, devise, présence fbc/fbp/ph,
+  code HTTP, `events_received`, `fbtrace_id` et message d'erreur Meta. Jamais le
+  token ni d'identifiant en clair.
+- **`_fbc` mis à jour** quand un nouveau `fbclid` arrive (règle Meta) ; inchangé
+  pour le même `fbclid`.
+- InitiateCheckout (navigateur) et AddToCart émis une seule fois par intention.
+- OrderPlaced : value = total réel de la commande isolée (77 TND pour une
+  trancheuse). Purchase : inchangé, au statut « Livrée », value = total réel.
+
 ## 0.2.6 — 2026-10-13
 
 ### Meta Conversions API : meilleure correspondance (fbc / fbp)
