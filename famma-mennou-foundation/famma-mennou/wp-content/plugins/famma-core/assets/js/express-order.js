@@ -55,6 +55,26 @@
 	var phoneInput = form.querySelector( '[name="billing_phone"]' );
 	var phoneError = phoneInput ? document.getElementById( phoneInput.getAttribute( 'aria-describedby' ) ) : null;
 
+	/*
+	 * Ancien balisage (avant 0.2.7) encore servi par le cache de page : case
+	 * CGV obligatoire et récapitulatif inséré. Le serveur n'exige plus la
+	 * case : elle devient facultative et disparaît, le récapitulatif aussi, et
+	 * la commande passe toujours par la modale de vérification (l'ancienne
+	 * page n'annonce pas que seul cet article est commandé).
+	 */
+	var legacyTerms = form.querySelector( '[name="terms"]' );
+	var legacyRecap = form.querySelector( '.famma-express__recap' );
+	var legacy = !! ( legacyTerms || legacyRecap );
+
+	if ( legacyTerms ) {
+		legacyTerms.required = false;
+		legacyTerms.removeAttribute( 'required' );
+		( ( legacyTerms.closest && legacyTerms.closest( 'p, label, .form-row' ) ) || legacyTerms ).hidden = true;
+	}
+	if ( legacyRecap ) {
+		legacyRecap.hidden = true;
+	}
+
 	/**
 	 * Indique si l'animation doit être supprimée.
 	 *
@@ -918,7 +938,7 @@
 				saveRecord();
 				acknowledgedEvents( clickTracking() );
 				inform( result.other_items > 0 ? fammaExpress.otherItems : '' );
-				if ( ! sameTotal( result.summary ) ) {
+				if ( legacy || ! sameTotal( result.summary ) ) {
 					return review( result.summary, fields );
 				}
 				return submitFinal( fields );
@@ -1173,11 +1193,14 @@
 		dialog.setAttribute( 'aria-describedby', 'famma-express-modal-text' );
 		dialog.tabIndex = -1;
 		title.id = 'famma-express-modal-title';
-		title.textContent = fammaExpress.modalTitle || '';
+		// Replis pour l'ancien `fammaExpress` servi par le cache : jamais de titre ni de bouton sans nom.
+		title.textContent = fammaExpress.modalTitle || fammaExpress.confirmLabel || '';
 		text.id = 'famma-express-modal-text';
 		text.textContent = fammaExpress.amountChanged || '';
 		close.type = 'button';
-		close.setAttribute( 'aria-label', fammaExpress.modalClose || '' );
+		if ( fammaExpress.modalClose ) {
+			close.setAttribute( 'aria-label', fammaExpress.modalClose );
+		}
 		close.textContent = '×';
 		confirm.type = 'button';
 		spinner.setAttribute( 'aria-hidden', 'true' );
@@ -1224,7 +1247,7 @@
 		} );
 
 		document.body.appendChild( overlay );
-		modal = { overlay: overlay, dialog: dialog, content: content, close: close, confirm: confirm, confirmText: confirmText };
+		modal = { overlay: overlay, dialog: dialog, text: text, content: content, close: close, confirm: confirm, confirmText: confirmText };
 		return modal;
 	}
 
@@ -1232,7 +1255,8 @@
 		modal.confirm.disabled = on;
 		modal.close.disabled = on;
 		modal.confirm.setAttribute( 'aria-busy', on ? 'true' : 'false' );
-		modal.confirmText.textContent = on ? fammaExpress.sending : String( fammaExpress.finalLabel || '%s' ).replace( '%s', totalText( summary ) );
+		var finalText = fammaExpress.finalLabel ? String( fammaExpress.finalLabel ).replace( '%s', totalText( summary ) ) : [ fammaExpress.confirmLabel, totalText( summary ) ].filter( Boolean ).join( ' ' );
+		modal.confirmText.textContent = on ? fammaExpress.sending : finalText;
 	}
 
 	function hideModal() {
@@ -1280,6 +1304,9 @@
 		modalReturn = button;
 		m.content.innerHTML = '';
 		m.content.appendChild( summaryTable( summary ) );
+		// Modale forcée par l'ancien balisage : « total mis à jour » seulement s'il a changé.
+		m.text.textContent = sameTotal( summary ) ? '' : ( fammaExpress.amountChanged || '' );
+		m.text.hidden = ! m.text.textContent;
 		setModalBusy( false, summary );
 		m.overlay.hidden = false;
 		if ( document.documentElement && document.documentElement.classList ) {
