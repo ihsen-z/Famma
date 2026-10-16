@@ -9,6 +9,8 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/express-cart-isolation.php';
+
 /** Session-bound preparations never create orders or fabricate payable totals. */
 final class Express_Preparation {
 	/** Shared endpoint instance.
@@ -63,7 +65,14 @@ final class Express_Preparation {
 		return isset( $_POST[ $key ] ) && is_scalar( $_POST[ $key ] ) ? sanitize_text_field( wp_unslash( (string) $_POST[ $key ] ) ) : '';
 	}
 
-	/** Prepare the real cart and return the exact recap and acknowledged tracking. */
+	/**
+	 * Prépare le devis isolé (le seul produit de la fiche) et le suivi acquitté.
+	 *
+	 * Le panier est isolé (voir `Express_Cart_Isolation`) le temps du calcul,
+	 * puis remis tel quel avant l'enregistrement de la session : `prepare` ne
+	 * laisse aucune trace au panier. `other_items` indique combien d'articles
+	 * restent au panier, hors commande express.
+	 */
 	public function handle(): void {
 		if ( ! self::guard() ) {
 			return;
@@ -76,47 +85,38 @@ final class Express_Preparation {
 			$this->failure( 'preparation_invalid' );
 			return;
 		}
-		$signature    = hash( 'sha256', (string) wp_json_encode( array( $product_id, $quantity, self::posted( 'billing_state' ), self::posted( 'billing_country' ) ) ) );
+		$signature    = self::signature();
 		$preparations = (array) WC()->session->get( 'famma_express_preparations', array() );
+		$isolation    = Express_Cart_Isolation::instance();
 		$this->customer_location();
-		if ( ! $this->recalculate() ) {
-			$this->failure( 'cart_rejected' );
-			return;
-		}
-		if ( isset( $preparations[ $id ] ) ) {
-			if ( $signature !== $preparations[ $id ]['signature'] ) {
-				$this->failure( 'preparation_conflict' );
-				return;
-			}
-			if ( self::cart_hash() !== $preparations[ $id ]['response']['cart_hash'] ) {
-				$this->failure( 'cart_changed' );
-				return;
-			}
-			wp_send_json( $preparations[ $id ]['response'] );
-			return;
-		}
-		$previous = 0.0;
-		foreach ( WC()->cart->get_cart() as $item ) {
-			if ( (int) $item['product_id'] === $product_id && empty( $item['variation_id'] ) ) {
-				$previous += (float) $item['quantity'];
-			}
-		}
-		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- native Woo validation also applies when the quantity already matches.
-		if ( $previous === $quantity && ! apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, $quantity ) ) {
-			$this->failure( 'cart_rejected' );
-			return;
-		}
-		if ( $previous !== $quantity && ! Express_Checkout::instance()->put_in_cart( $product_id, $quantity ) ) {
+		if ( ! $isolation->isolate( $product_id, $quantity ) || ! $this->recalculate() ) {
 			$this->failure( 'cart_rejected' );
 			return;
 		}
 		// Revalidate unchanged quantities too; preparation is not a stock reservation.
 		WC()->cart->check_cart_items();
-		if ( wc_notice_count( 'error' ) > 0 ) {
+		if ( wc_notice_count( 'error' ) > 0 || ! $this->recalculate() ) {
 			$this->failure( 'cart_rejected' );
 			return;
 		}
-		$this->recalculate();
+		$hash = self::cart_hash();
+		if ( isset( $preparations[ $id ] ) ) {
+			if ( $signature !== $preparations[ $id ]['signature'] ) {
+				$this->failure( 'preparation_conflict' );
+				return;
+			}
+			if ( $hash !== $preparations[ $id ]['response']['cart_hash'] ) {
+				$this->failure( 'cart_changed' );
+				return;
+			}
+			$response                = $preparations[ $id ]['response'];
+			$response['other_items'] = $isolation->other_items();
+			$isolation->restore();
+			WC()->session->save_data();
+			wp_send_json( $response );
+			return;
+		}
+		$previous            = $isolation->previous_quantity();
 		$delta               = max( 0.0, $quantity - $previous );
 		$sku                 = (string) $product->get_sku();
 		$content_id          = '' !== $sku ? $sku : (string) $product_id;
@@ -135,8 +135,9 @@ final class Express_Preparation {
 		$response            = array(
 			'result'         => 'success',
 			'preparation_id' => $id,
-			'cart_hash'      => self::cart_hash(),
+			'cart_hash'      => $hash,
 			'summary'        => self::summary(),
+			'other_items'    => $isolation->other_items(),
 			'tracking'       => array(
 				'add_to_cart'       => array(
 					'emit'     => $delta > 0,
@@ -151,6 +152,7 @@ final class Express_Preparation {
 				),
 			),
 		);
+		$isolation->restore();
 		$preparations[ $id ] = array(
 			'signature' => $signature,
 			'response'  => $response,
@@ -161,89 +163,42 @@ final class Express_Preparation {
 	}
 
 	/**
-	 * Retire une ligne ou change sa quantité, depuis le récapitulatif.
+	 * Ancienne modification de ligne depuis le récapitulatif, désormais refusée.
 	 *
-	 * Même garde que la préparation : jeton, session, empreinte du panier que le
-	 * client vient de voir (un panier modifié ailleurs est refusé), puis les
-	 * contrôles natifs de WooCommerce (stock, quantité maximale, plafond
-	 * anti-abus). L'empreinte et la signature de la préparation sont mises à jour :
-	 * la confirmation finale porte sur le panier tel qu'il est maintenant.
+	 * La commande express ne porte plus que sur le produit de la fiche, à la
+	 * quantité du formulaire (`famma_quantity`) ; les autres lignes du panier
+	 * ne sont plus commandées. Modifier une ligne ici n'aurait donc plus
+	 * d'effet sur la commande. Le point d'entrée reste enregistré pour qu'un
+	 * ancien script servi par le cache reçoive un refus explicite, avec message.
 	 */
 	public function edit(): void {
 		if ( ! self::guard() ) {
 			return;
 		}
-		$id           = self::posted( 'famma_preparation_id' );
-		$preparations = (array) WC()->session->get( 'famma_express_preparations', array() );
-		$entry        = $preparations[ $id ] ?? null;
-		$this->customer_location();
-		if ( ! Express_Idempotency::valid_id( $id ) || ! is_array( $entry ) || ! $this->recalculate() ) {
-			$this->failure( 'preparation_missing' );
-			return;
-		}
-		if ( self::posted( 'famma_cart_hash' ) !== self::cart_hash() || self::cart_hash() !== $entry['response']['cart_hash'] ) {
-			$this->failure( 'cart_changed' );
-			return;
-		}
-		$key    = self::posted( 'famma_cart_key' );
-		$action = self::posted( 'famma_cart_action' );
-		$item   = WC()->cart->get_cart_item( $key );
-		if ( empty( $item ) || ! in_array( $action, array( 'set', 'remove' ), true ) ) {
-			$this->failure( 'cart_rejected' );
-			return;
-		}
-		if ( 'remove' === $action ) {
-			WC()->cart->remove_cart_item( $key );
-		} else {
-			$quantity = (float) wc_stock_amount( self::posted( 'famma_cart_quantity' ) );
-			$max      = self::max_quantity( $item['data'] );
-			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- native Woo validation, as WC_Form_Handler::update_cart_action() applies it.
-			if ( $quantity < 1 || ( $max > 0 && $quantity > $max ) || ! $item['data']->has_enough_stock( $quantity ) || ! apply_filters( 'woocommerce_update_cart_validation', true, $key, $item, $quantity ) ) {
-				$this->failure( 'cart_rejected' );
-				return;
-			}
-			WC()->cart->set_quantity( $key, $quantity );
-		}
-		if ( ! $this->recalculate() ) {
-			$this->failure( 'cart_rejected' );
-			return;
-		}
-		WC()->cart->check_cart_items();
-		if ( wc_notice_count( 'error' ) > 0 ) {
-			$this->failure( 'cart_rejected' );
-			return;
-		}
-		$summary                        = self::summary();
-		$hash                           = self::cart_hash();
-		$entry['response']['summary']   = $summary;
-		$entry['response']['cart_hash'] = $hash;
-		$entry['signature']             = hash( 'sha256', (string) wp_json_encode( array( absint( self::posted( 'famma_product_id' ) ), (float) wc_stock_amount( self::posted( 'famma_quantity' ) ), self::posted( 'billing_state' ), self::posted( 'billing_country' ) ) ) );
-		$preparations[ $id ]            = $entry;
-		WC()->session->set( 'famma_express_preparations', $preparations );
-		WC()->session->save_data();
-		wp_send_json(
-			array(
-				'result'         => 'success',
-				'preparation_id' => $id,
-				'cart_hash'      => $hash,
-				'summary'        => $summary,
-			)
-		);
+		$this->failure( 'cart_edit_unsupported' );
 	}
 
-	/** Require the prepared cart version and location before checkout reservation. @return bool */
+	/**
+	 * Exige le devis préparé : même produit, quantité, gouvernorat et même total.
+	 *
+	 * Isole le panier comme `prepare` : l'empreinte comparée est celle du devis
+	 * isolé. L'isolation reste active pendant `process_checkout()` et se termine
+	 * à `shutdown` (voir `Express_Cart_Isolation`).
+	 *
+	 * @return bool
+	 */
 	public function verify(): bool {
 		$id           = self::posted( 'famma_preparation_id' );
 		$preparations = (array) WC()->session->get( 'famma_express_preparations', array() );
 		$entry        = $preparations[ $id ] ?? null;
-		$signature    = hash( 'sha256', (string) wp_json_encode( array( absint( self::posted( 'famma_product_id' ) ), (float) wc_stock_amount( self::posted( 'famma_quantity' ) ), self::posted( 'billing_state' ), self::posted( 'billing_country' ) ) ) );
-		$this->customer_location();
-		if ( ! $this->recalculate() ) {
-			$this->failure( 'cart_rejected' );
+		if ( ! is_array( $entry ) || self::signature() !== ( $entry['signature'] ?? '' ) ) {
+			$this->failure( 'preparation_missing' );
 			return false;
 		}
-		if ( ! $entry || $signature !== $entry['signature'] ) {
-			$this->failure( 'preparation_missing' );
+		$this->customer_location();
+		$isolated = Express_Cart_Isolation::instance()->isolate( absint( self::posted( 'famma_product_id' ) ), (float) wc_stock_amount( self::posted( 'famma_quantity' ) ) );
+		if ( ! $isolated || ! $this->recalculate() ) {
+			$this->failure( 'cart_rejected' );
 			return false;
 		}
 		$hash = self::cart_hash();
@@ -252,6 +207,11 @@ final class Express_Preparation {
 			return false;
 		}
 		return true;
+	}
+
+	/** Digest of the posted intent: product, quantity and delivery location. @return string */
+	private static function signature(): string {
+		return hash( 'sha256', (string) wp_json_encode( array( absint( self::posted( 'famma_product_id' ) ), (float) wc_stock_amount( self::posted( 'famma_quantity' ) ), self::posted( 'billing_state' ), self::posted( 'billing_country' ) ) ) );
 	}
 
 	/** Apply posted Tunisian governorate for authoritative Woo delivery/tax calculations. */
@@ -361,19 +321,50 @@ final class Express_Preparation {
 		);
 	}
 
-	/** Safe refusal with a fresh authoritative recap.
+	/**
+	 * Refus sûr : toujours un message, et le devis isolé s'il a été calculé.
 	 *
-	 * @param string $code Reason.
+	 * Le panier d'origine est restauré avant la réponse.
+	 *
+	 * @param string $code Raison.
 	 */
 	private function failure( string $code ): void {
-		wp_send_json(
-			array(
-				'result'     => 'failure',
-				'famma_code' => $code,
-				'messages'   => wc_print_notices( true ),
-				'summary'    => self::summary(),
-				'cart_hash'  => self::cart_hash(),
-			)
+		if ( 0 === wc_notice_count( 'error' ) ) {
+			wc_add_notice( self::message( $code ), 'error' );
+		}
+		$response  = array(
+			'result'     => 'failure',
+			'famma_code' => $code,
+			'messages'   => wc_print_notices( true ),
 		);
+		$isolation = Express_Cart_Isolation::instance();
+		if ( $isolation->is_active() ) {
+			$response['summary']   = self::summary();
+			$response['cart_hash'] = self::cart_hash();
+		}
+		$isolation->restore();
+		wp_send_json( $response );
+	}
+
+	/**
+	 * Message d'un refus sans avis WooCommerce : jamais d'échec muet.
+	 *
+	 * @param string $code Raison.
+	 * @return string
+	 */
+	private static function message( string $code ): string {
+		switch ( $code ) {
+			case 'preparation_invalid':
+			case 'cart_rejected':
+				return __( 'Ce produit ne peut pas être commandé dans cette quantité pour le moment. Vérifiez la quantité et réessayez. / المنتوج هذا ما ينجمش يتطلب بالكمية هاذي توا.', 'famma-core' );
+			case 'preparation_conflict':
+			case 'preparation_missing':
+			case 'cart_changed':
+				return __( 'Votre commande a changé depuis sa préparation. Vérifiez le total puis confirmez à nouveau. / الطلبية تبدلت، ثبت في المجموع وأكد من جديد.', 'famma-core' );
+			case 'cart_edit_unsupported':
+				return __( 'Modifiez la quantité directement dans le formulaire de commande. / بدل الكمية في الفورمولار.', 'famma-core' );
+			default:
+				return __( 'The order could not go through. Please check the form and try again.', 'famma-core' );
+		}
 	}
 }

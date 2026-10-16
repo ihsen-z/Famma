@@ -154,7 +154,7 @@ final class Anti_Abuse {
 			return;
 		}
 
-		$phone = Config::international_phone( is_array( $data ) && isset( $data['billing_phone'] ) ? (string) $data['billing_phone'] : '' );
+		$phone = self::phone_key( is_array( $data ) && isset( $data['billing_phone'] ) ? (string) $data['billing_phone'] : '' );
 
 		if ( '' !== $phone && self::count( self::key( 'phone', $phone ) ) >= self::limit( 'orders_per_phone_day' ) ) {
 			$errors->add( 'famma_order_phone_limit', self::message( 'phone' ) );
@@ -184,11 +184,28 @@ final class Anti_Abuse {
 
 		self::bump( self::key( 'ip', self::client_ip() ), HOUR_IN_SECONDS );
 
-		$phone = Config::international_phone( (string) $order->get_billing_phone() );
+		$phone = self::phone_key( (string) $order->get_billing_phone() );
 
 		if ( '' !== $phone ) {
 			self::bump( self::key( 'phone', $phone ), DAY_IN_SECONDS );
 		}
+	}
+
+	/**
+	 * Clé de comptage d'un numéro client : `216` + 8 chiffres, ou ''.
+	 *
+	 * Même règle que la validation du checkout (`Tunisia::normalize_phone()`) :
+	 * « 20 123 456 », « +216 20123456 » et « ٢٠١٢٣٤٥٦ » comptent pour le même
+	 * numéro. Un numéro non tunisien n'est pas compté (la commande est de
+	 * toute façon refusée par la validation).
+	 *
+	 * @param string $raw Numéro saisi.
+	 * @return string
+	 */
+	private static function phone_key( string $raw ): string {
+		$local = Tunisia::normalize_phone( $raw );
+
+		return '' === $local ? '' : '216' . $local;
 	}
 
 	/**

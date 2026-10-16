@@ -120,17 +120,26 @@ final class Config {
 	 * (audit du 23/09, UX-01). Un numéro à 8 chiffres est donc tunisien.
 	 *
 	 * @param string $raw Number as typed: spaces, dots, « + » or « 00 » allowed.
+	 * A Tunisian number is recognised by `Tunisia::normalize_phone()` only (8
+	 * digits, or 216 / 00216 + 8 digits). Anything else is kept as an
+	 * international number — « 00 » removed, never prefixed with 216: before,
+	 * « 0020123456 » (an Egyptian prefix) became +216 20 123 456. Customer
+	 * numbers must use `'216' . Tunisia::normalize_phone()` directly; this
+	 * helper stays for the owner's WhatsApp number, which may be foreign.
+	 *
 	 * @return string Digits only, e.g. `21656261412`; empty when nothing usable.
 	 */
 	public static function international_phone( string $raw ): string {
 		$digits = (string) preg_replace( '/\D+/', '', $raw );
+		$local = Tunisia::normalize_phone( $raw );
+
+		if ( '' !== $local ) {
+			return '216' . $local;
+		}
+
 
 		if ( str_starts_with( $digits, '00' ) ) {
 			$digits = substr( $digits, 2 );
-		}
-
-		if ( 8 === strlen( $digits ) ) {
-			$digits = '216' . $digits;
 		}
 
 		return $digits;
@@ -1078,6 +1087,7 @@ final class Tunisia {
 		add_filter( 'woocommerce_states', array( $this, 'governorates' ) );
 		add_filter( 'woocommerce_checkout_fields', array( $this, 'checkout_fields' ) );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate_phone' ), 10, 2 );
+		add_filter( 'woocommerce_process_checkout_field_billing_phone', array( $this, 'normalize_billing_phone' ) );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'require_email_for_account' ), 20, 2 );
 
 		/*
@@ -1368,9 +1378,81 @@ final class Tunisia {
 	}
 
 	/**
+	/**
+	 * Normalises a Tunisian phone number to its 8 national digits.
+	 *
+	 * Accepts what customers really type: spaces (including non-breaking
+	 * ones), dots, dashes, parentheses, « + », Arabic-Indic and Persian digits,
+	 * and the +216 / 00216 / 216 prefix. The prefix is only removed when the
+	 * length proves it is one (13 digits « 00216… », 11 digits « 216… »): an
+	 * 8-digit number starting with 216, such as 21612345, stays a number.
+	 *
+	 * @param string $raw Number as typed.
+	 * @return string The 8 digits, or '' when the number is not plausible.
+	 */
+	public static function normalize_phone( string $raw ): string {
+		$raw    = strtr(
+			$raw,
+			array(
+				'٠' => '0',
+				'١' => '1',
+				'٢' => '2',
+				'٣' => '3',
+				'٤' => '4',
+				'٥' => '5',
+				'٦' => '6',
+				'٧' => '7',
+				'٨' => '8',
+				'٩' => '9',
+				'۰' => '0',
+				'۱' => '1',
+				'۲' => '2',
+				'۳' => '3',
+				'۴' => '4',
+				'۵' => '5',
+				'۶' => '6',
+				'۷' => '7',
+				'۸' => '8',
+				'۹' => '9',
+			)
+		);
+		$digits = (string) preg_replace( '/\D+/', '', $raw );
+
+		if ( 13 === strlen( $digits ) && str_starts_with( $digits, '00216' ) ) {
+			$digits = substr( $digits, 5 );
+		} elseif ( 11 === strlen( $digits ) && str_starts_with( $digits, '216' ) ) {
+			$digits = substr( $digits, 3 );
+		}
+
+		return 1 === preg_match( '/^[2-9]\d{7}$/', $digits ) ? $digits : '';
+	}
+
+	/**
+	 * Stores the billing phone as its 8 national digits.
+	 *
+	 * Applied by `WC_Checkout::get_posted_data()` before WooCommerce's own
+	 * phone check (`WC_Validation::is_phone_format()` refuses Arabic-Indic
+	 * digits): the order, the customer and the courier all get « 20123456 ».
+	 * An implausible number is left as typed so `validate_phone()` names it.
+	 *
+	 * @param mixed $value Posted value, already passed through wc_clean().
+	 * @return mixed
+	 */
+	public function normalize_billing_phone( $value ) {
+		if ( ! is_string( $value ) || '' === $value ) {
+			return $value;
+		}
+		$digits = self::normalize_phone( $value );
+
+		return '' === $digits ? $value : $digits;
+	}
+
 	 * Rejects anything that is not a plausible Tunisian mobile/landline number.
 	 *
-	 * Accepts an optional +216 / 00216 prefix, then requires 8 digits.
+	 * Same rule as normalize_phone(). WooCommerce's generic « not a valid
+	 * phone number » error is replaced by this one, so the customer reads a
+	 * single message. The `id` data becomes `data-id="billing_phone"` on the
+	 * notice: the express form uses it to mark the field.
 	 *
 	 * @param array<string,mixed> $data   Posted checkout data.
 	 * @param \WP_Error           $errors Error collector.
@@ -1380,15 +1462,16 @@ final class Tunisia {
 		if ( empty( $data['billing_phone'] ) ) {
 			return;
 		}
-		$raw    = preg_replace( '/[\s\-\.]/', '', (string) $data['billing_phone'] );
-		$digits = preg_replace( '/^(?:\+?216|00216)/', '', $raw );
-		if ( ! preg_match( '/^[2-9]\d{7}$/', $digits ) ) {
-			$errors->add(
-				'billing_phone_invalid',
-				__( 'Please enter a valid Tunisian phone number (8 digits). أدخل رقم هاتف تونسي صحيح.', 'famma-core' )
-			);
+		if ( '' !== self::normalize_phone( (string) $data['billing_phone'] ) ) {
+			return;
 		}
 	}
+		$errors->remove( 'billing_phone_validation' );
+		$errors->add(
+			'billing_phone_invalid',
+			__( 'Please enter a valid Tunisian phone number (8 digits). أدخل رقم هاتف تونسي صحيح.', 'famma-core' ),
+			array( 'id' => 'billing_phone' )
+		);
 }
 
 /**
