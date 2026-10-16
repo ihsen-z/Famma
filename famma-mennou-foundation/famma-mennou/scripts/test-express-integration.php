@@ -251,8 +251,8 @@ final class Famma_Express_Test {
 			)
 		);
 		update_option( 'woocommerce_terms_page_id', self::$context['terms_page'] );
-		// Product A at 77 TND (express product), product B at 49 TND (other cart line).
-		foreach ( array( 77, 49 ) as $price ) {
+		// Product A at 77 TND (express product), B at 49 and C at 30 TND (other cart lines).
+		foreach ( array( 77, 49, 30 ) as $price ) {
 			$product = new WC_Product_Simple();
 			$product->set_name( '[TEST LOCAL] Express transaction ' . $price );
 			$product->set_status( 'publish' );
@@ -388,8 +388,9 @@ final class Famma_Express_Test {
 	) ): array {
 		++self::$scenario;
 		self::set_cart( $cart );
-		$prep = self::prepare_request( $quantity );
-		self::assert( 'prepare-success-' . self::$scenario, 'success' === ( $prep['result'] ?? '' ), 'Real prepare endpoint accepted.' );
+		$prep     = self::prepare_request( $quantity );
+		$accepted = 'success' === ( $prep['result'] ?? '' );
+		self::assert( 'prepare-success-' . self::$scenario, $accepted, 'Real prepare endpoint accepted.' );
 		WC()->session->save_data();
 		return $prep;
 	}
@@ -471,7 +472,7 @@ final class Famma_Express_Test {
 		$level = ob_get_level();
 		ob_start();
 		try {
-			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- Exercise the native WooCommerce AJAX contract.
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Exercise the native WooCommerce AJAX contract.
 			do_action( 'wc_ajax_' . $endpoint );
 		} catch ( Famma_Express_Test_Stop $stop ) {
 			$stopped = true;
@@ -492,8 +493,8 @@ final class Famma_Express_Test {
 	/** Emulate the end of a real request for the code under test. */
 	private static function request_end(): void {
 		global $wp_filter;
-		$checkout = \Famma\Core\Express_Checkout::instance();
-		$restore  = array( \Famma\Core\Express_Cart_Isolation::instance(), 'restore' );
+		$checkout               = \Famma\Core\Express_Checkout::instance();
+		$restore                = array( \Famma\Core\Express_Cart_Isolation::instance(), 'restore' );
 		self::$restore_priority = (int) has_action( 'shutdown', $restore );
 		if ( isset( $wp_filter['shutdown'] ) ) {
 			foreach ( $wp_filter['shutdown']->callbacks as $priority => $callbacks ) {
@@ -515,6 +516,26 @@ final class Famma_Express_Test {
 	}
 
 	/**
+	 * Run WooCommerce's real order-received cart clearing, as template_redirect does.
+	 *
+	 * @param WC_Order $order Order shown on the page.
+	 * @param bool     $clear Whether to run the real clearing after reading the decision.
+	 * @return bool Decision of the woocommerce_should_clear_cart_after_payment filter for a cart WooCommerce would clear.
+	 */
+	private static function thankyou_page( WC_Order $order, bool $clear = true ): bool {
+		global $wp;
+		$wp->query_vars['order-received'] = (string) $order->get_id();
+		$_GET['key']                      = $order->get_order_key();
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Native WooCommerce filter.
+		$decision = (bool) apply_filters( 'woocommerce_should_clear_cart_after_payment', true );
+		if ( $clear ) {
+			wc_clear_cart_after_payment();
+		}
+		unset( $wp->query_vars['order-received'], $_GET['key'] );
+		return $decision;
+	}
+
+	/**
 	 * Execute sequential transaction assertions on the one-click contract.
 	 *
 	 * @throws RuntimeException When a backend contract assertion fails.
@@ -525,7 +546,7 @@ final class Famma_Express_Test {
 
 		// 1. Terms: the classic checkout still requires the box (run first: express filters are request-scoped).
 		self::set_cart( array( 0 => 1 ) );
-		$classic = array(
+		$classic         = array(
 			'billing_first_name'        => 'Client Fixture',
 			'billing_last_name'         => 'Classique',
 			'billing_phone'             => '20123456',
@@ -539,7 +560,7 @@ final class Famma_Express_Test {
 			'ship_to_different_address' => '0',
 			'famma_hp_site'             => '',
 		);
-		$refused = self::endpoint( 'checkout', $classic );
+		$refused         = self::endpoint( 'checkout', $classic );
 		self::$results[] = array(
 			'name'     => 'classic-terms-response',
 			'messages' => wp_strip_all_tags( (string) ( $refused['messages'] ?? '' ) ),
@@ -562,7 +583,7 @@ final class Famma_Express_Test {
 		$prep   = self::prepare_request( 1 );
 		self::assert( 'prepare-success', 'success' === ( $prep['result'] ?? '' ), 'Prepare accepted.' );
 		$items = $prep['summary']['items'] ?? array();
-		self::assert( 'prepare-isolated-quote', 77.0 === (float) ( $prep['summary']['total'] ?? 0 ) && 'TND' === ( $prep['summary']['currency'] ?? '' ) && 1 === count( $items ) && $a === (int) ( $items[0]['product_id'] ?? 0 ) && 1 === (int) ( $items[0]['quantity'] ?? 0 ), 'Quote holds only product A x1, total 77 TND, although the cart holds A x2 + B x1.' );
+		self::assert( 'prepare-isolated-quote', 77.0 === (float) ( $prep['summary']['total'] ?? 0 ) && 'TND' === ( $prep['summary']['currency'] ?? '' ) && 1 === count( $items ) && (int) ( $items[0]['product_id'] ?? 0 ) === $a && 1 === (int) ( $items[0]['quantity'] ?? 0 ), 'Quote holds only product A x1, total 77 TND, although the cart holds A x2 + B x1.' );
 		self::assert( 'prepare-other-items', 1 === ( $prep['other_items'] ?? null ), 'other_items counts the B line left in the cart.' );
 		self::assert( 'prepare-initiate-checkout-value', 77.0 === (float) ( $prep['tracking']['initiate_checkout']['params']['value'] ?? 0 ) && '' !== (string) ( $prep['tracking']['initiate_checkout']['event_id'] ?? '' ), 'InitiateCheckout carries the isolated total and a server event_id.' );
 		self::$results[] = array(
@@ -594,8 +615,8 @@ final class Famma_Express_Test {
 			'_fbc' => 'fb.1.1760000000000.IwFixtureClickIdLocalOnly',
 			'_fbp' => 'fb.1.1760000000000.1234567890',
 		);
-		$post  = self::commit_fields( $prep, wp_generate_uuid4() );
-		$first = self::endpoint( 'famma_express_checkout', $post );
+		$post          = self::commit_fields( $prep, wp_generate_uuid4() );
+		$first         = self::endpoint( 'famma_express_checkout', $post );
 		self::$cookies = array();
 		self::assert( 'restore-before-session-save', self::$restore_priority < 0 && self::$restore_priority < (int) has_action( 'shutdown', array( WC()->session, 'save_data' ) ), 'Cart restoration runs at shutdown before WooCommerce saves the session.' );
 		self::assert( 'one-click-success', 'success' === ( $first['result'] ?? '' ) && ! empty( $first['redirect'] ) && ! empty( $first['order_id'] ), 'One click without terms box creates the order and returns the WooCommerce redirect: ' . wp_strip_all_tags( (string) wp_json_encode( $first ) ) );
@@ -613,6 +634,32 @@ final class Famma_Express_Test {
 		self::assert( 'express-order-stamped', $post['famma_request_id'] === $order->get_meta( '_famma_express_request_id' ), 'Express order carries its request marker.' );
 		self::conversion_assertions( $order, true );
 
+		// 3b. Order-received page: WooCommerce clears the cart on template_redirect; the other lines must stay.
+		$c        = self::$context['products'][2];
+		$received = self::prepare(
+			1,
+			array(
+				1 => 1,
+				2 => 1,
+			)
+		);
+		$rec_post = self::commit_fields( $received, wp_generate_uuid4() );
+		$rec      = self::endpoint( 'famma_express_checkout', $rec_post );
+		self::assert( 'received-order-success', 'success' === ( $rec['result'] ?? '' ), 'Express order with B and C in the cart.' );
+		$rec_order = wc_get_order( $rec['order_id'] );
+		self::session( self::$context['cookie'] );
+		self::assert( 'order-received-express-not-cleared', false === self::thankyou_page( $rec_order ), 'On an express order-received page the cart is never cleared, whatever the cart hash.' );
+		self::assert( 'order-received-classic-still-cleared', true === self::thankyou_page( wc_get_order( $accepted_classic['order_id'] ), false ), 'A classic order keeps WooCommerce clearing decision.' );
+		$kept = self::quantities( self::cart_state() );
+		self::assert(
+			'order-received-keeps-other-lines',
+			array(
+				$b => 1.0,
+				$c => 1.0,
+			) === $kept && self::quantities( self::stored_cart_state() ) === $kept,
+			'Loading order-received keeps B and C in the cart (got ' . wp_json_encode( $kept ) . ').'
+		);
+
 		// 4. Validation failure: no order, field-tagged message, cart restored identically.
 		$prep_bad = self::prepare();
 		$before   = self::cart_state();
@@ -625,7 +672,7 @@ final class Famma_Express_Test {
 		self::assert( 'invalid-status-failed', 'failed' === ( $state['famma_state'] ?? '' ) && 'validation_failed' === ( $state['famma_code'] ?? '' ), 'Status reports the proven validation failure.' );
 
 		// 5. Phone formats: each stored as 20123456.
-		$formats = array( '20123456', '20 123 456', '+216 20123456', '0021620123456', '216 20 123 456', '٢٠١٢٣٤٥٦' );
+		$formats      = array( '20123456', '20 123 456', '+216 20123456', '0021620123456', '216 20 123 456', '٢٠١٢٣٤٥٦' );
 		$phone_orders = array();
 		foreach ( $formats as $index => $typed ) {
 			$p        = self::prepare( 1, array( 1 => 1 ) );
@@ -828,7 +875,7 @@ final class Famma_Express_Test {
 	}
 
 	/**
-	 * famma-capi journal lines of one event for one order.
+	 * Journal lines (famma-capi) of one event for one order.
 	 *
 	 * @param string $event Event name.
 	 * @param int    $order_id Order ID.
@@ -1056,7 +1103,7 @@ final class Famma_Express_Test {
 			$order->delete( true );
 		}
 		$page = (int) ( self::$context['terms_page'] ?? 0 );
-		if ( $page && self::$run === get_post_meta( $page, '_famma_integration_run', true ) ) {
+		if ( $page && get_post_meta( $page, '_famma_integration_run', true ) === self::$run ) {
 			wp_delete_post( $page, true ); }
 		foreach ( self::$context['products'] ?? array() as $id ) {
 			$product = wc_get_product( $id );

@@ -95,8 +95,38 @@ final class Express_Cart_Isolation {
 			self::$i = new self();
 			add_action( 'woocommerce_cart_emptied', array( self::$i, 'mark_emptied' ) );
 			add_action( 'shutdown', array( self::$i, 'restore' ), -1000 );
+			add_filter( 'woocommerce_should_clear_cart_after_payment', array( self::$i, 'keep_cart_after_express' ) );
 		}
 		return self::$i;
+	}
+
+	/**
+	 * Page « commande reçue » d'une commande express : le panier n'est pas vidé.
+	 *
+	 * `wc_clear_cart_after_payment()` (template_redirect) vide le panier quand
+	 * l'URL porte la clé d'une commande. Une commande express ne contient que le
+	 * produit de la fiche, et sa ligne n'a jamais été remise au panier : ce
+	 * qui reste au panier, ce sont les AUTRES articles du client, à garder.
+	 * WooCommerce 11 les garde déjà (empreinte de panier différente de celle de
+	 * la commande) ; ce filtre ne dépend pas de ce détail.
+	 *
+	 * @param bool $clear Décision de WooCommerce.
+	 * @return bool
+	 */
+	public function keep_cart_after_express( $clear ): bool {
+		global $wp;
+
+		if ( ! $clear || empty( $wp->query_vars['order-received'] ) ) {
+			return (bool) $clear;
+		}
+		$order = wc_get_order( absint( $wp->query_vars['order-received'] ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- clé de commande lue comme WooCommerce, comparée en temps constant, aucune écriture.
+		$key = isset( $_GET['key'] ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : '';
+
+		if ( $order instanceof \WC_Order && is_string( $key ) && hash_equals( $order->get_order_key(), $key ) && '' !== (string) $order->get_meta( '_famma_express_request_id' ) ) {
+			return false;
+		}
+		return true;
 	}
 
 	/**

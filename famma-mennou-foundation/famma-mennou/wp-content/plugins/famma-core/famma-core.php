@@ -2776,6 +2776,7 @@ function boot(): void {
 	Express_Idempotency::instance();
 	Express_Preparation::instance();
 	Express_Checkout::instance();
+	Express_Cart_Isolation::instance();
 	Order_Emails::instance();
 	Anti_Abuse::instance();
 	Checkout_Lite::instance();
