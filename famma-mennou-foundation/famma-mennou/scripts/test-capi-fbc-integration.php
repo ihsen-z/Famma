@@ -120,7 +120,9 @@ final class Famma_Capi_Fbc_Integration {
 			self::check( 'orderplaced-identity', 'OrderPlaced' === ( $placed['event_name'] ?? '' ) && 'famma_orderplaced_' . $order->get_id() === ( $placed['event_id'] ?? '' ) && 'website' === ( $placed['action_source'] ?? '' ), 'Nom, event_id et action_source inchangés.' );
 			self::check( 'orderplaced-hashes', hash( 'sha256', 'synthetic@example.invalid' ) === ( $ud['em'] ?? '' ) && hash( 'sha256', '21620000000' ) === ( $ud['ph'] ?? '' ), 'Reste de user_data inchangé (em/ph hachés).' );
 			self::check( 'no-test-code', ! isset( self::$requests[0]['payload']['test_event_code'] ), 'Mode test éteint : aucun test_event_code.' );
-			$mono = array(
+			// Recharge le produit : le slug n'est attribué qu'à l'enregistrement en base.
+			$product = wc_get_product( $product->get_id() );
+			$mono    = array(
 				'content_ids'   => array( (string) $product->get_id() ),
 				'content_name'  => $product->get_name(),
 				'num_items'     => 1,
@@ -185,6 +187,7 @@ final class Famma_Capi_Fbc_Integration {
 			$second->set_virtual( true );
 			$second->update_meta_data( '_famma_integration_run', self::$run_id );
 			$second->save();
+			$second = wc_get_product( $second->get_id() ); // Slug attribué à l'enregistrement.
 			self::$products[] = $second->get_id();
 			$multi            = self::order( $product, false, array( array( $second, 2 ) ) );
 			wc_get_order( $multi->get_id() )->update_status( 'delivered', 'Local integration: multi-product.' );
@@ -215,6 +218,7 @@ final class Famma_Capi_Fbc_Integration {
 			$variable->set_attributes( array( $taille ) );
 			$variable->update_meta_data( '_famma_integration_run', self::$run_id );
 			$variable->save();
+			$variable = wc_get_product( $variable->get_id() ); // Slug attribué à l'enregistrement.
 			$variations = array();
 			foreach ( array( 'S', 'M' ) as $size ) {
 				$variation = new WC_Product_Variation();
