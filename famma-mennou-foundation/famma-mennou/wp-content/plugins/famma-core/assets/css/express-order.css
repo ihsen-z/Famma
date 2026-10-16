@@ -65,8 +65,12 @@
 	font-size: var(--fs-caption, 0.875rem);
 }
 
-.famma-express__field input[aria-invalid="true"] {
+/* Champ fautif : `aria-invalid` (validation locale ou `data-id` WooCommerce) et la classe posée par le script. */
+.famma-express__field input[aria-invalid="true"],
+.famma-express__field .famma-express__invalid {
 	border-color: var(--famma-danger, #D64545);
+	box-shadow: 0 0 0 1px var(--famma-danger, #D64545);
+	background: var(--famma-danger-soft, #FDF7F7);
 }
 
 .famma-express__field label {
@@ -224,6 +228,11 @@
 	box-shadow: none;
 }
 
+.famma-express .famma-express__qty-btn:disabled {
+	color: var(--famma-line-field, #DFE3EA);
+	cursor: not-allowed;
+}
+
 .famma-express__qty-btn:focus-visible {
 	outline: var(--focus-ring-width, 3px) solid var(--focus-ring-color, #0B1F3A);
 	outline-offset: -2px;
@@ -244,21 +253,6 @@
 .famma-express__qty input::-webkit-inner-spin-button {
 	appearance: none;
 	margin: 0;
-}
-
-.famma-express__terms label {
-	display: flex;
-	align-items: flex-start;
-	gap: var(--sp-2, 8px);
-	font-weight: var(--fw-regular, 400);
-}
-
-.famma-express__terms input[type="checkbox"] {
-	/* La case reste à sa taille native, mais assez grande pour le doigt. */
-	inline-size: 1.25rem;
-	block-size: 1.25rem;
-	margin-block-start: 2px;
-	flex: 0 0 auto;
 }
 
 /*
@@ -286,11 +280,6 @@
 	color: var(--famma-blue, #0B1F3A);
 	/* Le prix ne se coupe jamais en deux lignes. */
 	white-space: nowrap;
-}
-
-.famma-express__cart-note {
-	font-size: var(--fs-caption, 0.875rem);
-	color: var(--famma-text-2, #56617A);
 }
 
 /*
@@ -456,9 +445,13 @@ html[lang^="ar"] .famma-express__submit-ar {
 	display: none;
 }
 
-/* Vide par défaut : sans cette règle, la marge apparaîtrait sans message. */
+/*
+ * Avis d'erreur JUSTE au-dessus du bouton : le script y fait défiler, le
+ * bouton reste visible dessous. Vide par défaut : sans cette règle, la marge
+ * apparaîtrait sans message.
+ */
 .famma-express__notices:not(:empty) {
-	margin-block-start: var(--sp-3, 12px);
+	margin-block-end: var(--sp-3, 12px);
 	padding: var(--sp-3, 12px);
 	border-radius: var(--famma-radius-sm, 8px);
 	border: 1px solid var(--famma-danger-line, #EFD9D9);
@@ -511,207 +504,251 @@ html[lang^="ar"] .famma-express__submit-ar {
 	gap: var(--sp-3, 12px) var(--sp-4, 16px);
 }
 
-.famma-express__order + .famma-express__terms {
-	margin-block-start: var(--sp-4, 16px);
+/*
+ * Envoi en cours : bouton désactivé, indicateur de chargement à la place de
+ * l'icône. Le texte change, la hauteur du bouton non (56 px minimum).
+ */
+.famma-express__spinner {
+	display: none;
+	flex: none;
+	inline-size: 18px;
+	block-size: 18px;
+	border: 2px solid currentColor;
+	border-block-start-color: transparent;
+	border-radius: 50%;
+	animation: famma-express-spin 0.8s linear infinite;
 }
 
-/* Le récapitulatif serveur est lisible avant la confirmation finale. */
-.famma-express__recap {
-	margin-block: var(--sp-4, 16px);
-	padding: var(--sp-4, 16px);
-	border: 1px solid var(--famma-line, #E7EAF0);
-	border-radius: var(--famma-radius-sm, 8px);
-	background: var(--famma-white, #FFF);
+.famma-express__submit[aria-busy="true"] .famma-express__spinner,
+.famma-express-modal__confirm[aria-busy="true"] .famma-express__spinner {
+	display: inline-block;
 }
 
-.famma-express__recap[hidden] {
+.famma-express .famma-express__submit[aria-busy="true"] .famma-express__icon {
 	display: none;
 }
 
-.famma-express__recap h3 {
-	margin-block: 0 var(--sp-3, 12px);
-	font-size: 1rem;
+@keyframes famma-express-spin {
+	to {
+		transform: rotate(360deg);
+	}
 }
 
-.famma-express__recap table {
+/* Sans animation : un anneau fixe, toujours visible, signale l'attente. */
+@media (prefers-reduced-motion: reduce) {
+	.famma-express__spinner {
+		animation: none;
+		border-block-start-color: currentColor;
+		border-style: dotted;
+	}
+}
+
+/* Mention des conditions générales, sous le bouton. */
+.famma-express .famma-express__legal {
+	margin: var(--sp-2, 8px) 0 0;
+	color: var(--famma-text-2, #56617A);
+	font-size: var(--fs-caption, 0.875rem);
+	text-align: center;
+	overflow-wrap: anywhere;
+}
+
+.famma-express__legal a {
+	color: inherit;
+	text-decoration: underline;
+}
+
+/* Information non bloquante (autres articles restés au panier), sous le bouton. */
+.famma-express .famma-express__info {
+	margin: var(--sp-2, 8px) 0 0;
+	color: var(--famma-text-2, #56617A);
+	font-size: var(--fs-caption, 0.875rem);
+}
+
+.famma-express__info[hidden] {
+	display: none;
+}
+
+/*
+ * Modale « le total a changé » : centrée, hors du flux de la page. Hauteur
+ * maximale = écran (100dvh, la barre d'adresse mobile comprise) ; le contenu
+ * défile, le bouton final reste collé en bas, visible sans défiler.
+ */
+html.famma-express-modal-open,
+html.famma-express-modal-open body {
+	overflow: hidden;
+}
+
+.famma-express-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--sp-3, 12px);
+	background: rgba(11, 31, 58, 0.55);
+	overscroll-behavior: contain;
+}
+
+.famma-express-modal[hidden] {
+	display: none;
+}
+
+.famma-express-modal__dialog {
+	display: flex;
+	flex-direction: column;
 	inline-size: 100%;
-	margin-block: 0;
+	max-inline-size: 28rem;
+	max-block-size: calc(100vh - 2 * var(--sp-3, 12px));
+	max-block-size: calc(100dvh - 2 * var(--sp-3, 12px));
+	overflow: hidden;
+	border-radius: var(--famma-radius, 12px);
+	background: var(--famma-white, #FFF);
+	color: var(--famma-blue, #0B1F3A);
+	box-shadow: var(--elev-2, 0 8px 24px rgba(11, 31, 58, 0.14));
+}
+
+.famma-express-modal__dialog:focus {
+	outline: none;
+}
+
+.famma-express-modal__head {
+	display: flex;
+	flex: none;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-2, 8px);
+	padding-block: var(--sp-2, 8px);
+	padding-inline: var(--sp-4, 16px) var(--sp-2, 8px);
+	border-block-end: 1px solid var(--famma-line, #E7EAF0);
+}
+
+.famma-express-modal .famma-express-modal__title {
+	margin: 0;
+	font-size: 1.0625rem;
+	font-weight: var(--fw-bold, 700);
+	color: var(--famma-blue, #0B1F3A);
+}
+
+/* Kadence colore tout `button:hover` : deux classes pour garder le bouton neutre. */
+.famma-express-modal .famma-express-modal__close {
+	flex: none;
+	inline-size: 48px;
+	block-size: 48px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--famma-radius-sm, 8px);
+	background: transparent;
+	box-shadow: none;
+	color: var(--famma-blue, #0B1F3A);
+	font-family: inherit;
+	font-size: 1.75rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.famma-express-modal .famma-express-modal__close:hover,
+.famma-express-modal .famma-express-modal__close:focus {
+	background: var(--famma-surface-icon, #F1F4F9);
+	color: var(--famma-blue, #0B1F3A);
+	box-shadow: none;
+}
+
+.famma-express-modal__body {
+	flex: 1 1 auto;
+	min-block-size: 0;
+	overflow-y: auto;
+	padding: var(--sp-4, 16px);
+}
+
+.famma-express-modal .famma-express-modal__text {
+	margin: 0 0 var(--sp-3, 12px);
+	font-size: var(--fs-caption, 0.875rem);
+	color: var(--famma-text-2, #56617A);
+}
+
+.famma-express-modal__content table {
+	inline-size: 100%;
+	margin: 0;
 	border-collapse: collapse;
 	font-size: 0.9375rem;
 }
 
-.famma-express__recap th,
-.famma-express__recap td {
-	padding-block: var(--sp-2, 8px);
-	padding-inline: var(--sp-2, 8px);
+.famma-express-modal__content th,
+.famma-express-modal__content td {
+	padding: var(--sp-2, 8px) var(--sp-1, 4px);
 	text-align: start;
 	vertical-align: top;
 	overflow-wrap: anywhere;
 }
 
-/* Keep each WooCommerce amount together; product names may wrap on mobile. */
-.famma-express__recap th:last-child,
-.famma-express__recap td:last-child {
+/* Les montants ne se coupent pas ; les noms de produit, si. */
+.famma-express-modal__content th:last-child,
+.famma-express-modal__content td:last-child {
 	inline-size: 1%;
-}
-
-.famma-express__recap td:last-child {
+	text-align: end;
 	white-space: nowrap;
 	overflow-wrap: normal;
-	word-break: normal;
 }
 
-.famma-express__recap thead th:nth-child(2),
-.famma-express__recap tbody td:nth-child(2) {
-	/* Place du sélecteur − / + de la ligne (44 + 32 + 44 px). */
-	inline-size: 7.5rem;
-	min-inline-size: 7.5rem;
+/* Les intitulés de colonne ne se coupent qu'aux espaces (« Quantité / الكمية »). */
+.famma-express-modal__content thead th {
 	overflow-wrap: normal;
-	word-break: normal;
+	font-size: var(--fs-caption, 0.875rem);
 }
 
-.famma-express__recap tbody td:nth-child(2) {
-	white-space: nowrap;
-}
-
-.famma-express__recap tfoot {
+.famma-express-modal__content tfoot {
 	border-block-start: 1px solid var(--famma-line, #E7EAF0);
 }
 
-.famma-express__recap tfoot tr:last-child {
+.famma-express-modal__content tfoot tr:last-child {
 	font-weight: 700;
 }
 
-/*
- * Lignes modifiables du récapitulatif : quantité − / + et « Retirer ».
- * Même sélecteur de quantité que le formulaire, en cibles de 44 px ; les
- * montants restent ceux du serveur, jamais recalculés ici.
- */
-.famma-express__recap {
-	container: famma-recap / inline-size;
+.famma-express-modal__foot {
+	flex: none;
+	padding: var(--sp-3, 12px) var(--sp-4, 16px) calc(var(--sp-3, 12px) + env(safe-area-inset-bottom, 0px));
+	border-block-start: 1px solid var(--famma-line, #E7EAF0);
+	background: var(--famma-white, #FFF);
 }
 
-.famma-express__recap[aria-busy="true"] {
-	opacity: 0.6;
-	pointer-events: none;
-}
-
-.famma-express__qty--line .famma-express__qty-btn {
-	inline-size: 44px;
-	min-block-size: 44px;
-}
-
-.famma-express__qty--line .famma-express__qty-btn:disabled {
-	color: var(--famma-line-field, #DFE3EA);
-	cursor: not-allowed;
-}
-
-.famma-express__qty-value {
+.famma-express-modal .famma-express-modal__confirm {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	min-inline-size: 2rem;
-	border-inline: 1px solid var(--famma-line-field, #DFE3EA);
-	background: var(--famma-white, #FFF);
-	color: var(--famma-blue, #0B1F3A);
-	font-weight: var(--fw-semibold, 600);
-}
-
-/* Kadence colore tout `button:hover` : deux classes pour garder un lien discret. */
-.famma-express .famma-express__remove {
-	display: flex;
-	align-items: center;
-	min-block-size: 44px;
-	padding: 0;
+	gap: var(--sp-2, 8px);
+	inline-size: 100%;
+	min-block-size: 56px;
+	padding: var(--sp-3, 12px);
 	border: 0;
-	background: none;
+	border-radius: 9px;
+	background: var(--famma-orange, #FF7A00);
 	box-shadow: none;
-	color: var(--famma-text-2, #56617A);
+	color: var(--famma-on-orange, #0B1F3A);
 	font-family: inherit;
-	font-size: var(--fs-caption, 0.875rem);
-	text-decoration: underline;
+	font-size: var(--fs-button, 1rem);
+	font-weight: var(--fw-semibold, 600);
+	line-height: var(--lh-tight, 1.2);
+	text-align: center;
 	cursor: pointer;
 }
 
-.famma-express .famma-express__remove:hover,
-.famma-express .famma-express__remove:focus {
-	background: none;
+.famma-express-modal .famma-express-modal__confirm:hover,
+.famma-express-modal .famma-express-modal__confirm:focus-visible {
+	background: var(--famma-orange-600, #E86E00);
+	color: var(--famma-on-orange, #0B1F3A);
 	box-shadow: none;
-	color: var(--famma-danger-700, #C13333);
 }
 
-.famma-express__remove:focus-visible {
+.famma-express-modal .famma-express-modal__confirm:focus-visible,
+.famma-express-modal .famma-express-modal__close:focus-visible {
 	outline: var(--focus-ring-width, 3px) solid var(--focus-ring-color, #0B1F3A);
 	outline-offset: 2px;
 }
 
-.famma-express__remove:disabled {
-	cursor: not-allowed;
-	opacity: 0.5;
-}
-
-/*
- * Récapitulatif étroit (téléphone) : chaque ligne devient une carte — nom en
- * haut, quantité à gauche, montant à droite. Les en-têtes restent pour les
- * lecteurs d'écran, sans occuper de place.
- */
-@container famma-recap (max-width: 30rem) {
-	.famma-express__recap table,
-	.famma-express__recap tbody,
-	.famma-express__recap tfoot {
-		display: block;
-	}
-
-	.famma-express__recap thead {
-		position: absolute;
-		inline-size: 1px;
-		block-size: 1px;
-		overflow: hidden;
-		clip-path: inset(50%);
-	}
-
-	.famma-express__recap tbody tr {
-		display: grid;
-		grid-template-columns: 1fr auto;
-		grid-template-areas: "name name" "qty amount";
-		align-items: center;
-		gap: 0 var(--sp-3, 12px);
-		padding-block: var(--sp-2, 8px);
-		border-block-end: 1px solid var(--famma-line, #E7EAF0);
-	}
-
-	.famma-express__recap tbody td:nth-child(n) {
-		inline-size: auto;
-		min-inline-size: 0;
-		padding: 0;
-	}
-
-	.famma-express__recap tbody td:nth-child(1) {
-		grid-area: name;
-	}
-
-	.famma-express__recap tbody td:nth-child(2) {
-		grid-area: qty;
-	}
-
-	.famma-express__recap tbody td:nth-child(3) {
-		grid-area: amount;
-		text-align: end;
-	}
-
-	/* Totaux : libellé à gauche, montant à droite, sans colonnes de tableau. */
-	.famma-express__recap tfoot tr {
-		display: flex;
-		justify-content: space-between;
-		gap: var(--sp-3, 12px);
-		padding-block: var(--sp-2, 8px);
-	}
-
-	.famma-express__recap tfoot th:nth-child(n),
-	.famma-express__recap tfoot td:nth-child(n) {
-		inline-size: auto;
-		padding: 0;
-	}
+.famma-express-modal .famma-express-modal__confirm:disabled {
+	opacity: 0.7;
+	cursor: progress;
 }
 
 @media (min-width: 600px) {
