@@ -1,5 +1,19 @@
 # Changelog — FAMMA Core
 
+## 0.2.8 — 2026-10-16
+
+### Correctif
+
+- **Rapports WooCommerce (admin)** : plus d'erreur fatale sur le rapport
+  « Ventes par date ». WooCommerce passe `false` au filtre
+  `woocommerce_reports_order_statuses` pour ses requêtes de remboursements
+  (« aucun filtre de statut ») ; `Order_Statuses::reporting_statuses()`
+  exigeait un tableau et plantait (`TypeError`, production du 13/10/2026).
+  Une valeur qui n'est pas un tableau est désormais renvoyée telle quelle ;
+  sinon la logique est inchangée (sans `processing` / `on-hold`, avec
+  `delivered` / `completed`). Même garde sur `paid_statuses()`.
+- Test de non-régression en lecture seule : `scripts/test-report-statuses.php`.
+
 ## 0.2.7 — 2026-10-16
 
 ### Commande express en un clic (fiche produit, mobile)

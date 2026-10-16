@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.2.7
+ * Version:           0.2.8
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.2.7' );
+define( 'FAMMA_CORE_VERSION', '0.2.8' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -477,10 +477,15 @@ final class Order_Statuses {
 	 * Without this is_paid() stays false and revenue reports silently ignore
 	 * every delivered order.
 	 *
-	 * @param string[] $statuses Statuses considered paid.
-	 * @return string[]
+	 * @param mixed $statuses Statuses considered paid.
+	 * @return mixed
 	 */
-	public function paid_statuses( array $statuses ): array {
+	public function paid_statuses( mixed $statuses ): mixed {
+		// Another filter may hand over a non-array: pass it on instead of crashing.
+		if ( ! is_array( $statuses ) ) {
+			return $statuses;
+		}
+
 		$statuses[] = 'delivered';
 
 		/*
@@ -499,10 +504,19 @@ final class Order_Statuses {
 	/**
 	 * Includes delivered orders in WooCommerce reports.
 	 *
-	 * @param string[] $s Statuses included in reports.
-	 * @return string[]
+	 * WooCommerce passes false here when a report query must not filter by
+	 * status at all (refund queries of the "Sales by date" report). That value
+	 * is returned untouched: forcing a list would change the query, and a
+	 * typed array parameter crashed the report (fatal error of 13/10/2026).
+	 *
+	 * @param mixed $s Statuses included in reports, or false for "any status".
+	 * @return mixed
 	 */
-	public function reporting_statuses( array $s ): array {
+	public function reporting_statuses( mixed $s ): mixed {
+		if ( ! is_array( $s ) ) {
+			return $s;
+		}
+
 		// Same reasoning as paid_statuses(): a COD order is revenue only once delivered.
 		$s = array_values( array_diff( $s, array( 'processing', 'on-hold' ) ) );
 		foreach ( array( 'delivered', 'completed' ) as $x ) {
