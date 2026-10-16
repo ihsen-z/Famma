@@ -112,6 +112,12 @@ final class Famma_Express_Test {
 	 */
 	private static int $restore_priority = 0;
 	/**
+	 * Cart cookies written through wc_setcookie(): name => [value, expire].
+	 *
+	 * @var array
+	 */
+	private static array $set_cookies = array();
+	/**
 	 * Current clock observation.
 	 *
 	 * @var float
@@ -142,6 +148,7 @@ final class Famma_Express_Test {
 		add_action( 'set_transient', array( self::class, 'capture_transient' ), PHP_INT_MAX, 3 );
 		add_filter( 'woocommerce_logger_log_message', array( self::class, 'capture_log' ), PHP_INT_MAX, 4 );
 		// Many synthetic orders share one fixture phone: only the per-phone/IP ceilings are raised, the guards still run.
+		add_filter( 'woocommerce_set_cookie_enabled', array( self::class, 'capture_cookie' ), PHP_INT_MAX, 4 );
 		add_filter( 'famma_anti_abuse_limits', array( self::class, 'test_limits' ), PHP_INT_MAX );
 		wc_maybe_define_constant( 'DOING_AJAX', true );
 		if ( ! wp_doing_ajax() ) {
@@ -692,6 +699,21 @@ final class Famma_Express_Test {
 		$after = self::stored_cart_state();
 		self::assert( 'coupon-restored-after-success', array( $b => 1.0 ) === self::quantities( $after ) && array( $code ) === $after['coupons'], 'After the express order the other line and the coupon are back in the cart.' );
 
+		// 3d. Cart cookies sent with the prepare response describe the restored cart, not the isolated one.
+		self::set_cart( array() );
+		unset( $_COOKIE['woocommerce_items_in_cart'], $_COOKIE['woocommerce_cart_hash'] );
+		self::$set_cookies = array();
+		$empty_prep        = self::prepare_request( 1 );
+		self::assert( 'prepare-empty-cart-no-cookie', 'success' === ( $empty_prep['result'] ?? '' ) && '' === self::browser_cookie( 'woocommerce_items_in_cart', '' ) && '' === self::browser_cookie( 'woocommerce_cart_hash', '' ), 'After prepare on an empty cart the browser holds no cart cookie: ' . wp_json_encode( self::$set_cookies ) );
+		self::set_cart( array( 1 => 1 ) );
+		$b_hash                               = WC()->cart->get_cart_hash();
+		$_COOKIE['woocommerce_items_in_cart'] = '1';
+		$_COOKIE['woocommerce_cart_hash']     = $b_hash;
+		self::$set_cookies                    = array();
+		$b_prep                               = self::prepare_request( 1 );
+		self::assert( 'prepare-cookie-hash-restored-cart', 'success' === ( $b_prep['result'] ?? '' ) && self::browser_cookie( 'woocommerce_cart_hash', $b_hash ) === $b_hash && '1' === self::browser_cookie( 'woocommerce_items_in_cart', '1' ), 'After prepare the cart_hash cookie is the restored cart hash: ' . wp_json_encode( self::$set_cookies ) );
+		unset( $_COOKIE['woocommerce_items_in_cart'], $_COOKIE['woocommerce_cart_hash'] );
+
 		// 4. Validation failure: no order, field-tagged message, cart restored identically.
 		$prep_bad = self::prepare();
 		$before   = self::cart_state();
@@ -936,6 +958,37 @@ final class Famma_Express_Test {
 			self::$logs[] = (string) $message;
 		}
 		return $message;
+	}
+
+	/**
+	 * Record cart cookies instead of emitting headers.
+	 *
+	 * @param bool   $enabled Whether to set the cookie.
+	 * @param string $name Cookie name.
+	 * @param mixed  $value Cookie value.
+	 * @param int    $expire Expiry timestamp.
+	 * @return bool Unchanged decision.
+	 */
+	public static function capture_cookie( $enabled, $name, $value, $expire ) {
+		if ( in_array( $name, array( 'woocommerce_items_in_cart', 'woocommerce_cart_hash' ), true ) ) {
+			self::$set_cookies[ $name ] = array( (string) $value, (int) $expire );
+		}
+		return $enabled;
+	}
+
+	/**
+	 * Cart cookie as the browser holds it once the response headers are applied.
+	 *
+	 * @param string $name Cookie name.
+	 * @param string $sent Value the browser sent with the request ('' when absent).
+	 * @return string Value kept by the browser, '' when absent or expired.
+	 */
+	private static function browser_cookie( string $name, string $sent ): string {
+		if ( ! isset( self::$set_cookies[ $name ] ) ) {
+			return $sent;
+		}
+		list( $value, $expire ) = self::$set_cookies[ $name ];
+		return ( 0 !== $expire && $expire < time() ) ? '' : $value;
 	}
 
 	/**

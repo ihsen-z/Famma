@@ -240,9 +240,49 @@ final class Express_Cart_Isolation {
 		// Recalcule les totaux, puis WC_Cart_Session::set_session() (priorité 1000) remet le panier en session.
 		$cart->calculate_totals();
 		$this->persist();
+		$this->sync_cart_cookies();
 
 		$this->original = array();
 		$this->coupons  = array();
+	}
+
+	/**
+	 * Remet les cookies de panier en accord avec le panier restauré.
+	 *
+	 * `add_to_cart()` sur le panier isolé pose `woocommerce_items_in_cart` et
+	 * `woocommerce_cart_hash` (empreinte du panier isolé). La synchronisation
+	 * de WooCommerce à `shutdown` n'a plus lieu si la réponse JSON a déjà
+	 * envoyé les en-têtes (`prepare`) : elle est faite ici, même règle que
+	 * `WC_Cart_Session::set_cart_cookies()`.
+	 *
+	 * @return void
+	 */
+	private function sync_cart_cookies(): void {
+		if ( headers_sent() ) {
+			return;
+		}
+		$cart = WC()->cart;
+
+		if ( ! $cart->is_empty() ) {
+			$values = array(
+				'woocommerce_items_in_cart' => '1',
+				'woocommerce_cart_hash'     => $cart->get_cart_hash(),
+			);
+			foreach ( $values as $name => $value ) {
+				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- comparaison stricte seulement, comme WooCommerce.
+				if ( ! isset( $_COOKIE[ $name ] ) || $_COOKIE[ $name ] !== $value ) {
+					wc_setcookie( $name, $value );
+					$_COOKIE[ $name ] = $value;
+				}
+			}
+			return;
+		}
+		foreach ( array( 'woocommerce_items_in_cart', 'woocommerce_cart_hash' ) as $name ) {
+			if ( isset( $_COOKIE[ $name ] ) ) {
+				wc_setcookie( $name, '0', time() - HOUR_IN_SECONDS );
+				unset( $_COOKIE[ $name ] );
+			}
+		}
 	}
 
 	/**
