@@ -22,11 +22,12 @@
  * - Succès : la passerelle COD (`WC_Gateway_COD::process_payment()`) et la
  *   commande sans paiement (`wc_empty_cart()`) vident le panier, ce qui
  *   déclenche `woocommerce_cart_emptied`. Dans ce cas, seules les AUTRES
- *   lignes sont remises ; la ligne du produit commandé ne revient pas, ni les
- *   codes promo (vidés avec le panier). Sans vidage (échec, validation
- *   refusée, exception), le panier d'origine revient à l'identique : mêmes
- *   clés, produits, variations, attributs, données de ligne, quantités et
- *   codes promo.
+ *   lignes sont remises ; la ligne du produit commandé ne revient pas. Sans
+ *   vidage (échec, validation refusée, exception), le panier d'origine
+ *   revient à l'identique : mêmes clés, produits, variations, attributs,
+ *   données de ligne et quantités.
+ * - Codes promo : retirés du panier isolé (la commande express est au prix
+ *   de la fiche, aucun code n'y est consommé), remis dans les deux cas.
  * - Le panier persistant des clients connectés (méta utilisateur), réécrit
  *   par `add_to_cart()` et effacé par `empty_cart()`, est réécrit avec le
  *   panier restauré, comme le fait `WC_Cart_Session::persistent_cart_update()`.
@@ -165,6 +166,8 @@ final class Express_Cart_Isolation {
 		$this->active     = true;
 
 		$cart->set_cart_contents( array() );
+		// Les codes promo du panier ne s'appliquent pas à la commande express (prix de la fiche) : mis de côté, remis par restore().
+		$cart->set_applied_coupons( array() );
 
 		/** This filter is documented in woocommerce/includes/class-wc-ajax.php */
 		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- filtre natif de WooCommerce, appliqué comme WC_AJAX::add_to_cart().
@@ -231,12 +234,8 @@ final class Express_Cart_Isolation {
 		}
 		$cart = WC()->cart;
 
-		if ( $this->emptied ) {
-			$cart->set_cart_contents( $this->others() );
-		} else {
-			$cart->set_cart_contents( $this->original );
-			$cart->set_applied_coupons( $this->coupons );
-		}
+		$cart->set_cart_contents( $this->emptied ? $this->others() : $this->original );
+		$cart->set_applied_coupons( $this->coupons );
 
 		// Recalcule les totaux, puis WC_Cart_Session::set_session() (priorité 1000) remet le panier en session.
 		$cart->calculate_totals();

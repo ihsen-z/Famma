@@ -263,6 +263,13 @@ final class Famma_Express_Test {
 			$product->save();
 			self::$context['products'][] = $product->get_id();
 		}
+		$coupon = new WC_Coupon();
+		$coupon->set_code( 'famma-qa-' . substr( self::$run, 0, 8 ) );
+		$coupon->set_discount_type( 'percent' );
+		$coupon->set_amount( 10 );
+		$coupon->update_meta_data( '_famma_integration_run', self::$run );
+		$coupon->save();
+		self::$context['coupon'] = $coupon->get_id();
 		self::session();
 		self::save_context();
 	}
@@ -659,6 +666,31 @@ final class Famma_Express_Test {
 			) === $kept && self::quantities( self::stored_cart_state() ) === $kept,
 			'Loading order-received keeps B and C in the cart (got ' . wp_json_encode( $kept ) . ').'
 		);
+
+		// 3c. Coupon on the cart: the isolated quote and order ignore it; it stays on the cart (failure and success).
+		$code = wc_get_coupon_code_by_id( self::$context['coupon'] );
+		self::set_cart(
+			array(
+				0 => 2,
+				1 => 1,
+			)
+		);
+		WC()->cart->apply_coupon( $code );
+		WC()->cart->calculate_totals();
+		WC()->session->save_data();
+		$with_coupon = self::cart_state();
+		$c_prep      = self::prepare_request( 1 );
+		self::assert( 'coupon-quote-isolated', 77.0 === (float) ( $c_prep['summary']['total'] ?? 0 ) && self::cart_state() === $with_coupon && array( $code ) === $with_coupon['coupons'], 'A cart coupon does not enter the isolated quote (77 TND) and stays applied after prepare.' );
+		$c_bad   = self::commit_fields( $c_prep, wp_generate_uuid4(), 1, '123' );
+		$refused = self::endpoint( 'famma_express_checkout', $c_bad );
+		self::assert( 'coupon-kept-after-refusal', 'failure' === ( $refused['result'] ?? '' ) && self::stored_cart_state() === $with_coupon, 'After a refused express checkout the coupon is still applied.' );
+		$c_prep = self::prepare_request( 1 );
+		$c_post = self::commit_fields( $c_prep, wp_generate_uuid4() );
+		$c_done = self::endpoint( 'famma_express_checkout', $c_post );
+		$c_ord  = 'success' === ( $c_done['result'] ?? '' ) ? wc_get_order( $c_done['order_id'] ) : null;
+		self::assert( 'coupon-not-consumed', $c_ord && 77.0 === (float) $c_ord->get_total() && array() === $c_ord->get_coupon_codes() && 0 === ( new WC_Coupon( $code ) )->get_usage_count(), 'The express order neither uses nor consumes the cart coupon.' );
+		$after = self::stored_cart_state();
+		self::assert( 'coupon-restored-after-success', array( $b => 1.0 ) === self::quantities( $after ) && array( $code ) === $after['coupons'], 'After the express order the other line and the coupon are back in the cart.' );
 
 		// 4. Validation failure: no order, field-tagged message, cart restored identically.
 		$prep_bad = self::prepare();
@@ -1105,6 +1137,9 @@ final class Famma_Express_Test {
 		$page = (int) ( self::$context['terms_page'] ?? 0 );
 		if ( $page && get_post_meta( $page, '_famma_integration_run', true ) === self::$run ) {
 			wp_delete_post( $page, true ); }
+		$coupon_id = (int) ( self::$context['coupon'] ?? 0 );
+		if ( $coupon_id && get_post_meta( $coupon_id, '_famma_integration_run', true ) === self::$run ) {
+			wp_delete_post( $coupon_id, true ); }
 		foreach ( self::$context['products'] ?? array() as $id ) {
 			$product = wc_get_product( $id );
 			if ( $product && self::$run === $product->get_meta( '_famma_integration_run' ) ) {
