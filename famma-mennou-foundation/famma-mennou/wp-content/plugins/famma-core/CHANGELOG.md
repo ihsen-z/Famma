@@ -1,0 +1,105 @@
+# Changelog — FAMMA Core
+
+## 0.2.8 — 2026-10-16
+
+### Correctif
+
+- **Rapports WooCommerce (admin)** : plus d'erreur fatale sur le rapport
+  « Ventes par date ». WooCommerce passe `false` au filtre
+  `woocommerce_reports_order_statuses` pour ses requêtes de remboursements
+  (« aucun filtre de statut ») ; `Order_Statuses::reporting_statuses()`
+  exigeait un tableau et plantait (`TypeError`, production du 13/10/2026).
+  Une valeur qui n'est pas un tableau est désormais renvoyée telle quelle ;
+  sinon la logique est inchangée (sans `processing` / `on-hold`, avec
+  `delivered` / `completed`). Même garde sur `paid_statuses()`.
+- Test de non-régression en lecture seule : `scripts/test-report-statuses.php`.
+
+## 0.2.7 — 2026-10-16
+
+### Commande express en un clic (fiche produit, mobile)
+
+- **Un clic = une commande** : « Confirmer ma commande / أكد طلبيتك » enchaîne
+  `famma_express_prepare` puis `famma_express_checkout` et redirige vers la page
+  de remerciement WooCommerce (order-received). Plus de bloc « Vérifiez votre
+  commande » inséré au-dessus du bouton.
+- **Commande isolée** : la commande ne contient que le produit de la fiche, à la
+  quantité choisie (− / +). Les autres articles du panier ne sont ni commandés,
+  ni supprimés, ni modifiés ; codes promo mis de côté puis remis. Nouvelle classe
+  `Express_Cart_Isolation`.
+- **Modale de contrôle** uniquement si le total calculé par le serveur diffère du
+  total affiché : fenêtre centrée, bouton final « Valider ma commande – XX DT /
+  أكّد نهائيا » visible sans défiler.
+- **Pendant l'envoi** : bouton désactivé, « Envoi en cours… / قاعد نبعث… »,
+  indicateur de chargement. Double clic = une seule commande ; reprise par
+  `famma_express_status` conservée ; aucun renvoi automatique après erreur
+  (un refus avant réservation ramène au repos avec son message).
+- **Erreurs visibles** : message WooCommerce juste au-dessus du bouton,
+  défilement jusqu'à lui, champ fautif en rouge (`aria-invalid`). Jamais
+  d'échec sans message.
+- **Conditions générales** : case obligatoire supprimée, remplacée par « En
+  commandant, vous acceptez nos conditions générales » (lien) sous le bouton.
+  Côté serveur, `woocommerce_checkout_show_terms` est à false pour la seule
+  requête express ; le checkout classique est inchangé.
+- **Page de remerciement** d'une commande express : numéro de commande et « On
+  vous appelle pour confirmer / باش نكلموك باش نأكدو ». Le panier restant n'y est
+  jamais vidé.
+- **Bouton collant** (thème enfant, `sticky-cta.js`) : défile jusqu'au formulaire
+  et place le curseur dans le champ Nom.
+- **Script et CSS du formulaire** marqués `data-no-optimize`, `data-no-defer`,
+  `data-cfasync="false"` et exclus des optimisations LiteSpeed.
+- **Compatibilité cache** : le nouveau script reste sûr face à l'ancien HTML
+  servi par LiteSpeed avant purge (case CGV rendue facultative, contrôle forcé).
+
+### Téléphone tunisien
+
+- `Tunisia::normalize_phone()` : 20123456, « 20 123 456 », « +216 20123456 »,
+  0021620123456, « 216 20 123 456 », « (+216) … », chiffres arabes et espaces
+  insécables sont acceptés et **enregistrés sur 8 chiffres**. Les numéros
+  216xxxxx (ex. 21612345) ne sont plus refusés à tort. Même règle côté
+  navigateur, anti-abus et hash Meta.
+
+### Meta
+
+- **Journal `famma-capi`** (WooCommerce > État > Journaux) : une ligne par envoi
+  OrderPlaced / Purchase avec event_id, valeur, devise, présence fbc/fbp/ph,
+  code HTTP, `events_received`, `fbtrace_id` et message d'erreur Meta. Jamais le
+  token ni d'identifiant en clair.
+- **`_fbc` mis à jour** quand un nouveau `fbclid` arrive (règle Meta) ; inchangé
+  pour le même `fbclid`.
+- InitiateCheckout (navigateur) et AddToCart émis une seule fois par intention.
+- OrderPlaced : value = total réel de la commande isolée (77 TND pour une
+  trancheuse). Purchase : inchangé, au statut « Livrée », value = total réel.
+
+## 0.2.6 — 2026-10-13
+
+### Meta Conversions API : meilleure correspondance (fbc / fbp)
+
+- **Cookie `_fbc` créé dès l'arrivée** : quand l'URL contient `?fbclid=` et
+  qu'aucun `_fbc` n'existe, un petit script pose `fb.1.<horodatage ms>.<fbclid>`
+  pour 90 jours sur le domaine principal. Il ne dépend plus du chargement
+  différé du Pixel Meta et fonctionne sur les pages servies par le cache
+  LiteSpeed (aucun PHP n'y est exécuté).
+- **Cookie `_fbp` créé s'il manque** (même script) : `fb.1.<horodatage ms>.<10 chiffres
+  aléatoires>`, 90 jours, domaine principal, jamais d'écrasement d'un `_fbp` existant.
+- **Script exécuté immédiatement, sans interaction** : handle séparé `famma-fbc`,
+  placé dans `<head>` (et non plus en pied de page avec le Pixel), balise marquée
+  `data-no-optimize="1"`, `data-no-defer="1"` et `data-cfasync="false"`, et ajoutée
+  aux exclusions LiteSpeed Cache (`litespeed_optimize_js_excludes`,
+  `litespeed_optm_js_defer_exc`) : ni combiné, ni différé, ni retardé.
+- **IP client** : `REMOTE_ADDR` conservé. Le site est servi directement par
+  LiteSpeed chez OXA Host, sans CDN ni proxy (ni Cloudflare ni QUIC.cloud,
+  vérifié le 13/10/2026) : aucun en-tête de CDN n'est lu.
+- **Validation à la commande** : `_fbc` et `_fbp` ne sont enregistrés que s'ils
+  respectent le format Meta (`fb.<chiffre>.<horodatage>.<valeur>[.<appendice>]`) ;
+  l'IP est validée, le user agent assaini et borné à 512 caractères. Mêmes
+  métadonnées qu'avant (`_famma_fbc`, `_famma_fbp`, `_famma_client_ip`,
+  `_famma_client_ua`).
+- **OrderPlaced et Purchase** lisent ces métadonnées (revalidées à l'envoi).
+  Purchase, envoyé depuis l'admin, n'utilise jamais l'IP ni le navigateur de
+  l'admin. Les commandes antérieures sans métadonnées partent sans ces champs.
+- **Mode test** : constante `FAMMA_META_CAPI_TEST_MODE` (true) ou option
+  `famma_meta_capi_test_mode` (1), éteint par défaut. Activé, les événements
+  réels portent le `test_event_code` configuré (format `TEST…`) et un avis
+  s'affiche dans l'admin.
+- Inchangés : noms d'événements, moment d'envoi, `event_id`, reste de
+  `user_data`, envoi non bloquant.

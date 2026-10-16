@@ -6,8 +6,9 @@
  * cachables — `?wc-ajax=add_to_cart`, `?wc-ajax=famma_express_nonce`, puis
  * `?wc-ajax=checkout`. Après : le jeton est demandé pendant que le client
  * remplit le formulaire, et le clic n'envoie plus qu'un seul appel,
- * `?wc-ajax=famma_express_checkout`, qui met le produit au panier puis exécute
- * le checkout de WooCommerce.
+ * `?wc-ajax=famma_express_checkout`, qui isole le produit de la fiche dans le
+ * panier (`Express_Cart_Isolation`) puis exécute le checkout de WooCommerce :
+ * seul ce produit est commandé, les autres lignes du panier sont restaurées.
  *
  * ── Pourquoi la commande passe toujours par `process_checkout()` ───────────
  *
@@ -69,6 +70,13 @@ final class Express_Checkout {
 	private static ?Express_Checkout $i = null;
 
 	/**
+	 * Message d'échec générique, échappé, préparé avant `process_checkout()`.
+	 *
+	 * @var string
+	 */
+	private string $fallback = '';
+
+	/**
 	 * Renvoie l'instance partagée, en posant les hooks au premier appel.
 	 *
 	 * @return Express_Checkout
@@ -94,7 +102,7 @@ final class Express_Checkout {
 	}
 
 	/**
-	 * Met le produit au panier et exécute le checkout de WooCommerce.
+	 * Isole le produit de la fiche et exécute le checkout de WooCommerce.
 	 *
 	 * Point d'entrée public : la commande invité n'exige aucune capacité. La
 	 * séquence de sécurité du projet s'applique ainsi — jeton (CSRF), puis
@@ -145,7 +153,19 @@ final class Express_Checkout {
 		// Le formulaire express ne demande que nom, téléphone et gouvernorat.
 		add_filter( 'woocommerce_checkout_fields', array( $this, 'relax_address_fields' ), 99 );
 
-		// Comme `WC_AJAX::checkout()` : la suite est entièrement celle de WooCommerce.
+		// Pas de case CGV dans le formulaire express : ni affichage, ni exigence (cette requête seulement).
+		add_filter( 'woocommerce_checkout_show_terms', array( $this, 'hide_terms' ), 99 );
+		add_filter( 'woocommerce_checkout_posted_data', array( $this, 'waive_terms' ), 99 );
+
+		// Tout échec renvoyé par WooCommerce porte un message (voir ensure_failure_message()).
+		$this->fallback = '<ul class="woocommerce-error" role="alert"><li>' . esc_html__( 'The order could not go through. Please check the form and try again.', 'famma-core' ) . '</li></ul>';
+		ob_start( array( $this, 'ensure_failure_message' ) );
+
+		/*
+		 * Comme `WC_AJAX::checkout()` : la suite est entièrement celle de
+		 * WooCommerce, sur le panier isolé par verify() (le seul produit de la
+		 * fiche). Le panier d'origine est restauré à `shutdown`.
+		 */
 		wc_maybe_define_constant( 'WOOCOMMERCE_CHECKOUT', true );
 		WC()->checkout()->process_checkout();
 		wp_die( 0 );
@@ -216,80 +236,60 @@ final class Express_Checkout {
 	}
 
 	/**
-	 * Fixe la ligne du produit à la quantité choisie, sans toucher au reste.
+	 * Masque les CGV du checkout express (case non affichée).
 	 *
-	 * La ligne existante du même produit est retirée puis remplacée, au lieu
-	 * d'être cumulée : un second envoi après une erreur (téléphone mal saisi)
-	 * ne double plus la quantité. Les autres articles du panier restent, comme
-	 * le formulaire l'annonce (« Plus N articles déjà dans votre panier »).
+	 * Posé uniquement dans la requête `famma_express_checkout` : le formulaire
+	 * express annonce les conditions sous le bouton (« En commandant, vous
+	 * acceptez… »), sans case à cocher. Le checkout classique n'est pas touché.
 	 *
-	 * Le filtre `woocommerce_add_to_cart_validation` est appliqué comme le fait
-	 * `WC_AJAX::add_to_cart()` : le plafond de quantité d'`Anti_Abuse` et les
-	 * contrôles de WooCommerce (stock, achat possible) restent en vigueur. En
-	 * cas de refus, la ligne retirée est restaurée.
-	 *
-	 * @param int   $product_id Produit commandé.
-	 * @param float $quantity   Quantité demandée.
 	 * @return bool
 	 */
-	public function put_in_cart( int $product_id, float $quantity ): bool {
-		$cart    = WC()->cart;
-		$removed = array();
-
-		foreach ( $cart->get_cart() as $key => $item ) {
-			if ( isset( $item['product_id'] ) && (int) $item['product_id'] === $product_id && empty( $item['variation_id'] ) ) {
-				$cart->remove_cart_item( (string) $key );
-				$removed[] = (string) $key;
-			}
-		}
-
-		/** This filter is documented in woocommerce/includes/class-wc-ajax.php */
-		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- filtre natif de WooCommerce, appliqué comme WC_AJAX::add_to_cart().
-		$passed = (bool) apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, $quantity );
-		$added  = $passed ? $cart->add_to_cart( $product_id, $quantity ) : false;
-
-		if ( false === $added ) {
-			foreach ( $removed as $key ) {
-				$cart->restore_cart_item( $key );
-			}
-			return false;
-		}
-
-		/** This action is documented in woocommerce/includes/class-wc-ajax.php */
-		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- action native de WooCommerce, rejouée comme WC_AJAX::add_to_cart().
-		do_action( 'woocommerce_ajax_added_to_cart', $product_id );
-
-		return true;
+	public function hide_terms(): bool {
+		return false;
 	}
 
 	/**
-	 * Répond par un échec, au format de `process_checkout()`.
+	 * Neutralise l'exigence de case CGV pour la seule commande express.
 	 *
-	 * Les avis déjà posés par WooCommerce ou par les filtres (stock, plafond)
-	 * sont renvoyés tels quels ; à défaut, un message générique.
+	 * `WC_Checkout::validate_checkout()` (WooCommerce 11.0.1) n'exige la case
+	 * que si `terms-field` est posté et `terms` absent. Les deux valeurs sont
+	 * fixées ici, après `get_posted_data()` et avant la validation.
 	 *
-	 * @return void
+	 * @param array<string,mixed> $data Données postées.
+	 * @return array<string,mixed>
 	 */
-	private function fail(): void {
-		$generic = __( 'The order could not go through. Please check the form and try again.', 'famma-core' );
+	public function waive_terms( array $data ): array {
+		$data['terms']       = 0;
+		$data['terms-field'] = 0;
 
-		// Sans session, pas d'avis WooCommerce possibles : message seul, échappé.
-		if ( ! function_exists( 'WC' ) || ! WC()->session ) {
-			$messages = '<ul class="woocommerce-error" role="alert"><li>' . esc_html( $generic ) . '</li></ul>';
-		} else {
-			if ( 0 === wc_notice_count( 'error' ) ) {
-				wc_add_notice( $generic, 'error' );
-			}
-			$messages = wc_print_notices( true );
+		return $data;
+	}
+
+	/**
+	 * Garantit un message à tout échec renvoyé par `process_checkout()`.
+	 *
+	 * `WC_Checkout::send_ajax_failure_response()` peut renvoyer `messages`
+	 * vide (passerelle absente, rechargement demandé). La réponse JSON passe
+	 * par ce tampon de sortie : un échec sans message reçoit le message
+	 * générique, déjà échappé. Les réponses avec message (dont les `<li
+	 * data-id="billing_phone">` de WooCommerce) et les succès sont rendus
+	 * tels quels. Fonction pure : appelée à la fermeture du tampon.
+	 *
+	 * @param string $buffer Sortie de la requête.
+	 * @return string
+	 */
+	public function ensure_failure_message( string $buffer ): string {
+		$response = json_decode( $buffer, true );
+
+		if ( ! is_array( $response ) || 'failure' !== ( $response['result'] ?? '' ) ) {
+			return $buffer;
 		}
+		if ( '' !== trim( wp_strip_all_tags( (string) ( $response['messages'] ?? '' ) ) ) ) {
+			return $buffer;
+		}
+		$response['messages'] = $this->fallback;
+		$encoded              = wp_json_encode( $response );
 
-		wp_send_json(
-			array(
-				'result'   => 'failure',
-				'messages' => $messages,
-				'refresh'  => false,
-				'reload'   => false,
-			)
-		);
+		return false === $encoded ? $buffer : $encoded;
 	}
 }

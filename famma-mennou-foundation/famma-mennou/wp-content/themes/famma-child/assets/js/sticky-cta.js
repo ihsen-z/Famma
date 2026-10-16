@@ -81,18 +81,16 @@
 			block: 'start',
 		} );
 
-		var fields = express.querySelectorAll( 'input:not([type="hidden"]), select' );
-		var first = null;
+		/*
+		 * Le champ Nom, premier du formulaire. Focus posé juste après le lancement
+		 * du défilement, dans le même geste : iOS n'ouvre le clavier que si le
+		 * focus arrive pendant le clic, et `preventScroll` laisse le défilement
+		 * doux se terminer au lieu de sauter au champ.
+		 */
+		var name = express.querySelector( '[name="billing_first_name"]' );
 
-		for ( var i = 0; i < fields.length; i++ ) {
-			if ( 'checkbox' !== fields[ i ].type && '' === fields[ i ].value ) {
-				first = fields[ i ];
-				break;
-			}
-		}
-
-		if ( first ) {
-			first.focus( { preventScroll: true } );
+		if ( name && ! name.disabled ) {
+			name.focus( { preventScroll: true } );
 		}
 	}
 
