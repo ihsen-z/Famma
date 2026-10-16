@@ -963,7 +963,8 @@
 			quoted = false;
 			reviewedTotal = null;
 			unlockFields();
-			var html = result.messages || ( original && original.messages );
+			// Le message précis de WooCommerce (avec data-id) est dans la réponse du checkout ; celui du statut est générique.
+			var html = ( original && original.messages ) || result.messages;
 			if ( html ) {
 				showError( html );
 			} else {
