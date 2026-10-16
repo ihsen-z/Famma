@@ -1,6 +1,7 @@
 <?php
 /**
- * Scénarios fbc / fbp / IP / user agent (0.2.6) sur un clone WordPress jetable.
+ * Scénarios fbc / fbp / IP / user agent (0.2.6) et bloc produit custom_data (0.2.7)
+ * sur un clone WordPress jetable.
  * Lancer avec FAMMA_INTEGRATION_TEST=1, FAMMA_TEST_DB_NAME=famma_integration,
  * FAMMA_TEST_DB_HOST=db, puis wp eval-file /tests/test-capi-fbc-integration.php.
  * Tout appel HTTP est intercepté : rien ne part vers Meta.
@@ -22,8 +23,8 @@ $famma_host = (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST );
 if ( ! in_array( $famma_host, array( 'localhost', '127.0.0.1', '::1' ), true ) && ! str_ends_with( $famma_host, '.test' ) ) {
 	throw new RuntimeException( 'Refusing writes: clone URL must be localhost, loopback or a .test host.' );
 }
-if ( ! class_exists( '\Famma\Core\Capi_Signals' ) || ! class_exists( 'WC_Order' ) || ! function_exists( 'as_get_scheduled_actions' ) ) {
-	throw new RuntimeException( 'Required active FAMMA 0.2.6/WooCommerce/Action Scheduler APIs are missing.' );
+if ( ! class_exists( '\Famma\Core\Capi_Signals' ) || ! class_exists( '\Famma\Core\Capi_Product_Data' ) || ! class_exists( 'WC_Order' ) || ! function_exists( 'as_get_scheduled_actions' ) ) {
+	throw new RuntimeException( 'Required active FAMMA 0.2.7/WooCommerce/Action Scheduler APIs are missing.' );
 }
 foreach ( array( 'FAMMA_META_ACCESS_TOKEN', 'FAMMA_META_PIXEL_ID', 'FAMMA_META_TEST_EVENT_CODE', 'FAMMA_META_CAPI_TEST_MODE' ) as $famma_constant ) {
 	if ( defined( $famma_constant ) && '' !== (string) constant( $famma_constant ) ) {
@@ -119,6 +120,13 @@ final class Famma_Capi_Fbc_Integration {
 			self::check( 'orderplaced-identity', 'OrderPlaced' === ( $placed['event_name'] ?? '' ) && 'famma_orderplaced_' . $order->get_id() === ( $placed['event_id'] ?? '' ) && 'website' === ( $placed['action_source'] ?? '' ), 'Nom, event_id et action_source inchangés.' );
 			self::check( 'orderplaced-hashes', hash( 'sha256', 'synthetic@example.invalid' ) === ( $ud['em'] ?? '' ) && hash( 'sha256', '21620000000' ) === ( $ud['ph'] ?? '' ), 'Reste de user_data inchangé (em/ph hachés).' );
 			self::check( 'no-test-code', ! isset( self::$requests[0]['payload']['test_event_code'] ), 'Mode test éteint : aucun test_event_code.' );
+			$mono = array(
+				'content_ids'   => array( (string) $product->get_id() ),
+				'content_name'  => $product->get_name(),
+				'num_items'     => 1,
+				'famma_product' => $product->get_slug(),
+			);
+			self::check( 'orderplaced-product-mono', self::product_data_matches( $placed, $mono ) && 'order_placed' === ( $placed['custom_data']['famma_stage'] ?? '' ), 'OrderPlaced mono-produit : content_ids, content_name, num_items, famma_product.' );
 
 			// 4. Purchase depuis « l'admin » : autre IP, autre navigateur, autres cookies.
 			$_COOKIE['_fbc']            = 'fb.1.1760000000999.ADMIN_SESSION_CLICK';
@@ -130,6 +138,7 @@ final class Famma_Capi_Fbc_Integration {
 			$pud      = $purchase['user_data'] ?? array();
 			self::check( 'purchase-signals', 'Purchase' === ( $purchase['event_name'] ?? '' ) && self::FBC === ( $pud['fbc'] ?? '' ) && self::FBP === ( $pud['fbp'] ?? '' ) && self::CLIENT_IP === ( $pud['client_ip_address'] ?? '' ) && self::CLIENT_UA === ( $pud['client_user_agent'] ?? '' ), 'Purchase : valeurs de la commande, jamais celles de l’admin.' );
 			self::check( 'purchase-identity', 'famma_purchase_' . $order->get_id() === ( $purchase['event_id'] ?? '' ), 'event_id Purchase inchangé.' );
+			self::check( 'purchase-product-mono', self::product_data_matches( $purchase, $mono ) && ! isset( $purchase['custom_data']['famma_stage'] ), 'Purchase mono-produit : même bloc produit que OrderPlaced.' );
 
 			// 5. Commande antérieure à 0.2.6, sans métadonnées.
 			$legacy = self::order( $product, false );
@@ -166,6 +175,73 @@ final class Famma_Capi_Fbc_Integration {
 			$after = wc_get_order( $down->get_id() );
 			self::check( 'non-blocking', $result === $success && $after->has_status( 'delivered' ) && ! $after->get_meta( '_famma_purchase_sent' ), 'Échec Meta : aucune exception, commande livrée normalement.' );
 			self::$network_down = false;
+
+			// 9. Multi-produit : SKU repris, quantités sommées, « | » neutralisé.
+			$second = new WC_Product_Simple();
+			$second->set_name( '[TEST LOCAL] Lame | inox' );
+			$second->set_sku( 'FAMMA-LOCAL-' . substr( md5( self::$run_id ), 0, 8 ) );
+			$second->set_status( 'private' );
+			$second->set_regular_price( '20' );
+			$second->set_virtual( true );
+			$second->update_meta_data( '_famma_integration_run', self::$run_id );
+			$second->save();
+			self::$products[] = $second->get_id();
+			$multi            = self::order( $product, false, array( array( $second, 2 ) ) );
+			wc_get_order( $multi->get_id() )->update_status( 'delivered', 'Local integration: multi-product.' );
+			$mp = self::last_event();
+			self::check(
+				'purchase-product-multi',
+				self::product_data_matches(
+					$mp,
+					array(
+						'content_ids'   => array( (string) $product->get_id(), $second->get_sku() ),
+						'content_name'  => $product->get_name() . ' | [TEST LOCAL] Lame / inox',
+						'num_items'     => 3,
+						'famma_product' => $product->get_slug() . ',' . $second->get_slug(),
+					)
+				),
+				'Multi-produit : deux ids (ID puis SKU), noms joints par « | », 3 articles, deux slugs.'
+			);
+
+			// 10. Variations S et M d'un même produit : un seul slug, celui du parent.
+			$taille = new WC_Product_Attribute();
+			$taille->set_name( 'Taille' );
+			$taille->set_options( array( 'S', 'M' ) );
+			$taille->set_visible( true );
+			$taille->set_variation( true );
+			$variable = new WC_Product_Variable();
+			$variable->set_name( '[TEST LOCAL] CAPI variable fixture' );
+			$variable->set_status( 'private' );
+			$variable->set_attributes( array( $taille ) );
+			$variable->update_meta_data( '_famma_integration_run', self::$run_id );
+			$variable->save();
+			$variations = array();
+			foreach ( array( 'S', 'M' ) as $size ) {
+				$variation = new WC_Product_Variation();
+				$variation->set_parent_id( $variable->get_id() );
+				$variation->set_attributes( array( 'taille' => $size ) );
+				$variation->set_regular_price( '49' );
+				$variation->set_virtual( true );
+				$variation->update_meta_data( '_famma_integration_run', self::$run_id );
+				$variation->save();
+				self::$products[] = $variation->get_id();
+				$variations[]     = wc_get_product( $variation->get_id() );
+			}
+			self::$products[] = $variable->get_id();
+			$variable         = wc_get_product( $variable->get_id() );
+			$varorder         = self::order( $variations[0], true, array( array( $variations[1], 1 ) ) );
+			apply_filters( 'woocommerce_payment_successful_result', $success, $varorder->get_id() );
+			self::run_action( $varorder->get_id() );
+			$vp       = self::last_event();
+			$var_data = array(
+				'content_ids'   => array( (string) $variations[0]->get_id(), (string) $variations[1]->get_id() ),
+				'num_items'     => 2,
+				'famma_product' => $variable->get_slug(),
+			);
+			self::check( 'orderplaced-product-variation', 'OrderPlaced' === ( $vp['event_name'] ?? '' ) && self::product_data_matches( $vp, $var_data ) && 2 === count( explode( ' | ', (string) ( $vp['custom_data']['content_name'] ?? '' ) ) ) && $variable->get_slug() !== $variations[0]->get_slug(), 'Variations : ids des variations, slug du parent une seule fois.' );
+			wc_get_order( $varorder->get_id() )->update_status( 'delivered', 'Local integration: variation.' );
+			$vpur = self::last_event();
+			self::check( 'purchase-product-variation', 'Purchase' === ( $vpur['event_name'] ?? '' ) && self::product_data_matches( $vpur, $var_data ) && ( $vp['custom_data']['content_name'] ?? '' ) === ( $vpur['custom_data']['content_name'] ?? null ), 'Purchase variation : même bloc produit que OrderPlaced.' );
 		} finally {
 			$_SERVER = $server_backup;
 			$_COOKIE = $cookie_backup;
@@ -174,7 +250,7 @@ final class Famma_Capi_Fbc_Integration {
 		WP_CLI::line(
 			wp_json_encode(
 				array(
-					'suite'      => 'capi-fbc-fbp-0.2.6',
+					'suite'      => 'capi-fbc-fbp-product-0.2.7',
 					'plugin'     => FAMMA_CORE_VERSION,
 					'transport'  => 'intercepted-no-meta-network',
 					'assertions' => self::$assertions,
@@ -220,9 +296,10 @@ final class Famma_Capi_Fbc_Integration {
 	 *
 	 * @param WC_Product $product Produit fixture.
 	 * @param bool       $stamp   Appliquer woocommerce_checkout_create_order.
+	 * @param array      $extra   Lignes supplémentaires : liste de array( WC_Product, quantité ).
 	 * @return WC_Order
 	 */
-	private static function order( WC_Product $product, bool $stamp ): WC_Order {
+	private static function order( WC_Product $product, bool $stamp, array $extra = array() ): WC_Order {
 		$order = wc_create_order(
 			array(
 				'created_via' => 'checkout',
@@ -238,6 +315,9 @@ final class Famma_Capi_Fbc_Integration {
 		$order->set_billing_last_name( 'Synthetic' );
 		$order->set_billing_country( 'TN' );
 		$order->add_product( $product, 1 );
+		foreach ( $extra as $line ) {
+			$order->add_product( $line[0], (int) $line[1] );
+		}
 		$order->calculate_totals();
 		if ( $stamp ) {
 			\Famma\Core\Tracking::instance()->stamp_capi_signals( $order );
@@ -266,6 +346,41 @@ final class Famma_Capi_Fbc_Integration {
 			throw new RuntimeException( 'Expected exactly one pending scheduler action.' );
 		}
 		ActionScheduler_QueueRunner::instance()->process_action( (int) $ids[0], 'famma-local-integration' );
+	}
+
+	/**
+	 * Dernier événement Meta intercepté.
+	 *
+	 * @return array
+	 */
+	private static function last_event(): array {
+		$last = end( self::$requests );
+		return is_array( $last ) ? (array) ( $last['payload']['data'][0] ?? array() ) : array();
+	}
+
+	/**
+	 * Compare le bloc produit (0.2.7) d'un événement intercepté aux valeurs attendues.
+	 *
+	 * Vérifie aussi que content_ids reprend exactement contents[].id, sans doublon.
+	 *
+	 * @param array $event    Événement Meta décodé.
+	 * @param array $expected Champs attendus parmi content_ids, content_name, num_items, famma_product.
+	 * @return bool
+	 */
+	private static function product_data_matches( array $event, array $expected ): bool {
+		$cd = $event['custom_data'] ?? array();
+		if ( ! is_array( $cd ) || ! isset( $cd['contents'], $cd['content_ids'] ) ) {
+			return false;
+		}
+		if ( array_values( array_unique( array_column( $cd['contents'], 'id' ) ) ) !== $cd['content_ids'] ) {
+			return false;
+		}
+		foreach ( $expected as $key => $value ) {
+			if ( ! array_key_exists( $key, $cd ) || $value !== $cd[ $key ] ) {
+				return false;
+			}
+		}
+		return 'product' === ( $cd['content_type'] ?? '' );
 	}
 
 	/**

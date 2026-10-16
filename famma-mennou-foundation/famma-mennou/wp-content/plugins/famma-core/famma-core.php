@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.2.8
+ * Version:           0.2.9
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.2.8' );
+define( 'FAMMA_CORE_VERSION', '0.2.9' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -46,6 +46,7 @@ require_once __DIR__ . '/includes/express-preparation.php';
 require_once __DIR__ . '/includes/capi-delivery-registry.php';
 require_once __DIR__ . '/includes/capi-signals.php';
 require_once __DIR__ . '/includes/capi-log.php';
+require_once __DIR__ . '/includes/capi-product-data.php';
 require_once __DIR__ . '/includes/order-emails.php';
 require_once __DIR__ . '/includes/anti-abuse.php';
 require_once __DIR__ . '/includes/checkout-lite.php';
@@ -2087,33 +2088,6 @@ final class Capi {
 	}
 
 	/**
-	 * Builds the contents block from the order lines.
-	 *
-	 * @param \WC_Order $order Delivered order.
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function contents( \WC_Order $order ): array {
-		$contents = array();
-
-		foreach ( $order->get_items() as $item ) {
-			$product = $item->get_product();
-			if ( ! $product instanceof \WC_Product ) {
-				continue;
-			}
-
-			$sku = (string) $product->get_sku();
-
-			$contents[] = array(
-				'id'         => '' !== $sku ? $sku : (string) $product->get_id(),
-				'quantity'   => (int) $item->get_quantity(),
-				'item_price' => round( (float) $order->get_line_subtotal( $item, false, false ) / max( 1, (int) $item->get_quantity() ), 3 ),
-			);
-		}
-
-		return $contents;
-	}
-
-	/**
 	 * Sends the Purchase event, and records the outcome on the order.
 	 *
 	 * @param \WC_Order $order    Delivered order.
@@ -2198,14 +2172,14 @@ final class Capi {
 			'action_source'    => 'website',
 			'event_source_url' => wc_get_checkout_url(),
 			'user_data'        => $this->user_data( $order ),
+			// Bloc produit commun aux deux événements (Capi_Product_Data, 0.2.9).
 			'custom_data'      => array(
 				'currency'     => $order->get_currency(),
 				// Total réel de la commande (lignes, frais, livraison, remises) : jamais une valeur fixe.
 				'value'        => round( (float) $order->get_total(), 3 ),
 				'order_id'     => (string) $order->get_id(),
-				'contents'     => $this->contents( $order ),
 				'content_type' => 'product',
-			),
+			) + Capi_Product_Data::for_order( $order ),
 		);
 
 		if ( ! $is_purchase ) {

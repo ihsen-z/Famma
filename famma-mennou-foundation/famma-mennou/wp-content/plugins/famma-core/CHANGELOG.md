@@ -1,5 +1,31 @@
 # Changelog — FAMMA Core
 
+## 0.2.9 — 2026-10-16
+
+### Meta Conversions API : identifier le produit de chaque commande
+
+Deux produits tournent en publicité (trancheuse, ceinture dorsale PRO) et
+Meta ne pouvait pas séparer leurs commandes. `custom_data` de **OrderPlaced
+et de Purchase** porte désormais :
+
+- `content_ids` : tableau des identifiants produit, identiques à
+  `contents[].id` (SKU, sinon ID du produit ou de la variation), sans doublon ;
+- `content_name` : noms des lignes de commande joints par « | » (texte brut,
+  sans balise ni entité, borné à 500 caractères) ;
+- `num_items` : somme des quantités ;
+- `famma_product` : slugs produit joints par « , » — le slug du produit
+  parent pour une variation, donc un seul slug pour une commande
+  mono-produit, quelles que soient la taille ou la quantité
+  (ex. `ceinture-dorsale-pro`). Utilisable dans une conversion
+  personnalisée Meta (« famma_product contient ceinture-dorsale-pro »).
+
+Le tout est construit par une seule classe, `Capi_Product_Data`
+(`includes/capi-product-data.php`), qui remplace l'ancienne méthode privée
+`Capi::contents()` : `contents` est inchangé (même id, quantité, prix
+unitaire). Inchangés : noms d'événements, `event_id`, moment d'envoi,
+`user_data` (fbc/fbp de la 0.2.6), `value`, `currency`, `order_id`,
+`famma_stage`.
+
 ## 0.2.8 — 2026-10-16
 
 ### Correctif
