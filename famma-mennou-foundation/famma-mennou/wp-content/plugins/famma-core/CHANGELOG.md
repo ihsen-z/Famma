@@ -1,5 +1,45 @@
 # Changelog — FAMMA Core
 
+## 0.3.0 — 2026-10-16
+
+### Choix de taille dans le formulaire express
+
+- Réglage par produit (produit simple) : Produits → modifier → Données
+  produit → onglet **Général** → « Tailles proposées » (ex. `S, M`) et
+  « Intitulé du choix de taille » (facultatif, « Taille / المقاس » par
+  défaut), posés par `Product_Sizes_Admin` (`includes/product-sizes-admin.php`).
+  Méta `_famma_size_options` / `_famma_size_label`. Vide : aucun
+  choix, le produit est inchangé. Le produit reste simple : le formulaire
+  express ne s'affiche pas sur un produit variable.
+- Fiche produit : boutons radio obligatoires juste avant la quantité, sans
+  valeur présélectionnée, pastilles de 48 px, clavier natif, propriétés CSS
+  logiques (RTL). Rien ne dépend du visiteur : le HTML reste cachable.
+- Contrôle serveur unique (`Product_Sizes`, `includes/product-sizes.php`)
+  dans `woocommerce_add_cart_item_data` : taille absente ou hors liste =
+  ajout refusé avec un message FR + derja, pour la commande express comme
+  pour « Ajouter au panier », l'AJAX des listes et `?add-to-cart=`. Sur les
+  listes, le bouton d'un produit à tailles devient « Choisir la taille » et
+  mène à la fiche. « Commander à nouveau » reprend la taille.
+- La taille est enregistrée sur la ligne de commande (méta `famma_size`,
+  affichée « Taille : M » dans l'administration, les e-mails WooCommerce et
+  la page « commande reçue ») et visible au panier / checkout classiques.
+- Commande express : la taille entre dans la signature du devis, et le
+  panier isolé ne retire que la ligne de la taille commandée.
+- Script : compatible avec l'ancien HTML encore en cache (bloc taille absent
+  = comportement 0.2.9) ; « Ajouter au panier » transmet la taille au
+  formulaire WooCommerce et est bloqué sans taille.
+
+### Messages d'erreur
+
+- Message générique d'échec en français + derja (texte source bilingue,
+  affiché même sans traduction chargée), y compris dans les réponses du
+  serveur.
+- Erreur de téléphone du formulaire : ajout de la derja.
+- Nom complet : au moins 3 caractères, contrôlé dans le navigateur et par le
+  serveur (`Tunisia::validate_full_name()`, checkout classique compris),
+  message FR + derja.
+- Traductions `fr_FR` et `ar` complétées, `.mo` régénérés.
+
 ## 0.2.9 — 2026-10-16
 
 ### Meta Conversions API : identifier le produit de chaque commande
