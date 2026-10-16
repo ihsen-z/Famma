@@ -362,7 +362,7 @@ final class Express_Order {
 				'statusUrl'     => \WC_AJAX::get_endpoint( 'famma_express_status' ),
 				'nonceUrl'      => \WC_AJAX::get_endpoint( 'famma_express_nonce' ),
 				'currency'      => get_woocommerce_currency(),
-				'genericError'  => __( 'The order could not go through. Please check the form and try again.', 'famma-core' ),
+				'genericError'  => Express_Checkout::generic_error(),
 				'sending'       => __( 'Envoi en cours… / قاعد نبعث…', 'famma-core' ),
 				'phoneError'    => __( 'Check the number: 8 digits (XX XXX XXX).', 'famma-core' ),
 				'stateError'    => __( 'Pick your governorate from the list.', 'famma-core' ),
@@ -373,7 +373,8 @@ final class Express_Order {
 				'amountChanged' => __( 'Le total a été mis à jour. Vérifiez-le puis validez votre commande. تبدل المجموع، راجعو وأكّد.', 'famma-core' ),
 				'changed'       => __( 'Votre commande a changé entre-temps (prix ou stock). Appuyez à nouveau sur Confirmer. طلبيتك تبدلت، اضغط مرة أخرى على أكد.', 'famma-core' ),
 				'networkError'  => __( 'Connexion impossible. Vérifiez votre connexion internet puis appuyez à nouveau. الكونكسيون مقصوصة، ثبت وعاود اضغط.', 'famma-core' ),
-				'nameError'     => __( 'Indiquez votre nom et prénom. اكتب اسمك ولقبك.', 'famma-core' ),
+				'nameError'     => Tunisia::name_error(),
+				'sizeError'     => Product_Sizes::missing_message(),
 				'otherItems'    => __( 'Seul cet article est commandé ici : les autres articles restent dans votre panier. كان المنتوج هذا يتطلب، البقية تقعد في السلة.', 'famma-core' ),
 				'modalTitle'    => __( 'Vérifiez le nouveau total / راجع المجموع الجديد', 'famma-core' ),
 				'modalClose'    => __( 'Fermer / سكّر', 'famma-core' ),
@@ -696,6 +697,8 @@ final class Express_Order {
 					<p class="famma-express__legend" id="famma-express-order-title"><?php esc_html_e( 'Your order / طلبيتك', 'famma-core' ); ?></p>
 					<div class="famma-express__order">
 						<?php
+						// Taille d'abord (produits qui en proposent), puis la quantité.
+						Product_Sizes::render_field( $product );
 						$this->quantity_field( $product );
 						$this->summary( $product );
 						?>

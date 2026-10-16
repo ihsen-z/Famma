@@ -102,6 +102,18 @@ final class Express_Checkout {
 	}
 
 	/**
+	 * Message d'échec générique, en français et en derja.
+	 *
+	 * Le texte source est déjà bilingue : il s'affiche correctement même si
+	 * aucune traduction n'est chargée pour la requête.
+	 *
+	 * @return string
+	 */
+	public static function generic_error(): string {
+		return __( 'La commande n’a pas pu aboutir. Vérifiez le formulaire puis réessayez. / الطلبية ما تعدّاتش، ثبّت في المعلومات وعاود.', 'famma-core' );
+	}
+
+	/**
 	 * Isole le produit de la fiche et exécute le checkout de WooCommerce.
 	 *
 	 * Point d'entrée public : la commande invité n'exige aucune capacité. La
@@ -158,7 +170,7 @@ final class Express_Checkout {
 		add_filter( 'woocommerce_checkout_posted_data', array( $this, 'waive_terms' ), 99 );
 
 		// Tout échec renvoyé par WooCommerce porte un message (voir ensure_failure_message()).
-		$this->fallback = '<ul class="woocommerce-error" role="alert"><li>' . esc_html__( 'The order could not go through. Please check the form and try again.', 'famma-core' ) . '</li></ul>';
+		$this->fallback = '<ul class="woocommerce-error" role="alert"><li>' . esc_html( self::generic_error() ) . '</li></ul>';
 		ob_start( array( $this, 'ensure_failure_message' ) );
 
 		/*

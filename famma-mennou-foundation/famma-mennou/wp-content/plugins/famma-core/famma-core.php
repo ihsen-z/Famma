@@ -39,6 +39,8 @@ require_once __DIR__ . '/includes/newsletter.php';
 require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';
 require_once __DIR__ . '/includes/tracking-events.php';
+require_once __DIR__ . '/includes/product-sizes.php';
+require_once __DIR__ . '/includes/product-sizes-admin.php';
 require_once __DIR__ . '/includes/express-order.php';
 require_once __DIR__ . '/includes/express-checkout.php';
 require_once __DIR__ . '/includes/express-idempotency.php';
@@ -1104,6 +1106,7 @@ final class Tunisia {
 		add_filter( 'woocommerce_checkout_fields', array( $this, 'checkout_fields' ) );
 		add_filter( 'woocommerce_process_checkout_field_billing_phone', array( $this, 'normalize_billing_phone' ) );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate_phone' ), 10, 2 );
+		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate_full_name' ), 10, 2 );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'require_email_for_account' ), 20, 2 );
 
 		/*
@@ -1487,6 +1490,36 @@ final class Tunisia {
 			__( 'Please enter a valid Tunisian phone number (8 digits). أدخل رقم هاتف تونسي صحيح.', 'famma-core' ),
 			array( 'id' => 'billing_phone' )
 		);
+	}
+
+	/**
+	 * Message d'un nom complet absent ou trop court (formulaire express et serveur).
+	 *
+	 * @return string
+	 */
+	public static function name_error(): string {
+		return __( 'Indiquez votre nom complet (au moins 3 caractères). / اكتب اسمك ولقبك (3 حروف على الأقل).', 'famma-core' );
+	}
+
+	/**
+	 * Refuse un nom complet de moins de 3 caractères.
+	 *
+	 * Le nom est déjà redécoupé par `split_full_name()` : prénom et nom sont
+	 * recollés pour compter. Un nom vide est laissé à WooCommerce (champ
+	 * obligatoire), pour ne pas afficher deux messages.
+	 *
+	 * @param array<string,mixed> $data   Données postées.
+	 * @param \WP_Error           $errors Erreurs de validation.
+	 * @return void
+	 */
+	public function validate_full_name( array $data, \WP_Error $errors ): void {
+		$full = trim( (string) ( $data['billing_first_name'] ?? '' ) . ' ' . (string) ( $data['billing_last_name'] ?? '' ) );
+
+		if ( '' === $full || mb_strlen( $full ) >= 3 ) {
+			return;
+		}
+
+		$errors->add( 'billing_first_name_short', self::name_error(), array( 'id' => 'billing_first_name' ) );
 	}
 }
 
@@ -2760,6 +2793,7 @@ function boot(): void {
 	Tunisia::instance();
 	Tracking::instance();
 	Tracking_Events::instance();
+	Product_Sizes::instance();
 	Express_Order::instance();
 	Express_Idempotency::instance();
 	Express_Preparation::instance();

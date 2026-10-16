@@ -196,6 +196,106 @@
 	cursor: default;
 }
 
+/*
+ * Taille (0.3.0) : boutons radio en pastilles de 48 px minimum, sur toute la
+ * largeur de la rangée « commande », juste avant la quantité. Le bouton radio
+ * natif reste dans la page (clavier : Tab puis flèches) mais n'est pas dessiné ;
+ * la pastille porte l'état coché et l'anneau de focus.
+ */
+.famma-express .famma-express__sizes {
+	flex: 1 1 100%;
+	min-inline-size: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.famma-express__sizes-legend {
+	margin-block-end: var(--sp-1, 4px);
+	padding: 0;
+	color: var(--famma-blue, #0B1F3A);
+	font-size: var(--fs-caption, 0.875rem);
+	font-weight: var(--fw-medium, 500);
+	text-align: start;
+}
+
+.famma-express__sizes .required {
+	color: var(--famma-danger-700, #C13333);
+	text-decoration: none;
+	border: 0;
+}
+
+.famma-express__size-options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--sp-2, 8px);
+}
+
+.famma-express__size {
+	position: relative;
+	display: inline-flex;
+	margin: 0;
+	cursor: pointer;
+}
+
+.famma-express__size input[type="radio"] {
+	position: absolute;
+	inset: 0;
+	inline-size: 100%;
+	block-size: 100%;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.famma-express__size-text {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	/* 48px : cible tactile minimale du projet. */
+	min-inline-size: 48px;
+	min-block-size: 48px;
+	padding-inline: var(--sp-3, 12px);
+	border: 1px solid var(--famma-line-field, #DFE3EA);
+	border-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-white, #FFF);
+	color: var(--famma-blue, #0B1F3A);
+	font-size: 1rem;
+	font-weight: var(--fw-semibold, 600);
+	line-height: 1;
+}
+
+.famma-express__size input:checked + .famma-express__size-text {
+	border-color: var(--famma-blue, #0B1F3A);
+	box-shadow: 0 0 0 1px var(--famma-blue, #0B1F3A);
+	background: var(--famma-surface-icon, #F1F4F9);
+}
+
+.famma-express__size input:focus-visible + .famma-express__size-text {
+	outline: var(--focus-ring-width, 3px) solid var(--focus-ring-color, #0B1F3A);
+	outline-offset: 1px;
+}
+
+.famma-express__size input:disabled + .famma-express__size-text {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+/* Aucune taille choisie à l'envoi : pastilles en rouge, message sous la liste. */
+.famma-express__sizes[aria-invalid="true"] .famma-express__size-text {
+	border-color: var(--famma-danger, #D64545);
+	background: var(--famma-danger-soft, #FDF7F7);
+}
+
+.famma-express__sizes .famma-express__error {
+	display: block;
+	margin-block-start: var(--sp-1, 4px);
+}
+
+.famma-express__sizes .famma-express__error[hidden] {
+	display: none;
+}
+
 /* Quantité : un bloc bordé « − valeur + », boutons de 48 px. */
 .famma-express__qty {
 	display: inline-flex;

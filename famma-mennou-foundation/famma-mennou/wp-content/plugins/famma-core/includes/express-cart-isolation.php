@@ -87,6 +87,13 @@ final class Express_Cart_Isolation {
 	private int $product_id = 0;
 
 	/**
+	 * Taille de la ligne commandée (chaîne vide : produit sans taille).
+	 *
+	 * @var string
+	 */
+	private string $size = '';
+
+	/**
 	 * Renvoie l'instance partagée, en posant les hooks au premier appel.
 	 *
 	 * @return Express_Cart_Isolation
@@ -162,6 +169,7 @@ final class Express_Cart_Isolation {
 		$this->original   = $cart->get_cart();
 		$this->coupons    = $cart->get_applied_coupons();
 		$this->product_id = $product_id;
+		$this->size       = '';
 		$this->emptied    = false;
 		$this->active     = true;
 
@@ -173,7 +181,15 @@ final class Express_Cart_Isolation {
 		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- filtre natif de WooCommerce, appliqué comme WC_AJAX::add_to_cart().
 		$passed = (bool) apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, $quantity );
 
-		return $passed && false !== $cart->add_to_cart( $product_id, $quantity );
+		$key = $passed ? $cart->add_to_cart( $product_id, $quantity ) : false;
+
+		if ( ! is_string( $key ) || '' === $key ) {
+			return false;
+		}
+		// Taille contrôlée par `Product_Sizes::cart_item_data()` : seule la ligne de cette taille est commandée.
+		$this->size = (string) ( $cart->cart_contents[ $key ][ Product_Sizes::FIELD ] ?? '' );
+
+		return true;
 	}
 
 	/**
@@ -300,13 +316,14 @@ final class Express_Cart_Isolation {
 	}
 
 	/**
-	 * La ligne est-elle celle du produit commandé (produit simple) ?
+	 * La ligne est-elle celle du produit commandé (produit simple, même taille) ?
 	 *
 	 * @param mixed $item Ligne du panier.
 	 * @return bool
 	 */
 	private function is_ordered_line( $item ): bool {
-		return is_array( $item ) && isset( $item['product_id'] ) && (int) $item['product_id'] === $this->product_id && empty( $item['variation_id'] );
+		return is_array( $item ) && isset( $item['product_id'] ) && (int) $item['product_id'] === $this->product_id && empty( $item['variation_id'] )
+			&& (string) ( $item[ Product_Sizes::FIELD ] ?? '' ) === $this->size;
 	}
 
 	/**

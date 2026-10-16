@@ -56,6 +56,45 @@
 	var phoneError = phoneInput ? document.getElementById( phoneInput.getAttribute( 'aria-describedby' ) ) : null;
 
 	/*
+	 * Choix de taille (0.3.0), seulement sur les produits qui en proposent.
+	 * Absent de l'ancien balisage servi par le cache : tout ce qui suit le
+	 * vérifie avant de s'en servir.
+	 */
+	var sizeGroup = form.querySelector( '[data-famma-sizes]' );
+	var sizeError = sizeGroup ? sizeGroup.querySelector( '.famma-express__error' ) : null;
+
+	/**
+	 * Taille cochée, ou chaîne vide (aucune taille choisie, ou pas de choix).
+	 *
+	 * @return {string}
+	 */
+	function currentSize() {
+		var checked = sizeGroup ? sizeGroup.querySelector( 'input[name="famma_size"]:checked' ) : null;
+		return checked ? String( checked.value ) : '';
+	}
+
+	/**
+	 * Message de taille sous les boutons (vide : message retiré).
+	 *
+	 * @param {string} text Message.
+	 */
+	function sizeMessage( text ) {
+		if ( sizeError ) {
+			sizeError.textContent = text || '';
+			sizeError.hidden = ! text;
+		}
+	}
+
+	/**
+	 * Une taille est-elle choisie, quand le produit en propose ?
+	 *
+	 * @return {boolean}
+	 */
+	function sizeChosen() {
+		return ! sizeGroup || '' !== currentSize();
+	}
+
+	/*
 	 * Ancien balisage (avant 0.2.7) encore servi par le cache de page : case
 	 * CGV obligatoire et récapitulatif inséré. Le serveur n'exige plus la
 	 * case : elle devient facultative et disparaît, le récapitulatif aussi, et
@@ -237,6 +276,25 @@
 
 			syncQuantity();
 
+			// Pas d'ajout au panier sans taille : le serveur le refuserait de toute façon.
+			if ( ! sizeChosen() ) {
+				event.preventDefault();
+				clearAllInvalid();
+				showProblems( [ [ sizeGroup, sizeText() ] ] );
+				return;
+			}
+			// Le formulaire WooCommerce rangé par le thème n'a pas de taille : elle lui est transmise.
+			if ( wooForm && sizeGroup ) {
+				var carried = wooForm.querySelector( 'input[type="hidden"][name="famma_size"]' );
+				if ( ! carried ) {
+					carried = document.createElement( 'input' );
+					carried.type = 'hidden';
+					carried.name = 'famma_size';
+					wooForm.appendChild( carried );
+				}
+				carried.value = currentSize();
+			}
+
 			if ( wooButton ) {
 				event.preventDefault();
 
@@ -391,6 +449,9 @@
 		if ( 'billing_last_name' === name ) {
 			name = 'billing_first_name';
 		}
+		if ( 'famma_size' === name && sizeGroup ) {
+			return sizeGroup;
+		}
 		var field = form.querySelector( '[name="' + name + '"]' );
 		if ( field && field.classList && field.classList.contains( 'famma-express__native' ) && field.parentNode ) {
 			field = field.parentNode.querySelector( '[role="combobox"]' ) || field;
@@ -436,8 +497,12 @@
 		var name = form.querySelector( '[name="billing_first_name"]' );
 		var state = form.querySelector( '[name="billing_state"]' );
 
-		if ( name && ! String( name.value || '' ).trim() ) {
+		// Même règle que `Tunisia::validate_full_name()` : au moins 3 caractères.
+		if ( name && String( name.value || '' ).trim().length < 3 ) {
 			problems.push( [ name, fammaExpress.nameError ] );
+		}
+		if ( ! sizeChosen() ) {
+			problems.push( [ sizeGroup, sizeText() ] );
 		}
 		if ( phoneInput && ! checkPhone( true, true ) ) {
 			problems.push( [ phoneInput, fammaExpress.phoneError ] );
@@ -447,6 +512,11 @@
 		}
 
 		return problems;
+	}
+
+	/** Message « choisissez votre taille » (repli : message générique, ancien `fammaExpress`). */
+	function sizeText() {
+		return fammaExpress.sizeError || fammaExpress.genericError;
 	}
 
 	/**
@@ -465,6 +535,9 @@
 			item.textContent = problem[ 1 ] || fammaExpress.genericError;
 			list.appendChild( item );
 			markInvalid( problem[ 0 ] );
+			if ( sizeGroup && problem[ 0 ] === sizeGroup ) {
+				sizeMessage( problem[ 1 ] );
+			}
 		} );
 		notices.appendChild( list );
 		reveal( notices );
@@ -737,6 +810,11 @@
 		if ( event.target && 'billing_state' === event.target.name ) {
 			invalidateQuote();
 		}
+		if ( event.target && 'famma_size' === event.target.name ) {
+			clearInvalid( sizeGroup );
+			sizeMessage( '' );
+			invalidateQuote();
+		}
 	} );
 
 	/** InitiateCheckout déjà envoyé par ce navigateur pour ce produit (persisté, survit au rechargement). */
@@ -854,7 +932,7 @@
 			[ 'famma_product_id', productId ], [ 'famma_quantity', String( currentQuantity() ) ],
 			[ 'famma_preparation_id', record.preparation_id ], [ 'billing_country', 'TN' ],
 			[ 'billing_state', state ? state.value : '' ], [ 'famma_hp_site', trap ? trap.value : '' ],
-		], true );
+		].concat( sizeGroup ? [ [ 'famma_size', currentSize() ] ] : [] ), true );
 	}
 
 	/** Chiffres seuls d'un montant HTML : « 231,000&nbsp;DT » devient « 231000 ». */
@@ -1133,7 +1211,7 @@
 
 		( summary.items || [] ).forEach( function ( item ) {
 			var row = node( 'tr' );
-			cell( row, item.name, false );
+			cell( row, item.size ? item.name + ' – ' + item.size : item.name, false );
 			cell( row, item.quantity, false );
 			cell( row, item.line_total_html || '', true );
 			body.appendChild( row );

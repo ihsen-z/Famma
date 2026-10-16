@@ -209,9 +209,9 @@ final class Express_Preparation {
 		return true;
 	}
 
-	/** Digest of the posted intent: product, quantity and delivery location. @return string */
+	/** Digest of the posted intent: product, size, quantity and delivery location. @return string */
 	private static function signature(): string {
-		return hash( 'sha256', (string) wp_json_encode( array( absint( self::posted( 'famma_product_id' ) ), (float) wc_stock_amount( self::posted( 'famma_quantity' ) ), self::posted( 'billing_state' ), self::posted( 'billing_country' ) ) ) );
+		return hash( 'sha256', (string) wp_json_encode( array( absint( self::posted( 'famma_product_id' ) ), (float) wc_stock_amount( self::posted( 'famma_quantity' ) ), self::posted( 'billing_state' ), self::posted( 'billing_country' ), self::posted( Product_Sizes::FIELD ) ) ) );
 	}
 
 	/** Apply posted Tunisian governorate for authoritative Woo delivery/tax calculations. */
@@ -269,6 +269,7 @@ final class Express_Preparation {
 				'key'             => (string) $key,
 				'product_id'      => (int) $item['product_id'],
 				'name'            => $item['data']->get_name(),
+				'size'            => (string) ( $item[ Product_Sizes::FIELD ] ?? '' ),
 				'quantity'        => (float) $item['quantity'],
 				'max'             => self::max_quantity( $item['data'] ),
 				'line_total'      => (float) $item['line_total'] + (float) $item['line_tax'],
@@ -364,7 +365,7 @@ final class Express_Preparation {
 			case 'cart_edit_unsupported':
 				return __( 'Modifiez la quantité directement dans le formulaire de commande. / بدل الكمية في الفورمولار.', 'famma-core' );
 			default:
-				return __( 'The order could not go through. Please check the form and try again.', 'famma-core' );
+				return Express_Checkout::generic_error();
 		}
 	}
 }

@@ -289,10 +289,8 @@ msgstr "Envoi en cours…"
 msgid "required"
 msgstr "obligatoire"
 
-msgid "The order could not go through. Please check the form and try again."
-msgstr ""
-"La commande n'''a pas pu aboutir. Vérifiez les informations saisies, puis "
-"réessayez."
+msgid "La commande n’a pas pu aboutir. Vérifiez le formulaire puis réessayez. / الطلبية ما تعدّاتش، ثبّت في المعلومات وعاود."
+msgstr "La commande n’a pas pu aboutir. Vérifiez le formulaire puis réessayez. / الطلبية ما تعدّاتش، ثبّت في المعلومات وعاود."
 
 msgid "Plus %d item already in your cart."
 msgid_plural "Plus %d items already in your cart."
@@ -312,7 +310,7 @@ msgid "Increase quantity"
 msgstr "Augmenter la quantité"
 
 msgid "Check the number: 8 digits (XX XXX XXX)."
-msgstr "Vérifiez le numéro : 8 chiffres (XX XXX XXX)."
+msgstr "Vérifiez le numéro : 8 chiffres (XX XXX XXX). / ثبّت في النمرة: 8 أرقام."
 
 msgid "Your details / معلوماتك"
 msgstr "Vos coordonnées / معلوماتك"
@@ -328,3 +326,21 @@ msgstr "Aucun gouvernorat trouvé"
 
 msgid "Type to search…"
 msgstr "Rechercher… / لوّج"
+
+msgid "Indiquez votre nom complet (au moins 3 caractères). / اكتب اسمك ولقبك (3 حروف على الأقل)."
+msgstr "Indiquez votre nom complet (au moins 3 caractères). / اكتب اسمك ولقبك (3 حروف على الأقل)."
+
+msgid "Taille / المقاس"
+msgstr "Taille / المقاس"
+
+msgid "Taille"
+msgstr "Taille"
+
+msgid "Choisissez votre taille. / اختار المقاس متاعك."
+msgstr "Choisissez votre taille. / اختار المقاس متاعك."
+
+msgid "Cette taille n’est pas proposée pour cet article. Choisissez une taille de la liste. / المقاس هذا موش موجود، اختار مقاس من القائمة."
+msgstr "Cette taille n’est pas proposée pour cet article. Choisissez une taille de la liste. / المقاس هذا موش موجود، اختار مقاس من القائمة."
+
+msgid "Choisir la taille / اختار المقاس"
+msgstr "Choisir la taille / اختار المقاس"

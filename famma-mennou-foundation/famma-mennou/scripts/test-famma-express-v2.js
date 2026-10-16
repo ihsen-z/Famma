@@ -97,6 +97,14 @@ function setup(responses = [], options = {}) {
   const terms = element('input', 'on', { required: '' }); terms.required = true;
   const recap = element('div');
   if (options.legacy) { inputs.terms = terms; map['[name="terms"]'] = terms; map['.famma-express__recap'] = recap; }
+  // Choix de taille (0.3.0) : groupe de boutons radio, comme Product_Sizes::render_field().
+  const sizeGroup = element('fieldset');
+  const sizeError = element('span'); sizeError.hidden = true;
+  const sizeRadios = (options.sizes || []).map(v => { const r = element('input', v); r.name = 'famma_size'; r.checked = v === options.size; return r; });
+  sizeGroup.querySelector = sel => sel === '.famma-express__error' ? sizeError
+    : sel === 'input[name="famma_size"]:checked' ? (sizeRadios.find(r => r.checked) || null) : null;
+  const cartButton = element('button');
+  if (options.sizes) { map['[data-famma-sizes]'] = sizeGroup; map['.famma-express__cart'] = cartButton; }
   const form = element('form');
   form.querySelector = s => map[s] || null;
   form.querySelectorAll = s => {
@@ -126,14 +134,20 @@ function setup(responses = [], options = {}) {
   if (options.crypto !== false) window.crypto = { randomUUID: () => '00000000-0000-4000-8000-' + String(++sequence).padStart(12, '0') };
   if (options.pixel !== false) window.fbq = (...args) => { events.push(args); };
   class MockFormData {
-    constructor(target) { this.values = []; if (target === form) Object.entries(inputs).forEach(([k, v]) => { if (!v.disabled) this.values.push([k, v.value]); }); }
+    constructor(target) {
+      this.values = [];
+      if (target === form) {
+        Object.entries(inputs).forEach(([k, v]) => { if (!v.disabled) this.values.push([k, v.value]); });
+        sizeRadios.forEach(r => { if (r.checked && !r.disabled) this.values.push(['famma_size', r.value]); });
+      }
+    }
     append(k, v) { this.values.push([k, v]); }
     forEach(cb) { this.values.forEach(([k, v]) => cb(v, k)); }
   }
   const fammaExpress = {
     nonceUrl: '/nonce', prepareUrl: '/prepare', expressUrl: '/express', statusUrl: '/status', currency: 'TND',
     genericError: 'Erreur générique', sending: 'Envoi en cours', phoneError: 'Téléphone invalide', stateError: 'Gouvernorat',
-    nameError: 'Nom manquant', confirmLabel: 'Confirmer', retryLabel: 'Vérifier ma commande en cours', amountChanged: 'Le total a été mis à jour.',
+    nameError: 'Nom manquant', sizeError: 'Taille manquante', confirmLabel: 'Confirmer', retryLabel: 'Vérifier ma commande en cours', amountChanged: 'Le total a été mis à jour.',
     changed: 'Commande changée', networkError: 'Connexion impossible', otherItems: 'Seul cet article est commandé ici',
     modalTitle: 'Nouveau total', modalClose: 'Fermer', finalLabel: 'Valider ma commande – %s', pending: 'En cours',
     recovery: 'Résultat inconnu', storageError: 'Stockage indisponible',
@@ -163,7 +177,7 @@ function setup(responses = [], options = {}) {
     return overlay && { overlay, confirm: find('famma-express-modal__confirm'), close: find('famma-express-modal__close'),
       text: find('famma-express-modal__confirm-text'), content: find('famma-express-modal__content') };
   };
-  return { terms, recap, qty, phone, phoneError, name, state, total, button, submitText, notices, info, minus, plus, cartQty, form,
+  return { sizeGroup, sizeError, sizeRadios, cartButton, terms, recap, qty, phone, phoneError, name, state, total, button, submitText, notices, info, minus, plus, cartQty, form,
     window, calls, events, storage, submit, modal, documentElement,
     urls: () => calls.map(c => c.url),
     record: () => JSON.parse(storage.get('famma_express_intent_123')) };
@@ -571,6 +585,46 @@ async function test(name, run) {
     const s = setup([token, quote(), accepted]);
     s.submit(); await flush();
     assert.ok(!names(s.calls[2]).includes('terms'));
+  });
+
+  // ── Choix de taille (0.3.0) et nom complet ───────────────────────────
+  await test('Taille proposée mais non choisie : aucun envoi, message taille, groupe marqué', async () => {
+    const s = setup([], { sizes: ['S', 'M'] });
+    s.submit(); await flush();
+    assert.equal(s.calls.length, 0);
+    assert.ok(s.notices.textContent.includes('Taille manquante'));
+    assert.equal(s.sizeGroup.getAttribute('aria-invalid'), 'true');
+    assert.equal(s.sizeError.hidden, false);
+  });
+
+  await test('Taille M choisie : envoyée au devis ET à la commande', async () => {
+    const s = setup([token, quote(), accepted], { sizes: ['S', 'M'], size: 'M' });
+    s.submit(); await flush();
+    assert.deepEqual(s.urls(), ['/nonce', '/prepare', '/express']);
+    assert.equal(field(s.calls[1], 'famma_size'), 'M');
+    assert.equal(field(s.calls[2], 'famma_size'), 'M');
+    assert.equal(s.window.location.href, accepted.redirect);
+  });
+
+  await test('Ajouter au panier sans taille : bloqué avec le message taille', async () => {
+    const s = setup([], { sizes: ['S', 'M'] });
+    s.cartButton.fire('click');
+    assert.equal(s.calls.length, 0);
+    assert.ok(s.notices.textContent.includes('Taille manquante'));
+  });
+
+  await test('Ancien fammaExpress sans sizeError : repli sur le message générique', async () => {
+    const s = setup([], { sizes: ['S', 'M'], drop: ['sizeError'] });
+    s.submit(); await flush();
+    assert.equal(s.calls.length, 0);
+    assert.ok(s.notices.textContent.includes('Erreur générique'));
+  });
+
+  await test('Nom complet de 2 caractères : aucun envoi, message nom', async () => {
+    const s = setup([], { name: 'Al' });
+    s.submit(); await flush();
+    assert.equal(s.calls.length, 0);
+    assert.ok(s.notices.textContent.includes('Nom manquant'));
   });
 
   // ── Reprise par famma_express_status ───────────────────────────────────
