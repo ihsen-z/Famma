@@ -208,6 +208,41 @@ final class Visitor_Store {
 	}
 
 	/**
+	 * Événements d'une liste de visiteurs, pour l'export des données personnelles.
+	 *
+	 * @param array<int, string> $visitor_ids Identifiants visiteurs (UUID vérifiés).
+	 * @param int                $limit       Lignes au plus.
+	 * @return array<int, array<string, string>>
+	 */
+	public function events_for_visitors( array $visitor_ids, int $limit = 2000 ): array {
+		if ( array() === $visitor_ids ) {
+			return array();
+		}
+		global $wpdb;
+		$marks = implode( ',', array_fill( 0, count( $visitor_ids ), '%s' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- custom table; $marks only holds %s placeholders, values passed by spread.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, created_at, event, page_type, path, label, num, source, medium, campaign, device FROM %i WHERE visitor_id IN ($marks) ORDER BY id LIMIT %d", $this->table(), ...array_merge( $visitor_ids, array( $limit ) ) ), ARRAY_A );
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * Supprime tous les événements d'une liste de visiteurs.
+	 *
+	 * @param array<int, string> $visitor_ids Identifiants visiteurs (UUID vérifiés).
+	 * @return int Lignes supprimées.
+	 */
+	public function delete_visitors( array $visitor_ids ): int {
+		if ( array() === $visitor_ids ) {
+			return 0;
+		}
+		global $wpdb;
+		$marks = implode( ',', array_fill( 0, count( $visitor_ids ), '%s' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- custom table; $marks only holds %s placeholders, values passed by spread.
+		$done = $wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE visitor_id IN ($marks)", $this->table(), ...$visitor_ids ) );
+		return is_int( $done ) ? $done : 0;
+	}
+
+	/**
 	 * Supprime les lignes plus anciennes que la durée de conservation.
 	 *
 	 * Paquets bornés et au plus vingt passages par jour : une base en retard se

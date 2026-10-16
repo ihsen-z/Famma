@@ -191,4 +191,27 @@ final class Visitor_Report {
 		);
 		return is_array( $rows ) ? $rows : array();
 	}
+
+	/**
+	 * Historique d'un visiteur : nombre de sessions et première visite connue.
+	 *
+	 * @param string $visitor_id Identifiant visiteur.
+	 * @return array{sessions: int, first_seen: string}
+	 */
+	public function visitor_history( string $visitor_id ): array {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- indexed read of a custom table.
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT COUNT(DISTINCT session_id) AS sessions, MIN(created_at) AS first_seen FROM %i WHERE visitor_id = %s',
+				$this->table(),
+				$visitor_id
+			),
+			ARRAY_A
+		);
+		return array(
+			'sessions'   => (int) ( $row['sessions'] ?? 0 ),
+			'first_seen' => (string) ( $row['first_seen'] ?? '' ),
+		);
+	}
 }

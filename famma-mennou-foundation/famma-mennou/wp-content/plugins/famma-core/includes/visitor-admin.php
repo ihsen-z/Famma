@@ -130,16 +130,18 @@ final class Visitor_Admin {
 	 */
 	public static function event_labels(): array {
 		return array(
-			'page_view'      => __( 'Page vue', 'famma-core' ),
-			'page_leave'     => __( 'Sortie de page', 'famma-core' ),
-			'add_to_cart'    => __( 'Ajout au panier', 'famma-core' ),
-			'form_start'     => __( 'Formulaire commencé', 'famma-core' ),
-			'form_field'     => __( 'Champ touché', 'famma-core' ),
-			'form_submit'    => __( 'Formulaire envoyé', 'famma-core' ),
-			'order_placed'   => __( 'Commande passée', 'famma-core' ),
-			'click_whatsapp' => __( 'Clic WhatsApp', 'famma-core' ),
-			'click_phone'    => __( 'Clic téléphone', 'famma-core' ),
-			'click_outbound' => __( 'Lien sortant', 'famma-core' ),
+			'page_view'         => __( 'Page vue', 'famma-core' ),
+			'page_leave'        => __( 'Sortie de page', 'famma-core' ),
+			'add_to_cart'       => __( 'Ajout au panier', 'famma-core' ),
+			'form_start'        => __( 'Formulaire commencé', 'famma-core' ),
+			'form_field'        => __( 'Champ touché', 'famma-core' ),
+			'form_submit'       => __( 'Formulaire envoyé', 'famma-core' ),
+			'order_placed'      => __( 'Commande passée', 'famma-core' ),
+			'click_whatsapp'    => __( 'Clic WhatsApp', 'famma-core' ),
+			'click_phone'       => __( 'Clic téléphone', 'famma-core' ),
+			'click_outbound'    => __( 'Lien sortant', 'famma-core' ),
+			'product_media'     => __( 'Média produit', 'famma-core' ),
+			'product_variation' => __( 'Variation choisie', 'famma-core' ),
 		);
 	}
 
@@ -169,17 +171,45 @@ final class Visitor_Admin {
 	 * @return void
 	 */
 	private function overview(): void {
-		$days   = $this->days();
-		$report = new Visitor_Report();
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination.
-		$paged = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1;
+		$days = $this->days();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only tab selector.
+		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'summary';
+		$tabs = array(
+			'summary'  => __( 'Synthèse', 'famma-core' ),
+			'sources'  => __( 'Sources et campagnes', 'famma-core' ),
+			'products' => __( 'Produits', 'famma-core' ),
+		);
+		$tab  = isset( $tabs[ $tab ] ) ? $tab : 'summary';
 
 		echo '<h1>' . esc_html__( 'Parcours visiteurs', 'famma-core' ) . '</h1>';
-		echo '<p class="famma-vj__periods">';
+		echo '<nav class="nav-tab-wrapper">';
+		foreach ( $tabs as $key => $label ) {
+			printf(
+				'<a href="%1$s" class="nav-tab%2$s">%3$s</a>',
+				esc_url(
+					$this->url(
+						array(
+							'days' => $days,
+							'tab'  => $key,
+						)
+					)
+				),
+				$key === $tab ? ' nav-tab-active' : '',
+				esc_html( $label )
+			);
+		}
+		echo '</nav><p class="famma-vj__periods">';
 		foreach ( self::PERIODS as $period ) {
 			printf(
 				'<a href="%1$s" class="button%2$s">%3$s</a> ',
-				esc_url( $this->url( array( 'days' => $period ) ) ),
+				esc_url(
+					$this->url(
+						array(
+							'days' => $period,
+							'tab'  => $tab,
+						)
+					)
+				),
 				$period === $days ? ' button-primary' : '',
 				/* translators: %d: number of days. */
 				esc_html( sprintf( _n( '%d jour', '%d jours', $period, 'famma-core' ), $period ) )
@@ -187,6 +217,19 @@ final class Visitor_Admin {
 		}
 		echo '</p>';
 
+		if ( 'sources' === $tab ) {
+			Visitor_Insights_Views::sources( ( new Visitor_Insights() )->sources( $days ) );
+			return;
+		}
+		if ( 'products' === $tab ) {
+			$insights = new Visitor_Insights();
+			Visitor_Insights_Views::products( $insights->products( $days ), $insights->variations( $days ) );
+			return;
+		}
+
+		$report = new Visitor_Report();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination.
+		$paged = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1;
 		Visitor_Admin_Views::summary( $report->summary( $days ) );
 		Visitor_Admin_Views::forms( $report->form_fields( $days ) );
 		Visitor_Admin_Views::sessions( $report->sessions( $days, $paged ), $days, $paged, array( $this, 'url' ) );

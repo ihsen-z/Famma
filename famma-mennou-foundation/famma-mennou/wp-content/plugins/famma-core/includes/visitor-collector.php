@@ -43,6 +43,8 @@ final class Visitor_Collector {
 		'click_whatsapp',
 		'click_phone',
 		'click_outbound',
+		'product_media',
+		'product_variation',
 	);
 
 	/**

@@ -206,6 +206,40 @@
 		}
 	}, true );
 
+	// ── Fiche produit : galerie, vidéo, variations (une fois chacun par page) ──
+	var seenMedia = {};
+	function media( kind ) {
+		if ( ! seenMedia[ kind ] ) {
+			seenMedia[ kind ] = true;
+			track( 'product_media', { label: kind } );
+		}
+	}
+	if ( 'product' === ctx.pageType ) {
+		document.addEventListener( 'click', function ( event ) {
+			if ( event.target && event.target.closest && event.target.closest( '.famma-gallery-col, .woocommerce-product-gallery' ) ) {
+				media( 'gallery' );
+			}
+		}, true );
+		// `play` ne remonte pas : écoute en capture.
+		document.addEventListener( 'play', function ( event ) {
+			if ( event.target && 'VIDEO' === event.target.tagName ) {
+				media( 'video' );
+			}
+		}, true );
+		var seenVariations = {};
+		document.addEventListener( 'change', function ( event ) {
+			var select = event.target;
+			if ( ! select || ! select.closest || ! select.closest( 'form.variations_form' ) || ! select.value ) {
+				return;
+			}
+			var label = ( select.name || '' ).replace( /^attribute_/, '' ) + '=' + select.value;
+			if ( ! seenVariations[ label ] ) {
+				seenVariations[ label ] = true;
+				track( 'product_variation', { label: label } );
+			}
+		} );
+	}
+
 	// ── Clics : WhatsApp, téléphone, liens sortants ──
 	document.addEventListener( 'click', function ( event ) {
 		var link = event.target && event.target.closest ? event.target.closest( 'a[href]' ) : null;
