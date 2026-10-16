@@ -2236,7 +2236,13 @@ final class Capi {
 
 		if ( is_wp_error( $response ) ) {
 			$registry->finish( $claim, 'uncertain', 0, 0 );
-			Capi_Log::write( $log + array( 'state' => 'transport_uncertain', 'error' => $response->get_error_message() ), $token );
+			Capi_Log::write(
+				$log + array(
+					'state' => 'transport_uncertain',
+					'error' => $response->get_error_message(),
+				),
+				$token
+			);
 			$this->record_failure( $order, 'transport_uncertain; ' . $event_id, $attempts, $event_name );
 			return;
 		}

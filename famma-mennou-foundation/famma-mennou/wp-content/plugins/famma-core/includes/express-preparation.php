@@ -116,11 +116,11 @@ final class Express_Preparation {
 			wp_send_json( $response );
 			return;
 		}
-		$previous            = $isolation->previous_quantity();
-		$delta               = max( 0.0, $quantity - $previous );
-		$sku                 = (string) $product->get_sku();
-		$content_id          = '' !== $sku ? $sku : (string) $product_id;
-		$params              = array(
+		$previous   = $isolation->previous_quantity();
+		$delta      = max( 0.0, $quantity - $previous );
+		$sku        = (string) $product->get_sku();
+		$content_id = '' !== $sku ? $sku : (string) $product_id;
+		$params     = array(
 			'content_ids'  => array( $content_id ),
 			'content_type' => 'product',
 			'currency'     => get_woocommerce_currency(),
@@ -132,7 +132,7 @@ final class Express_Preparation {
 				),
 			),
 		);
-		$response            = array(
+		$response   = array(
 			'result'         => 'success',
 			'preparation_id' => $id,
 			'cart_hash'      => $hash,
