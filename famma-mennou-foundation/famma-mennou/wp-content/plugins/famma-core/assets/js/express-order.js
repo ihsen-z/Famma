@@ -575,6 +575,7 @@
 	var productId = form.querySelector( '[name="famma_product_id"]' ).value;
 	var storageKey = 'famma_express_intent_' + productId;
 	var checkoutKey = 'famma_express_ic_' + productId;
+	var cartKey = 'famma_express_atc_' + productId;
 	var record = null;
 	var storageReady = false;
 	var quoted = false;
@@ -740,6 +741,27 @@
 	}
 
 	/**
+	 * AddToCart déjà envoyé pour ce produit (persisté hors du registre, qu'un
+	 * refus de validation remplace) : un refus suivi d'un nouvel essai, ou un
+	 * rechargement, ne compte pas un second ajout au panier.
+	 */
+	function cartEmitted() {
+		try {
+			return !! window.sessionStorage.getItem( cartKey );
+		} catch ( error ) {
+			return false;
+		}
+	}
+
+	function rememberCart( id ) {
+		try {
+			window.sessionStorage.setItem( cartKey, String( id ) );
+		} catch ( error ) {
+			// Sans stockage, la déduplication par event_id de la page suffit.
+		}
+	}
+
+	/**
 	 * Use the exact server acknowledgement and event ID, including replays.
 	 * InitiateCheckout part une seule fois : au premier clic qui obtient un
 	 * devis, avec l'event_id du serveur (déduplication avec la CAPI).
@@ -751,7 +773,7 @@
 		[ [ 'AddToCart', tracking.add_to_cart ], [ 'InitiateCheckout', tracking.initiate_checkout ] ].forEach( function ( entry ) {
 			var data = entry[ 1 ];
 			var isCheckout = 'InitiateCheckout' === entry[ 0 ];
-			if ( ! data || false === data.emit || ! data.event_id || emitted[ data.event_id ] || ! window.fbq || ( isCheckout && checkoutEmitted() ) ) {
+			if ( ! data || false === data.emit || ! data.event_id || emitted[ data.event_id ] || ! window.fbq || ( isCheckout && checkoutEmitted() ) || ( ! isCheckout && cartEmitted() ) ) {
 				return;
 			}
 			if ( ! pixel( entry[ 0 ], data.params, data.event_id ) ) {
@@ -759,6 +781,8 @@
 			}
 			if ( isCheckout ) {
 				rememberCheckout( data.event_id );
+			} else {
+				rememberCart( data.event_id );
 			}
 			emitted[ data.event_id ] = true;
 			record.events.push( data.event_id );
@@ -941,6 +965,7 @@
 		try {
 			// Une nouvelle commande, plus tard, sera une nouvelle intention d'achat.
 			window.sessionStorage.removeItem( checkoutKey );
+			window.sessionStorage.removeItem( cartKey );
 		} catch ( error ) {
 			// Sans effet sur la commande.
 		}
