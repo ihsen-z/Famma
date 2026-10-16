@@ -93,6 +93,10 @@ function setup(responses = [], options = {}) {
   const map = { '.famma-express__submit': button, '.famma-express__notices': notices, '.famma-express__info': info,
     '.famma-express__total': total };
   Object.entries(inputs).forEach(([k, v]) => { map[`[name="${k}"]`] = v; });
+  // Ancien balisage servi par le cache (avant 0.2.7) : case CGV obligatoire et récapitulatif inséré.
+  const terms = element('input', 'on', { required: '' }); terms.required = true;
+  const recap = element('div');
+  if (options.legacy) { inputs.terms = terms; map['[name="terms"]'] = terms; map['.famma-express__recap'] = recap; }
   const form = element('form');
   form.querySelector = s => map[s] || null;
   form.querySelectorAll = s => {
@@ -136,6 +140,7 @@ function setup(responses = [], options = {}) {
     recapLabels: { product: 'Article', quantity: 'Quantité', amount: 'Montant', subtotal: 'Sous-total', discount: 'Remises', shipping: 'Livraison', fees: 'Frais', tax: 'Taxes', total: 'Total' },
     price: { decimals: 3, decimal: ',', thousand: ' ', format: '%2$s %1$s', symbol: 'DT' },
   };
+  (options.drop || []).forEach(k => { delete fammaExpress[k]; });
   const sandbox = {
     document, window, fammaExpress, FormData: MockFormData, Uint8Array, Date, JSON, Math,
     Event: class { constructor(type, init) { this.type = type; Object.assign(this, init); } },
@@ -158,7 +163,7 @@ function setup(responses = [], options = {}) {
     return overlay && { overlay, confirm: find('famma-express-modal__confirm'), close: find('famma-express-modal__close'),
       text: find('famma-express-modal__confirm-text'), content: find('famma-express-modal__content') };
   };
-  return { qty, phone, phoneError, name, state, total, button, submitText, notices, info, minus, plus, cartQty, form,
+  return { terms, recap, qty, phone, phoneError, name, state, total, button, submitText, notices, info, minus, plus, cartQty, form,
     window, calls, events, storage, submit, modal, documentElement,
     urls: () => calls.map(c => c.url),
     record: () => JSON.parse(storage.get('famma_express_intent_123')) };
@@ -188,7 +193,8 @@ function quote(over = {}) {
 }
 const accepted = { result: 'success', redirect: '/commande/order-received/900/?key=wc_order_fixture', famma_state: 'accepted', order_id: 900 };
 const wooPhoneError = { result: 'failure', messages: '<ul class="woocommerce-error" role="alert"><li data-id="billing_phone">Numéro invalide</li></ul>' };
-const failedState = { result: 'failure', famma_state: 'failed', famma_code: 'validation_failed' };
+// Comme Express_Idempotency::reply() : le statut d'un refus porte un message générique ; le détail est dans la réponse du checkout.
+const failedState = { result: 'failure', famma_state: 'failed', famma_code: 'validation_failed', messages: '<ul class="woocommerce-error"><li>Échec générique du statut</li></ul>' };
 const ic = s => s.events.filter(e => e[1] === 'InitiateCheckout');
 
 let passed = 0, failed = 0;
@@ -492,6 +498,7 @@ async function test(name, run) {
     const r = setup([token, quote({ ic: 'srv-ic-c', add: 'srv-add-c' }), accepted], { storage: store });
     r.submit(); await flush();
     assert.equal(ic(r).length, 0, 'pas de second InitiateCheckout après rechargement');
+    assert.equal(s.events.filter(e => e[1] === 'AddToCart').length + r.events.filter(e => e[1] === 'AddToCart').length, 1, 'AddToCart une seule fois malgré le refus et le rechargement');
     assert.equal(r.window.location.href, accepted.redirect);
     assert.equal(store.has('famma_express_ic_123'), false, 'commande acceptée : prochaine intention libre');
   });
@@ -506,6 +513,64 @@ async function test(name, run) {
     const s = setup([token, { result: 'failure', messages: '<ul><li>Stock insuffisant</li></ul>' }]);
     s.submit(); await flush();
     assert.equal(s.events.length, 0);
+  });
+
+  // ── Refus explicites avant réservation (aucune commande possible) ────
+  for (const [label, refusal, expected] of [
+    ['plafond 429 Anti_Abuse', { result: 'failure', messages: '<ul class="woocommerce-error"><li>Trop de tentatives</li></ul>', refresh: false, reload: false }, 'Trop de tentatives'],
+    ['intent_invalid sans message', { result: 'failure', famma_code: 'intent_invalid' }, 'Erreur générique'],
+    ['registry_unavailable', { result: 'failure', famma_code: 'registry_unavailable' }, 'Erreur générique'],
+    ['cart_rejected avec avis', { result: 'failure', famma_code: 'cart_rejected', messages: '<ul><li>Stock insuffisant</li></ul>' }, 'Stock insuffisant'],
+  ]) {
+    await test(`Refus explicite (${label}) puis status unknown_intent → retour au repos, message, pas de boucle`, async () => {
+      const s = setup([token, quote(), refusal, { result: 'failure', famma_code: 'unknown_intent' }, quote(), accepted]);
+      s.submit(); await flush();
+      assert.deepEqual(s.urls(), ['/nonce', '/prepare', '/express', '/status']);
+      assert.equal(s.notices.textContent, expected);
+      assert.equal(s.record().phase, 'draft');
+      assert.equal(s.record().fields, undefined);
+      assert.equal(s.phone.disabled, false, 'champs déverrouillés');
+      assert.equal(s.button.disabled, false);
+      assert.equal(s.submitText.innerHTML, 'Confirmer ma commande / أكد طلبيتك');
+      s.submit(); await flush();
+      assert.deepEqual(s.urls().slice(4), ['/prepare', '/express'], "le clic suivant refait un devis, sans rejouer l'ancien envoi");
+      assert.notEqual(field(s.calls[4], 'famma_preparation_id'), field(s.calls[1], 'famma_preparation_id'));
+      assert.equal(s.window.location.href, accepted.redirect);
+    });
+  }
+  await test('Réponse illisible du checkout puis unknown_intent → reste « à vérifier » (verrouillé)', async () => {
+    const s = setup([token, quote(), 'Fatal error', { result: 'failure', famma_code: 'unknown_intent' }]);
+    s.submit(); await flush();
+    assert.equal(s.record().phase, 'unknown');
+    assert.equal(s.phone.disabled, true);
+  });
+
+  // ── Ancien balisage servi par le cache LiteSpeed ─────────────────────
+  await test('Ancien HTML : case CGV rendue facultative et masquée, récapitulatif masqué', async () => {
+    const s = setup([], { legacy: true, drop: ['finalLabel', 'modalTitle', 'modalClose'] });
+    assert.equal(s.terms.required, false);
+    assert.equal(s.terms.getAttribute('required'), null);
+    assert.equal(s.terms.hidden, true);
+    assert.equal(s.recap.hidden, true);
+  });
+  await test('Ancien HTML : modale de vérification forcée à total identique, libellés de repli non vides', async () => {
+    const s = setup([token, quote(), accepted], { legacy: true, drop: ['finalLabel', 'modalTitle', 'modalClose'] });
+    s.submit(); await flush();
+    assert.deepEqual(s.urls(), ['/nonce', '/prepare']);
+    const m = s.modal();
+    assert.ok(m && m.overlay.hidden === false, 'modale ouverte');
+    assert.ok(m.text.textContent.includes('Confirmer') && m.text.textContent.includes('79,000 DT'), 'bouton final : libellé existant + montant (' + m.text.textContent + ')');
+    const closeName = m.close.getAttribute('aria-label');
+    assert.ok(closeName === null ? m.close.textContent.trim() !== '' : closeName.trim() !== '', 'bouton Fermer avec un nom accessible');
+    const title = s.modal().overlay.children[0].children[0].children[0];
+    assert.ok(title.textContent.trim() !== '', 'titre de modale non vide');
+    m.confirm.fire('click'); await flush();
+    assert.equal(s.window.location.href, accepted.redirect);
+  });
+  await test('Nouveau HTML : aucune case CGV envoyée ni requise', async () => {
+    const s = setup([token, quote(), accepted]);
+    s.submit(); await flush();
+    assert.ok(!names(s.calls[2]).includes('terms'));
   });
 
   // ── Reprise par famma_express_status ───────────────────────────────────
