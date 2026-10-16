@@ -48,11 +48,12 @@ final class Anti_Abuse {
 	 * Seuils par défaut.
 	 */
 	private const DEFAULT_LIMITS = array(
-		'orders_per_ip_hour'   => 5,
-		'orders_per_phone_day' => 3,
-		'nonces_per_ip_hour'   => 40,
-		'express_per_ip_hour'  => 40,
-		'max_quantity'         => 10,
+		'orders_per_ip_hour'     => 5,
+		'orders_per_phone_day'   => 3,
+		'nonces_per_ip_hour'     => 40,
+		'express_per_ip_hour'    => 40,
+		'cart_edits_per_ip_hour' => 300,
+		'max_quantity'           => 10,
 	);
 
 	/**
@@ -312,6 +313,29 @@ final class Anti_Abuse {
 		if ( '' !== $trap ) {
 			self::refuse_express( 'refused', 200 );
 		}
+	}
+
+	/**
+	 * Limite les retraits et changements de quantité du récapitulatif express.
+	 *
+	 * Compteur distinct de `throttle_express()` : un client qui ajuste trois
+	 * lignes ne doit pas épuiser le budget de ses confirmations.
+	 *
+	 * @return void
+	 */
+	public function throttle_cart_edit(): void {
+		if ( self::exempt() ) {
+			return;
+		}
+
+		$key = self::key( 'cart_edit', self::client_ip() );
+
+		if ( self::count( $key ) >= self::limit( 'cart_edits_per_ip_hour' ) ) {
+			self::refuse_express( 'ip', 429 );
+			return;
+		}
+
+		self::bump( $key, HOUR_IN_SECONDS );
 	}
 
 	/**

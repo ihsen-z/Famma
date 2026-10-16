@@ -14,7 +14,7 @@
 .famma-express {
 	margin-block: var(--sp-6, 24px);
 	padding: var(--sp-4, 16px);
-	border: 2px solid var(--famma-orange, #F5A623);
+	border: 2px solid var(--famma-orange, #FF7A00);
 	border-radius: var(--famma-radius, 12px);
 	background: var(--famma-white, #FFF);
 	/*
@@ -30,7 +30,7 @@
 	margin-block: 0 var(--sp-4, 16px);
 	font-size: var(--fs-h3, 1.25rem);
 	font-weight: var(--fw-bold, 700);
-	color: var(--famma-blue, #10275A);
+	color: var(--famma-blue, #0B1F3A);
 }
 
 /*
@@ -56,29 +56,29 @@
 }
 
 .famma-express__optional {
-	color: var(--famma-ink-muted, #55606E);
+	color: var(--famma-text-2, #56617A);
 	font-weight: var(--fw-regular, 400);
 }
 
 .famma-express__error {
-	color: var(--famma-danger, #C0392B);
+	color: var(--famma-danger-700, #C13333);
 	font-size: var(--fs-caption, 0.875rem);
 }
 
 .famma-express__field input[aria-invalid="true"] {
-	border-color: var(--famma-danger, #C0392B);
+	border-color: var(--famma-danger, #D64545);
 }
 
 .famma-express__field label {
 	font-size: var(--fs-caption, 0.875rem);
 	font-weight: var(--fw-medium, 500);
-	color: var(--famma-blue, #10275A);
+	color: var(--famma-blue, #0B1F3A);
 	/* `start`, pas `left` : l'intitulé suit le sens de lecture. */
 	text-align: start;
 }
 
 .famma-express__field .required {
-	color: var(--famma-danger, #C0392B);
+	color: var(--famma-danger-700, #C13333);
 	text-decoration: none;
 	border: 0;
 }
@@ -91,10 +91,10 @@
 	min-block-size: 48px;
 	inline-size: 100%;
 	padding-inline: var(--chrome-field-pad-inline, 14px);
-	border: 1px solid var(--famma-line, #DBE1E8);
+	border: 1px solid var(--famma-line, #E7EAF0);
 	border-radius: var(--famma-radius-sm, 8px);
 	background: var(--famma-surface-field, #FBFCFD);
-	color: var(--famma-blue, #10275A);
+	color: var(--famma-blue, #0B1F3A);
 	font-family: inherit;
 	/*
 	 * 16px minimum, et ce n'est pas un choix esthétique : en dessous, iOS
@@ -106,7 +106,7 @@
 
 .famma-express__field input:focus-visible,
 .famma-express__field select:focus-visible {
-	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #2C6BED);
+	outline: var(--focus-ring-width, 3px) solid var(--focus-ring-color, #0B1F3A);
 	outline-offset: 1px;
 }
 
@@ -123,10 +123,13 @@
 	inline-size: 100%;
 }
 
-.famma-express__native {
+/* Deux classes + l'élément : plus fort que `.famma-express__field select` (pleine largeur), sinon le <select> masqué dépasse du formulaire et crée un défilement horizontal. */
+.famma-express__field select.famma-express__native {
 	position: absolute;
 	inline-size: 1px;
+	min-inline-size: 0;
 	block-size: 1px;
+	min-block-size: 0;
 	margin: -1px;
 	padding: 0;
 	overflow: hidden;
@@ -147,10 +150,10 @@
 	overflow-y: auto;
 	overscroll-behavior: contain;
 	list-style: none;
-	border: 1px solid var(--famma-line, #DBE1E8);
+	border: 1px solid var(--famma-line, #E7EAF0);
 	border-radius: var(--famma-radius-sm, 8px);
 	background: var(--famma-white, #FFF);
-	box-shadow: 0 8px 24px rgb(16 39 90 / 12%);
+	box-shadow: var(--elev-2, 0 8px 24px rgba(11, 31, 58, 0.14));
 }
 
 .famma-express__combo-list li {
@@ -162,24 +165,30 @@
 	min-block-size: 48px;
 	margin: 0;
 	padding-inline: var(--sp-3, 12px);
+	border-inline-start: 3px solid transparent;
 	border-radius: var(--famma-radius-sm, 8px);
-	color: var(--famma-blue, #10275A);
+	color: var(--famma-blue, #0B1F3A);
 	white-space: nowrap;
 	cursor: pointer;
 }
 
 .famma-express__combo-list li > span:nth-child(2) {
-	color: var(--famma-ink-muted, #55606E);
+	color: var(--famma-text-2, #56617A);
 	font-size: var(--fs-caption, 0.875rem);
 }
 
 .famma-express__combo-list li[aria-selected="true"],
 .famma-express__combo-list li:hover {
-	background: var(--famma-surface-field, #EEF3FB);
+	background: var(--famma-surface-icon, #F1F4F9);
+}
+
+.famma-express__combo-list li[aria-selected="true"] {
+	border-inline-start-color: var(--famma-blue, #0B1F3A);
+	font-weight: var(--fw-semibold, 600);
 }
 
 .famma-express__combo-list .famma-express__combo-empty {
-	color: var(--famma-ink-muted, #55606E);
+	color: var(--famma-text-2, #56617A);
 	cursor: default;
 }
 
@@ -216,7 +225,7 @@
 }
 
 .famma-express__qty-btn:focus-visible {
-	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #2C6BED);
+	outline: var(--focus-ring-width, 3px) solid var(--focus-ring-color, #0B1F3A);
 	outline-offset: -2px;
 }
 
@@ -268,20 +277,20 @@
 
 .famma-express__total-label {
 	font-size: var(--fs-caption, 0.875rem);
-	color: var(--famma-ink-muted, #55606E);
+	color: var(--famma-text-2, #56617A);
 }
 
 .famma-express__total {
 	font-size: var(--fs-h3, 1.25rem);
 	font-weight: var(--fw-bold, 700);
-	color: var(--famma-blue, #10275A);
+	color: var(--famma-blue, #0B1F3A);
 	/* Le prix ne se coupe jamais en deux lignes. */
 	white-space: nowrap;
 }
 
 .famma-express__cart-note {
 	font-size: var(--fs-caption, 0.875rem);
-	color: var(--famma-ink-muted, #55606E);
+	color: var(--famma-text-2, #56617A);
 }
 
 /*
@@ -340,7 +349,7 @@
 
 .famma-express .famma-express__submit:focus-visible,
 .famma-express .famma-express__cart:focus-visible {
-	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #2C6BED);
+	outline: var(--focus-ring-width, 3px) solid var(--focus-ring-color, #0B1F3A);
 	outline-offset: 2px;
 }
 
@@ -452,8 +461,9 @@ html[lang^="ar"] .famma-express__submit-ar {
 	margin-block-start: var(--sp-3, 12px);
 	padding: var(--sp-3, 12px);
 	border-radius: var(--famma-radius-sm, 8px);
-	background: var(--famma-danger-bg, #FDECEA);
-	color: var(--famma-danger, #C0392B);
+	border: 1px solid var(--famma-danger-line, #EFD9D9);
+	background: var(--famma-danger-soft, #FDF7F7);
+	color: var(--famma-danger-700, #C13333);
 	font-size: var(--fs-caption, 0.875rem);
 }
 
@@ -485,8 +495,8 @@ html[lang^="ar"] .famma-express__submit-ar {
 	inline-size: 100%;
 	margin: 0 0 var(--sp-3, 12px);
 	padding: 0 0 var(--sp-2, 8px);
-	border-block-end: 1px solid var(--famma-line, #DBE1E8);
-	color: var(--famma-blue, #10275A);
+	border-block-end: 1px solid var(--famma-line, #E7EAF0);
+	color: var(--famma-blue, #0B1F3A);
 	font-size: var(--fs-small, 0.875rem);
 	font-weight: var(--fw-semibold, 600);
 	line-height: var(--lh-tight, 1.2);
@@ -509,9 +519,9 @@ html[lang^="ar"] .famma-express__submit-ar {
 .famma-express__recap {
 	margin-block: var(--sp-4, 16px);
 	padding: var(--sp-4, 16px);
-	border: 1px solid var(--famma-line, #DBE1E8);
+	border: 1px solid var(--famma-line, #E7EAF0);
 	border-radius: var(--famma-radius-sm, 8px);
-	background: var(--famma-surface, #fff);
+	background: var(--famma-white, #FFF);
 }
 
 .famma-express__recap[hidden] {
@@ -553,8 +563,9 @@ html[lang^="ar"] .famma-express__submit-ar {
 
 .famma-express__recap thead th:nth-child(2),
 .famma-express__recap tbody td:nth-child(2) {
-	inline-size: 4.5em;
-	min-inline-size: 4.5em;
+	/* Place du sélecteur − / + de la ligne (44 + 32 + 44 px). */
+	inline-size: 7.5rem;
+	min-inline-size: 7.5rem;
 	overflow-wrap: normal;
 	word-break: normal;
 }
@@ -564,11 +575,143 @@ html[lang^="ar"] .famma-express__submit-ar {
 }
 
 .famma-express__recap tfoot {
-	border-block-start: 1px solid var(--famma-line, #DBE1E8);
+	border-block-start: 1px solid var(--famma-line, #E7EAF0);
 }
 
 .famma-express__recap tfoot tr:last-child {
 	font-weight: 700;
+}
+
+/*
+ * Lignes modifiables du récapitulatif : quantité − / + et « Retirer ».
+ * Même sélecteur de quantité que le formulaire, en cibles de 44 px ; les
+ * montants restent ceux du serveur, jamais recalculés ici.
+ */
+.famma-express__recap {
+	container: famma-recap / inline-size;
+}
+
+.famma-express__recap[aria-busy="true"] {
+	opacity: 0.6;
+	pointer-events: none;
+}
+
+.famma-express__qty--line .famma-express__qty-btn {
+	inline-size: 44px;
+	min-block-size: 44px;
+}
+
+.famma-express__qty--line .famma-express__qty-btn:disabled {
+	color: var(--famma-line-field, #DFE3EA);
+	cursor: not-allowed;
+}
+
+.famma-express__qty-value {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-inline-size: 2rem;
+	border-inline: 1px solid var(--famma-line-field, #DFE3EA);
+	background: var(--famma-white, #FFF);
+	color: var(--famma-blue, #0B1F3A);
+	font-weight: var(--fw-semibold, 600);
+}
+
+/* Kadence colore tout `button:hover` : deux classes pour garder un lien discret. */
+.famma-express .famma-express__remove {
+	display: flex;
+	align-items: center;
+	min-block-size: 44px;
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	color: var(--famma-text-2, #56617A);
+	font-family: inherit;
+	font-size: var(--fs-caption, 0.875rem);
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.famma-express .famma-express__remove:hover,
+.famma-express .famma-express__remove:focus {
+	background: none;
+	box-shadow: none;
+	color: var(--famma-danger-700, #C13333);
+}
+
+.famma-express__remove:focus-visible {
+	outline: var(--focus-ring-width, 3px) solid var(--focus-ring-color, #0B1F3A);
+	outline-offset: 2px;
+}
+
+.famma-express__remove:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+/*
+ * Récapitulatif étroit (téléphone) : chaque ligne devient une carte — nom en
+ * haut, quantité à gauche, montant à droite. Les en-têtes restent pour les
+ * lecteurs d'écran, sans occuper de place.
+ */
+@container famma-recap (max-width: 30rem) {
+	.famma-express__recap table,
+	.famma-express__recap tbody,
+	.famma-express__recap tfoot {
+		display: block;
+	}
+
+	.famma-express__recap thead {
+		position: absolute;
+		inline-size: 1px;
+		block-size: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+	}
+
+	.famma-express__recap tbody tr {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		grid-template-areas: "name name" "qty amount";
+		align-items: center;
+		gap: 0 var(--sp-3, 12px);
+		padding-block: var(--sp-2, 8px);
+		border-block-end: 1px solid var(--famma-line, #E7EAF0);
+	}
+
+	.famma-express__recap tbody td:nth-child(n) {
+		inline-size: auto;
+		min-inline-size: 0;
+		padding: 0;
+	}
+
+	.famma-express__recap tbody td:nth-child(1) {
+		grid-area: name;
+	}
+
+	.famma-express__recap tbody td:nth-child(2) {
+		grid-area: qty;
+	}
+
+	.famma-express__recap tbody td:nth-child(3) {
+		grid-area: amount;
+		text-align: end;
+	}
+
+	/* Totaux : libellé à gauche, montant à droite, sans colonnes de tableau. */
+	.famma-express__recap tfoot tr {
+		display: flex;
+		justify-content: space-between;
+		gap: var(--sp-3, 12px);
+		padding-block: var(--sp-2, 8px);
+	}
+
+	.famma-express__recap tfoot th:nth-child(n),
+	.famma-express__recap tfoot td:nth-child(n) {
+		inline-size: auto;
+		padding: 0;
+	}
 }
 
 @media (min-width: 600px) {

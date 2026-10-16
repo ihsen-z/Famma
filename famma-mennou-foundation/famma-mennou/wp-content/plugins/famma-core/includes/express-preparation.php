@@ -23,6 +23,8 @@ final class Express_Preparation {
 			self::$i = new self();
 			add_action( 'wc_ajax_famma_express_prepare', array( self::$i, 'handle' ) );
 			add_action( 'wc_ajax_famma_express_prepare', array( Anti_Abuse::instance(), 'throttle_express' ), 1 );
+			add_action( 'wc_ajax_famma_express_cart', array( self::$i, 'edit' ) );
+			add_action( 'wc_ajax_famma_express_cart', array( Anti_Abuse::instance(), 'throttle_cart_edit' ), 1 );
 		}
 		return self::$i;
 	}
@@ -140,6 +142,8 @@ final class Express_Preparation {
 					'emit'     => $delta > 0,
 					'event_id' => 'famma_add_' . $id,
 					'params'   => $params,
+					'previous' => $previous,
+					'unit'     => (float) wc_get_price_to_display( $product ),
 				),
 				'initiate_checkout' => array(
 					'event_id' => 'famma_checkout_' . $id,
@@ -154,6 +158,77 @@ final class Express_Preparation {
 		WC()->session->set( 'famma_express_preparations', array_slice( $preparations, -10, null, true ) );
 		WC()->session->save_data();
 		wp_send_json( $response );
+	}
+
+	/**
+	 * Retire une ligne ou change sa quantité, depuis le récapitulatif.
+	 *
+	 * Même garde que la préparation : jeton, session, empreinte du panier que le
+	 * client vient de voir (un panier modifié ailleurs est refusé), puis les
+	 * contrôles natifs de WooCommerce (stock, quantité maximale, plafond
+	 * anti-abus). L'empreinte et la signature de la préparation sont mises à jour :
+	 * la confirmation finale porte sur le panier tel qu'il est maintenant.
+	 */
+	public function edit(): void {
+		if ( ! self::guard() ) {
+			return;
+		}
+		$id           = self::posted( 'famma_preparation_id' );
+		$preparations = (array) WC()->session->get( 'famma_express_preparations', array() );
+		$entry        = $preparations[ $id ] ?? null;
+		$this->customer_location();
+		if ( ! Express_Idempotency::valid_id( $id ) || ! is_array( $entry ) || ! $this->recalculate() ) {
+			$this->failure( 'preparation_missing' );
+			return;
+		}
+		if ( self::posted( 'famma_cart_hash' ) !== self::cart_hash() || self::cart_hash() !== $entry['response']['cart_hash'] ) {
+			$this->failure( 'cart_changed' );
+			return;
+		}
+		$key    = self::posted( 'famma_cart_key' );
+		$action = self::posted( 'famma_cart_action' );
+		$item   = WC()->cart->get_cart_item( $key );
+		if ( empty( $item ) || ! in_array( $action, array( 'set', 'remove' ), true ) ) {
+			$this->failure( 'cart_rejected' );
+			return;
+		}
+		if ( 'remove' === $action ) {
+			WC()->cart->remove_cart_item( $key );
+		} else {
+			$quantity = (float) wc_stock_amount( self::posted( 'famma_cart_quantity' ) );
+			$max      = self::max_quantity( $item['data'] );
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- native Woo validation, as WC_Form_Handler::update_cart_action() applies it.
+			if ( $quantity < 1 || ( $max > 0 && $quantity > $max ) || ! $item['data']->has_enough_stock( $quantity ) || ! apply_filters( 'woocommerce_update_cart_validation', true, $key, $item, $quantity ) ) {
+				$this->failure( 'cart_rejected' );
+				return;
+			}
+			WC()->cart->set_quantity( $key, $quantity );
+		}
+		if ( ! $this->recalculate() ) {
+			$this->failure( 'cart_rejected' );
+			return;
+		}
+		WC()->cart->check_cart_items();
+		if ( wc_notice_count( 'error' ) > 0 ) {
+			$this->failure( 'cart_rejected' );
+			return;
+		}
+		$summary                        = self::summary();
+		$hash                           = self::cart_hash();
+		$entry['response']['summary']   = $summary;
+		$entry['response']['cart_hash'] = $hash;
+		$entry['signature']             = hash( 'sha256', (string) wp_json_encode( array( absint( self::posted( 'famma_product_id' ) ), (float) wc_stock_amount( self::posted( 'famma_quantity' ) ), self::posted( 'billing_state' ), self::posted( 'billing_country' ) ) ) );
+		$preparations[ $id ]            = $entry;
+		WC()->session->set( 'famma_express_preparations', $preparations );
+		WC()->session->save_data();
+		wp_send_json(
+			array(
+				'result'         => 'success',
+				'preparation_id' => $id,
+				'cart_hash'      => $hash,
+				'summary'        => $summary,
+			)
+		);
 	}
 
 	/** Require the prepared cart version and location before checkout reservation. @return bool */
@@ -204,29 +279,59 @@ final class Express_Preparation {
 		return true;
 	}
 
+	/**
+	 * Quantité maximale d'une ligne (0 : illimitée), plafond anti-abus compris.
+	 *
+	 * @param \WC_Product $product Produit de la ligne.
+	 * @return float
+	 */
+	private static function max_quantity( \WC_Product $product ): float {
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- native Woo filter; Anti_Abuse caps it.
+		$max = apply_filters( 'woocommerce_quantity_input_max', $product->get_max_purchase_quantity(), $product );
+		return is_numeric( $max ) && (float) $max > 0 ? (float) $max : 0.0;
+	}
+
+	/**
+	 * Montant formaté, ou chaîne vide quand il est nul : la ligne n'est pas affichée.
+	 *
+	 * @param float $amount Montant.
+	 * @return string
+	 */
+	private static function amount_html( float $amount ): string {
+		return 0.0 === round( $amount, wc_get_price_decimals() ) ? '' : wc_price( $amount );
+	}
+
 	/** Return complete customer-facing Woo recap, never internal delivery costs. @return array */
 	public static function summary(): array {
 		$items = array();
-		foreach ( WC()->cart->get_cart() as $item ) {
+		foreach ( WC()->cart->get_cart() as $key => $item ) {
 			$items[] = array(
+				'key'             => (string) $key,
 				'product_id'      => (int) $item['product_id'],
 				'name'            => $item['data']->get_name(),
 				'quantity'        => (float) $item['quantity'],
+				'max'             => self::max_quantity( $item['data'] ),
 				'line_total'      => (float) $item['line_total'] + (float) $item['line_tax'],
 				'line_total_html' => wc_price( (float) $item['line_total'] + (float) $item['line_tax'] ),
 			);
 		}
-		$cart = WC()->cart;
+		$cart     = WC()->cart;
+		$discount = self::amount_html( (float) $cart->get_discount_total() + (float) $cart->get_discount_tax() );
+		$shipping = self::amount_html( (float) $cart->get_shipping_total() + (float) $cart->get_shipping_tax() );
+		$fees     = self::amount_html( (float) $cart->get_fee_total() + (float) $cart->get_fee_tax() );
+		$tax      = self::amount_html( (float) $cart->get_total_tax() );
+		// Un sous-total identique au total n'apprend rien : il n'apparaît que s'il y a une ligne en plus.
+		$has_extra = '' !== $discount || '' !== $shipping || '' !== $fees || '' !== $tax;
 		return array(
 			'items'         => $items,
 			'currency'      => get_woocommerce_currency(),
 			'total'         => (float) $cart->get_total( 'edit' ),
 			'total_html'    => $cart->get_total(),
-			'subtotal_html' => $cart->get_cart_subtotal(),
-			'discount_html' => wc_price( (float) $cart->get_discount_total() + (float) $cart->get_discount_tax() ),
-			'shipping_html' => wc_price( (float) $cart->get_shipping_total() + (float) $cart->get_shipping_tax() ),
-			'fees_html'     => wc_price( (float) $cart->get_fee_total() + (float) $cart->get_fee_tax() ),
-			'tax_html'      => wc_price( (float) $cart->get_total_tax() ),
+			'subtotal_html' => $has_extra ? $cart->get_cart_subtotal() : '',
+			'discount_html' => $discount,
+			'shipping_html' => $shipping,
+			'fees_html'     => $fees,
+			'tax_html'      => $tax,
 			'item_count'    => $cart->get_cart_contents_count(),
 			'coupons'       => $cart->get_applied_coupons(),
 		);
