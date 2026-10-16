@@ -1,0 +1,15 @@
+/* FAMMA — Parcours visiteurs (administration). Propriétés logiques : RTL natif. */
+.famma-vj__periods .button { margin-inline-end: 4px; }
+.famma-vj__tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-block: 16px 24px; }
+.famma-vj__tile { background: #fff; border: 1px solid #dcdcde; border-radius: 6px; padding: 14px 16px; }
+.famma-vj__tile span { color: #50575e; display: block; font-size: 12px; }
+.famma-vj__tile strong { display: block; font-size: 22px; margin-block-start: 4px; }
+.famma-vj__funnel th { inline-size: 200px; }
+.famma-vj__bar-cell { inline-size: 45%; }
+.famma-vj__bar { background: #2271b1; border-radius: 3px; display: block; block-size: 14px; }
+.famma-vj .num { text-align: end; white-space: nowrap; }
+.famma-vj__drop { color: #50575e; }
+.famma-vj__forms { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.famma-vj__pager { margin-block: 12px; }
+.famma-vj__retention input[type="number"] { inline-size: 90px; }
+.famma-vj__meta { color: #50575e; }

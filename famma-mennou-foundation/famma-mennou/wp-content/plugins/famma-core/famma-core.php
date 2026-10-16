@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.2.5
+ * Version:           0.2.6
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.2.5' );
+define( 'FAMMA_CORE_VERSION', '0.2.6' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -54,6 +54,13 @@ require_once __DIR__ . '/includes/seo-admin.php';
 require_once __DIR__ . '/includes/hardening.php';
 require_once __DIR__ . '/includes/performance.php';
 require_once __DIR__ . '/includes/cache-warmup.php';
+require_once __DIR__ . '/includes/visitor-store.php';
+require_once __DIR__ . '/includes/visitor-context.php';
+require_once __DIR__ . '/includes/visitor-collector.php';
+require_once __DIR__ . '/includes/visitor-commerce.php';
+require_once __DIR__ . '/includes/visitor-report.php';
+require_once __DIR__ . '/includes/visitor-admin.php';
+require_once __DIR__ . '/includes/visitor-admin-views.php';
 
 /**
  * Reads configuration from env-fed constants and WordPress options.
@@ -2671,6 +2678,9 @@ function boot(): void {
 	Hardening::instance();
 	Performance::instance();
 	Cache_Warmup::instance();
+	Visitor_Store::instance();
+	Visitor_Collector::instance();
+	Visitor_Commerce::instance();
 	// Le formulaire public passe par admin-post.php : chargé partout.
 	Newsletter::instance();
 
@@ -2683,6 +2693,7 @@ function boot(): void {
 		Topbar_Content::instance();
 		Tracking_Settings::instance();
 		Seo_Admin::instance();
+		Visitor_Admin::instance();
 	}
 }
 
