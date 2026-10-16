@@ -45,6 +45,7 @@ require_once __DIR__ . '/includes/express-idempotency.php';
 require_once __DIR__ . '/includes/express-preparation.php';
 require_once __DIR__ . '/includes/capi-delivery-registry.php';
 require_once __DIR__ . '/includes/capi-signals.php';
+require_once __DIR__ . '/includes/capi-log.php';
 require_once __DIR__ . '/includes/order-emails.php';
 require_once __DIR__ . '/includes/anti-abuse.php';
 require_once __DIR__ . '/includes/checkout-lite.php';
@@ -119,7 +120,6 @@ final class Config {
 	 * le lisait comme un numéro chilien (+56) : aucun message n'arrivait
 	 * (audit du 23/09, UX-01). Un numéro à 8 chiffres est donc tunisien.
 	 *
-	 * @param string $raw Number as typed: spaces, dots, « + » or « 00 » allowed.
 	 * A Tunisian number is recognised by `Tunisia::normalize_phone()` only (8
 	 * digits, or 216 / 00216 + 8 digits). Anything else is kept as an
 	 * international number — « 00 » removed, never prefixed with 216: before,
@@ -127,16 +127,17 @@ final class Config {
 	 * numbers must use `'216' . Tunisia::normalize_phone()` directly; this
 	 * helper stays for the owner's WhatsApp number, which may be foreign.
 	 *
+	 * @param string $raw Number as typed: spaces, dots, « + » or « 00 » allowed.
 	 * @return string Digits only, e.g. `21656261412`; empty when nothing usable.
 	 */
 	public static function international_phone( string $raw ): string {
-		$digits = (string) preg_replace( '/\D+/', '', $raw );
 		$local = Tunisia::normalize_phone( $raw );
 
 		if ( '' !== $local ) {
 			return '216' . $local;
 		}
 
+		$digits = (string) preg_replace( '/\D+/', '', $raw );
 
 		if ( str_starts_with( $digits, '00' ) ) {
 			$digits = substr( $digits, 2 );
@@ -1086,8 +1087,8 @@ final class Tunisia {
 	private function hooks(): void {
 		add_filter( 'woocommerce_states', array( $this, 'governorates' ) );
 		add_filter( 'woocommerce_checkout_fields', array( $this, 'checkout_fields' ) );
-		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate_phone' ), 10, 2 );
 		add_filter( 'woocommerce_process_checkout_field_billing_phone', array( $this, 'normalize_billing_phone' ) );
+		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate_phone' ), 10, 2 );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'require_email_for_account' ), 20, 2 );
 
 		/*
@@ -1378,7 +1379,6 @@ final class Tunisia {
 	}
 
 	/**
-	/**
 	 * Normalises a Tunisian phone number to its 8 national digits.
 	 *
 	 * Accepts what customers really type: spaces (including non-breaking
@@ -1447,6 +1447,7 @@ final class Tunisia {
 		return '' === $digits ? $value : $digits;
 	}
 
+	/**
 	 * Rejects anything that is not a plausible Tunisian mobile/landline number.
 	 *
 	 * Same rule as normalize_phone(). WooCommerce's generic « not a valid
@@ -1465,13 +1466,13 @@ final class Tunisia {
 		if ( '' !== self::normalize_phone( (string) $data['billing_phone'] ) ) {
 			return;
 		}
-	}
 		$errors->remove( 'billing_phone_validation' );
 		$errors->add(
 			'billing_phone_invalid',
 			__( 'Please enter a valid Tunisian phone number (8 digits). أدخل رقم هاتف تونسي صحيح.', 'famma-core' ),
 			array( 'id' => 'billing_phone' )
 		);
+	}
 }
 
 /**
@@ -2011,6 +2012,13 @@ final class Capi {
 	 * @return string
 	 */
 	private function normalise_phone( string $phone ): string {
+		// 216 + 8 chiffres nationaux, format attendu par Meta (sans « + » ni zéros).
+		if ( method_exists( Tunisia::class, 'normalize_phone' ) ) {
+			$national = (string) Tunisia::normalize_phone( $phone );
+			if ( '' !== $national ) {
+				return '216' . $national;
+			}
+		}
 		return Config::international_phone( $phone );
 	}
 
@@ -2178,6 +2186,7 @@ final class Capi {
 			'user_data'        => $this->user_data( $order ),
 			'custom_data'      => array(
 				'currency'     => $order->get_currency(),
+				// Total réel de la commande (lignes, frais, livraison, remises) : jamais une valeur fixe.
 				'value'        => round( (float) $order->get_total(), 3 ),
 				'order_id'     => (string) $order->get_id(),
 				'contents'     => $this->contents( $order ),
@@ -2215,33 +2224,53 @@ final class Capi {
 			)
 		);
 
+		$log = array(
+			'order_id'   => $order->get_id(),
+			'event_name' => $event_name,
+			'event_id'   => $event_id,
+			'value'      => $event['custom_data']['value'],
+			'currency'   => $event['custom_data']['currency'],
+			'user_data'  => $event['user_data'],
+			'attempt'    => $attempts,
+		);
+
 		if ( is_wp_error( $response ) ) {
 			$registry->finish( $claim, 'uncertain', 0, 0 );
+			Capi_Log::write( $log + array( 'state' => 'transport_uncertain', 'error' => $response->get_error_message() ), $token );
 			$this->record_failure( $order, 'transport_uncertain; ' . $event_id, $attempts, $event_name );
 			return;
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
+		$body = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+		$body = is_array( $body ) ? $body : array();
+
+		$log['http']            = $code;
+		$log['events_received'] = (int) ( $body['events_received'] ?? 0 );
+		$log['fbtrace_id']      = (string) ( $body['fbtrace_id'] ?? ( $body['error']['fbtrace_id'] ?? '' ) );
+		$log['error']           = isset( $body['error'] ) && is_array( $body['error'] ) ? (string) ( $body['error']['error_user_msg'] ?? $body['error']['message'] ?? '' ) : '';
 
 		if ( $code < 200 || $code >= 300 ) {
-			$body     = json_decode( (string) wp_remote_retrieve_body( $response ), true );
-			$rejected = $code >= 400 && $code < 500 && 408 !== $code && is_array( $body ) && isset( $body['error']['code'] ) && is_numeric( $body['error']['code'] );
+			$rejected = $code >= 400 && $code < 500 && 408 !== $code && isset( $body['error']['code'] ) && is_numeric( $body['error']['code'] );
 			$state    = $rejected ? 'rejected' : 'uncertain';
 			$registry->finish( $claim, $state, $code, 0 );
+			Capi_Log::write( $log + array( 'state' => $state ), $token );
 			$this->record_failure( $order, $state . '; HTTP ' . $code . '; ' . $event_id, $attempts, $event_name );
 			return;
 		}
 
-		$body = json_decode( (string) wp_remote_retrieve_body( $response ), true );
-		if ( ! is_array( $body ) || 1 !== (int) ( $body['events_received'] ?? 0 ) || isset( $body['error'] ) ) {
+		if ( array() === $body || 1 !== (int) ( $body['events_received'] ?? 0 ) || isset( $body['error'] ) ) {
 			$registry->finish( $claim, 'uncertain', $code, 0 );
+			Capi_Log::write( $log + array( 'state' => 'ack_uncertain' ), $token );
 			$this->record_failure( $order, 'ack_uncertain; ' . $event_id, $attempts, $event_name );
 			return;
 		}
 		if ( ! $registry->finish( $claim, 'accepted', $code, 1 ) ) {
+			Capi_Log::write( $log + array( 'state' => 'ack_persistence_uncertain' ), $token );
 			$this->record_failure( $order, 'ack_persistence_uncertain; ' . $event_id, $attempts, $event_name );
 			return;
 		}
+		Capi_Log::write( $log + array( 'state' => 'accepted' ), $token );
 		do_action( 'famma_capi_delivery_acknowledged', $claim, $order, $event_name );
 		$this->persist_event_success( $order->get_id(), $event_name, $event_id );
 	}

@@ -132,11 +132,16 @@ final class Capi_Signals {
 	 * Script qui crée `_fbc` (arrivée depuis une annonce) et `_fbp` s'ils manquent.
 	 *
 	 * Côté navigateur plutôt que PHP : une page servie par le cache LiteSpeed
-	 * n'exécute aucun PHP, un `setcookie()` n'y partirait jamais. Le script
-	 * n'écrase jamais un cookie existant et le pose sur le domaine principal
-	 * (comme le Pixel), pour qu'il n'en existe qu'un seul.
+	 * n'exécute aucun PHP, un `setcookie()` n'y partirait jamais. Le cookie
+	 * est posé sur le domaine principal (comme le Pixel), pour qu'il n'en
+	 * existe qu'un seul.
 	 *
 	 * `_fbc` : fb.1.<horodatage ms>.<fbclid>, seulement si l'URL porte un fbclid.
+	 * Règle Meta (Parameter Builder, `get_updated_fbc_cookie`) : créé s'il
+	 * manque, réécrit si le fbclid de l'URL diffère de celui du cookie (nouveau
+	 * clic publicitaire), laissé intact — horodatage d'origine compris — si
+	 * c'est le même fbclid.
+	 * `_fbp` : jamais écrasé.
 	 * `_fbp` : fb.1.<horodatage ms>.<nombre aléatoire de 10 chiffres>.
 	 * Les deux durent 90 jours.
 	 *
@@ -146,7 +151,8 @@ final class Capi_Signals {
 		return '(function(){try{var a=";path=/;max-age=7776000;SameSite=Lax"+("https:"===location.protocol?";Secure":""),'
 			. 'h=location.hostname.split("."),id=new URLSearchParams(location.search).get("fbclid");'
 			. 'function put(n,v){for(var i=h.length-2;i>=0;i--){document.cookie=n+"="+v+a+";domain="+h.slice(i).join(".");if(document.cookie.indexOf(n+"="+v)>-1){return;}}document.cookie=n+"="+v+a;}'
-			. 'if(id&&/^[A-Za-z0-9_-]{1,500}$/.test(id)&&!/(?:^|;\s*)_fbc=/.test(document.cookie)){put("_fbc","fb.1."+Date.now()+"."+id);}'
+			. 'var c=document.cookie.match(/(?:^|;\s*)_fbc=([^;]*)/),o=c?(c[1].split(".")[3]||""):"";'
+			. 'if(id&&/^[A-Za-z0-9_-]{1,500}$/.test(id)&&o!==id){put("_fbc","fb.1."+Date.now()+"."+id);}'
 			. 'if(!/(?:^|;\s*)_fbp=/.test(document.cookie)){put("_fbp","fb.1."+Date.now()+"."+(1e9+Math.floor(Math.random()*9e9)));}'
 			. '}catch(e){}})();';
 	}
