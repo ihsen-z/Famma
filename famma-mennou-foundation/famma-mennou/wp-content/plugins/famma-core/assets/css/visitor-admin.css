@@ -13,3 +13,7 @@
 .famma-vj__pager { margin-block: 12px; }
 .famma-vj__retention input[type="number"] { inline-size: 90px; }
 .famma-vj__meta { color: #50575e; }
+.famma-vj__rate { font-weight: 600; }
+.famma-vj__rate--good { color: #007a3d; }
+.famma-vj__rate--warn { color: #b26200; }
+.famma-vj__rate--poor { color: #b32d2e; }

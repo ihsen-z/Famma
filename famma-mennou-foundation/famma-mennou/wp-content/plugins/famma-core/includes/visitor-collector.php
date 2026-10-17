@@ -45,6 +45,8 @@ final class Visitor_Collector {
 		'click_outbound',
 		'product_media',
 		'product_variation',
+		'web_vitals',
+		'js_error',
 	);
 
 	/**

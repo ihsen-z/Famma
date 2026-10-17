@@ -142,6 +142,8 @@ final class Visitor_Admin {
 			'click_outbound'    => __( 'Lien sortant', 'famma-core' ),
 			'product_media'     => __( 'Média produit', 'famma-core' ),
 			'product_variation' => __( 'Variation choisie', 'famma-core' ),
+			'web_vitals'        => __( 'Temps de chargement', 'famma-core' ),
+			'js_error'          => __( 'Erreur JavaScript', 'famma-core' ),
 		);
 	}
 
@@ -178,6 +180,7 @@ final class Visitor_Admin {
 			'summary'  => __( 'Synthèse', 'famma-core' ),
 			'sources'  => __( 'Sources et campagnes', 'famma-core' ),
 			'products' => __( 'Produits', 'famma-core' ),
+			'perf'     => __( 'Performance', 'famma-core' ),
 		);
 		$tab  = isset( $tabs[ $tab ] ) ? $tab : 'summary';
 
@@ -219,6 +222,11 @@ final class Visitor_Admin {
 
 		if ( 'sources' === $tab ) {
 			Visitor_Insights_Views::sources( ( new Visitor_Insights() )->sources( $days ) );
+			return;
+		}
+		if ( 'perf' === $tab ) {
+			$perf = new Visitor_Performance();
+			Visitor_Performance_Views::render( $perf->vitals( $days ), $perf->errors( $days ) );
 			return;
 		}
 		if ( 'products' === $tab ) {

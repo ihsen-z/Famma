@@ -163,6 +163,7 @@
 			scrollDepth();
 			// Palier de 25 % : 0, 25, 50, 75, 100.
 			track( 'page_leave', { label: String( Math.floor( maxScroll / 25 ) * 25 ), num: activeMs / 1000 } );
+			sendVitals();
 		}
 		flush();
 	}
@@ -176,6 +177,90 @@
 	} );
 	window.addEventListener( 'pagehide', leave );
 	setInterval( flush, 15000 );
+
+	// ── Temps de chargement réels (Web Vitals), une ligne par page ──
+	// Mesure maison sur PerformanceObserver, sans bibliothèque : LCP, CLS
+	// (fenêtres de session de 5 s), INP (interaction la plus lente) et TTFB.
+	// Tout part dans une seule ligne `web_vitals` à la sortie de la page.
+	var vitals = { lcp: 0, cls: 0, inp: 0 };
+	// Une interaction plus rapide que 40 ms ne produit aucune entrée : sans ce
+	// témoin, « rapide » et « aucune interaction » se confondraient.
+	var interacted = false;
+	[ 'pointerdown', 'keydown' ].forEach( function ( type ) {
+		document.addEventListener( type, function () {
+			interacted = true;
+		}, { capture: true, passive: true } );
+	} );
+	var clsWindow = 0;
+	var clsFirst = 0;
+	var clsLast = 0;
+	function observe( type, callback, extra ) {
+		try {
+			var po = new PerformanceObserver( function ( list ) {
+				list.getEntries().forEach( callback );
+			} );
+			po.observe( Object.assign( { type: type, buffered: true }, extra || {} ) );
+		} catch ( e ) {}
+	}
+	observe( 'largest-contentful-paint', function ( entry ) {
+		vitals.lcp = entry.startTime;
+	} );
+	observe( 'layout-shift', function ( entry ) {
+		if ( entry.hadRecentInput ) {
+			return;
+		}
+		if ( clsWindow && entry.startTime - clsLast < 1000 && entry.startTime - clsFirst < 5000 ) {
+			clsWindow += entry.value;
+		} else {
+			clsWindow = entry.value;
+			clsFirst = entry.startTime;
+		}
+		clsLast = entry.startTime;
+		vitals.cls = Math.max( vitals.cls, clsWindow );
+	} );
+	observe( 'event', function ( entry ) {
+		if ( entry.interactionId ) {
+			vitals.inp = Math.max( vitals.inp, entry.duration );
+		}
+	}, { durationThreshold: 40 } );
+
+	function sendVitals() {
+		var nav = performance.getEntriesByType && performance.getEntriesByType( 'navigation' )[ 0 ];
+		var ttfb = nav ? Math.max( 0, nav.responseStart ) : 0;
+		if ( ! vitals.lcp && ! ttfb ) {
+			return;
+		}
+		track( 'web_vitals', {
+			label: 'lcp=' + Math.round( vitals.lcp ) + ';cls=' + vitals.cls.toFixed( 3 ) + ';inp=' + ( interacted ? Math.round( vitals.inp ) : -1 ) + ';ttfb=' + Math.round( ttfb ),
+			num: vitals.lcp,
+		} );
+	}
+
+	// ── Erreurs JavaScript : 5 par page au plus, sans doublon, sans URL complète ──
+	var errorsSent = [];
+	function reportError( message, file, line ) {
+		var msg = String( message || 'Error' ).replace( /https?:\/\/([^\/\s]+)\S*/g, '$1' ).slice( 0, 70 );
+		var where = String( file || '' ).split( '?' )[ 0 ].split( '/' ).pop();
+		var key = msg + where + line;
+		if ( errorsSent.length >= 5 || errorsSent.indexOf( key ) >= 0 ) {
+			return;
+		}
+		errorsSent.push( key );
+		track( 'js_error', { label: msg + ( where ? ' — ' + where : '' ), num: line || 0 } );
+		flush();
+	}
+	window.addEventListener( 'error', function ( event ) {
+		// Ressource introuvable (image, script) : la cible porte l'URL, pas de message.
+		if ( event.target && event.target !== window && ( event.target.src || event.target.href ) ) {
+			reportError( 'Ressource introuvable (' + event.target.tagName.toLowerCase() + ')', event.target.src || event.target.href, 0 );
+			return;
+		}
+		reportError( event.message, event.filename, event.lineno );
+	}, true );
+	window.addEventListener( 'unhandledrejection', function ( event ) {
+		var reason = event.reason;
+		reportError( 'Promesse rejetée : ' + ( reason && reason.message ? reason.message : String( reason ) ), '', 0 );
+	} );
 
 	// ── Formulaires de commande : express (fiche produit) et checkout ──
 	var formSelector = '.famma-express__form, form.checkout';

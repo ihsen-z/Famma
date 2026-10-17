@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.2.7
+ * Version:           0.2.8
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.2.7' );
+define( 'FAMMA_CORE_VERSION', '0.2.8' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -65,6 +65,8 @@ require_once __DIR__ . '/includes/visitor-insights.php';
 require_once __DIR__ . '/includes/visitor-insights-views.php';
 require_once __DIR__ . '/includes/visitor-order-box.php';
 require_once __DIR__ . '/includes/visitor-privacy.php';
+require_once __DIR__ . '/includes/visitor-performance.php';
+require_once __DIR__ . '/includes/visitor-performance-views.php';
 
 /**
  * Reads configuration from env-fed constants and WordPress options.
