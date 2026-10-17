@@ -793,6 +793,52 @@ final class Famma_Express_Test {
 		self::assert( 'delivered-paid', $order->is_paid() && 'delivered' === $order->get_status(), 'Delivered marks the COD order paid and keeps the delivered status.' );
 		self::assert( 'purchase-once-real-value', 1 === count( $purchase ) && 77.0 === (float) ( $purchase[0]['custom_data']['value'] ?? 0 ) && 'TND' === ( $purchase[0]['custom_data']['currency'] ?? '' ), 'Delivery sends exactly one Purchase with the real 77 TND value, even when replayed.' );
 		self::assert( 'purchase-logged-once', 1 === count( self::log_lines( 'Purchase', $order->get_id() ) ), 'One famma-capi log line for the Purchase.' );
+		self::stale_session_cookie();
+	}
+
+	/**
+	 * A present-but-unverifiable session cookie must be replaced by the token endpoint.
+	 *
+	 * Simulates the browser across two requests: the cookie it holds for the
+	 * second request is the one the first response set, or the stale one if
+	 * none was set.
+	 *
+	 * @throws RuntimeException When the stale cookie still blocks preparation.
+	 */
+	private static function stale_session_cookie(): void {
+		$saved  = self::$context['cookie'];
+		$stale  = array(
+			'name'  => $saved['name'],
+			'value' => 't_stale|1999999999|1999990000|deadbeef',
+		);
+		$issued = array();
+		self::session( $stale );
+		$capture = static function ( $enabled, $name, $value ) use ( &$issued, $saved ) {
+			if ( $saved['name'] === $name ) {
+				$issued[] = (string) $value; }
+			return $enabled;
+		};
+		add_filter( 'woocommerce_set_cookie_enabled', $capture, PHP_INT_MAX, 3 );
+		$token = self::endpoint( 'famma_express_nonce', array() );
+		remove_filter( 'woocommerce_set_cookie_enabled', $capture, PHP_INT_MAX );
+		$held = $issued ? (string) end( $issued ) : $stale['value'];
+		self::session(
+			array(
+				'name'  => $saved['name'],
+				'value' => $held,
+			)
+		);
+		self::$context['sessions'][] = WC()->session->get_customer_id();
+		$prepare                     = self::endpoint(
+			'famma_express_prepare',
+			array(
+				'woocommerce-process-checkout-nonce' => (string) ( $token['data']['nonce'] ?? '' ),
+				'famma_preparation_id'               => wp_generate_uuid4(),
+			)
+		);
+		self::assert( 'stale-cookie-reissued', '' !== $held && $stale['value'] !== $held && is_array( WC()->session->get_session_cookie() ), 'Token endpoint replaces an unverifiable session cookie with a valid one.' );
+		self::assert( 'stale-cookie-token-accepted', 'expired' !== ( $prepare['famma_token'] ?? '' ), 'Token issued over a stale cookie verifies on the next request.' );
+		self::session( $saved );
 	}
 
 	/**

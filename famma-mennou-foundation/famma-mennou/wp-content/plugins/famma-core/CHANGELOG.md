@@ -1,5 +1,37 @@
 # Changelog — FAMMA Core
 
+## 0.3.1 — 2026-10-17
+
+### Parcours visiteurs (FAMMA → Parcours visiteurs)
+
+- Collecte propre au site, sans tiers : `assets/js/visitor-journal.js` envoie
+  les événements par lots (`sendBeacon`) à `famma/v1/collect`, une requête
+  POST jamais servie par le cache LiteSpeed. Pas de nonce (page en cache) :
+  liste blanche d'événements, lots et corps plafonnés, robots et équipe
+  écartés, limite de débit par empreinte d'IP, IP jamais stockée en clair.
+- Événements : pages vues, sortie (temps actif, défilement), galerie, vidéo,
+  variation, formulaires express et checkout (nom du champ seulement, jamais
+  la valeur), clics WhatsApp / téléphone / sortants, temps de chargement
+  réels (LCP, INP, CLS, TTFB) et erreurs JavaScript. Côté serveur : ajout au
+  panier et commande passée.
+- Table `{prefix}famma_visitor_events` (option `famma_visitor_schema_version`),
+  purge quotidienne par paquets, conservation réglable (180 jours par défaut).
+- Commande : méta `_famma_visitor_id` / `_famma_visitor_session` et encadré
+  « Parcours avant commande » (HPOS).
+- Vue en quatre onglets : Synthèse (entonnoir en sessions, champs du
+  formulaire, sessions et chronologie), Sources et campagnes (UTM, CA
+  commandé non encaissé), Produits, Performance (75e centile, erreurs).
+- Export / effacement des parcours rattachés aux commandes via les outils de
+  confidentialité WordPress (par e-mail de facturation ; les commandes
+  express sans e-mail ne sont pas retrouvées).
+
+### Commande express
+
+- Un cookie de session WooCommerce présent mais invalide (sels changés,
+  valeur corrompue, session expirée) est désormais remplacé par
+  `famma_express_nonce` : le jeton ne repartait plus jamais en
+  `famma_token: expired` en boucle.
+
 ## 0.3.0 — 2026-10-16
 
 ### Choix de taille dans le formulaire express
