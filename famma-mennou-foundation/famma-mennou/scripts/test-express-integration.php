@@ -450,6 +450,52 @@ final class Famma_Express_Test {
 		do_action( 'woocommerce_order_status_delivered', $order->get_id() );
 		$purchase = array_filter( self::$events, static fn( array $event ): bool => 'Purchase' === ( $event['event_name'] ?? '' ) );
 		self::assert( 'cod-paid-purchase-once', wc_get_order( $order->get_id() )->is_paid() && 1 === count( $purchase ), 'Delivery recognizes COD and emits one intercepted Purchase.' );
+		self::stale_session_cookie();
+	}
+
+	/**
+	 * A present-but-unverifiable session cookie must be replaced by the token endpoint.
+	 *
+	 * Simulates the browser across two requests: the cookie it holds for the
+	 * second request is the one the first response set, or the stale one if
+	 * none was set.
+	 *
+	 * @throws RuntimeException When the stale cookie still blocks preparation.
+	 */
+	private static function stale_session_cookie(): void {
+		$saved  = self::$context['cookie'];
+		$stale  = array(
+			'name'  => $saved['name'],
+			'value' => 't_stale|1999999999|1999990000|deadbeef',
+		);
+		$issued = array();
+		self::session( $stale );
+		$capture = static function ( $enabled, $name, $value ) use ( &$issued, $saved ) {
+			if ( $saved['name'] === $name ) {
+				$issued[] = (string) $value; }
+			return $enabled;
+		};
+		add_filter( 'woocommerce_set_cookie_enabled', $capture, PHP_INT_MAX, 3 );
+		$token = self::endpoint( 'famma_express_nonce', array() );
+		remove_filter( 'woocommerce_set_cookie_enabled', $capture, PHP_INT_MAX );
+		$held = $issued ? (string) end( $issued ) : $stale['value'];
+		self::session(
+			array(
+				'name'  => $saved['name'],
+				'value' => $held,
+			)
+		);
+		self::$context['sessions'][] = WC()->session->get_customer_id();
+		$prepare                     = self::endpoint(
+			'famma_express_prepare',
+			array(
+				'woocommerce-process-checkout-nonce' => (string) ( $token['data']['nonce'] ?? '' ),
+				'famma_preparation_id'               => wp_generate_uuid4(),
+			)
+		);
+		self::assert( 'stale-cookie-reissued', '' !== $held && $stale['value'] !== $held && is_array( WC()->session->get_session_cookie() ), 'Token endpoint replaces an unverifiable session cookie with a valid one.' );
+		self::assert( 'stale-cookie-token-accepted', 'expired' !== ( $prepare['famma_token'] ?? '' ), 'Token issued over a stale cookie verifies on the next request.' );
+		self::session( $saved );
 	}
 
 	/**

@@ -156,16 +156,47 @@ final class Express_Order {
 	 * cachable. Aucune donnée de session n'est écrite, donc aucune ligne en
 	 * base tant que rien n'est mis au panier.
 	 *
+	 * Un cookie présent mais refusé par WooCommerce (clés WP changées, valeur
+	 * corrompue, session expirée) compte aussi comme manquant : voir
+	 * `session_cookie_missing()`.
+	 *
 	 * @return void
 	 */
 	public function send_nonce(): void {
-		if ( function_exists( 'WC' ) && WC()->session && ! WC()->session->has_session() ) {
+		if ( self::session_cookie_missing() ) {
 			WC()->session->set_customer_session_cookie( true );
 		}
 
 		wp_send_json_success(
 			array( 'nonce' => wp_create_nonce( 'woocommerce-process_checkout' ) )
 		);
+	}
+
+	/**
+	 * Le visiteur invité a-t-il besoin qu'on (re)pose son cookie de session ?
+	 *
+	 * `has_session()` ne suffit pas : il est vrai dès qu'un cookie du bon nom
+	 * EXISTE. Si sa signature ne vérifie plus (sels WP régénérés, valeur
+	 * corrompue), WooCommerce l'ignore et tire un nouvel identifiant client à
+	 * chaque requête sans jamais renvoyer de cookie. Le jeton, lié à cet
+	 * identifiant, ne vérifiait alors jamais (`famma_token: expired` en boucle)
+	 * et le panier repartait de zéro. Même chose pour une session expirée :
+	 * WooCommerce la détruit et change d'identifiant.
+	 *
+	 * Règle : le cookie reçu doit être valide ET désigner la session en cours.
+	 * Un client connecté n'est pas concerné (son jeton dépend de son compte).
+	 *
+	 * @return bool
+	 */
+	private static function session_cookie_missing(): bool {
+		if ( ! function_exists( 'WC' ) || ! WC()->session instanceof \WC_Session_Handler || is_user_logged_in() ) {
+			return false;
+		}
+
+		$cookie      = WC()->session->get_session_cookie();
+		$customer_id = (string) WC()->session->get_customer_id();
+
+		return ! $cookie || $customer_id !== (string) $cookie[0];
 	}
 
 	/**
