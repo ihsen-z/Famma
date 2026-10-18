@@ -14,7 +14,7 @@
 .famma-express {
 	margin-block: var(--sp-6, 24px);
 	padding: var(--sp-4, 16px);
-	border: 2px solid var(--famma-orange, #F5A623);
+	border: 2px solid var(--famma-orange, #FF7A00);
 	border-radius: var(--famma-radius, 12px);
 	background: var(--famma-white, #FFF);
 	/*
@@ -30,7 +30,7 @@
 	margin-block: 0 var(--sp-4, 16px);
 	font-size: var(--fs-h3, 1.25rem);
 	font-weight: var(--fw-bold, 700);
-	color: var(--famma-blue, #10275A);
+	color: var(--famma-blue, #0B1F3A);
 }
 
 /*
@@ -56,29 +56,33 @@
 }
 
 .famma-express__optional {
-	color: var(--famma-ink-muted, #55606E);
+	color: var(--famma-text-2, #56617A);
 	font-weight: var(--fw-regular, 400);
 }
 
 .famma-express__error {
-	color: var(--famma-danger, #C0392B);
+	color: var(--famma-danger-700, #C13333);
 	font-size: var(--fs-caption, 0.875rem);
 }
 
-.famma-express__field input[aria-invalid="true"] {
-	border-color: var(--famma-danger, #C0392B);
+/* Champ fautif : `aria-invalid` (validation locale ou `data-id` WooCommerce) et la classe posée par le script. */
+.famma-express__field input[aria-invalid="true"],
+.famma-express__field .famma-express__invalid {
+	border-color: var(--famma-danger, #D64545);
+	box-shadow: 0 0 0 1px var(--famma-danger, #D64545);
+	background: var(--famma-danger-soft, #FDF7F7);
 }
 
 .famma-express__field label {
 	font-size: var(--fs-caption, 0.875rem);
 	font-weight: var(--fw-medium, 500);
-	color: var(--famma-blue, #10275A);
+	color: var(--famma-blue, #0B1F3A);
 	/* `start`, pas `left` : l'intitulé suit le sens de lecture. */
 	text-align: start;
 }
 
 .famma-express__field .required {
-	color: var(--famma-danger, #C0392B);
+	color: var(--famma-danger-700, #C13333);
 	text-decoration: none;
 	border: 0;
 }
@@ -91,10 +95,10 @@
 	min-block-size: 48px;
 	inline-size: 100%;
 	padding-inline: var(--chrome-field-pad-inline, 14px);
-	border: 1px solid var(--famma-line, #DBE1E8);
+	border: 1px solid var(--famma-line, #E7EAF0);
 	border-radius: var(--famma-radius-sm, 8px);
 	background: var(--famma-surface-field, #FBFCFD);
-	color: var(--famma-blue, #10275A);
+	color: var(--famma-blue, #0B1F3A);
 	font-family: inherit;
 	/*
 	 * 16px minimum, et ce n'est pas un choix esthétique : en dessous, iOS
@@ -106,7 +110,7 @@
 
 .famma-express__field input:focus-visible,
 .famma-express__field select:focus-visible {
-	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #2C6BED);
+	outline: var(--focus-ring-width, 3px) solid var(--focus-ring-color, #0B1F3A);
 	outline-offset: 1px;
 }
 
@@ -123,10 +127,13 @@
 	inline-size: 100%;
 }
 
-.famma-express__native {
+/* Deux classes + l'élément : plus fort que `.famma-express__field select` (pleine largeur), sinon le <select> masqué dépasse du formulaire et crée un défilement horizontal. */
+.famma-express__field select.famma-express__native {
 	position: absolute;
 	inline-size: 1px;
+	min-inline-size: 0;
 	block-size: 1px;
+	min-block-size: 0;
 	margin: -1px;
 	padding: 0;
 	overflow: hidden;
@@ -147,10 +154,10 @@
 	overflow-y: auto;
 	overscroll-behavior: contain;
 	list-style: none;
-	border: 1px solid var(--famma-line, #DBE1E8);
+	border: 1px solid var(--famma-line, #E7EAF0);
 	border-radius: var(--famma-radius-sm, 8px);
 	background: var(--famma-white, #FFF);
-	box-shadow: 0 8px 24px rgb(16 39 90 / 12%);
+	box-shadow: var(--elev-2, 0 8px 24px rgba(11, 31, 58, 0.14));
 }
 
 .famma-express__combo-list li {
@@ -162,25 +169,131 @@
 	min-block-size: 48px;
 	margin: 0;
 	padding-inline: var(--sp-3, 12px);
+	border-inline-start: 3px solid transparent;
 	border-radius: var(--famma-radius-sm, 8px);
-	color: var(--famma-blue, #10275A);
+	color: var(--famma-blue, #0B1F3A);
 	white-space: nowrap;
 	cursor: pointer;
 }
 
 .famma-express__combo-list li > span:nth-child(2) {
-	color: var(--famma-ink-muted, #55606E);
+	color: var(--famma-text-2, #56617A);
 	font-size: var(--fs-caption, 0.875rem);
 }
 
 .famma-express__combo-list li[aria-selected="true"],
 .famma-express__combo-list li:hover {
-	background: var(--famma-surface-field, #EEF3FB);
+	background: var(--famma-surface-icon, #F1F4F9);
+}
+
+.famma-express__combo-list li[aria-selected="true"] {
+	border-inline-start-color: var(--famma-blue, #0B1F3A);
+	font-weight: var(--fw-semibold, 600);
 }
 
 .famma-express__combo-list .famma-express__combo-empty {
-	color: var(--famma-ink-muted, #55606E);
+	color: var(--famma-text-2, #56617A);
 	cursor: default;
+}
+
+/*
+ * Taille (0.3.0) : boutons radio en pastilles de 48 px minimum, sur toute la
+ * largeur de la rangée « commande », juste avant la quantité. Le bouton radio
+ * natif reste dans la page (clavier : Tab puis flèches) mais n'est pas dessiné ;
+ * la pastille porte l'état coché et l'anneau de focus.
+ */
+.famma-express .famma-express__sizes {
+	flex: 1 1 100%;
+	min-inline-size: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.famma-express__sizes-legend {
+	margin-block-end: var(--sp-1, 4px);
+	padding: 0;
+	color: var(--famma-blue, #0B1F3A);
+	font-size: var(--fs-caption, 0.875rem);
+	font-weight: var(--fw-medium, 500);
+	text-align: start;
+}
+
+.famma-express__sizes .required {
+	color: var(--famma-danger-700, #C13333);
+	text-decoration: none;
+	border: 0;
+}
+
+.famma-express__size-options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--sp-2, 8px);
+}
+
+.famma-express__size {
+	position: relative;
+	display: inline-flex;
+	margin: 0;
+	cursor: pointer;
+}
+
+.famma-express__size input[type="radio"] {
+	position: absolute;
+	inset: 0;
+	inline-size: 100%;
+	block-size: 100%;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.famma-express__size-text {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	/* 48px : cible tactile minimale du projet. */
+	min-inline-size: 48px;
+	min-block-size: 48px;
+	padding-inline: var(--sp-3, 12px);
+	border: 1px solid var(--famma-line-field, #DFE3EA);
+	border-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-white, #FFF);
+	color: var(--famma-blue, #0B1F3A);
+	font-size: 1rem;
+	font-weight: var(--fw-semibold, 600);
+	line-height: 1;
+}
+
+.famma-express__size input:checked + .famma-express__size-text {
+	border-color: var(--famma-blue, #0B1F3A);
+	box-shadow: 0 0 0 1px var(--famma-blue, #0B1F3A);
+	background: var(--famma-surface-icon, #F1F4F9);
+}
+
+.famma-express__size input:focus-visible + .famma-express__size-text {
+	outline: var(--focus-ring-width, 3px) solid var(--focus-ring-color, #0B1F3A);
+	outline-offset: 1px;
+}
+
+.famma-express__size input:disabled + .famma-express__size-text {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+/* Aucune taille choisie à l'envoi : pastilles en rouge, message sous la liste. */
+.famma-express__sizes[aria-invalid="true"] .famma-express__size-text {
+	border-color: var(--famma-danger, #D64545);
+	background: var(--famma-danger-soft, #FDF7F7);
+}
+
+.famma-express__sizes .famma-express__error {
+	display: block;
+	margin-block-start: var(--sp-1, 4px);
+}
+
+.famma-express__sizes .famma-express__error[hidden] {
+	display: none;
 }
 
 /* Quantité : un bloc bordé « − valeur + », boutons de 48 px. */
@@ -215,8 +328,13 @@
 	box-shadow: none;
 }
 
+.famma-express .famma-express__qty-btn:disabled {
+	color: var(--famma-line-field, #DFE3EA);
+	cursor: not-allowed;
+}
+
 .famma-express__qty-btn:focus-visible {
-	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #2C6BED);
+	outline: var(--focus-ring-width, 3px) solid var(--focus-ring-color, #0B1F3A);
 	outline-offset: -2px;
 }
 
@@ -237,21 +355,6 @@
 	margin: 0;
 }
 
-.famma-express__terms label {
-	display: flex;
-	align-items: flex-start;
-	gap: var(--sp-2, 8px);
-	font-weight: var(--fw-regular, 400);
-}
-
-.famma-express__terms input[type="checkbox"] {
-	/* La case reste à sa taille native, mais assez grande pour le doigt. */
-	inline-size: 1.25rem;
-	block-size: 1.25rem;
-	margin-block-start: 2px;
-	flex: 0 0 auto;
-}
-
 /*
  * Total : à droite de la quantité qui le fait varier. Aligné en fin de ligne
  * (`end`, donc à gauche en RTL), et libre de passer à la ligne sur 303 px.
@@ -268,20 +371,15 @@
 
 .famma-express__total-label {
 	font-size: var(--fs-caption, 0.875rem);
-	color: var(--famma-ink-muted, #55606E);
+	color: var(--famma-text-2, #56617A);
 }
 
 .famma-express__total {
 	font-size: var(--fs-h3, 1.25rem);
 	font-weight: var(--fw-bold, 700);
-	color: var(--famma-blue, #10275A);
+	color: var(--famma-blue, #0B1F3A);
 	/* Le prix ne se coupe jamais en deux lignes. */
 	white-space: nowrap;
-}
-
-.famma-express__cart-note {
-	font-size: var(--fs-caption, 0.875rem);
-	color: var(--famma-ink-muted, #55606E);
 }
 
 /*
@@ -340,7 +438,7 @@
 
 .famma-express .famma-express__submit:focus-visible,
 .famma-express .famma-express__cart:focus-visible {
-	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #2C6BED);
+	outline: var(--focus-ring-width, 3px) solid var(--focus-ring-color, #0B1F3A);
 	outline-offset: 2px;
 }
 
@@ -447,13 +545,18 @@ html[lang^="ar"] .famma-express__submit-ar {
 	display: none;
 }
 
-/* Vide par défaut : sans cette règle, la marge apparaîtrait sans message. */
+/*
+ * Avis d'erreur JUSTE au-dessus du bouton : le script y fait défiler, le
+ * bouton reste visible dessous. Vide par défaut : sans cette règle, la marge
+ * apparaîtrait sans message.
+ */
 .famma-express__notices:not(:empty) {
-	margin-block-start: var(--sp-3, 12px);
+	margin-block-end: var(--sp-3, 12px);
 	padding: var(--sp-3, 12px);
 	border-radius: var(--famma-radius-sm, 8px);
-	background: var(--famma-danger-bg, #FDECEA);
-	color: var(--famma-danger, #C0392B);
+	border: 1px solid var(--famma-danger-line, #EFD9D9);
+	background: var(--famma-danger-soft, #FDF7F7);
+	color: var(--famma-danger-700, #C13333);
 	font-size: var(--fs-caption, 0.875rem);
 }
 
@@ -485,8 +588,8 @@ html[lang^="ar"] .famma-express__submit-ar {
 	inline-size: 100%;
 	margin: 0 0 var(--sp-3, 12px);
 	padding: 0 0 var(--sp-2, 8px);
-	border-block-end: 1px solid var(--famma-line, #DBE1E8);
-	color: var(--famma-blue, #10275A);
+	border-block-end: 1px solid var(--famma-line, #E7EAF0);
+	color: var(--famma-blue, #0B1F3A);
 	font-size: var(--fs-small, 0.875rem);
 	font-weight: var(--fw-semibold, 600);
 	line-height: var(--lh-tight, 1.2);
@@ -501,74 +604,251 @@ html[lang^="ar"] .famma-express__submit-ar {
 	gap: var(--sp-3, 12px) var(--sp-4, 16px);
 }
 
-.famma-express__order + .famma-express__terms {
-	margin-block-start: var(--sp-4, 16px);
+/*
+ * Envoi en cours : bouton désactivé, indicateur de chargement à la place de
+ * l'icône. Le texte change, la hauteur du bouton non (56 px minimum).
+ */
+.famma-express__spinner {
+	display: none;
+	flex: none;
+	inline-size: 18px;
+	block-size: 18px;
+	border: 2px solid currentColor;
+	border-block-start-color: transparent;
+	border-radius: 50%;
+	animation: famma-express-spin 0.8s linear infinite;
 }
 
-/* Le récapitulatif serveur est lisible avant la confirmation finale. */
-.famma-express__recap {
-	margin-block: var(--sp-4, 16px);
-	padding: var(--sp-4, 16px);
-	border: 1px solid var(--famma-line, #DBE1E8);
-	border-radius: var(--famma-radius-sm, 8px);
-	background: var(--famma-surface, #fff);
+.famma-express__submit[aria-busy="true"] .famma-express__spinner,
+.famma-express-modal__confirm[aria-busy="true"] .famma-express__spinner {
+	display: inline-block;
 }
 
-.famma-express__recap[hidden] {
+.famma-express .famma-express__submit[aria-busy="true"] .famma-express__icon {
 	display: none;
 }
 
-.famma-express__recap h3 {
-	margin-block: 0 var(--sp-3, 12px);
-	font-size: 1rem;
+@keyframes famma-express-spin {
+	to {
+		transform: rotate(360deg);
+	}
 }
 
-.famma-express__recap table {
+/* Sans animation : un anneau fixe, toujours visible, signale l'attente. */
+@media (prefers-reduced-motion: reduce) {
+	.famma-express__spinner {
+		animation: none;
+		border-block-start-color: currentColor;
+		border-style: dotted;
+	}
+}
+
+/* Mention des conditions générales, sous le bouton. */
+.famma-express .famma-express__legal {
+	margin: var(--sp-2, 8px) 0 0;
+	color: var(--famma-text-2, #56617A);
+	font-size: var(--fs-caption, 0.875rem);
+	text-align: center;
+	overflow-wrap: anywhere;
+}
+
+.famma-express__legal a {
+	color: inherit;
+	text-decoration: underline;
+}
+
+/* Information non bloquante (autres articles restés au panier), sous le bouton. */
+.famma-express .famma-express__info {
+	margin: var(--sp-2, 8px) 0 0;
+	color: var(--famma-text-2, #56617A);
+	font-size: var(--fs-caption, 0.875rem);
+}
+
+.famma-express__info[hidden] {
+	display: none;
+}
+
+/*
+ * Modale « le total a changé » : centrée, hors du flux de la page. Hauteur
+ * maximale = écran (100dvh, la barre d'adresse mobile comprise) ; le contenu
+ * défile, le bouton final reste collé en bas, visible sans défiler.
+ */
+html.famma-express-modal-open,
+html.famma-express-modal-open body {
+	overflow: hidden;
+}
+
+.famma-express-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--sp-3, 12px);
+	background: rgba(11, 31, 58, 0.55);
+	overscroll-behavior: contain;
+}
+
+.famma-express-modal[hidden] {
+	display: none;
+}
+
+.famma-express-modal__dialog {
+	display: flex;
+	flex-direction: column;
 	inline-size: 100%;
-	margin-block: 0;
+	max-inline-size: 28rem;
+	max-block-size: calc(100vh - 2 * var(--sp-3, 12px));
+	max-block-size: calc(100dvh - 2 * var(--sp-3, 12px));
+	overflow: hidden;
+	border-radius: var(--famma-radius, 12px);
+	background: var(--famma-white, #FFF);
+	color: var(--famma-blue, #0B1F3A);
+	box-shadow: var(--elev-2, 0 8px 24px rgba(11, 31, 58, 0.14));
+}
+
+.famma-express-modal__dialog:focus {
+	outline: none;
+}
+
+.famma-express-modal__head {
+	display: flex;
+	flex: none;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-2, 8px);
+	padding-block: var(--sp-2, 8px);
+	padding-inline: var(--sp-4, 16px) var(--sp-2, 8px);
+	border-block-end: 1px solid var(--famma-line, #E7EAF0);
+}
+
+.famma-express-modal .famma-express-modal__title {
+	margin: 0;
+	font-size: 1.0625rem;
+	font-weight: var(--fw-bold, 700);
+	color: var(--famma-blue, #0B1F3A);
+}
+
+/* Kadence colore tout `button:hover` : deux classes pour garder le bouton neutre. */
+.famma-express-modal .famma-express-modal__close {
+	flex: none;
+	inline-size: 48px;
+	block-size: 48px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--famma-radius-sm, 8px);
+	background: transparent;
+	box-shadow: none;
+	color: var(--famma-blue, #0B1F3A);
+	font-family: inherit;
+	font-size: 1.75rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.famma-express-modal .famma-express-modal__close:hover,
+.famma-express-modal .famma-express-modal__close:focus {
+	background: var(--famma-surface-icon, #F1F4F9);
+	color: var(--famma-blue, #0B1F3A);
+	box-shadow: none;
+}
+
+.famma-express-modal__body {
+	flex: 1 1 auto;
+	min-block-size: 0;
+	overflow-y: auto;
+	padding: var(--sp-4, 16px);
+}
+
+.famma-express-modal .famma-express-modal__text {
+	margin: 0 0 var(--sp-3, 12px);
+	font-size: var(--fs-caption, 0.875rem);
+	color: var(--famma-text-2, #56617A);
+}
+
+.famma-express-modal__content table {
+	inline-size: 100%;
+	margin: 0;
 	border-collapse: collapse;
 	font-size: 0.9375rem;
 }
 
-.famma-express__recap th,
-.famma-express__recap td {
-	padding-block: var(--sp-2, 8px);
-	padding-inline: var(--sp-2, 8px);
+.famma-express-modal__content th,
+.famma-express-modal__content td {
+	padding: var(--sp-2, 8px) var(--sp-1, 4px);
 	text-align: start;
 	vertical-align: top;
 	overflow-wrap: anywhere;
 }
 
-/* Keep each WooCommerce amount together; product names may wrap on mobile. */
-.famma-express__recap th:last-child,
-.famma-express__recap td:last-child {
+/* Les montants ne se coupent pas ; les noms de produit, si. */
+.famma-express-modal__content th:last-child,
+.famma-express-modal__content td:last-child {
 	inline-size: 1%;
-}
-
-.famma-express__recap td:last-child {
+	text-align: end;
 	white-space: nowrap;
 	overflow-wrap: normal;
-	word-break: normal;
 }
 
-.famma-express__recap thead th:nth-child(2),
-.famma-express__recap tbody td:nth-child(2) {
-	inline-size: 4.5em;
-	min-inline-size: 4.5em;
+/* Les intitulés de colonne ne se coupent qu'aux espaces (« Quantité / الكمية »). */
+.famma-express-modal__content thead th {
 	overflow-wrap: normal;
-	word-break: normal;
+	font-size: var(--fs-caption, 0.875rem);
 }
 
-.famma-express__recap tbody td:nth-child(2) {
-	white-space: nowrap;
+.famma-express-modal__content tfoot {
+	border-block-start: 1px solid var(--famma-line, #E7EAF0);
 }
 
-.famma-express__recap tfoot {
-	border-block-start: 1px solid var(--famma-line, #DBE1E8);
-}
-
-.famma-express__recap tfoot tr:last-child {
+.famma-express-modal__content tfoot tr:last-child {
 	font-weight: 700;
+}
+
+.famma-express-modal__foot {
+	flex: none;
+	padding: var(--sp-3, 12px) var(--sp-4, 16px) calc(var(--sp-3, 12px) + env(safe-area-inset-bottom, 0px));
+	border-block-start: 1px solid var(--famma-line, #E7EAF0);
+	background: var(--famma-white, #FFF);
+}
+
+.famma-express-modal .famma-express-modal__confirm {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--sp-2, 8px);
+	inline-size: 100%;
+	min-block-size: 56px;
+	padding: var(--sp-3, 12px);
+	border: 0;
+	border-radius: 9px;
+	background: var(--famma-orange, #FF7A00);
+	box-shadow: none;
+	color: var(--famma-on-orange, #0B1F3A);
+	font-family: inherit;
+	font-size: var(--fs-button, 1rem);
+	font-weight: var(--fw-semibold, 600);
+	line-height: var(--lh-tight, 1.2);
+	text-align: center;
+	cursor: pointer;
+}
+
+.famma-express-modal .famma-express-modal__confirm:hover,
+.famma-express-modal .famma-express-modal__confirm:focus-visible {
+	background: var(--famma-orange-600, #E86E00);
+	color: var(--famma-on-orange, #0B1F3A);
+	box-shadow: none;
+}
+
+.famma-express-modal .famma-express-modal__confirm:focus-visible,
+.famma-express-modal .famma-express-modal__close:focus-visible {
+	outline: var(--focus-ring-width, 3px) solid var(--focus-ring-color, #0B1F3A);
+	outline-offset: 2px;
+}
+
+.famma-express-modal .famma-express-modal__confirm:disabled {
+	opacity: 0.7;
+	cursor: progress;
 }
 
 @media (min-width: 600px) {

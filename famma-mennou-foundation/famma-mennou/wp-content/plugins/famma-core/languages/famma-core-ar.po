@@ -113,7 +113,7 @@ msgstr "قاعد يتبعث…"
 msgid "required"
 msgstr "ضروري"
 
-msgid "The order could not go through. Please check the form and try again."
+msgid "La commande n’a pas pu aboutir. Vérifiez le formulaire puis réessayez. / الطلبية ما تعدّاتش، ثبّت في المعلومات وعاود."
 msgstr "الطلب ما نجّمش يتبعث. شوف المعلومات وعاود جرّب."
 
 msgid "Plus %d item already in your cart."
@@ -157,3 +157,21 @@ msgstr "ما لقينا حتى ولاية"
 
 msgid "Type to search…"
 msgstr "لوّج…"
+
+msgid "Indiquez votre nom complet (au moins 3 caractères). / اكتب اسمك ولقبك (3 حروف على الأقل)."
+msgstr "اكتب اسمك ولقبك (3 حروف على الأقل)."
+
+msgid "Taille / المقاس"
+msgstr "المقاس"
+
+msgid "Taille"
+msgstr "المقاس"
+
+msgid "Choisissez votre taille. / اختار المقاس متاعك."
+msgstr "اختار المقاس متاعك."
+
+msgid "Cette taille n’est pas proposée pour cet article. Choisissez une taille de la liste. / المقاس هذا موش موجود، اختار مقاس من القائمة."
+msgstr "المقاس هذا موش موجود، اختار مقاس من القائمة."
+
+msgid "Choisir la taille / اختار المقاس"
+msgstr "اختار المقاس"

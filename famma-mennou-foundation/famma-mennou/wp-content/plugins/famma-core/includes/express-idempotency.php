@@ -296,6 +296,8 @@ final class Express_Idempotency {
 				'famma_code'       => 'validation_failed',
 				'famma_state'      => 'failed',
 				'famma_request_id' => $row['request_id'],
+				// Jamais d'échec muet : le détail de la validation a déjà été rendu à la première réponse.
+				'messages'         => '<ul class="woocommerce-error" role="alert"><li>' . esc_html( Express_Checkout::generic_error() ) . '</li></ul>',
 			);
 		}
 		return array(

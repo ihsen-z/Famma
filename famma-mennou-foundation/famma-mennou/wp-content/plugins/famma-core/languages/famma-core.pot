@@ -321,3 +321,36 @@ msgstr ""
 
 msgid "Type to search…"
 msgstr ""
+
+msgid "La commande n’a pas pu aboutir. Vérifiez le formulaire puis réessayez. / الطلبية ما تعدّاتش، ثبّت في المعلومات وعاود."
+msgstr ""
+
+msgid "Indiquez votre nom complet (au moins 3 caractères). / اكتب اسمك ولقبك (3 حروف على الأقل)."
+msgstr ""
+
+msgid "Taille / المقاس"
+msgstr ""
+
+msgid "Taille"
+msgstr ""
+
+msgid "Choisissez votre taille. / اختار المقاس متاعك."
+msgstr ""
+
+msgid "Cette taille n’est pas proposée pour cet article. Choisissez une taille de la liste. / المقاس هذا موش موجود، اختار مقاس من القائمة."
+msgstr ""
+
+msgid "Choisir la taille / اختار المقاس"
+msgstr ""
+
+msgid "Tailles proposées"
+msgstr ""
+
+msgid "Tailles séparées par une virgule, par exemple « S, M ». Le client devra en choisir une pour commander. Laissez vide : aucun choix de taille."
+msgstr ""
+
+msgid "Intitulé du choix de taille"
+msgstr ""
+
+msgid "Facultatif. Laissez vide pour afficher « Taille / المقاس »."
+msgstr ""

@@ -135,6 +135,7 @@ Une tâche n'est pas finie tant que ces points ne sont pas verts :
 * Marque : FAMMA (فمّا). Slogan : فمّا ديما حاجة جديدة.
 * Boutique e-commerce Tunisie, mobile-first, paiement à la livraison (COD).
 * Stack : WordPress + WooCommerce, orchestré via Docker (`docker-compose.yml` déjà présent).
+* Production : fammaminnou.tn, hébergée chez OXA Host. Panneau serveur DirectAdmin : https://da5.tn.oxa.host:2222/evo/ (le propriétaire ouvre lui-même la session ; ne jamais y saisir d'identifiants ; tout envoi de fichiers en prod exige son accord explicite).
 * Langues : Français + Derja tunisienne, support RTL.
 * Spécification complète : voir `MASTER-PROMPT.md` (64 sections).
 

@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.2.5
+ * Version:           0.3.1
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.2.5' );
+define( 'FAMMA_CORE_VERSION', '0.3.1' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -39,11 +39,16 @@ require_once __DIR__ . '/includes/newsletter.php';
 require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';
 require_once __DIR__ . '/includes/tracking-events.php';
+require_once __DIR__ . '/includes/product-sizes.php';
+require_once __DIR__ . '/includes/product-sizes-admin.php';
 require_once __DIR__ . '/includes/express-order.php';
 require_once __DIR__ . '/includes/express-checkout.php';
 require_once __DIR__ . '/includes/express-idempotency.php';
 require_once __DIR__ . '/includes/express-preparation.php';
 require_once __DIR__ . '/includes/capi-delivery-registry.php';
+require_once __DIR__ . '/includes/capi-signals.php';
+require_once __DIR__ . '/includes/capi-log.php';
+require_once __DIR__ . '/includes/capi-product-data.php';
 require_once __DIR__ . '/includes/order-emails.php';
 require_once __DIR__ . '/includes/anti-abuse.php';
 require_once __DIR__ . '/includes/checkout-lite.php';
@@ -54,6 +59,19 @@ require_once __DIR__ . '/includes/seo-admin.php';
 require_once __DIR__ . '/includes/hardening.php';
 require_once __DIR__ . '/includes/performance.php';
 require_once __DIR__ . '/includes/cache-warmup.php';
+require_once __DIR__ . '/includes/visitor-store.php';
+require_once __DIR__ . '/includes/visitor-context.php';
+require_once __DIR__ . '/includes/visitor-collector.php';
+require_once __DIR__ . '/includes/visitor-commerce.php';
+require_once __DIR__ . '/includes/visitor-report.php';
+require_once __DIR__ . '/includes/visitor-admin.php';
+require_once __DIR__ . '/includes/visitor-admin-views.php';
+require_once __DIR__ . '/includes/visitor-insights.php';
+require_once __DIR__ . '/includes/visitor-insights-views.php';
+require_once __DIR__ . '/includes/visitor-order-box.php';
+require_once __DIR__ . '/includes/visitor-privacy.php';
+require_once __DIR__ . '/includes/visitor-performance.php';
+require_once __DIR__ . '/includes/visitor-performance-views.php';
 
 /**
  * Reads configuration from env-fed constants and WordPress options.
@@ -118,18 +136,27 @@ final class Config {
 	 * le lisait comme un numéro chilien (+56) : aucun message n'arrivait
 	 * (audit du 23/09, UX-01). Un numéro à 8 chiffres est donc tunisien.
 	 *
+	 * A Tunisian number is recognised by `Tunisia::normalize_phone()` only (8
+	 * digits, or 216 / 00216 + 8 digits). Anything else is kept as an
+	 * international number — « 00 » removed, never prefixed with 216: before,
+	 * « 0020123456 » (an Egyptian prefix) became +216 20 123 456. Customer
+	 * numbers must use `'216' . Tunisia::normalize_phone()` directly; this
+	 * helper stays for the owner's WhatsApp number, which may be foreign.
+	 *
 	 * @param string $raw Number as typed: spaces, dots, « + » or « 00 » allowed.
 	 * @return string Digits only, e.g. `21656261412`; empty when nothing usable.
 	 */
 	public static function international_phone( string $raw ): string {
+		$local = Tunisia::normalize_phone( $raw );
+
+		if ( '' !== $local ) {
+			return '216' . $local;
+		}
+
 		$digits = (string) preg_replace( '/\D+/', '', $raw );
 
 		if ( str_starts_with( $digits, '00' ) ) {
 			$digits = substr( $digits, 2 );
-		}
-
-		if ( 8 === strlen( $digits ) ) {
-			$digits = '216' . $digits;
 		}
 
 		return $digits;
@@ -466,10 +493,15 @@ final class Order_Statuses {
 	 * Without this is_paid() stays false and revenue reports silently ignore
 	 * every delivered order.
 	 *
-	 * @param string[] $statuses Statuses considered paid.
-	 * @return string[]
+	 * @param mixed $statuses Statuses considered paid.
+	 * @return mixed
 	 */
-	public function paid_statuses( array $statuses ): array {
+	public function paid_statuses( mixed $statuses ): mixed {
+		// Another filter may hand over a non-array: pass it on instead of crashing.
+		if ( ! is_array( $statuses ) ) {
+			return $statuses;
+		}
+
 		$statuses[] = 'delivered';
 
 		/*
@@ -488,10 +520,19 @@ final class Order_Statuses {
 	/**
 	 * Includes delivered orders in WooCommerce reports.
 	 *
-	 * @param string[] $s Statuses included in reports.
-	 * @return string[]
+	 * WooCommerce passes false here when a report query must not filter by
+	 * status at all (refund queries of the "Sales by date" report). That value
+	 * is returned untouched: forcing a list would change the query, and a
+	 * typed array parameter crashed the report (fatal error of 13/10/2026).
+	 *
+	 * @param mixed $s Statuses included in reports, or false for "any status".
+	 * @return mixed
 	 */
-	public function reporting_statuses( array $s ): array {
+	public function reporting_statuses( mixed $s ): mixed {
+		if ( ! is_array( $s ) ) {
+			return $s;
+		}
+
 		// Same reasoning as paid_statuses(): a COD order is revenue only once delivered.
 		$s = array_values( array_diff( $s, array( 'processing', 'on-hold' ) ) );
 		foreach ( array( 'delivered', 'completed' ) as $x ) {
@@ -1076,7 +1117,9 @@ final class Tunisia {
 	private function hooks(): void {
 		add_filter( 'woocommerce_states', array( $this, 'governorates' ) );
 		add_filter( 'woocommerce_checkout_fields', array( $this, 'checkout_fields' ) );
+		add_filter( 'woocommerce_process_checkout_field_billing_phone', array( $this, 'normalize_billing_phone' ) );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate_phone' ), 10, 2 );
+		add_action( 'woocommerce_after_checkout_validation', array( $this, 'validate_full_name' ), 10, 2 );
 		add_action( 'woocommerce_after_checkout_validation', array( $this, 'require_email_for_account' ), 20, 2 );
 
 		/*
@@ -1367,9 +1410,81 @@ final class Tunisia {
 	}
 
 	/**
+	 * Normalises a Tunisian phone number to its 8 national digits.
+	 *
+	 * Accepts what customers really type: spaces (including non-breaking
+	 * ones), dots, dashes, parentheses, « + », Arabic-Indic and Persian digits,
+	 * and the +216 / 00216 / 216 prefix. The prefix is only removed when the
+	 * length proves it is one (13 digits « 00216… », 11 digits « 216… »): an
+	 * 8-digit number starting with 216, such as 21612345, stays a number.
+	 *
+	 * @param string $raw Number as typed.
+	 * @return string The 8 digits, or '' when the number is not plausible.
+	 */
+	public static function normalize_phone( string $raw ): string {
+		$raw    = strtr(
+			$raw,
+			array(
+				'٠' => '0',
+				'١' => '1',
+				'٢' => '2',
+				'٣' => '3',
+				'٤' => '4',
+				'٥' => '5',
+				'٦' => '6',
+				'٧' => '7',
+				'٨' => '8',
+				'٩' => '9',
+				'۰' => '0',
+				'۱' => '1',
+				'۲' => '2',
+				'۳' => '3',
+				'۴' => '4',
+				'۵' => '5',
+				'۶' => '6',
+				'۷' => '7',
+				'۸' => '8',
+				'۹' => '9',
+			)
+		);
+		$digits = (string) preg_replace( '/\D+/', '', $raw );
+
+		if ( 13 === strlen( $digits ) && str_starts_with( $digits, '00216' ) ) {
+			$digits = substr( $digits, 5 );
+		} elseif ( 11 === strlen( $digits ) && str_starts_with( $digits, '216' ) ) {
+			$digits = substr( $digits, 3 );
+		}
+
+		return 1 === preg_match( '/^[2-9]\d{7}$/', $digits ) ? $digits : '';
+	}
+
+	/**
+	 * Stores the billing phone as its 8 national digits.
+	 *
+	 * Applied by `WC_Checkout::get_posted_data()` before WooCommerce's own
+	 * phone check (`WC_Validation::is_phone_format()` refuses Arabic-Indic
+	 * digits): the order, the customer and the courier all get « 20123456 ».
+	 * An implausible number is left as typed so `validate_phone()` names it.
+	 *
+	 * @param mixed $value Posted value, already passed through wc_clean().
+	 * @return mixed
+	 */
+	public function normalize_billing_phone( $value ) {
+		if ( ! is_string( $value ) || '' === $value ) {
+			return $value;
+		}
+		$digits = self::normalize_phone( $value );
+
+		return '' === $digits ? $value : $digits;
+	}
+
+	/**
 	 * Rejects anything that is not a plausible Tunisian mobile/landline number.
 	 *
-	 * Accepts an optional +216 / 00216 prefix, then requires 8 digits.
+	 * Same rule as normalize_phone(). WooCommerce's generic « not a valid
+	 * phone number » error is replaced by this one, so the customer reads a
+	 * single message. The `id` data becomes `data-id="billing_phone"` on the
+	 * notice: the express form uses it to mark the field.
 	 *
 	 * @param array<string,mixed> $data   Posted checkout data.
 	 * @param \WP_Error           $errors Error collector.
@@ -1379,14 +1494,45 @@ final class Tunisia {
 		if ( empty( $data['billing_phone'] ) ) {
 			return;
 		}
-		$raw    = preg_replace( '/[\s\-\.]/', '', (string) $data['billing_phone'] );
-		$digits = preg_replace( '/^(?:\+?216|00216)/', '', $raw );
-		if ( ! preg_match( '/^[2-9]\d{7}$/', $digits ) ) {
-			$errors->add(
-				'billing_phone_invalid',
-				__( 'Please enter a valid Tunisian phone number (8 digits). أدخل رقم هاتف تونسي صحيح.', 'famma-core' )
-			);
+		if ( '' !== self::normalize_phone( (string) $data['billing_phone'] ) ) {
+			return;
 		}
+		$errors->remove( 'billing_phone_validation' );
+		$errors->add(
+			'billing_phone_invalid',
+			__( 'Please enter a valid Tunisian phone number (8 digits). أدخل رقم هاتف تونسي صحيح.', 'famma-core' ),
+			array( 'id' => 'billing_phone' )
+		);
+	}
+
+	/**
+	 * Message d'un nom complet absent ou trop court (formulaire express et serveur).
+	 *
+	 * @return string
+	 */
+	public static function name_error(): string {
+		return __( 'Indiquez votre nom complet (au moins 3 caractères). / اكتب اسمك ولقبك (3 حروف على الأقل).', 'famma-core' );
+	}
+
+	/**
+	 * Refuse un nom complet de moins de 3 caractères.
+	 *
+	 * Le nom est déjà redécoupé par `split_full_name()` : prénom et nom sont
+	 * recollés pour compter. Un nom vide est laissé à WooCommerce (champ
+	 * obligatoire), pour ne pas afficher deux messages.
+	 *
+	 * @param array<string,mixed> $data   Données postées.
+	 * @param \WP_Error           $errors Erreurs de validation.
+	 * @return void
+	 */
+	public function validate_full_name( array $data, \WP_Error $errors ): void {
+		$full = trim( (string) ( $data['billing_first_name'] ?? '' ) . ' ' . (string) ( $data['billing_last_name'] ?? '' ) );
+
+		if ( '' === $full || mb_strlen( $full ) >= 3 ) {
+			return;
+		}
+
+		$errors->add( 'billing_first_name_short', self::name_error(), array( 'id' => 'billing_first_name' ) );
 	}
 }
 
@@ -1708,27 +1854,18 @@ final class Tracking {
 	 * @return void
 	 */
 	public function stamp_capi_signals( \WC_Order $order ): void {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- lecture seule d'un contexte de visite, pas une action.
-		$cookie_map = array(
-			'_fbp' => '_famma_fbp',
-			'_fbc' => '_famma_fbc',
+		// Seules les valeurs au format Meta sont gardées : un cookie forgé ou
+		// tronqué ne doit jamais atteindre la Conversions API.
+		$signals = array(
+			'_famma_fbp'       => Capi_Signals::cookie( '_fbp' ),
+			'_famma_fbc'       => Capi_Signals::cookie( '_fbc' ),
+			'_famma_client_ip' => Capi_Signals::client_ip(),
+			'_famma_client_ua' => Capi_Signals::client_user_agent(),
 		);
-		foreach ( $cookie_map as $cookie => $meta ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- idem.
-			if ( ! empty( $_COOKIE[ $cookie ] ) ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- idem.
-				$order->update_meta_data( $meta, substr( sanitize_text_field( wp_unslash( $_COOKIE[ $cookie ] ) ), 0, 255 ) );
+		foreach ( $signals as $meta => $value ) {
+			if ( '' !== $value ) {
+				$order->update_meta_data( $meta, $value );
 			}
-		}
-
-		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
-		if ( '' !== $ip && filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-			$order->update_meta_data( '_famma_client_ip', $ip );
-		}
-
-		$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
-		if ( '' !== $ua ) {
-			$order->update_meta_data( '_famma_client_ua', substr( $ua, 0, 400 ) );
 		}
 	}
 
@@ -1936,6 +2073,13 @@ final class Capi {
 	 * @return string
 	 */
 	private function normalise_phone( string $phone ): string {
+		// 216 + 8 chiffres nationaux, format attendu par Meta (sans « + » ni zéros).
+		if ( method_exists( Tunisia::class, 'normalize_phone' ) ) {
+			$national = (string) Tunisia::normalize_phone( $phone );
+			if ( '' !== $national ) {
+				return '216' . $national;
+			}
+		}
 		return Config::international_phone( $phone );
 	}
 
@@ -1958,19 +2102,25 @@ final class Capi {
 			)
 		);
 
-		// Ces trois-là ne sont PAS hachés : Meta les attend en clair.
+		/*
+		 * Ces quatre-là ne sont PAS hachés : Meta les attend en clair. Ils
+		 * viennent toujours des métadonnées figées à la commande — jamais de
+		 * la requête courante, qui pour Purchase est celle de l'admin. Ils
+		 * sont revalidés ici car une commande antérieure à 0.2.6 a pu les
+		 * enregistrer sans contrôle de format ; absents, ils sont omis.
+		 */
 		$raw_meta_map = array(
 			'fbp' => '_famma_fbp',
 			'fbc' => '_famma_fbc',
 		);
 		foreach ( $raw_meta_map as $key => $meta ) {
-			$value = (string) $order->get_meta( $meta );
+			$value = Capi_Signals::clean_cookie( (string) $order->get_meta( $meta ) );
 			if ( '' !== $value ) {
 				$data[ $key ] = $value;
 			}
 		}
 
-		$ip = (string) $order->get_meta( '_famma_client_ip' );
+		$ip = Capi_Signals::clean_ip( (string) $order->get_meta( '_famma_client_ip' ) );
 		if ( '' !== $ip ) {
 			$data['client_ip_address'] = $ip;
 		}
@@ -1981,33 +2131,6 @@ final class Capi {
 		}
 
 		return $data;
-	}
-
-	/**
-	 * Builds the contents block from the order lines.
-	 *
-	 * @param \WC_Order $order Delivered order.
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function contents( \WC_Order $order ): array {
-		$contents = array();
-
-		foreach ( $order->get_items() as $item ) {
-			$product = $item->get_product();
-			if ( ! $product instanceof \WC_Product ) {
-				continue;
-			}
-
-			$sku = (string) $product->get_sku();
-
-			$contents[] = array(
-				'id'         => '' !== $sku ? $sku : (string) $product->get_id(),
-				'quantity'   => (int) $item->get_quantity(),
-				'item_price' => round( (float) $order->get_line_subtotal( $item, false, false ) / max( 1, (int) $item->get_quantity() ), 3 ),
-			);
-		}
-
-		return $contents;
 	}
 
 	/**
@@ -2095,13 +2218,14 @@ final class Capi {
 			'action_source'    => 'website',
 			'event_source_url' => wc_get_checkout_url(),
 			'user_data'        => $this->user_data( $order ),
+			// Bloc produit commun aux deux événements (Capi_Product_Data, 0.2.9).
 			'custom_data'      => array(
 				'currency'     => $order->get_currency(),
+				// Total réel de la commande (lignes, frais, livraison, remises) : jamais une valeur fixe.
 				'value'        => round( (float) $order->get_total(), 3 ),
 				'order_id'     => (string) $order->get_id(),
-				'contents'     => $this->contents( $order ),
 				'content_type' => 'product',
-			),
+			) + Capi_Product_Data::for_order( $order ),
 		);
 
 		if ( ! $is_purchase ) {
@@ -2109,8 +2233,12 @@ final class Capi {
 		}
 		$payload = array( 'data' => array( $event ) );
 
-		// Real delivered orders always remain live conversions. Tests use the
-		// dedicated administration tool, without touching an order or its metadata.
+		// Les vraies commandes restent des conversions réelles, sauf mode test
+		// explicitement activé (constante ou option, éteint par défaut).
+		$test_code = Capi_Signals::test_event_code();
+		if ( '' !== $test_code ) {
+			$payload['test_event_code'] = $test_code;
+		}
 
 		$version = (string) apply_filters( 'famma_capi_graph_version', self::GRAPH_VERSION );
 		$url     = 'https://graph.facebook.com/' . rawurlencode( $version ) . '/' . rawurlencode( $pixel ) . '/events';
@@ -2130,33 +2258,59 @@ final class Capi {
 			)
 		);
 
+		$log = array(
+			'order_id'   => $order->get_id(),
+			'event_name' => $event_name,
+			'event_id'   => $event_id,
+			'value'      => $event['custom_data']['value'],
+			'currency'   => $event['custom_data']['currency'],
+			'user_data'  => $event['user_data'],
+			'attempt'    => $attempts,
+		);
+
 		if ( is_wp_error( $response ) ) {
 			$registry->finish( $claim, 'uncertain', 0, 0 );
+			Capi_Log::write(
+				$log + array(
+					'state' => 'transport_uncertain',
+					'error' => $response->get_error_message(),
+				),
+				$token
+			);
 			$this->record_failure( $order, 'transport_uncertain; ' . $event_id, $attempts, $event_name );
 			return;
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
+		$body = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+		$body = is_array( $body ) ? $body : array();
+
+		$log['http']            = $code;
+		$log['events_received'] = (int) ( $body['events_received'] ?? 0 );
+		$log['fbtrace_id']      = (string) ( $body['fbtrace_id'] ?? ( $body['error']['fbtrace_id'] ?? '' ) );
+		$log['error']           = isset( $body['error'] ) && is_array( $body['error'] ) ? (string) ( $body['error']['error_user_msg'] ?? $body['error']['message'] ?? '' ) : '';
 
 		if ( $code < 200 || $code >= 300 ) {
-			$body     = json_decode( (string) wp_remote_retrieve_body( $response ), true );
-			$rejected = $code >= 400 && $code < 500 && 408 !== $code && is_array( $body ) && isset( $body['error']['code'] ) && is_numeric( $body['error']['code'] );
+			$rejected = $code >= 400 && $code < 500 && 408 !== $code && isset( $body['error']['code'] ) && is_numeric( $body['error']['code'] );
 			$state    = $rejected ? 'rejected' : 'uncertain';
 			$registry->finish( $claim, $state, $code, 0 );
+			Capi_Log::write( $log + array( 'state' => $state ), $token );
 			$this->record_failure( $order, $state . '; HTTP ' . $code . '; ' . $event_id, $attempts, $event_name );
 			return;
 		}
 
-		$body = json_decode( (string) wp_remote_retrieve_body( $response ), true );
-		if ( ! is_array( $body ) || 1 !== (int) ( $body['events_received'] ?? 0 ) || isset( $body['error'] ) ) {
+		if ( array() === $body || 1 !== (int) ( $body['events_received'] ?? 0 ) || isset( $body['error'] ) ) {
 			$registry->finish( $claim, 'uncertain', $code, 0 );
+			Capi_Log::write( $log + array( 'state' => 'ack_uncertain' ), $token );
 			$this->record_failure( $order, 'ack_uncertain; ' . $event_id, $attempts, $event_name );
 			return;
 		}
 		if ( ! $registry->finish( $claim, 'accepted', $code, 1 ) ) {
+			Capi_Log::write( $log + array( 'state' => 'ack_persistence_uncertain' ), $token );
 			$this->record_failure( $order, 'ack_persistence_uncertain; ' . $event_id, $attempts, $event_name );
 			return;
 		}
+		Capi_Log::write( $log + array( 'state' => 'accepted' ), $token );
 		do_action( 'famma_capi_delivery_acknowledged', $claim, $order, $event_name );
 		$this->persist_event_success( $order->get_id(), $event_name, $event_id );
 	}
@@ -2652,15 +2806,18 @@ function boot(): void {
 	Tunisia::instance();
 	Tracking::instance();
 	Tracking_Events::instance();
+	Product_Sizes::instance();
 	Express_Order::instance();
 	Express_Idempotency::instance();
 	Express_Preparation::instance();
 	Express_Checkout::instance();
+	Express_Cart_Isolation::instance();
 	Order_Emails::instance();
 	Anti_Abuse::instance();
 	Checkout_Lite::instance();
 	Capi::instance();
 	Capi_Delivery_Registry::instance();
+	Capi_Signals::instance();
 	WhatsApp::instance();
 	Product_Video::instance();
 	Seo::instance();
@@ -2671,6 +2828,9 @@ function boot(): void {
 	Hardening::instance();
 	Performance::instance();
 	Cache_Warmup::instance();
+	Visitor_Store::instance();
+	Visitor_Collector::instance();
+	Visitor_Commerce::instance();
 	// Le formulaire public passe par admin-post.php : chargé partout.
 	Newsletter::instance();
 
@@ -2683,6 +2843,9 @@ function boot(): void {
 		Topbar_Content::instance();
 		Tracking_Settings::instance();
 		Seo_Admin::instance();
+		Visitor_Admin::instance();
+		Visitor_Order_Box::instance();
+		Visitor_Privacy::instance();
 	}
 }
 
