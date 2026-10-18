@@ -48,11 +48,12 @@ final class Anti_Abuse {
 	 * Seuils par défaut.
 	 */
 	private const DEFAULT_LIMITS = array(
-		'orders_per_ip_hour'   => 5,
-		'orders_per_phone_day' => 3,
-		'nonces_per_ip_hour'   => 40,
-		'express_per_ip_hour'  => 40,
-		'max_quantity'         => 10,
+		'orders_per_ip_hour'     => 5,
+		'orders_per_phone_day'   => 3,
+		'nonces_per_ip_hour'     => 40,
+		'express_per_ip_hour'    => 40,
+		'cart_edits_per_ip_hour' => 300,
+		'max_quantity'           => 10,
 	);
 
 	/**
@@ -153,7 +154,7 @@ final class Anti_Abuse {
 			return;
 		}
 
-		$phone = Config::international_phone( is_array( $data ) && isset( $data['billing_phone'] ) ? (string) $data['billing_phone'] : '' );
+		$phone = self::phone_key( is_array( $data ) && isset( $data['billing_phone'] ) ? (string) $data['billing_phone'] : '' );
 
 		if ( '' !== $phone && self::count( self::key( 'phone', $phone ) ) >= self::limit( 'orders_per_phone_day' ) ) {
 			$errors->add( 'famma_order_phone_limit', self::message( 'phone' ) );
@@ -183,11 +184,28 @@ final class Anti_Abuse {
 
 		self::bump( self::key( 'ip', self::client_ip() ), HOUR_IN_SECONDS );
 
-		$phone = Config::international_phone( (string) $order->get_billing_phone() );
+		$phone = self::phone_key( (string) $order->get_billing_phone() );
 
 		if ( '' !== $phone ) {
 			self::bump( self::key( 'phone', $phone ), DAY_IN_SECONDS );
 		}
+	}
+
+	/**
+	 * Clé de comptage d'un numéro client : `216` + 8 chiffres, ou ''.
+	 *
+	 * Même règle que la validation du checkout (`Tunisia::normalize_phone()`) :
+	 * « 20 123 456 », « +216 20123456 » et « ٢٠١٢٣٤٥٦ » comptent pour le même
+	 * numéro. Un numéro non tunisien n'est pas compté (la commande est de
+	 * toute façon refusée par la validation).
+	 *
+	 * @param string $raw Numéro saisi.
+	 * @return string
+	 */
+	private static function phone_key( string $raw ): string {
+		$local = Tunisia::normalize_phone( $raw );
+
+		return '' === $local ? '' : '216' . $local;
 	}
 
 	/**
@@ -312,6 +330,29 @@ final class Anti_Abuse {
 		if ( '' !== $trap ) {
 			self::refuse_express( 'refused', 200 );
 		}
+	}
+
+	/**
+	 * Limite les retraits et changements de quantité du récapitulatif express.
+	 *
+	 * Compteur distinct de `throttle_express()` : un client qui ajuste trois
+	 * lignes ne doit pas épuiser le budget de ses confirmations.
+	 *
+	 * @return void
+	 */
+	public function throttle_cart_edit(): void {
+		if ( self::exempt() ) {
+			return;
+		}
+
+		$key = self::key( 'cart_edit', self::client_ip() );
+
+		if ( self::count( $key ) >= self::limit( 'cart_edits_per_ip_hour' ) ) {
+			self::refuse_express( 'ip', 429 );
+			return;
+		}
+
+		self::bump( $key, HOUR_IN_SECONDS );
 	}
 
 	/**
