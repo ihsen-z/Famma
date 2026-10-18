@@ -3,54 +3,109 @@
  * Extended Pixel / CAPI scenario tests with real Config normalization; no WordPress database or real HTTP requests.
  * Run with: php scripts/test-pixel-scenarios.php
  * The source class is extracted so its actual implementation is exercised.
+ *
+ * @package Famma_Test_Scenarios
  */
+
+// Standalone runner: WordPress is never loaded. The doubles below keep the names
+// and signatures of the WordPress and WooCommerce code they replace.
+// phpcs:disable Universal.Namespaces -- The global doubles are grouped in the braced global namespace that wraps this runner.
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals, Generic.Classes.DuplicateClassName -- Doubles keep the names of the API they replace.
+// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter -- Doubles keep the signatures of the API they replace.
+// phpcs:disable Squiz.Commenting.ClassComment.Missing, Squiz.Commenting.FunctionComment.Missing, Squiz.Commenting.VariableComment.Missing -- Doubles are documented by the API they replace.
 
 namespace {
 	define( 'ABSPATH', __DIR__ );
 	final class WC_Order {
-		public array $meta = array();
-		public array $notes = array();
-		public string $status = 'delivered';
+		public array $meta         = array();
+		public array $notes        = array();
+		public string $status      = 'delivered';
 		public string $created_via = 'checkout';
-		public int $id = 901;
-		public string $email = 'isolated@example.invalid';
-		public string $phone = '00000000';
-		public string $first_name = 'Test';
-		public string $last_name = 'Isolated';
-		public string $city = 'Tunis';
-		public string $state = 'TN-11';
-		public string $country = 'TN';
-		public function get_meta( string $key ) { return $this->meta[ $key ] ?? ''; }
-		public function update_meta_data( string $key, $value ): void { $this->meta[ $key ] = $value; }
+		public int $id             = 901;
+		public string $email       = 'isolated@example.invalid';
+		public string $phone       = '00000000';
+		public string $first_name  = 'Test';
+		public string $last_name   = 'Isolated';
+		public string $city        = 'Tunis';
+		public string $state       = 'TN-11';
+		public string $country     = 'TN';
+		public function get_meta( string $key ) {
+			return $this->meta[ $key ] ?? '';
+		}
+		public function update_meta_data( string $key, $value ): void {
+			$this->meta[ $key ] = $value;
+		}
 		public function save(): void {}
-		public function has_status( $status ): bool { return in_array( $this->status, (array) $status, true ); }
-		public function get_items(): array { return array(); }
-		public function get_id(): int { return $this->id; }
-		public function get_created_via(): string { return $this->created_via; }
-		public function get_billing_email(): string { return $this->email; }
-		public function get_billing_phone(): string { return $this->phone; }
-		public function get_billing_first_name(): string { return $this->first_name; }
-		public function get_billing_last_name(): string { return $this->last_name; }
-		public function get_billing_city(): string { return $this->city; }
-		public function get_billing_state(): string { return $this->state; }
-		public function get_billing_country(): string { return $this->country; }
-		public function get_currency(): string { return 'TND'; }
-		public function get_total(): string { return '79.000'; }
-		public function get_checkout_order_received_url(): string { return 'https://example.invalid/order-received/901/'; }
-		public function get_date_created(): \DateTimeImmutable { return new \DateTimeImmutable( '2020-01-01' ); }
-		public function add_order_note( string $note ): void { $this->notes[] = $note; }
+		public function has_status( $status ): bool {
+			return in_array( $this->status, (array) $status, true );
+		}
+		public function get_items(): array {
+			return array();
+		}
+		public function get_id(): int {
+			return $this->id;
+		}
+		public function get_created_via(): string {
+			return $this->created_via;
+		}
+		public function get_billing_email(): string {
+			return $this->email;
+		}
+		public function get_billing_phone(): string {
+			return $this->phone;
+		}
+		public function get_billing_first_name(): string {
+			return $this->first_name;
+		}
+		public function get_billing_last_name(): string {
+			return $this->last_name;
+		}
+		public function get_billing_city(): string {
+			return $this->city;
+		}
+		public function get_billing_state(): string {
+			return $this->state;
+		}
+		public function get_billing_country(): string {
+			return $this->country;
+		}
+		public function get_currency(): string {
+			return 'TND';
+		}
+		public function get_total(): string {
+			return '79.000';
+		}
+		public function get_checkout_order_received_url(): string {
+			return 'https://example.invalid/order-received/901/';
+		}
+		public function get_date_created(): \DateTimeImmutable {
+			return new \DateTimeImmutable( '2020-01-01' );
+		}
+		public function add_order_note( string $note ): void {
+			$this->notes[] = $note;
+		}
 	}
 	final class WP_Error {
-		public function get_error_message(): string { return $GLOBALS['network_message'] ?? 'Isolated network error'; }
+		public function get_error_message(): string {
+			return $GLOBALS['network_message'] ?? 'Isolated network error';
+		}
 	}
 	function add_action( ...$args ): void {}
-	function add_filter( string $name, ...$args ): void { $GLOBALS['registered_filters'][] = $name; }
-	function get_option( string $name, $default = false ) { return 'famma_meta_orderplaced_enabled' === $name ? ($GLOBALS['orderplaced_enabled'] ?? $default) : ($GLOBALS['options'][$name] ?? $default); }
-	function wc_get_order( int $id ) { return $GLOBALS['checkout_order'] ?? false; }
+	function add_filter( string $name, ...$args ): void {
+		$GLOBALS['registered_filters'][] = $name;
+	}
+	function get_option( string $name, $default_value = false ) {
+		return 'famma_meta_orderplaced_enabled' === $name ? ( $GLOBALS['orderplaced_enabled'] ?? $default_value ) : ( $GLOBALS['options'][ $name ] ?? $default_value );
+	}
+	function wc_get_order( int $id ) {
+		return $GLOBALS['checkout_order'] ?? false;
+	}
 	if ( ! getenv( 'FAMMA_TEST_CRON_FALLBACK' ) ) {
 		function as_enqueue_async_action( string $hook, array $args, string $group, bool $unique ): int {
 			$GLOBALS['queue_calls'][] = array( $hook, $args, $group, $unique );
-			if ( ! empty( $GLOBALS['queue_failure'] ) ) { return 0; }
+			if ( ! empty( $GLOBALS['queue_failure'] ) ) {
+				return 0;
+			}
 			$GLOBALS['jobs'][ $args['order_id'] ] = $args;
 			return 1;
 		}
@@ -60,109 +115,161 @@ namespace {
 		}
 		function wp_schedule_single_event( int $time, string $hook, array $args ): bool {
 			$GLOBALS['queue_calls'][] = array( $hook, $args, 'wp-cron', true );
-			if ( ! empty( $GLOBALS['queue_failure'] ) ) { return false; }
+			if ( ! empty( $GLOBALS['queue_failure'] ) ) {
+				return false;
+			}
 			$GLOBALS['jobs'][ $args['order_id'] ] = $args;
 			return true;
 		}
 	}
-	function apply_filters( string $tag, $value ) { return $value; }
-	function wp_json_encode( $value ): string { return json_encode( $value ); }
+	function apply_filters( string $tag, $value ) {
+		return $value;
+	}
+	function wp_json_encode( $value ): string {
+		return json_encode( $value );
+	}
 	function wp_remote_post( string $url, array $args ) {
 		$GLOBALS['calls'][] = array( $url, json_decode( $args['body'], true ) );
 		return $GLOBALS['response'];
 	}
-	function is_wp_error( $value ): bool { return $value instanceof WP_Error; }
-	function wp_remote_retrieve_response_code( array $response ): int { return $response['code']; }
-	function wp_remote_retrieve_body( array $response ): string { return $response['body']; }
-	function current_time( string $type ): string { return '2026-10-09 12:00:00'; }
-	function wc_get_checkout_url(): string { return 'https://example.invalid/checkout/'; }
-	function __( string $message, string $domain ): string { return $message; }
+	function is_wp_error( $value ): bool {
+		return $value instanceof WP_Error;
+	}
+	function wp_remote_retrieve_response_code( array $response ): int {
+		return $response['code'];
+	}
+	function wp_remote_retrieve_body( array $response ): string {
+		return $response['body'];
+	}
+	function current_time( string $type ): string {
+		return '2026-10-09 12:00:00';
+	}
+	function wc_get_checkout_url(): string {
+		return 'https://example.invalid/checkout/';
+	}
+	function __( string $message, string $domain ): string {
+		return $message;
+	}
+
+	/**
+	 * Stop the run on the first broken contract, otherwise count and report it as passed.
+	 *
+	 * @param bool   $condition Contract outcome.
+	 * @param string $message   Contract description.
+	 * @throws \RuntimeException When the contract does not hold.
+	 */
 	function check( bool $condition, string $message ): void {
-		if ( ! $condition ) { throw new \RuntimeException( $message ); }
-		$GLOBALS['assertions'] = ($GLOBALS['assertions'] ?? 0) + 1;
+		if ( ! $condition ) {
+			throw new \RuntimeException( $message );
+		}
+		$GLOBALS['assertions'] = ( $GLOBALS['assertions'] ?? 0 ) + 1;
 		echo 'PASS: ' . $message . PHP_EOL;
 	}
+	// phpcs:enable
+
 	$source = file_get_contents( dirname( __DIR__ ) . '/wp-content/plugins/famma-core/famma-core.php' );
-	$start = strpos( $source, 'final class Capi {' );
-	$end = strpos( $source, '/**' . PHP_EOL . ' * Simplified merchant dashboard', $start );
+	$start  = strpos( $source, 'final class Capi {' );
+	$end    = strpos( $source, '/**' . PHP_EOL . ' * Simplified merchant dashboard', $start );
 	// Accommodate checkouts using either LF or CRLF.
-	if ( false === $end ) { $end = strpos( $source, "/**\n * Simplified merchant dashboard", $start ); }
-	if ( false === $start || false === $end ) { throw new \RuntimeException( 'Capi source boundaries not found.' ); }
+	if ( false === $end ) {
+		$end = strpos( $source, "/**\n * Simplified merchant dashboard", $start );
+	}
+	if ( false === $start || false === $end ) {
+		throw new \RuntimeException( 'Capi source boundaries not found.' );
+	}
+	// phpcs:ignore Squiz.PHP.Eval.Discouraged -- Runs the real plugin source read from the plugin file, never external input.
 	eval( 'namespace Famma\\Core;' . substr( $source, $start, $end - $start ) );
 	$config_start = strpos( $source, 'final class Config {' );
-	$config_end = strpos( $source, 'final class Order_Statuses', $config_start );
+	$config_end   = strpos( $source, 'final class Order_Statuses', $config_start );
+	// phpcs:ignore Squiz.PHP.Eval.Discouraged -- Runs the real plugin source read from the plugin file, never external input.
 	eval( 'namespace Famma\\Core;' . substr( $source, $config_start, $config_end - $config_start ) );
-	$GLOBALS['options'] = array( 'famma_meta_pixel_id' => '123456789', 'famma_meta_access_token' => 'test-token-not-a-secret', 'famma_meta_test_event_code' => 'TEST_ISOLATED' );
-	$client = \Famma\Core\Capi::instance();
-	$GLOBALS['calls'] = array();
-	$GLOBALS['response'] = array( 'code' => 200, 'body' => '{"events_received":1}' );
-	$order = new WC_Order();
+	$GLOBALS['options']                            = array(
+		'famma_meta_pixel_id'        => '123456789',
+		'famma_meta_access_token'    => 'test-token-not-a-secret',
+		'famma_meta_test_event_code' => 'TEST_ISOLATED',
+	);
+	$client                                        = \Famma\Core\Capi::instance();
+	$GLOBALS['calls']                              = array();
+	$GLOBALS['response']                           = array(
+		'code' => 200,
+		'body' => '{"events_received":1}',
+	);
+	$test_order                                    = new WC_Order();
 	$GLOBALS['options']['famma_meta_access_token'] = '';
-	$client->send_purchase( $order, 'famma_purchase_901' );
-	check( array() === $GLOBALS['calls'] && ! $order->get_meta( '_famma_purchase_sent' ), 'Missing token does not send or consume the event.' );
+	$client->send_purchase( $test_order, 'famma_purchase_901' );
+	check( array() === $GLOBALS['calls'] && ! $test_order->get_meta( '_famma_purchase_sent' ), 'Missing token does not send or consume the event.' );
 	$GLOBALS['options']['famma_meta_access_token'] = 'test-token-not-a-secret';
-	$order->status = 'pending';
-	$client->send_purchase( $order, 'famma_purchase_901' );
+	$test_order->status                            = 'pending';
+	$client->send_purchase( $test_order, 'famma_purchase_901' );
 	check( array() === $GLOBALS['calls'], 'Undelivered orders cannot become Purchase events.' );
-	$order->status = 'delivered';
-	$before = time();
-	$client->send_purchase( $order, 'famma_purchase_901' );
+	$test_order->status = 'delivered';
+	$before             = time();
+	$client->send_purchase( $test_order, 'famma_purchase_901' );
 	$payload = $GLOBALS['calls'][0][1];
 	check( ! isset( $payload['test_event_code'] ), 'Global test settings cannot turn a delivered sale into a test.' );
 	check( $payload['data'][0]['event_time'] >= $before, 'Purchase time reflects delivery even for an old order.' );
 	check( 79.0 === (float) $payload['data'][0]['custom_data']['value'] && 'TND' === $payload['data'][0]['custom_data']['currency'], 'Value and currency match the delivered order.' );
 	check( ! isset( $payload['data'][0]['custom_data']['famma_stage'] ), 'Purchase cannot enter the OrderPlaced conversion rule.' );
 	check( 'https://example.invalid/checkout/' === $payload['data'][0]['event_source_url'], 'No private order access key is sent to Meta.' );
-	check( (bool) $order->get_meta( '_famma_purchase_sent' ), 'Confirmed acceptance marks the event sent.' );
-	$client->send_purchase( $order, 'famma_purchase_901' );
+	check( (bool) $test_order->get_meta( '_famma_purchase_sent' ), 'Confirmed acceptance marks the event sent.' );
+	$client->send_purchase( $test_order, 'famma_purchase_901' );
 	check( 1 === count( $GLOBALS['calls'] ), 'Repeated delivery does not send twice.' );
 	foreach ( array( '{"events_received":0}', '{}', 'invalid-json', '{"events_received":1,"error":{"message":"failure"}}' ) as $body ) {
-		$order = new WC_Order();
-		$GLOBALS['response'] = array( 'code' => 200, 'body' => $body );
-		$client->send_purchase( $order, 'famma_purchase_901' );
-		check( ! $order->get_meta( '_famma_purchase_sent' ), 'An unacknowledged response cannot consume the event: ' . $body );
+		$test_order          = new WC_Order();
+		$GLOBALS['response'] = array(
+			'code' => 200,
+			'body' => $body,
+		);
+		$client->send_purchase( $test_order, 'famma_purchase_901' );
+		check( ! $test_order->get_meta( '_famma_purchase_sent' ), 'An unacknowledged response cannot consume the event: ' . $body );
 	}
-	$order = new WC_Order();
+	$test_order          = new WC_Order();
 	$GLOBALS['response'] = new WP_Error();
-	$client->send_purchase( $order, 'famma_purchase_901' );
-	$first_time = $order->get_meta( '_famma_purchase_event_time' );
-	check( ! $order->get_meta( '_famma_purchase_sent' ), 'A network failure leaves the event replayable.' );
-	$GLOBALS['response'] = array( 'code' => 200, 'body' => '{"events_received":1}' );
-	$client->send_purchase( $order, 'famma_purchase_901' );
-	check( $first_time === $order->get_meta( '_famma_purchase_event_time' ), 'Retry preserves the first delivery timestamp.' );
-	check( (bool) $order->get_meta( '_famma_purchase_sent' ), 'A successful retry records acceptance.' );
+	$client->send_purchase( $test_order, 'famma_purchase_901' );
+	$first_time = $test_order->get_meta( '_famma_purchase_event_time' );
+	check( ! $test_order->get_meta( '_famma_purchase_sent' ), 'A network failure leaves the event replayable.' );
+	$GLOBALS['response'] = array(
+		'code' => 200,
+		'body' => '{"events_received":1}',
+	);
+	$client->send_purchase( $test_order, 'famma_purchase_901' );
+	check( $first_time === $test_order->get_meta( '_famma_purchase_event_time' ), 'Retry preserves the first delivery timestamp.' );
+	check( (bool) $test_order->get_meta( '_famma_purchase_sent' ), 'A successful retry records acceptance.' );
 	check( in_array( 'woocommerce_payment_successful_result', $GLOBALS['registered_filters'], true ), 'OrderPlaced is connected to accepted checkout result, not order creation.' );
-	$GLOBALS['calls'] = array();
-	$GLOBALS['queue_calls'] = array();
-	$GLOBALS['jobs'] = array();
+	$GLOBALS['calls']               = array();
+	$GLOBALS['queue_calls']         = array();
+	$GLOBALS['jobs']                = array();
 	$GLOBALS['orderplaced_enabled'] = false;
-	$order = new WC_Order();
-	$order->status = 'pending-confirm';
-	$GLOBALS['checkout_order'] = $order;
-	$result = array( 'result' => 'success', 'redirect' => 'https://example.invalid/thanks/' );
+	$test_order                     = new WC_Order();
+	$test_order->status             = 'pending-confirm';
+	$GLOBALS['checkout_order']      = $test_order;
+	$result                         = array(
+		'result'   => 'success',
+		'redirect' => 'https://example.invalid/thanks/',
+	);
 	check( $result === $client->order_placed_after_checkout( $result, 901 ) && array() === $GLOBALS['calls'] && array() === $GLOBALS['jobs'], 'Default OFF leaves checkout unchanged and sends no customer data.' );
 	$GLOBALS['orderplaced_enabled'] = true;
-	$failure = array( 'result' => 'failure' );
+	$failure                        = array( 'result' => 'failure' );
 	$client->order_placed_after_checkout( $failure, 901 );
 	check( array() === $GLOBALS['calls'], 'Failed checkout cannot send OrderPlaced.' );
-	foreach ( array( 'checkout-draft', 'draft', 'failed', 'cancelled', 'trash', 'returned', 'refused', 'failed-delivery' ) as $status ) {
-		$order->status = $status;
+	foreach ( array( 'checkout-draft', 'draft', 'failed', 'cancelled', 'trash', 'returned', 'refused', 'failed-delivery' ) as $rejected_status ) {
+		$test_order->status = $rejected_status;
 		$client->order_placed_after_checkout( $result, 901 );
-		check( array() === $GLOBALS['calls'], 'Rejected status cannot send OrderPlaced: ' . $status );
+		check( array() === $GLOBALS['calls'], 'Rejected status cannot send OrderPlaced: ' . $rejected_status );
 	}
-	$order->status = 'pending-confirm';
-	$order->created_via = 'admin';
+	$test_order->status      = 'pending-confirm';
+	$test_order->created_via = 'admin';
 	$client->order_placed_after_checkout( $result, 901 );
 	check( array() === $GLOBALS['calls'], 'Admin-created orders cannot send OrderPlaced.' );
-	$order->created_via = 'checkout';
-	$order->id = 0;
+	$test_order->created_via = 'checkout';
+	$test_order->id          = 0;
 	$client->order_placed_after_checkout( $result, 0 );
 	check( array() === $GLOBALS['calls'], 'Unsaved orders cannot send OrderPlaced.' );
-	$order->id = 901;
+	$test_order->id                                = 901;
 	$GLOBALS['options']['famma_meta_access_token'] = '';
 	$client->order_placed_after_checkout( $result, 901 );
-	check( array() === $GLOBALS['calls'] && ! $order->get_meta( '_famma_orderplaced_sent' ), 'Missing token cannot consume OrderPlaced.' );
-	check( 1 === count( $GLOBALS['jobs'] ) && (bool) $order->get_meta( '_famma_orderplaced_checkout_accepted' ), 'Accepted checkout queues work without a synchronous HTTP call.' );
+	check( array() === $GLOBALS['calls'] && ! $test_order->get_meta( '_famma_orderplaced_sent' ), 'Missing token cannot consume OrderPlaced.' );
+	check( 1 === count( $GLOBALS['jobs'] ) && (bool) $test_order->get_meta( '_famma_orderplaced_checkout_accepted' ), 'Accepted checkout queues work without a synchronous HTTP call.' );
 	$queue_group = getenv( 'FAMMA_TEST_CRON_FALLBACK' ) ? 'wp-cron' : 'famma-capi';
 	check( true === $GLOBALS['queue_calls'][0][3] && $queue_group === $GLOBALS['queue_calls'][0][2], 'Selected scheduler receives a unique task: ' . $queue_group );
 	$client->order_placed_after_checkout( $result, 901 );
@@ -172,136 +279,163 @@ namespace {
 	$placed = $GLOBALS['calls'][0][1]['data'][0];
 	check( 'OrderPlaced' === $placed['event_name'] && 'famma_orderplaced_901' === $placed['event_id'], 'OrderPlaced uses a separate stable event name and identifier.' );
 	check( 'order_placed' === $placed['custom_data']['famma_stage'], 'OrderPlaced carries a distinct public business stage for custom conversion.' );
-	check( $order->get_date_created()->getTimestamp() === $placed['event_time'], 'OrderPlaced carries the creation timestamp.' );
-	check( (bool) $order->get_meta( '_famma_orderplaced_sent' ) && ! $order->get_meta( '_famma_purchase_sent' ), 'OrderPlaced acceptance cannot consume the delivered Purchase.' );
+	check( $test_order->get_date_created()->getTimestamp() === $placed['event_time'], 'OrderPlaced carries the creation timestamp.' );
+	check( (bool) $test_order->get_meta( '_famma_orderplaced_sent' ) && ! $test_order->get_meta( '_famma_purchase_sent' ), 'OrderPlaced acceptance cannot consume the delivered Purchase.' );
 	$client->order_placed_after_checkout( $result, 901 );
 	$redirect = 'https://example.invalid/thanks/';
-	check( $redirect === $client->order_placed_without_payment( $redirect, $order ) && 1 === count( $GLOBALS['calls'] ), 'Repeating successful hooks cannot send OrderPlaced twice or alter redirect.' );
-	$order->status = 'delivered';
-	$client->send_purchase( $order, 'famma_purchase_901' );
+	check( $redirect === $client->order_placed_without_payment( $redirect, $test_order ) && 1 === count( $GLOBALS['calls'] ), 'Repeating successful hooks cannot send OrderPlaced twice or alter redirect.' );
+	$test_order->status = 'delivered';
+	$client->send_purchase( $test_order, 'famma_purchase_901' );
 	check( 2 === count( $GLOBALS['calls'] ) && 'Purchase' === $GLOBALS['calls'][1][1]['data'][0]['event_name'], 'Later delivery sends Purchase independently of OrderPlaced.' );
 	foreach ( array( '{"events_received":0}', '{}', 'invalid-json' ) as $body ) {
-		$order = new WC_Order();
-		$order->status = 'pending-confirm';
-		$order->meta['_famma_orderplaced_checkout_accepted'] = 1;
-		$GLOBALS['response'] = array( 'code' => 200, 'body' => $body );
-		$client->send_order_placed( $order );
-		check( ! $order->get_meta( '_famma_orderplaced_sent' ), 'Ambiguous response cannot consume OrderPlaced: ' . $body );
+		$test_order         = new WC_Order();
+		$test_order->status = 'pending-confirm';
+		$test_order->meta['_famma_orderplaced_checkout_accepted'] = 1;
+		$GLOBALS['response']                                      = array(
+			'code' => 200,
+			'body' => $body,
+		);
+		$client->send_order_placed( $test_order );
+		check( ! $test_order->get_meta( '_famma_orderplaced_sent' ), 'Ambiguous response cannot consume OrderPlaced: ' . $body );
 	}
-	$order = new WC_Order();
-	$order->status = 'pending-confirm';
-	$order->meta['_famma_orderplaced_checkout_accepted'] = 1;
-	$GLOBALS['response'] = new WP_Error();
-	$client->send_order_placed( $order );
-	$placed_time = $order->get_meta( '_famma_orderplaced_event_time' );
-	$GLOBALS['response'] = array( 'code' => 200, 'body' => '{"events_received":1}' );
-	$client->send_order_placed( $order );
-	check( $placed_time === $order->get_meta( '_famma_orderplaced_event_time' ) && (bool) $order->get_meta( '_famma_orderplaced_sent' ), 'Retry preserves OrderPlaced timestamp and consumes it only after confirmation.' );
-	$order = new WC_Order();
-	$order->status = 'pending-confirm';
-	$GLOBALS['checkout_order'] = $order;
+	$test_order         = new WC_Order();
+	$test_order->status = 'pending-confirm';
+	$test_order->meta['_famma_orderplaced_checkout_accepted'] = 1;
+	$GLOBALS['response']                                      = new WP_Error();
+	$client->send_order_placed( $test_order );
+	$placed_time         = $test_order->get_meta( '_famma_orderplaced_event_time' );
+	$GLOBALS['response'] = array(
+		'code' => 200,
+		'body' => '{"events_received":1}',
+	);
+	$client->send_order_placed( $test_order );
+	check( $placed_time === $test_order->get_meta( '_famma_orderplaced_event_time' ) && (bool) $test_order->get_meta( '_famma_orderplaced_sent' ), 'Retry preserves OrderPlaced timestamp and consumes it only after confirmation.' );
+	$test_order                = new WC_Order();
+	$test_order->status        = 'pending-confirm';
+	$GLOBALS['checkout_order'] = $test_order;
 	$client->order_placed_after_checkout( $result, 901 );
-	$count = count( $GLOBALS['calls'] );
+	$count                          = count( $GLOBALS['calls'] );
 	$GLOBALS['orderplaced_enabled'] = false;
 	$client->send_queued_order_placed( 901 );
-	check( $count === count( $GLOBALS['calls'] ), 'Queued worker rechecks the OFF setting before sharing data.' );
+	check( count( $GLOBALS['calls'] ) === $count, 'Queued worker rechecks the OFF setting before sharing data.' );
 	$GLOBALS['orderplaced_enabled'] = true;
-	$order->status = 'cancelled';
+	$test_order->status             = 'cancelled';
 	$client->send_queued_order_placed( 901 );
-	check( $count === count( $GLOBALS['calls'] ), 'Queued worker rejects an order cancelled after checkout.' );
-	$order->status = 'pending-confirm';
-	$order->created_via = 'admin';
+	check( count( $GLOBALS['calls'] ) === $count, 'Queued worker rejects an order cancelled after checkout.' );
+	$test_order->status      = 'pending-confirm';
+	$test_order->created_via = 'admin';
 	$client->send_queued_order_placed( 901 );
-	check( $count === count( $GLOBALS['calls'] ), 'Queued worker rechecks the storefront source.' );
-	$order->created_via = 'checkout';
-	unset( $order->meta['_famma_orderplaced_checkout_accepted'] );
+	check( count( $GLOBALS['calls'] ) === $count, 'Queued worker rechecks the storefront source.' );
+	$test_order->created_via = 'checkout';
+	unset( $test_order->meta['_famma_orderplaced_checkout_accepted'] );
 	$client->send_queued_order_placed( 901 );
-	check( $count === count( $GLOBALS['calls'] ), 'A queued identifier without successful checkout acceptance cannot send.' );
+	check( count( $GLOBALS['calls'] ) === $count, 'A queued identifier without successful checkout acceptance cannot send.' );
 	// Additional scenarios exercise real Config rather than a phone-normalization stub.
 	foreach ( array( '20 000 000', '+216 20 000 000', '00216-20-000-000', '21620000000', '20.000.000' ) as $phone ) {
 		check( '21620000000' === \Famma\Core\Config::international_phone( $phone ), 'Synthetic Tunisian phone representations normalize identically.' );
 	}
 	check( '' === \Famma\Core\Config::international_phone( 'letters only' ), 'Unusable phone characters normalize to empty.' );
-	$order = new WC_Order();
-	$order->email = '  SYNTHETIC@EXAMPLE.INVALID  ';
-	$order->phone = '+216 20 000 000';
-	$order->first_name = '  TEST  ';
-	$order->meta['_famma_fbp'] = 'fb.1.1700000000000.synthetic';
-	$order->meta['_famma_fbc'] = 'fb.1.1700000000000.syntheticclick';
-	$order->meta['_famma_client_ip'] = '192.0.2.10';
-	$order->meta['_famma_client_ua'] = 'SyntheticScenarioAgent';
-	$GLOBALS['response'] = array( 'code' => 201, 'body' => '{"events_received":1}' );
-	$client->send_purchase( $order, 'famma_purchase_901' );
-	$last = $GLOBALS['calls'][array_key_last( $GLOBALS['calls'] )];
+	$test_order                           = new WC_Order();
+	$test_order->email                    = '  SYNTHETIC@EXAMPLE.INVALID  ';
+	$test_order->phone                    = '+216 20 000 000';
+	$test_order->first_name               = '  TEST  ';
+	$test_order->meta['_famma_fbp']       = 'fb.1.1700000000000.synthetic';
+	$test_order->meta['_famma_fbc']       = 'fb.1.1700000000000.syntheticclick';
+	$test_order->meta['_famma_client_ip'] = '192.0.2.10';
+	$test_order->meta['_famma_client_ua'] = 'SyntheticScenarioAgent';
+	$GLOBALS['response']                  = array(
+		'code' => 201,
+		'body' => '{"events_received":1}',
+	);
+	$client->send_purchase( $test_order, 'famma_purchase_901' );
+	$last = $GLOBALS['calls'][ array_key_last( $GLOBALS['calls'] ) ];
 	$data = $last[1]['data'][0]['user_data'];
 	check( hash( 'sha256', 'synthetic@example.invalid' ) === $data['em'], 'Real Config and Capi normalize email case and spaces before hashing.' );
 	check( hash( 'sha256', '21620000000' ) === $data['ph'], 'Tunisian phone is internationalized before hashing.' );
 	check( hash( 'sha256', 'test' ) === $data['fn'], 'ASCII first name is lowercased and trimmed before hashing.' );
-	check( $order->meta['_famma_fbp'] === $data['fbp'] && $order->meta['_famma_fbc'] === $data['fbc'], 'Meta click/browser signals retain their expected raw format.' );
+	check( $test_order->meta['_famma_fbp'] === $data['fbp'] && $test_order->meta['_famma_fbc'] === $data['fbc'], 'Meta click/browser signals retain their expected raw format.' );
 	check( '192.0.2.10' === $data['client_ip_address'] && 'SyntheticScenarioAgent' === $data['client_user_agent'], 'Stored synthetic browser context is reused at delivery.' );
 	check( ! str_contains( $last[0], 'test-token-not-a-secret' ) && isset( $last[1]['access_token'] ), 'Token is confined to the server request body, not its URL.' );
-	check( (bool) $order->get_meta( '_famma_purchase_sent' ), 'HTTP 201 with acknowledgement is a valid acceptance.' );
+	check( (bool) $test_order->get_meta( '_famma_purchase_sent' ), 'HTTP 201 with acknowledgement is a valid acceptance.' );
 	foreach ( array( 400, 401, 429, 500, 503 ) as $code ) {
-		$order = new WC_Order();
-		$GLOBALS['response'] = array( 'code' => $code, 'body' => '{"error":{"message":"Synthetic rejection"}}' );
-		$before = count( $GLOBALS['calls'] );
-		$client->send_purchase( $order, 'famma_purchase_901' );
-		check( ! $order->get_meta( '_famma_purchase_sent' ) && 1 === $order->get_meta( '_famma_capi_attempts' ) && count( $GLOBALS['calls'] ) === $before + 1, 'Rejected HTTP response remains unsent with one recorded attempt: ' . $code );
+		$test_order          = new WC_Order();
+		$GLOBALS['response'] = array(
+			'code' => $code,
+			'body' => '{"error":{"message":"Synthetic rejection"}}',
+		);
+		$before              = count( $GLOBALS['calls'] );
+		$client->send_purchase( $test_order, 'famma_purchase_901' );
+		check( ! $test_order->get_meta( '_famma_purchase_sent' ) && 1 === $test_order->get_meta( '_famma_capi_attempts' ) && count( $GLOBALS['calls'] ) === $before + 1, 'Rejected HTTP response remains unsent with one recorded attempt: ' . $code );
 	}
-	$order = new WC_Order();
-	$order->meta['_famma_capi_attempts'] = 5;
-	$order->meta['_famma_orderplaced_checkout_accepted'] = 1;
+	$test_order                               = new WC_Order();
+	$test_order->meta['_famma_capi_attempts'] = 5;
+	$test_order->meta['_famma_orderplaced_checkout_accepted'] = 1;
 	$before = count( $GLOBALS['calls'] );
-	$client->send_purchase( $order, 'famma_purchase_901' );
-	check( $before === count( $GLOBALS['calls'] ), 'Five Purchase failures stop further attempts.' );
-	$GLOBALS['response'] = array( 'code' => 200, 'body' => '{"events_received":1}' );
-	$client->send_order_placed( $order );
-	check( $before + 1 === count( $GLOBALS['calls'] ), 'Purchase attempt exhaustion does not exhaust OrderPlaced.' );
-	$order = new WC_Order();
-	$order->meta['_famma_orderplaced_checkout_accepted'] = 1;
-	$order->meta['_famma_orderplaced_attempts'] = 5;
+	$client->send_purchase( $test_order, 'famma_purchase_901' );
+	check( count( $GLOBALS['calls'] ) === $before, 'Five Purchase failures stop further attempts.' );
+	$GLOBALS['response'] = array(
+		'code' => 200,
+		'body' => '{"events_received":1}',
+	);
+	$client->send_order_placed( $test_order );
+	check( count( $GLOBALS['calls'] ) === $before + 1, 'Purchase attempt exhaustion does not exhaust OrderPlaced.' );
+	$test_order = new WC_Order();
+	$test_order->meta['_famma_orderplaced_checkout_accepted'] = 1;
+	$test_order->meta['_famma_orderplaced_attempts']          = 5;
 	$before = count( $GLOBALS['calls'] );
-	$client->send_order_placed( $order );
-	check( $before === count( $GLOBALS['calls'] ), 'Five OrderPlaced failures stop further attempts.' );
-	$client->send_purchase( $order, 'famma_purchase_901' );
-	check( $before + 1 === count( $GLOBALS['calls'] ), 'OrderPlaced attempt exhaustion does not exhaust Purchase.' );
-	$order = new WC_Order();
+	$client->send_order_placed( $test_order );
+	check( count( $GLOBALS['calls'] ) === $before, 'Five OrderPlaced failures stop further attempts.' );
+	$client->send_purchase( $test_order, 'famma_purchase_901' );
+	check( count( $GLOBALS['calls'] ) === $before + 1, 'OrderPlaced attempt exhaustion does not exhaust Purchase.' );
+	$test_order                                = new WC_Order();
 	$GLOBALS['options']['famma_meta_pixel_id'] = '';
-	$before = count( $GLOBALS['calls'] );
-	$client->send_purchase( $order, 'famma_purchase_901' );
-	check( $before === count( $GLOBALS['calls'] ) && ! $order->get_meta( '_famma_purchase_sent' ), 'Missing Pixel ID prevents requests and leaves event unconsumed.' );
+	$before                                    = count( $GLOBALS['calls'] );
+	$client->send_purchase( $test_order, 'famma_purchase_901' );
+	check( count( $GLOBALS['calls'] ) === $before && ! $test_order->get_meta( '_famma_purchase_sent' ), 'Missing Pixel ID prevents requests and leaves event unconsumed.' );
 	$GLOBALS['options']['famma_meta_pixel_id'] = '123456789';
-	$order = new WC_Order();
-	$order->email = $order->phone = $order->first_name = $order->last_name = $order->city = $order->state = $order->country = '';
-	$GLOBALS['response'] = array( 'code' => 400, 'body' => '{"error":{"message":"Synthetic missing identifiers"}}' );
-	$client->send_purchase( $order, 'famma_purchase_901' );
-	$last = $GLOBALS['calls'][array_key_last( $GLOBALS['calls'] )];
-	check( array() === $last[1]['data'][0]['user_data'] && ! $order->get_meta( '_famma_purchase_sent' ), 'Absent matching identifiers are omitted and rejection cannot count as success.' );
+	$test_order                                = new WC_Order();
+	$test_order->email                         = '';
+	$test_order->phone                         = '';
+	$test_order->first_name                    = '';
+	$test_order->last_name                     = '';
+	$test_order->city                          = '';
+	$test_order->state                         = '';
+	$test_order->country                       = '';
+	$GLOBALS['response']                       = array(
+		'code' => 400,
+		'body' => '{"error":{"message":"Synthetic missing identifiers"}}',
+	);
+	$client->send_purchase( $test_order, 'famma_purchase_901' );
+	$last = $GLOBALS['calls'][ array_key_last( $GLOBALS['calls'] ) ];
+	check( array() === $last[1]['data'][0]['user_data'] && ! $test_order->get_meta( '_famma_purchase_sent' ), 'Absent matching identifiers are omitted and rejection cannot count as success.' );
 	$GLOBALS['checkout_order'] = false;
-	$before = count( $GLOBALS['calls'] );
+	$before                    = count( $GLOBALS['calls'] );
 	$client->send_queued_order_placed( 901 );
-	check( $before === count( $GLOBALS['calls'] ), 'Deleted order is safely ignored by a queued worker.' );
+	check( count( $GLOBALS['calls'] ) === $before, 'Deleted order is safely ignored by a queued worker.' );
 	// Findings reproduce error-handling limitations, without changing production sources.
-	$order = new WC_Order();
-	$order->status = 'pending-confirm';
-	$GLOBALS['checkout_order'] = $order;
-	$GLOBALS['jobs'] = array();
-	$GLOBALS['queue_failure'] = true;
+	$test_order                = new WC_Order();
+	$test_order->status        = 'pending-confirm';
+	$GLOBALS['checkout_order'] = $test_order;
+	$GLOBALS['jobs']           = array();
+	$GLOBALS['queue_failure']  = true;
 	$client->order_placed_after_checkout( $result, 901 );
-	check( array() === $GLOBALS['jobs'] && (bool) $order->get_meta( '_famma_orderplaced_checkout_accepted' ) && array() === $order->notes, 'FINDING: failed scheduling is not surfaced or recovered.' );
-	$GLOBALS['queue_failure'] = false;
-	$order = new WC_Order();
+	check( array() === $GLOBALS['jobs'] && (bool) $test_order->get_meta( '_famma_orderplaced_checkout_accepted' ) && array() === $test_order->notes, 'FINDING: failed scheduling is not surfaced or recovered.' );
+	$GLOBALS['queue_failure']   = false;
+	$test_order                 = new WC_Order();
 	$GLOBALS['network_message'] = 'Synthetic error containing test-token-not-a-secret';
-	$GLOBALS['response'] = new WP_Error();
-	$client->send_purchase( $order, 'famma_purchase_901' );
-	check( str_contains( $order->notes[0], 'test-token-not-a-secret' ), 'FINDING: untrusted network error text is stored without secret redaction.' );
+	$GLOBALS['response']        = new WP_Error();
+	$client->send_purchase( $test_order, 'famma_purchase_901' );
+	check( str_contains( $test_order->notes[0], 'test-token-not-a-secret' ), 'FINDING: untrusted network error text is stored without secret redaction.' );
 	unset( $GLOBALS['network_message'] );
-	$order = new WC_Order();
-	$order->first_name = 'ÉRIC';
-	$order->city = 'Béja';
-	$GLOBALS['response'] = array( 'code' => 200, 'body' => '{"events_received":1}' );
-	$client->send_purchase( $order, 'famma_purchase_901' );
-	$last = $GLOBALS['calls'][array_key_last( $GLOBALS['calls'] )];
+	$test_order             = new WC_Order();
+	$test_order->first_name = 'ÉRIC';
+	$test_order->city       = 'Béja';
+	$GLOBALS['response']    = array(
+		'code' => 200,
+		'body' => '{"events_received":1}',
+	);
+	$client->send_purchase( $test_order, 'famma_purchase_901' );
+	$last = $GLOBALS['calls'][ array_key_last( $GLOBALS['calls'] ) ];
 	check( hash( 'sha256', 'Éric' ) === $last[1]['data'][0]['user_data']['fn'] && hash( 'sha256', 'bja' ) === $last[1]['data'][0]['user_data']['ct'], 'FINDING: non-ASCII name/city normalization loses accent information.' );
 	echo 'ASSERTIONS=' . $GLOBALS['assertions'] . PHP_EOL;
 	echo 'No network requests or database writes were performed.' . PHP_EOL;
