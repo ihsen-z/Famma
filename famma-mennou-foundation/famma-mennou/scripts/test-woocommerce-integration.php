@@ -189,6 +189,7 @@ final class Famma_Woo_Integration {
 			self::check( 'pending-stock', 12 === (int) wc_get_product( $p->get_id() )->get_stock_quantity(), 'Unconfirmed order has not yet reduced physical stock count.' );
 			$order->update_status( 'confirmed' );
 			self::check( 'confirmed-stock', 10 === (int) wc_get_product( $p->get_id() )->get_stock_quantity() && 11 === (int) wc_get_product( $q->get_id() )->get_stock_quantity(), 'Confirmation reduces both real Woo product quantities.' );
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Replay the actual WooCommerce status action.
 			do_action( 'woocommerce_order_status_confirmed', $order->get_id() );
 			self::check( 'stock-idempotency', 10 === (int) wc_get_product( $p->get_id() )->get_stock_quantity(), 'Repeated reserve hook does not reduce twice.' );
 			$order->update_status( 'shipped' );
@@ -196,6 +197,7 @@ final class Famma_Woo_Integration {
 			$order->update_status( 'delivered' );
 			$order = wc_get_order( $order->get_id() );
 			self::check( 'delivered-paid', $order->has_status( 'delivered' ) && $order->is_paid() && null !== $order->get_date_paid() && 'yes' === $order->get_meta( '_famma_cod_paid' ), 'Delivered collects COD while retaining custom status.' );
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Replay the actual WooCommerce status action.
 			do_action( 'woocommerce_order_status_delivered', $order->get_id() );
 			self::check( 'delivery-stock-once', 10 === (int) wc_get_product( $p->get_id() )->get_stock_quantity(), 'Repeated delivered hook cannot double-decrement stock.' );
 			$order->update_status( 'returned' );
@@ -213,13 +215,16 @@ final class Famma_Woo_Integration {
 				$before            = count( self::$orders );
 				$result            = self::checkout();
 				$creation_scenario = 'new-' . $status;
-				self::check( $creation_scenario, 'success' === ( $result['result'] ?? '' ) && 1 === ( count( self::$orders ) - $before ), 'Real checkout creates an independent outcome fixture.' );
+				$creation_passed   = 'success' === ( $result['result'] ?? '' ) && 1 === ( count( self::$orders ) - $before );
+				self::check( $creation_scenario, $creation_passed, 'Real checkout creates an independent outcome fixture.' );
 				$outcome = wc_get_order( self::$orders[ $before ] );
 				$outcome->update_status( 'confirmed' );
 				$outcome->update_status( $status );
+				// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Replay the actual WooCommerce status actions.
 				do_action( 'woocommerce_order_status_' . $status, $outcome->get_id() );
 				$release_scenario = 'release-' . $status;
-				self::check( $release_scenario, 12 === (int) wc_get_product( $p->get_id() )->get_stock_quantity() && ! wc_get_order( $outcome->get_id() )->is_paid(), 'Outcome restores stock once and remains unpaid.' );
+				$release_passed   = 12 === (int) wc_get_product( $p->get_id() )->get_stock_quantity() && ! wc_get_order( $outcome->get_id() )->is_paid();
+				self::check( $release_scenario, $release_passed, 'Outcome restores stock once and remains unpaid.' );
 			}
 
 			// Endpoint replay is observed rather than silently assuming uniqueness.
