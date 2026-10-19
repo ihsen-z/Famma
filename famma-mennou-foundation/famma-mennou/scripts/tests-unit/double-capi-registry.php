@@ -108,6 +108,7 @@ final class Capi_Delivery_Registry {
 		return true;
 	}
 	public function for_orders( array $order_ids ): array {
-		return array();
+		// Fixture `$GLOBALS['famma_test_registry_orders']`: order_id => event_name => record, as the real query returns.
+		return array_intersect_key( $GLOBALS['famma_test_registry_orders'] ?? array(), array_flip( $order_ids ) );
 	}
 }

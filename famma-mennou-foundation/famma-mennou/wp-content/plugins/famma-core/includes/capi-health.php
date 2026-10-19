@@ -11,9 +11,12 @@
  *
  * Il est recalculé sur `admin_init` (au plus toutes les 5 minutes, sans
  * cron, pour qu'une file arrêtée se voie quand même), par le battement de
- * cœur quotidien et après chaque sonde. Le passage au rouge envoie un
- * e-mail à l'administrateur, au plus un par 24 heures. Le mu-plugin
- * `famma-measurement-watchdog.php` lit cet état sans dépendre de famma-core.
+ * cœur quotidien et après chaque sonde. Toute raison rouge pas encore
+ * annoncée (passage au rouge, ou nouvelle panne alors que l'état l'était
+ * déjà) envoie un e-mail à l'administrateur, au plus un par 24 heures ; une
+ * raison retenue par cette limite est annoncée au calcul suivant qui la
+ * permet. Le mu-plugin `famma-measurement-watchdog.php` lit cet état sans
+ * dépendre de famma-core.
  *
  * @package Famma\Core
  */
@@ -23,7 +26,7 @@ namespace Famma\Core;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Règles, état enregistré et alerte par e-mail.
+ * Règles, état enregistré ; l'e-mail est confié à `Capi_Health_Alert`.
  */
 final class Capi_Health {
 
@@ -41,11 +44,6 @@ final class Capi_Health {
 	 * Option des signaux relevés par les envois et la sonde.
 	 */
 	private const SIGNALS = 'famma_capi_health_signals';
-
-	/**
-	 * Option de la date du dernier e-mail d'alerte.
-	 */
-	private const MAIL = 'famma_capi_health_mail';
 
 	/**
 	 * Transitoire qui limite le recalcul sur admin_init.
@@ -210,33 +208,7 @@ final class Capi_Health {
 			'verifie_le' => $now,
 		);
 		update_option( self::OPTION, $state, true );
-		if ( 'rouge' === $status && 'rouge' !== $previous['statut'] ) {
-			self::mail( $state, $now );
-		}
+		Capi_Health_Alert::notify( $state, $previous, $now );
 		return $state;
-	}
-
-	/**
-	 * E-mail à l'administrateur au passage au rouge, au plus un par 24 heures.
-	 *
-	 * @param array<string, mixed> $state État calculé.
-	 * @param int                  $now   Horloge.
-	 * @return bool Whether an e-mail was sent.
-	 */
-	private static function mail( array $state, int $now ): bool {
-		$last = (int) get_option( self::MAIL, 0 );
-		if ( $last > 0 && $now - $last < self::MAIL_INTERVAL ) {
-			return false;
-		}
-		update_option( self::MAIL, $now, false );
-		$lines = array( __( 'La mesure Meta de la boutique est passée au rouge :', 'famma-core' ), '' );
-		foreach ( $state['raisons'] as $reason ) {
-			$lines[] = '- ' . Capi_Health_Rules::label( $reason );
-		}
-		$lines[] = '';
-		/* translators: %s: URL of the FAMMA → Mesure screen. */
-		$lines[] = sprintf( __( 'Détails et actions : %s', 'famma-core' ), admin_url( 'admin.php?page=famma-tracking' ) );
-
-		return (bool) wp_mail( (string) get_option( 'admin_email' ), __( 'FAMMA : mesure Meta en alerte', 'famma-core' ), implode( "\n", $lines ) );
 	}
 }

@@ -5,12 +5,13 @@
  * Rouge : jeton illisible, jeton ou droits refusés par Meta, registre
  * d'envoi indisponible, battement de cœur de plus de 36 h, tâche
  * `famma-capi` en retard de plus de 2 h, commande livrée (ou terminée) sans
- * Purchase depuis plus de 24 h, version critique (R1), jeton refusé par la
- * sonde (190).
+ * Purchase depuis plus de 24 h et encore renvoyable, version critique (R1),
+ * jeton refusé par la sonde (190).
  * Orange : non configuré, envoi bloqué par l'environnement (D4), version
  * servie différente de la demandée, profil « minimal » actif, fbc refusés
  * localement sur 7 jours, mode test sans code valide, refus de contrat,
- * sonde indisponible.
+ * sonde indisponible, Purchase manquant qu'aucun renvoi ne peut plus
+ * rattraper (`Capi_Purchase_Gaps`).
  *
  * @package Famma\Core
  */
@@ -61,9 +62,15 @@ final class Capi_Health_Rules {
 		if ( self::late_actions( $now ) ) {
 			$reasons[] = self::reason( 'pending_actions', 'rouge' );
 		}
-		$missing = $configured && $cfg->meta_sending_allowed() ? self::missing_purchases( $now ) : 0;
-		if ( $missing > 0 ) {
-			$reasons[] = self::reason( 'purchase_missing', 'rouge', (string) $missing );
+		$gaps = $configured && $cfg->meta_sending_allowed() ? Capi_Purchase_Gaps::count( $now ) : array(
+			'missing' => 0,
+			'lost'    => 0,
+		);
+		if ( $gaps['missing'] > 0 ) {
+			$reasons[] = self::reason( 'purchase_missing', 'rouge', (string) $gaps['missing'] );
+		}
+		if ( $gaps['lost'] > 0 ) {
+			$reasons[] = self::reason( 'purchase_lost', 'orange', (string) $gaps['lost'] );
 		}
 		$version = Capi_Graph_Version::status( $cfg->meta_graph_version(), $now );
 		if ( 'critical' === $version['level'] ) {
@@ -143,42 +150,14 @@ final class Capi_Health_Rules {
 	}
 
 	/**
-	 * Commandes livrées (ou terminées, D5) depuis plus de 24 h sans Purchase accepté.
-	 *
-	 * Seules comptent les commandes dont le Purchase est attendu selon la règle
-	 * du circuit de commande (`Order_Statuses::purchase_ineligibility()`), que
-	 * l'émetteur applique aussi : une commande « Terminée » sans encaissement
-	 * d'avant la 0.3.2 n'allume pas un rouge sans remède ; le rapprochement la
-	 * montre parmi les inéligibles.
-	 * Commandes de test (`_famma_test_order`) exclues ; 14 derniers jours.
+	 * Commandes livrées (ou terminées, D5) depuis plus de 24 h sans Purchase
+	 * accepté et encore renvoyables (règles : `Capi_Purchase_Gaps::count()`).
 	 *
 	 * @param int $now Horloge.
 	 * @return int
 	 */
 	public static function missing_purchases( int $now ): int {
-		if ( ! function_exists( 'wc_get_orders' ) ) {
-			return 0;
-		}
-		$orders  = wc_get_orders(
-			array(
-				'type'          => 'shop_order',
-				'status'        => array( 'wc-delivered', 'wc-completed' ),
-				'date_modified' => '>' . ( $now - Capi_Health::WINDOW ),
-				'limit'         => 100,
-			)
-		);
-		$missing = 0;
-		foreach ( is_array( $orders ) ? $orders : array() as $order ) {
-			if ( ! $order instanceof \WC_Order || $order->get_meta( '_famma_purchase_sent' ) || $order->get_meta( '_famma_test_order' ) ) {
-				continue;
-			}
-			if ( '' !== Order_Statuses::purchase_ineligibility( $order ) ) {
-				continue;
-			}
-			$since    = $order->get_date_paid() ? $order->get_date_paid()->getTimestamp() : ( $order->get_date_modified() ? $order->get_date_modified()->getTimestamp() : $now );
-			$missing += $now - $since > Capi_Health::PURCHASE_GRACE ? 1 : 0;
-		}
-		return $missing;
+		return Capi_Purchase_Gaps::count( $now )['missing'];
 	}
 
 	/**
@@ -233,7 +212,9 @@ final class Capi_Health_Rules {
 			'heartbeat'         => sprintf( __( 'Les tâches planifiées ne tournent plus depuis %s h : files et relances arrêtées.', 'famma-core' ), $detail ),
 			'pending_actions'   => __( 'Une tâche CAPI attend depuis plus de 2 heures (Action Scheduler).', 'famma-core' ),
 			/* translators: %s: number of orders. */
-			'purchase_missing'  => sprintf( __( '%s commande(s) livrée(s) depuis plus de 24 h sans Purchase accepté par Meta.', 'famma-core' ), $detail ),
+			'purchase_missing'  => sprintf( __( '%s commande(s) livrée(s) depuis plus de 24 h sans Purchase accepté par Meta : « Renvoyer » dans le rapprochement.', 'famma-core' ), $detail ),
+			/* translators: %s: number of orders. */
+			'purchase_lost'     => sprintf( __( '%s commande(s) livrée(s) sans Purchase accepté, que l’on ne peut plus renvoyer (délai dépassé) : voir le rapprochement, puis « Acquitter l’alerte ».', 'famma-core' ), $detail ),
 			/* translators: %s: Graph API version. */
 			'version_critical'  => sprintf( __( 'Version de l’API Meta %s en fin de vie : changez-la dans FAMMA → Mesure.', 'famma-core' ), $detail ),
 			/* translators: %s: Graph API version served by Meta. */

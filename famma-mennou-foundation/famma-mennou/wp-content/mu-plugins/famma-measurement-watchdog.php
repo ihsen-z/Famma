@@ -15,11 +15,12 @@
  * Pixel et du jeton, et l'option `famma_capi_health` écrite par famma-core
  * (`statut` vert / orange / rouge, `verifie_le`).
  *
- * Un seul e-mail par alerte (R7, V6) : le passage au rouge est déjà
- * notifié par famma-core (`Capi_Health`, au plus un par 24 h). Le chien de
- * garde l'affiche en avis, mais n'écrit que pour ce que famma-core ne peut
- * pas signaler lui-même : famma-core inactif, Pixel ou jeton vide, état
- * périmé.
+ * Un seul e-mail par alerte (R7, V6) : chaque raison rouge, au passage au
+ * rouge comme quand une nouvelle panne s'ajoute à un rouge déjà allumé, est
+ * annoncée par famma-core (`Capi_Health_Alert`, au plus un par 24 h). Le
+ * chien de garde l'affiche en avis, mais n'écrit que pour ce que famma-core
+ * ne peut pas signaler lui-même : famma-core inactif, Pixel ou jeton vide,
+ * état périmé.
  *
  * Retrait : supprimer ce fichier.
  *
@@ -41,7 +42,7 @@ const STALE = 172800;
 const MAIL_INTERVAL = 86400;
 
 /**
- * Problème déjà notifié par e-mail par famma-core (passage au rouge).
+ * Problème déjà notifié par e-mail par famma-core (chaque raison rouge).
  */
 const NOTIFIED_BY_CORE = 'rouge';
 

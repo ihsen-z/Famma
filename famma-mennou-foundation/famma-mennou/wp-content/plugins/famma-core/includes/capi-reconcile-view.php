@@ -28,6 +28,7 @@ final class Capi_Reconcile_View {
 		?>
 		<h2 id="famma-reconcile"><?php esc_html_e( 'Rapprochement des 14 derniers jours', 'famma-core' ); ?></h2>
 		<?php self::resend_result(); ?>
+		<?php Capi_Purchase_Gaps::result(); ?>
 		<p><?php esc_html_e( 'Chaque commande doit avoir un OrderPlaced accepté par Meta, et chaque commande livrée un Purchase. « Renvoyer » rejoue le même identifiant d’événement : Meta le dédoublonne.', 'famma-core' ); ?></p>
 		<ul>
 			<li>
@@ -87,7 +88,8 @@ final class Capi_Reconcile_View {
 	}
 
 	/**
-	 * Une cellule d'événement, avec le bouton « Renvoyer » quand il est permis.
+	 * Une cellule d'événement, avec le bouton « Renvoyer » quand il est permis
+	 * et, pour un Purchase attendu non accepté, « Acquitter l'alerte ».
 	 *
 	 * @param \WC_Order            $order Commande.
 	 * @param string               $event OrderPlaced ou Purchase.
@@ -107,6 +109,9 @@ final class Capi_Reconcile_View {
 			return;
 		}
 		echo esc_html( $states[ $cell['state'] ] ?? (string) $cell['state'] );
+		if ( 'Purchase' === $event && 'accepted' !== $cell['state'] ) {
+			Capi_Purchase_Gaps::render_ack( $order );
+		}
 		if ( ! $cell['resend'] ) {
 			return;
 		}

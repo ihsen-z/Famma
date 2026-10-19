@@ -34,6 +34,14 @@ défauts prouvés par les tests des lots 0 à 4 (D1 à D7).
   vert / orange / rouge (Mesure, commandes, tableau de bord), e-mail au rouge
   au plus une fois par 24 h, écran de rapprochement sur 14 jours avec renvoi
   borné ; mu-plugin `famma-measurement-watchdog.php` indépendant de famma-core.
+- Alerte jamais aveuglée par un rouge ancien (relecture du lot 5, R-CACHE-2) :
+  e-mail pour toute raison rouge pas encore annoncée, y compris une nouvelle
+  panne (jeton révoqué) sur un état déjà rouge, toujours au plus un par 24 h
+  (`Capi_Health_Alert`, option `famma_capi_health_mail_codes`) ; Purchase
+  manquant que plus aucun renvoi ne peut rattraper (mêmes bornes que
+  « Renvoyer ») classé orange `purchase_lost` au lieu de rouge pendant
+  14 jours ; « Acquitter l'alerte » par commande dans le rapprochement (méta
+  `_famma_purchase_ack`, nonce, `manage_woocommerce`, note de commande).
 
 ### Retour arrière vers la 0.3.1 : le jeton CAPI d'abord
 

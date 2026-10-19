@@ -148,7 +148,7 @@ final class Capi_Reconcile {
 			'expected' => '' === $reason,
 			'reason'   => $reason,
 			'state'    => $state,
-			'resend'   => '' === $reason && self::resend_allowed( $state, $record, $this->event_time( $order, $event, $record, $now ), $now ),
+			'resend'   => '' === $reason && self::resend_allowed( $state, $record, self::event_time( $order, $event, $record, $now ), $now ),
 		);
 	}
 
@@ -177,7 +177,8 @@ final class Capi_Reconcile {
 	}
 
 	/**
-	 * Horodatage de l'événement pour les bornes de renvoi.
+	 * Horodatage de l'événement pour les bornes de renvoi (partagé avec
+	 * `Capi_Purchase_Gaps`, qui applique les mêmes bornes à l'état de santé).
 	 *
 	 * @param \WC_Order            $order  Commande.
 	 * @param string               $event  OrderPlaced ou Purchase.
@@ -185,7 +186,7 @@ final class Capi_Reconcile {
 	 * @param int                  $now    Horloge.
 	 * @return int
 	 */
-	private function event_time( \WC_Order $order, string $event, array $record, int $now ): int {
+	public static function event_time( \WC_Order $order, string $event, array $record, int $now ): int {
 		if ( isset( $record['event_time'] ) ) {
 			return (int) $record['event_time'];
 		}
