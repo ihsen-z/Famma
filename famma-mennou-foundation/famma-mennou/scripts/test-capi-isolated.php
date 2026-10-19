@@ -33,6 +33,67 @@ namespace Famma\Core {
 			return '216' . $phone;
 		}
 	}
+
+	/**
+	 * Since 0.2.4 Capi delegates to four collaborators (includes/capi-*.php).
+	 * The doubles below keep their public signatures. The registry grants
+	 * ownership the way an empty table does (attempt = recorded attempts + 1,
+	 * blocked beyond the maximum); it does not persist uncertain outcomes.
+	 */
+	final class Capi_Delivery_Registry {
+		private static ?self $i = null;
+		public static function instance(): self {
+			self::$i ??= new self();
+			return self::$i;
+		}
+		public function acquire( string $pixel, string $name, string $id, int $order_id, int $time, int $maximum, int $legacy = 0 ): array {
+			$attempt = $legacy + 1;
+			if ( $time <= 0 || $attempt > $maximum ) {
+				return array( 'state' => 'blocked' );
+			}
+			return array(
+				'key'        => hash( 'sha256', $pixel . '|' . $name . '|' . $id ),
+				'state'      => 'sending',
+				'owner'      => 'isolated-owner',
+				'event_time' => $time,
+				'attempt'    => $attempt,
+				'owned'      => true,
+			);
+		}
+		public function finish( array $claim, string $state, int $http, int $received ): bool {
+			$GLOBALS['registry_finishes'][] = array( $state, $http, $received );
+			return ! empty( $claim['owned'] ) && in_array( $state, array( 'accepted', 'rejected', 'uncertain' ), true );
+		}
+	}
+	final class Capi_Signals {
+		public static function clean_cookie( string $raw ): string {
+			return trim( $raw );
+		}
+		public static function clean_ip( string $raw ): string {
+			$ip = trim( $raw );
+			return false !== filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
+		}
+		public static function test_event_code(): string {
+			// Test mode is off by default, whatever the configured code.
+			return '';
+		}
+	}
+	final class Capi_Log {
+		public static function write( array $fields, string $secret = '' ): void {
+			$GLOBALS['capi_log'][] = $fields;
+		}
+	}
+	final class Capi_Product_Data {
+		public static function for_order( \WC_Order $order ): array {
+			return array(
+				'contents'      => array(),
+				'content_ids'   => array(),
+				'content_name'  => '',
+				'num_items'     => 0,
+				'famma_product' => '',
+			);
+		}
+	}
 }
 
 namespace {
@@ -43,12 +104,17 @@ namespace {
 		public string $status      = 'delivered';
 		public string $created_via = 'checkout';
 		public int $id             = 901;
+		public function __construct() {
+			// The most recent order is the one WooCommerce stores under its identifier.
+			$GLOBALS['latest_order'] = $this;
+		}
 		public function get_meta( string $key ) {
 			return $this->meta[ $key ] ?? '';
 		}
 		public function update_meta_data( string $key, $value ): void {
 			$this->meta[ $key ] = $value;
 		}
+		public function read_meta_data( bool $force_read = false ): void {}
 		public function save(): void {}
 		public function has_status( $status ): bool {
 			return in_array( $this->status, (array) $status, true );
@@ -112,7 +178,15 @@ namespace {
 		return $GLOBALS['orderplaced_enabled'] ?? $default_value;
 	}
 	function wc_get_order( int $id ) {
-		return $GLOBALS['checkout_order'] ?? false;
+		// Capi re-reads the order it dispatches: return the stored order unless the test deleted it.
+		if ( array_key_exists( 'checkout_order', $GLOBALS ) && false === $GLOBALS['checkout_order'] ) {
+			return false;
+		}
+		$order = $GLOBALS['latest_order'] ?? false;
+		return $order instanceof WC_Order && $order->get_id() === $id ? $order : false;
+	}
+	function do_action( string $hook, ...$args ): void {
+		$GLOBALS['actions'][] = $hook;
 	}
 	if ( ! getenv( 'FAMMA_TEST_CRON_FALLBACK' ) ) {
 		function as_enqueue_async_action( string $hook, array $args, string $group, bool $unique ): int {
