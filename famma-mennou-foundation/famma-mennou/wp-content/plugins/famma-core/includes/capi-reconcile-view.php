@@ -153,6 +153,7 @@ final class Capi_Reconcile_View {
 			'status'        => __( 'commande annulée, échouée ou refusée', 'famma-core' ),
 			'not_accepted'  => __( 'checkout non accepté ou OrderPlaced coupé à ce moment', 'famma-core' ),
 			'not_delivered' => __( 'pas encore livrée', 'famma-core' ),
+			'not_collected' => __( '« Terminée » sans encaissement à la livraison (avant la 0.3.2) : repassez-la en « Livrée » pour l’encaisser et envoyer le Purchase', 'famma-core' ),
 		);
 		return $labels[ $reason ] ?? $reason;
 	}

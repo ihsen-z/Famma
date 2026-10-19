@@ -18,6 +18,9 @@ foreach ( array( 'FAMMA_META_PIXEL_ID', 'FAMMA_META_ACCESS_TOKEN', 'FAMMA_META_T
 if ( '' !== get_option( 'famma_meta_access_token', '' ) || ! class_exists( '\Famma\Core\Capi_Delivery_Registry' ) ) {
 	throw new RuntimeException( 'Credential-free clone with the registry required.' );
 }
+// Lot 5 (D4): outside production famma-core sends nothing to Meta. This disposable clone
+// already intercepts every outgoing request, so the suite lifts the guard for its own process.
+add_filter( 'famma_meta_sending_allowed', '__return_true' );
 
 /** Owns actual WooCommerce fixtures and process-local transport interception. */
 final class Famma_Capi_Registre_Test {
@@ -477,8 +480,11 @@ final class Famma_Capi_Registre_Test {
 		if ( 'timeout' === self::$response ) {
 			return new WP_Error( 'http_request_failed', 'cURL error 28: synthetic lost response.' );
 		}
-		$code    = 'rejected' === self::$response ? 429 : ( 'server-error' === self::$response ? 503 : 200 );
-		$payload = 200 === $code ? ( 'malformed-success' === self::$response ? 'not-json' : '{"events_received":1}' ) : '{"error":{"code":4,"message":"Synthetic local rejection"}}';
+		// Lot 5 (A2): HTTP 429 and Meta code 4 are a rate limit, hence transient (uncertain). An
+		// explicit rejection is a contract refusal: HTTP 400 with Meta code 100 (invalid parameter).
+		$code    = 'rejected' === self::$response ? 400 : ( 'server-error' === self::$response ? 503 : 200 );
+		$error   = 400 === $code ? '{"error":{"code":100,"message":"Synthetic local rejection"}}' : '{"error":{"code":4,"message":"Synthetic local rejection"}}';
+		$payload = 200 === $code ? ( 'malformed-success' === self::$response ? 'not-json' : '{"events_received":1}' ) : $error;
 		return array(
 			'response' => array( 'code' => $code ),
 			'body'     => $payload,
@@ -544,6 +550,15 @@ final class Famma_Capi_Registre_Test {
 					array( '%d' )
 				);
 				as_unschedule_all_actions( 'famma_capi_orderplaced_send', array( 'order_id' => $id ), 'famma-capi' );
+				// Lot 5 (D1): a transient failure also plans a bounded famma_capi_retry.
+				as_unschedule_all_actions(
+					'famma_capi_retry',
+					array(
+						'order_id'   => $id,
+						'event_name' => self::$context['event'],
+					),
+					'famma-capi'
+				);
 				as_unschedule_all_actions( \Famma\Core\Order_Emails::ACTION, array( $id ), \Famma\Core\Order_Emails::GROUP );
 				$order->delete( true );
 			}

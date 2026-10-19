@@ -128,6 +128,16 @@ namespace Famma\Core {
 		public static function is_cod_order( \WC_Order $order ): bool {
 			return true;
 		}
+		public static function purchase_ineligibility( \WC_Order $order ): string {
+			// Same rule as the real Order_Statuses::purchase_ineligibility() (tested in tests-unit).
+			if ( $order->has_status( 'delivered' ) ) {
+				return '';
+			}
+			if ( $order->has_status( 'completed' ) ) {
+				return 'yes' === $order->get_meta( '_famma_cod_paid' ) ? '' : 'not_collected';
+			}
+			return 'not_delivered';
+		}
 	}
 	final class Capi_Product_Data {
 		public static function for_order( \WC_Order $order ): array {

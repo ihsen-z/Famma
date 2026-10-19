@@ -69,7 +69,23 @@ foreach ( $cases as $case ) {
 	l5_check( $case[2] === $result['class'] && $case[3] === $result['reason'], 'V2: ' . $case[0] . ' → ' . $case[2] );
 }
 $absent = Capi_Transport::classify( $cases[14][1], 'v26.0' );
-l5_check( 'inconnue' === $absent['version_served'] && false === $absent['version_mismatch'], 'V2: header absent → version « inconnue », no alert.' );
+l5_check( 'unknown' === $absent['version_served'] && Capi_Transport::UNKNOWN_VERSION === $absent['version_served'] && false === $absent['version_mismatch'], 'V2: header absent → technical value « unknown », no alert.' );
+// §7: the visible word is translated at display time, never stored as a hard-coded French string.
+l5_check( 'inconnue' === Capi_Transport::served_label( 'unknown' ) && 'inconnue' === Capi_Transport::served_label( '' ) && 'inconnue' === Capi_Transport::served_label( 'inconnue' ) && 'v27.0' === Capi_Transport::served_label( 'v27.0' ), 'V2: « inconnue » is shown through __() (unknown, empty or legacy value); a real version is shown as is.' );
+$transport_source = (string) file_get_contents( ABSPATH . 'wp-content/plugins/famma-core/includes/capi-transport.php' );
+l5_check( str_contains( $transport_source, "__( 'inconnue', 'famma-core' )" ) && ! str_contains( $transport_source, "UNKNOWN_VERSION = 'inconnue'" ), 'V2: the transport keeps a neutral technical value; the label goes through the famma-core text domain.' );
+l5_check(
+	str_contains(
+		\Famma\Core\Capi_Health_Rules::label(
+			array(
+				'code'   => 'version_served',
+				'detail' => 'unknown',
+			)
+		),
+		'(inconnue)'
+	),
+	'V2: the version_served health label translates the unknown value.'
+);
 $other = Capi_Transport::classify( $cases[15][1], 'v26.0' );
 l5_check( 'v27.0' === $other['version_served'] && true === $other['version_mismatch'], 'V2: served version differs from the requested one → flagged.' );
 $sub = Capi_Transport::classify( $cases[1][1], 'v26.0' );

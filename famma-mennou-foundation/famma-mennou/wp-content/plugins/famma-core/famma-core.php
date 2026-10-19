@@ -713,6 +713,30 @@ final class Order_Statuses {
 	}
 
 	/**
+	 * Pourquoi une commande ne peut pas (encore) donner de Purchase ; vide si elle le peut.
+	 *
+	 * Règle du circuit de commande (§2, D5), seule et partagée par l'émetteur
+	 * (Capi), le rapprochement (R8) et l'état de santé (R7) : « Livrée », ou
+	 * « Terminée » pour une commande payée à la livraison déjà encaissée. Le
+	 * rapprochement reste indépendant de la logique d'envoi (réglages,
+	 * environnement, registre), mais n'attend jamais un Purchase que
+	 * l'émetteur refuserait.
+	 *
+	 * @param \WC_Order $order Commande.
+	 * @return string `not_delivered`, `not_collected` (« Terminée » en paiement à
+	 *                la livraison sans encaissement, cas d'avant la 0.3.2) ou vide.
+	 */
+	public static function purchase_ineligibility( \WC_Order $order ): string {
+		if ( $order->has_status( 'delivered' ) ) {
+			return '';
+		}
+		if ( $order->has_status( 'completed' ) && self::is_cod_order( $order ) ) {
+			return 'yes' === $order->get_meta( '_famma_cod_paid' ) ? '' : 'not_collected';
+		}
+		return 'not_delivered';
+	}
+
+	/**
 	 * Runs the COD bookkeeping once, whatever status triggered it.
 	 *
 	 * @param \WC_Order $o    Order being collected.
@@ -2362,19 +2386,20 @@ final class Capi {
 	}
 
 	/**
-	 * Whether the order may be reported as a Purchase now.
+	 * Motif journalisé quand le Purchase est écarté, ou vide s'il peut partir.
 	 *
-	 * « Livrée », ou « Terminée » pour une commande payée à la livraison
-	 * déjà encaissée (D5).
+	 * La règle vient du circuit de commande (`Order_Statuses::purchase_ineligibility()`),
+	 * la même pour l'émetteur, le rapprochement (R8) et l'état de santé (R7).
 	 *
 	 * @param \WC_Order $order Order concerned.
-	 * @return bool
+	 * @return string `not_collected`, `status:<statut>` ou vide.
 	 */
-	private function purchase_eligible( \WC_Order $order ): bool {
-		if ( $order->has_status( 'delivered' ) ) {
-			return true;
+	private function purchase_block_reason( \WC_Order $order ): string {
+		$why = Order_Statuses::purchase_ineligibility( $order );
+		if ( '' === $why ) {
+			return '';
 		}
-		return $order->has_status( 'completed' ) && Order_Statuses::is_cod_order( $order ) && 'yes' === $order->get_meta( '_famma_cod_paid' );
+		return 'not_collected' === $why ? $why : 'status:' . $order->get_status();
 	}
 
 	/**
@@ -2392,9 +2417,10 @@ final class Capi {
 		if ( ! $order instanceof \WC_Order ) {
 			return;
 		}
-		$base = $this->log_base( $order, 'Purchase' );
-		if ( ! $this->purchase_eligible( $order ) ) {
-			$this->outcome( $base, 'ineligible', 'status:' . $order->get_status() );
+		$base   = $this->log_base( $order, 'Purchase' );
+		$reason = $this->purchase_block_reason( $order );
+		if ( '' !== $reason ) {
+			$this->outcome( $base, 'ineligible', $reason );
 			return;
 		}
 		if ( $order->get_meta( '_famma_purchase_sent' ) ) {
@@ -2419,8 +2445,9 @@ final class Capi {
 	 * @return void
 	 */
 	public function send_purchase( \WC_Order $order, string $event_id ): void {
-		if ( ! $this->purchase_eligible( $order ) ) {
-			$this->outcome( $this->log_base( $order, 'Purchase', $event_id ), 'ineligible', 'status:' . $order->get_status() );
+		$reason = $this->purchase_block_reason( $order );
+		if ( '' !== $reason ) {
+			$this->outcome( $this->log_base( $order, 'Purchase', $event_id ), 'ineligible', $reason );
 			return;
 		}
 		$this->send_order_event( $order, 'Purchase', $event_id );
@@ -2458,8 +2485,9 @@ final class Capi {
 			return $this->send_order_placed( $order, true );
 		}
 		$event_id = 'famma_purchase_' . $order->get_id();
-		if ( ! $this->purchase_eligible( $order ) ) {
-			return $this->outcome( $this->log_base( $order, 'Purchase', $event_id ), 'ineligible', 'status:' . $order->get_status() );
+		$reason   = $this->purchase_block_reason( $order );
+		if ( '' !== $reason ) {
+			return $this->outcome( $this->log_base( $order, 'Purchase', $event_id ), 'ineligible', $reason );
 		}
 		return $this->send_order_event( $order, 'Purchase', $event_id, true );
 	}
@@ -2550,9 +2578,10 @@ final class Capi {
 			$registry->finish( $claim, 'accepted', 0, 0 );
 			return $this->outcome( $base, 'already_sent', 'marker' );
 		}
-		if ( 'Purchase' === $event_name && ! $this->purchase_eligible( $order ) ) {
+		$reason = 'Purchase' === $event_name ? $this->purchase_block_reason( $order ) : '';
+		if ( '' !== $reason ) {
 			$registry->finish( $claim, 'rejected', 0, 0 );
-			return $this->outcome( $base, 'ineligible', 'status:' . $order->get_status() );
+			return $this->outcome( $base, 'ineligible', $reason );
 		}
 		$event_time = (int) $claim['event_time'];
 		$attempts   = (int) $claim['attempt'];

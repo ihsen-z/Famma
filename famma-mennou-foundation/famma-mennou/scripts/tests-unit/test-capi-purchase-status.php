@@ -63,7 +63,8 @@ l5_reset();
 $early         = new WC_Order( 5903 );
 $early->status = 'completed';
 $capi->fire_purchase_on_status( 5903 );
-l5_check( array() === $GLOBALS['wp_test_http'], 'No Purchase on « Terminée » before the COD collection.' );
+l5_check( array() === $GLOBALS['wp_test_http'] && str_contains( l5_capi_lines()[0] ?? '', 'state=ineligible reason=not_collected' ), 'No Purchase on « Terminée » before the COD collection; the journal says not_collected.' );
+l5_check( 'not_collected' === Order_Statuses::purchase_ineligibility( $early ) && 'not_delivered' === Order_Statuses::purchase_ineligibility( $card ), 'The shared Purchase rule (also used by reconciliation and health) gives the same reason.' );
 
 // payment_complete() is allowed from « completed » only for a COD order.
 $cod_order         = new WC_Order( 5904 );

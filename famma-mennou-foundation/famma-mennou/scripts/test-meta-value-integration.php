@@ -18,6 +18,9 @@ foreach ( array( 'FAMMA_META_PIXEL_ID', 'FAMMA_META_ACCESS_TOKEN', 'FAMMA_META_T
 if ( '' !== get_option( 'famma_meta_access_token', '' ) ) {
 	throw new RuntimeException( 'Stored token must remain empty.' );
 }
+// Lot 5 (D4): outside production famma-core sends nothing to Meta. This disposable clone
+// already intercepts every outgoing request, so the suite lifts the guard for its own process.
+add_filter( 'famma_meta_sending_allowed', '__return_true' );
 
 /** Stop only the native admin redirect before its unconditional exit. */
 final class Famma_Meta_Value_Redirect extends Error {}
@@ -118,11 +121,11 @@ final class Famma_Meta_Value_Test {
 		foreach ( array( 'Purchase', 'OrderPlaced' ) as $event ) {
 			foreach ( array( '25', '129', '25.125', '25,125' ) as $value ) {
 				$before = count( self::$requests );
-				self::admin( $event, $value, 'TEST_LOCAL_VALUE' );
+				self::admin( $event, $value, 'TEST12345' );
 				$payload = self::$requests[ $before ] ?? array();
 				$actual  = $payload['data'][0] ?? array();
 				$number  = $actual['custom_data']['value'] ?? null;
-				$ok      = 1 === count( self::$requests ) - $before && ( is_int( $number ) || is_float( $number ) ) && (float) str_replace( ',', '.', $value ) === (float) $number && ( $actual['event_name'] ?? '' ) === $event && 'TND' === ( $actual['custom_data']['currency'] ?? '' ) && 'TEST_LOCAL_VALUE' === ( $payload['test_event_code'] ?? '' ) && str_starts_with( $actual['event_id'] ?? '', 'famma_test_' );
+				$ok      = 1 === count( self::$requests ) - $before && ( is_int( $number ) || is_float( $number ) ) && (float) str_replace( ',', '.', $value ) === (float) $number && ( $actual['event_name'] ?? '' ) === $event && 'TND' === ( $actual['custom_data']['currency'] ?? '' ) && 'TEST12345' === ( $payload['test_event_code'] ?? '' ) && str_starts_with( $actual['event_id'] ?? '', 'famma_test_' );
 				self::check( 'admin-positive-' . $event . '-' . $value, $ok, 'Native admin sender uses the entered positive numeric amount, exact event and mandatory test code.' );
 			}
 		}
@@ -139,13 +142,16 @@ final class Famma_Meta_Value_Test {
 			'array'               => array( '25' ),
 		) as $case => $invalid ) {
 			$before = count( self::$requests );
-			self::admin( 'Purchase', $invalid, 'TEST_LOCAL_VALUE' );
+			self::admin( 'Purchase', $invalid, 'TEST12345' );
 			$held = count( self::$requests ) === $before;
 			self::check( 'admin-invalid-' . $case, $held, 'Invalid, missing, zero or non-finite test amount never reaches HTTP.' );
 		}
 		$before = count( self::$requests );
 		self::admin( 'Purchase', '25', '' );
 		self::check( 'admin-no-code-no-http', count( self::$requests ) === $before, 'A valid amount without a test code cannot be sent.' );
+		// Lot 5 (A12): a test code must be TEST followed by digits; the former free format is refused.
+		self::admin( 'Purchase', '25', 'TEST_LOCAL_VALUE' );
+		self::check( 'admin-legacy-code-no-http', count( self::$requests ) === $before, 'A test code outside the TEST + digits format cannot be sent.' );
 		self::check( 'admin-no-created-orders', self::$created === $created, 'All synthetic admin sender requests create zero WooCommerce orders.' );
 	}
 

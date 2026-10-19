@@ -57,28 +57,84 @@ function wp_mail( $to, string $subject, string $message ): bool {
 function add_settings_error( string $setting, string $code, string $message, string $type = 'error' ): void {
 	$GLOBALS['wp_test_settings_errors'][] = array( $setting, $code, $message );
 }
+function has_filter( string $hook, $callback = false ) {
+	if ( empty( $GLOBALS['wp_test_hooks'][ $hook ] ) ) {
+		return false;
+	}
+	if ( false === $callback ) {
+		return true;
+	}
+	foreach ( $GLOBALS['wp_test_hooks'][ $hook ] as $listener ) {
+		if ( $callback === $listener[0] ) {
+			return 10;
+		}
+	}
+	return false;
+}
 function sanitize_key( $key ): string {
 	return (string) preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $key ) );
 }
 
-// Action Scheduler, in memory.
+// Action Scheduler, in memory, with the statuses of Action Scheduler 4.0.0: a "unique"
+// insert and as_has_scheduled_action() both count the pending AND the running
+// (in-progress) actions. Each action is array( timestamp, hook, args, group, unique, status ).
 function as_schedule_single_action( int $timestamp, string $hook, array $args = array(), string $group = '', bool $unique = false ): int {
-	$GLOBALS['as_test_actions'][] = array( $timestamp, $hook, $args, $group, $unique );
+	if ( $unique && array() !== l5_as_find( $hook, $args, $group, array( 'pending', 'in-progress' ) ) ) {
+		return 0;
+	}
+	$GLOBALS['as_test_actions'][] = array( $timestamp, $hook, $args, $group, $unique, 'pending' );
 	return count( $GLOBALS['as_test_actions'] );
 }
 function as_has_scheduled_action( string $hook, $args = null, string $group = '' ): bool {
-	foreach ( $GLOBALS['as_test_actions'] ?? array() as $action ) {
-		if ( $hook === $action[1] && ( null === $args || $args === $action[2] ) && ( '' === $group || $group === $action[3] ) ) {
-			return true;
-		}
-	}
-	return false;
+	return array() !== l5_as_find( $hook, $args, $group, array( 'pending', 'in-progress' ) );
 }
 function as_enqueue_async_action( string $hook, array $args = array(), string $group = '', bool $unique = false ): int {
 	return as_schedule_single_action( time(), $hook, $args, $group, $unique );
 }
 function as_get_scheduled_actions( array $args = array(), string $return_format = 'OBJECT' ): array {
-	return $GLOBALS['as_test_late_actions'] ?? array();
+	// The health rule asks for late actions by date: fixture. Any other query reads the in-memory queue.
+	if ( isset( $args['date'] ) ) {
+		return $GLOBALS['as_test_late_actions'] ?? array();
+	}
+	return l5_as_find( (string) ( $args['hook'] ?? '' ), $args['args'] ?? null, (string) ( $args['group'] ?? '' ), isset( $args['status'] ) ? (array) $args['status'] : array() );
+}
+
+/**
+ * Identifiers (1-based) of the in-memory actions matching a query.
+ *
+ * @param string     $hook     Hook, or '' for any.
+ * @param array|null $args     Exact arguments, or null for any.
+ * @param string     $group    Group, or '' for any.
+ * @param string[]   $statuses Statuses, or empty for any.
+ * @return int[]
+ */
+function l5_as_find( string $hook, $args, string $group, array $statuses ): array {
+	$ids = array();
+	foreach ( $GLOBALS['as_test_actions'] ?? array() as $index => $action ) {
+		if ( ( '' === $hook || $hook === $action[1] ) && ( null === $args || $args === $action[2] ) && ( '' === $group || $group === $action[3] ) && ( array() === $statuses || in_array( $action[5], $statuses, true ) ) ) {
+			$ids[] = $index + 1;
+		}
+	}
+	return $ids;
+}
+
+/**
+ * Runs the first pending in-memory action as Action Scheduler 4.0.0 does: the action
+ * is "in-progress" while its callbacks run, then "complete".
+ *
+ * @return array|null The action that ran, or null when none is pending.
+ */
+function l5_as_run_next(): ?array {
+	foreach ( $GLOBALS['as_test_actions'] ?? array() as $index => $action ) {
+		if ( 'pending' !== $action[5] ) {
+			continue;
+		}
+		$GLOBALS['as_test_actions'][ $index ][5] = 'in-progress';
+		do_action( $action[1], ...array_values( $action[2] ) );
+		$GLOBALS['as_test_actions'][ $index ][5] = 'complete';
+		return $action;
+	}
+	return null;
 }
 function wc_get_orders( array $args = array() ): array {
 	return $GLOBALS['wc_test_order_query'] ?? array();

@@ -232,8 +232,24 @@ final class Capi_Delivery_Registry {
 			return array();
 		}
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- durable evidence must be read from the live table.
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT order_id,event_name,event_id,event_time,attempt_count FROM %i WHERE state=%s AND updated_at < %s ORDER BY updated_at ASC LIMIT 20', $this->table(), 'sending', gmdate( 'Y-m-d H:i:s', time() - $seconds ) ), ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT event_key,order_id,event_name,event_id,event_time,state,owner,attempt_count,attempts,updated_at FROM %i WHERE state=%s AND updated_at < %s ORDER BY updated_at ASC LIMIT 20', $this->table(), 'sending', gmdate( 'Y-m-d H:i:s', time() - $seconds ) ), ARRAY_A );
 		return is_array( $rows ) ? $rows : array();
+	}
+
+	/** Take over an abandoned "sending" record found by the rescue sweep (D1).
+	 *
+	 * Same compare-and-swap as a takeover on acquisition: the record becomes
+	 * "uncertain", so the sweep never stalls behind sends it cannot retry.
+	 *
+	 * @param array $row Record returned by stale_sending().
+	 * @return bool True when this call moved the record to "uncertain".
+	 */
+	public function release_stale( array $row ): bool {
+		$key = (string) ( $row['event_key'] ?? '' );
+		if ( '' === $key || 'sending' !== ( $row['state'] ?? '' ) ) {
+			return false;
+		}
+		return 'uncertain' === ( $this->expire_stale( $key, $row )['state'] ?? '' );
 	}
 
 	/** Records of a set of orders, for the reconciliation screen (R8).

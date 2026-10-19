@@ -11,11 +11,13 @@
 require __DIR__ . '/bootstrap-capi.php';
 Famma_Unit_Harness::load_include( 'capi-reconcile.php' );
 
+use Famma\Core\Capi;
 use Famma\Core\Capi_Data_Profile;
 use Famma\Core\Capi_Health;
 use Famma\Core\Capi_Health_Rules;
 use Famma\Core\Capi_Reconcile;
 use Famma\Core\Config;
+use Famma\Core\Order_Statuses;
 
 $now   = time();
 $codes = static fn( array $state ): array => array_column( $state['raisons'], 'code' );
@@ -63,6 +65,55 @@ l5_check(
 	),
 	'V6: one delivered order without Purchase for 24 h → red (test order and recent order not counted).'
 );
+$GLOBALS['wc_test_order_query'] = array();
+
+// V6 / V7 — « Terminée » COD order not collected (before 0.3.2): the sender, the
+// reconciliation and the health state share one rule, so no red state without remedy.
+l5_reset();
+$legacy             = new WC_Order( 6100 );
+$legacy->status     = 'completed';
+$legacy->paid_at    = ( new DateTimeImmutable() )->setTimestamp( $now - 25 * 3600 );
+$collected          = new WC_Order( 6101 );
+$collected->status  = 'completed';
+$collected->paid_at = $legacy->paid_at;
+$collected->meta    = array( '_famma_cod_paid' => 'yes' );
+$card               = new WC_Order( 6102 );
+$card->status       = 'completed';
+$card->payment      = 'stripe';
+$card->paid_at      = $legacy->paid_at;
+l5_check( 'not_collected' === Order_Statuses::purchase_ineligibility( $legacy ) && '' === Order_Statuses::purchase_ineligibility( $collected ) && 'not_delivered' === Order_Statuses::purchase_ineligibility( $card ) && '' === Order_Statuses::purchase_ineligibility( new WC_Order( 6103 ) ), 'One Purchase rule: delivered or collected COD « Terminée » expected; not collected → not_collected; other payment → not_delivered.' );
+$GLOBALS['wc_test_order_query'] = array( $legacy, $card );
+$state                          = Capi_Health::evaluate( $now );
+l5_check( 'vert' === $state['statut'] && ! in_array( 'purchase_missing', $codes( $state ), true ) && array() === $GLOBALS['wp_test_mail'], 'V6: a « Terminée » order never collected is not a missing Purchase: no red, no e-mail.' );
+$GLOBALS['wc_test_order_query'] = array( $legacy, $collected, $card );
+$state                          = Capi_Health::evaluate( $now );
+l5_check(
+	in_array(
+		array(
+			'code'   => 'purchase_missing',
+			'niveau' => 'rouge',
+			'detail' => '1',
+		),
+		$state['raisons'],
+		true
+	),
+	'V6: a collected « Terminée » order without Purchase still counts (1 out of 3).'
+);
+$reconcile = Capi_Reconcile::instance();
+l5_check(
+	array(
+		'expected' => false,
+		'reason'   => 'not_collected',
+		'state'    => 'absent',
+		'resend'   => false,
+	) === $reconcile->cell( $legacy, 'Purchase', array(), $now ),
+	'V7: the reconciliation uses the sender rule: not_collected, not expected, no « Renvoyer » button.'
+);
+l5_check( $reconcile->cell( $collected, 'Purchase', array(), $now )['expected'] && $reconcile->cell( $collected, 'Purchase', array(), $now )['resend'], 'V7: a collected « Terminée » order is expected and can be sent.' );
+$reconcile_totals = $reconcile->build( $now )['totals'];
+l5_check( 1 === ( $reconcile_totals['ineligible']['not_collected'] ?? 0 ) && 1 === $reconcile_totals['purchase_expected'], 'V7: « Inéligibles » line counts the order with its reason (not_collected : 1).' );
+$GLOBALS['wc_test_log'] = array();
+l5_check( 'ineligible' === Capi::instance()->resend( $legacy, 'Purchase' ) && array() === $GLOBALS['wp_test_http'] && str_contains( l5_capi_lines()[0], 'state=ineligible reason=not_collected' ), 'A resend of such an order is refused by the sender with the same reason, without any request.' );
 $GLOBALS['wc_test_order_query'] = array();
 
 // Pending famma-capi action for more than 2 h.
@@ -119,6 +170,23 @@ $GLOBALS['wp_test_mail'] = array();
 \Famma\Watchdog\check();
 \Famma\Watchdog\check();
 l5_check( 1 === count( $GLOBALS['wp_test_mail'] ), 'Watchdog: at most one e-mail per day.' );
+
+// R7 / V6 — one e-mail per alert: the switch to red is mailed by famma-core only; the
+// watchdog shows it in its notice, and mails only what famma-core cannot report itself.
+l5_reset();
+$GLOBALS['wp_test_options']['active_plugins']       = array( 'famma-core/famma-core.php' );
+$GLOBALS['wp_test_options']['famma_capi_heartbeat'] = time() - 37 * 3600;
+$red_state = Capi_Health::evaluate( time() );
+\Famma\Watchdog\check();
+\Famma\Watchdog\check();
+ob_start();
+\Famma\Watchdog\notice();
+$watchdog_notice = (string) ob_get_clean();
+l5_check( 'rouge' === $red_state['statut'] && 1 === count( $GLOBALS['wp_test_mail'] ) && str_contains( $watchdog_notice, 'alerte rouge' ), 'V6: a switch to red gives exactly one e-mail in all (famma-core); the watchdog shows it as a notice.' );
+l5_check( array( 'La mesure Meta est en alerte rouge : voir FAMMA → Mesure.' ) === \Famma\Watchdog\problems() && array() === \Famma\Watchdog\mail_problems(), 'Watchdog: the red state is a notice, never a watchdog e-mail.' );
+$GLOBALS['wp_test_options']['active_plugins'] = array();
+\Famma\Watchdog\check();
+l5_check( 2 === count( $GLOBALS['wp_test_mail'] ) && str_contains( $GLOBALS['wp_test_mail'][1][2], 'inactive' ), 'Watchdog: famma-core inactive → its own e-mail, since famma-core cannot send it.' );
 
 // A5 / V7 — resend bounds.
 $updated = static fn( int $age ): array => array( 'updated_at' => gmdate( 'Y-m-d H:i:s', $now - $age ) );

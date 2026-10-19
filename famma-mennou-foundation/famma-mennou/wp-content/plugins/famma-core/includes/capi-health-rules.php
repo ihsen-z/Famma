@@ -145,6 +145,11 @@ final class Capi_Health_Rules {
 	/**
 	 * Commandes livrées (ou terminées, D5) depuis plus de 24 h sans Purchase accepté.
 	 *
+	 * Seules comptent les commandes dont le Purchase est attendu selon la règle
+	 * du circuit de commande (`Order_Statuses::purchase_ineligibility()`), que
+	 * l'émetteur applique aussi : une commande « Terminée » sans encaissement
+	 * d'avant la 0.3.2 n'allume pas un rouge sans remède ; le rapprochement la
+	 * montre parmi les inéligibles.
 	 * Commandes de test (`_famma_test_order`) exclues ; 14 derniers jours.
 	 *
 	 * @param int $now Horloge.
@@ -167,7 +172,7 @@ final class Capi_Health_Rules {
 			if ( ! $order instanceof \WC_Order || $order->get_meta( '_famma_purchase_sent' ) || $order->get_meta( '_famma_test_order' ) ) {
 				continue;
 			}
-			if ( $order->has_status( 'completed' ) && ! Order_Statuses::is_cod_order( $order ) ) {
+			if ( '' !== Order_Statuses::purchase_ineligibility( $order ) ) {
 				continue;
 			}
 			$since    = $order->get_date_paid() ? $order->get_date_paid()->getTimestamp() : ( $order->get_date_modified() ? $order->get_date_modified()->getTimestamp() : $now );
@@ -232,7 +237,7 @@ final class Capi_Health_Rules {
 			/* translators: %s: Graph API version. */
 			'version_critical'  => sprintf( __( 'Version de l’API Meta %s en fin de vie : changez-la dans FAMMA → Mesure.', 'famma-core' ), $detail ),
 			/* translators: %s: Graph API version served by Meta. */
-			'version_served'    => sprintf( __( 'Meta a répondu avec une autre version que celle demandée (%s).', 'famma-core' ), $detail ),
+			'version_served'    => sprintf( __( 'Meta a répondu avec une autre version que celle demandée (%s).', 'famma-core' ), Capi_Transport::served_label( $detail ) ),
 			'profile_minimal'   => __( 'Profil de données « minimal » actif : seuls la valeur et la devise partent.', 'famma-core' ),
 			/* translators: %s: number of rejected cookies. */
 			'fbc_rejected'      => sprintf( __( '%s identifiant(s) de clic fbc refusé(s) localement sur 7 jours.', 'famma-core' ), $detail ),

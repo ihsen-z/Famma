@@ -32,6 +32,21 @@ $stored = (string) $GLOBALS['wp_test_options']['famma_meta_access_token'];
 l5_check( Capi_Token_Vault::is_sealed( $stored ) && ! str_contains( $stored, $token ) && 'sealed' === Capi_Token_Vault::state(), 'T2.12: after the first read, the option holds only the encrypted value.' );
 l5_check( Config::instance()->meta_access_token() === $token && 'REAL' === Capi_Token_Vault::last4(), 'The encrypted token is read back; only its last 4 characters are exposed.' );
 
+// A token supplied by an option filter (server configuration, test bench) is used but never written:
+// the migration would otherwise replace the value really stored (found by the lot 5 corrector,
+// registry integration suite: its process-local pre_option token ended up sealed in the clone).
+$really_stored = $GLOBALS['wp_test_options']['famma_meta_access_token'];
+$filter        = static fn(): string => 'QA-L5-FILTERED-FAKE-TOKEN';
+add_filter( 'pre_option_famma_meta_access_token', $filter );
+// The get_option() double ignores pre_option filters: put the filtered value where it reads.
+$GLOBALS['wp_test_options']['famma_meta_access_token'] = 'QA-L5-FILTERED-FAKE-TOKEN';
+$writes_before = $GLOBALS['wp_test_options'];
+l5_check( 'QA-L5-FILTERED-FAKE-TOKEN' === Config::instance()->meta_access_token() && 'plain' === Capi_Token_Vault::state(), 'A filtered clear token is used as is.' );
+l5_check( $writes_before === $GLOBALS['wp_test_options'], 'A filtered token is never sealed into the database.' );
+unset( $GLOBALS['wp_test_hooks']['pre_option_famma_meta_access_token'] );
+$GLOBALS['wp_test_options']['famma_meta_access_token'] = $really_stored;
+l5_check( Config::instance()->meta_access_token() === $token && 'sealed' === Capi_Token_Vault::state(), 'Without the filter, the really stored encrypted token is read again.' );
+
 // The admin field shows only the last 4 characters, never the token nor its encrypted form.
 ob_start();
 Famma_Unit_Harness::bare( '\Famma\Core\Tracking_Settings' )->render_field(

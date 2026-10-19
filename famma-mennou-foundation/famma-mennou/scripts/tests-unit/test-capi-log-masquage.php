@@ -2,6 +2,10 @@
 /**
  * T1.6 — The CAPI token never reaches the famma-capi log, the order notes,
  * the request URL or the admin redirect; only its last 4 characters in the admin.
+ * Declared gap to V2 (H-S8): a third-party listener of `http_api_debug` still
+ * receives the request arguments, hence the token (WordPress HTTP API limit,
+ * documented in includes/capi-transport.php). It is counted apart, as
+ * ECART_V2, never hidden inside FUITES=0.
  * Run with: php scripts/tests-unit/test-capi-log-masquage.php [--json]
  * Real Capi, Config, Tunisia, Capi_Signals, Capi_Log, Capi_Product_Data, the
  * lot 5 collaborators (transport, user data, vault…) and Tracking_Settings;
@@ -224,11 +228,15 @@ foreach ( array( 'famma-core.php', 'includes/capi-log.php', 'includes/capi-signa
 	$core_listener += substr_count( (string) file_get_contents( ABSPATH . 'wp-content/plugins/famma-core/' . $core_file ), 'http_api_debug' );
 }
 
+// Declared gap to V2: paths where a third-party http_api_debug listener sees the token.
+$v2_gaps = count( array_filter( array_column( $rows, 'http_api_debug_voi' ) ) );
+
 if ( in_array( '--json', $argv, true ) ) {
 	echo json_encode(
 		array(
 			'test'                          => 'T1.6',
 			'fuites'                        => $failures,
+			'ecart_v2_http_api_debug'       => $v2_gaps,
 			'ecouteurs_http_api_debug_core' => $core_listener,
 			'rows'                          => $rows,
 		),
@@ -237,11 +245,12 @@ if ( in_array( '--json', $argv, true ) ) {
 	exit( 0 );
 }
 foreach ( $rows as $row ) {
-	echo $row['verdict'] . ': ' . $row['chemin'] . ( '' !== $row['fuite_journal'] ? ' [journal: « ' . $row['fuite_journal'] . ' »]' : '' ) . ( '' !== $row['fuite_url'] ? ' [url: « ' . $row['fuite_url'] . ' »]' : '' ) . ( '' !== $row['fuite_notes'] ? ' [notes: « ' . $row['fuite_notes'] . ' »]' : '' ) . ' | http_api_debug voit le jeton: ' . ( $row['http_api_debug_voi'] ? 'oui' : 'non' ) . PHP_EOL;
+	echo $row['verdict'] . ': ' . $row['chemin'] . ( '' !== $row['fuite_journal'] ? ' [journal: « ' . $row['fuite_journal'] . ' »]' : '' ) . ( '' !== $row['fuite_url'] ? ' [url: « ' . $row['fuite_url'] . ' »]' : '' ) . ( '' !== $row['fuite_notes'] ? ' [notes: « ' . $row['fuite_notes'] . ' »]' : '' ) . ' | http_api_debug voit le jeton: ' . ( $row['http_api_debug_voi'] ? 'oui (ÉCART V2 déclaré)' : 'non' ) . PHP_EOL;
 	if ( '' !== $row['ligne_journal'] ) {
 		echo '    ' . str_replace( "\n", "\n    ", $row['ligne_journal'] ) . PHP_EOL;
 	}
 }
 echo 'Occurrences de http_api_debug dans famma-core : ' . $core_listener . PHP_EOL;
-echo 'CHECKS=' . count( $rows ) . ' FUITES=' . $failures . PHP_EOL;
+echo 'CHECKS=' . count( $rows ) . ' FUITES=' . $failures . ' ECART_V2=' . $v2_gaps . PHP_EOL;
+echo 'ÉCART V2 (déclaré, non corrigé) : un écouteur tiers de http_api_debug reçoit les arguments de la requête, donc le jeton, sur ' . $v2_gaps . ' chemin(s) ; limite de l’API HTTP de WordPress, voir includes/capi-transport.php. T1.6 et V2 ne sont donc pas entièrement verts.' . PHP_EOL;
 echo 'No network requests or database writes were performed.' . PHP_EOL;

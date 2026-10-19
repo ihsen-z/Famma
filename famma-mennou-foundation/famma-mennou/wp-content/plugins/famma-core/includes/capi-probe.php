@@ -214,7 +214,7 @@ final class Capi_Probe {
 						wp_date( 'd/m/Y H:i', (int) ( $probe['at'] ?? 0 ) ),
 						self::label( (string) ( $probe['class'] ?? '' ) ),
 						(string) ( $probe['requested'] ?? '-' ),
-						'' !== (string) ( $probe['served'] ?? '' ) ? (string) $probe['served'] : Capi_Transport::UNKNOWN_VERSION
+						Capi_Transport::served_label( (string) ( $probe['served'] ?? '' ) )
 					)
 				);
 				?>

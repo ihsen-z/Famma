@@ -4,10 +4,13 @@
  *
  * Règle large et indépendante de l'émetteur : toute commande non test doit
  * avoir un OrderPlaced accepté, toute commande livrée (ou terminée en
- * paiement à la livraison, D5) un Purchase accepté. Une commande que
- * l'émetteur écarte volontairement (création dans l'administration,
- * OrderPlaced désactivé, commande annulée avant l'envoi) est comptée parmi
- * les « inéligibles », avec son motif. Les commandes de test
+ * paiement à la livraison et encaissée, D5) un Purchase accepté ; la règle
+ * du Purchase est `Order_Statuses::purchase_ineligibility()`, celle du
+ * circuit de commande, que l'émetteur applique aussi.
+ * Une commande que l'émetteur écarte volontairement (création dans
+ * l'administration, OrderPlaced désactivé, commande annulée avant l'envoi,
+ * « Terminée » sans encaissement d'avant la 0.3.2) est comptée parmi les
+ * « inéligibles », avec son motif. Les commandes de test
  * (`_famma_test_order`) sont exclues des comptes mais listées.
  *
  * « Renvoyer » rejoue le même event_id, dans des bornes fixées par Config :
@@ -158,10 +161,8 @@ final class Capi_Reconcile {
 	 */
 	private function ineligibility( \WC_Order $order, string $event ): string {
 		if ( 'Purchase' === $event ) {
-			if ( $order->has_status( 'delivered' ) || ( $order->has_status( 'completed' ) && Order_Statuses::is_cod_order( $order ) ) ) {
-				return '';
-			}
-			return 'not_delivered';
+			// Règle du circuit de commande, la même que l'émetteur : « Terminée » sans encaissement → not_collected.
+			return Order_Statuses::purchase_ineligibility( $order );
 		}
 		if ( 'checkout' !== $order->get_created_via() ) {
 			return 'admin';

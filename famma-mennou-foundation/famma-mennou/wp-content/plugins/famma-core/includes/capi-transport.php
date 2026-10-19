@@ -12,12 +12,23 @@
  * - `accepted` : accusé de réception de Meta ;
  * - `accepted_warning` : accepté, mais `messages[]` non vide ou version
  *   servie (en-tête `facebook-api-version`) différente de la demandée ; un
- *   en-tête absent donne « inconnue », sans alerte ;
+ *   en-tête absent donne la valeur technique `unknown` (affichée
+ *   « inconnue »), sans alerte ;
  * - `transient` : WP_Error, délai dépassé, 5xx, 408, 429, codes 1, 2 et
  *   limites de débit (4, 17, 341, 613), `is_transient`, ou 2xx sans accusé ;
  * - `access` : jeton ou droits (190, 10, 200 à 299 dont 294, 368) ;
  * - `contract` : refus du contenu (code 100…) ou réponse inconnue ;
  * - `blocked_environment` : garde d'environnement (D4), aucune requête.
+ *
+ * Limite connue (écart déclaré à V2 / T1.6, H-S8) : l'API HTTP de WordPress
+ * transmet les arguments de la requête, donc le corps (`access_token`) et
+ * l'en-tête `Authorization` de la sonde, aux crochets `http_request_args`,
+ * `pre_http_request` et `http_api_debug`. famma-core n'écoute aucun d'eux
+ * et ne journalise jamais le jeton ; il ne faut pas installer d'extension
+ * qui enregistre ces crochets (journal des requêtes HTTP) en production. Les
+ * retirer imposerait d'injecter le jeton sous WordPress, dans la
+ * bibliothèque Requests, ce qui le cacherait aussi aux bancs de test qui
+ * interceptent `pre_http_request`.
  *
  * @package Famma\Core
  */
@@ -42,9 +53,10 @@ final class Capi_Transport {
 	public const TIMEOUT = 8;
 
 	/**
-	 * Version servie quand Meta ne renvoie pas l'en-tête.
+	 * Version servie quand Meta ne renvoie pas l'en-tête : valeur technique,
+	 * traduite à l'affichage par `served_label()`.
 	 */
-	public const UNKNOWN_VERSION = 'inconnue';
+	public const UNKNOWN_VERSION = 'unknown';
 
 	/**
 	 * Codes d'erreur Meta d'accès (jeton, droits, blocage), hors plage 200-299.
@@ -65,6 +77,19 @@ final class Capi_Transport {
 	 */
 	public static function events_url( string $version, string $pixel ): string {
 		return self::HOST . rawurlencode( $version ) . '/' . rawurlencode( $pixel ) . '/events';
+	}
+
+	/**
+	 * Version servie, prête à l'affichage : « inconnue » quand Meta ne l'a pas donnée.
+	 *
+	 * Accepte aussi `inconnue`, la valeur enregistrée par les premières
+	 * versions de développement du lot 5.
+	 *
+	 * @param string $served Version servie enregistrée.
+	 * @return string
+	 */
+	public static function served_label( string $served ): string {
+		return in_array( $served, array( '', self::UNKNOWN_VERSION, 'inconnue' ), true ) ? __( 'inconnue', 'famma-core' ) : $served;
 	}
 
 	/**

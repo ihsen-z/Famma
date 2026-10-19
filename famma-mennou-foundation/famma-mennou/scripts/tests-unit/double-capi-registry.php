@@ -89,7 +89,23 @@ final class Capi_Delivery_Registry {
 		return ! empty( $claim['owned'] ) && in_array( $state, array( 'accepted', 'rejected', 'uncertain' ), true );
 	}
 	public function stale_sending( int $seconds ): array {
-		return $GLOBALS['famma_test_registry_stale'] ?? array();
+		// Rescue sweep: rows of $GLOBALS['famma_test_registry_stale'] (keyed by event_key), selected
+		// like the real query: still "sending", older than the delay, oldest first, 20 at most.
+		$limit = gmdate( 'Y-m-d H:i:s', time() - $seconds );
+		$rows  = array_filter(
+			$GLOBALS['famma_test_registry_stale'] ?? array(),
+			static fn( array $row ): bool => 'sending' === $row['state'] && $row['updated_at'] < $limit
+		);
+		uasort( $rows, static fn( array $a, array $b ): int => strcmp( $a['updated_at'], $b['updated_at'] ) );
+		return array_slice( array_values( $rows ), 0, 20 );
+	}
+	public function release_stale( array $row ): bool {
+		$key = (string) ( $row['event_key'] ?? '' );
+		if ( 'sending' !== ( $GLOBALS['famma_test_registry_stale'][ $key ]['state'] ?? '' ) ) {
+			return false;
+		}
+		$GLOBALS['famma_test_registry_stale'][ $key ]['state'] = 'uncertain';
+		return true;
 	}
 	public function for_orders( array $order_ids ): array {
 		return array();

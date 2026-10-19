@@ -35,6 +35,9 @@ foreach ( array( 'FAMMA_META_ACCESS_TOKEN', 'FAMMA_META_PIXEL_ID', 'FAMMA_META_T
 if ( '' !== (string) get_option( 'famma_meta_access_token', '' ) ) {
 	throw new RuntimeException( 'Clear the stored CAPI token in this clone first; no existing token is read into requests.' );
 }
+// Lot 5 (D4): outside production famma-core sends nothing to Meta. This disposable clone
+// already intercepts every outgoing request, so the suite lifts the guard for its own process.
+add_filter( 'famma_meta_sending_allowed', '__return_true' );
 
 /** Execute isolated integration scenarios with real WooCommerce persistence. */
 final class Famma_Capi_Integration {
@@ -107,7 +110,7 @@ final class Famma_Capi_Integration {
 			$stored = wc_get_order( $order->get_id() );
 			self::check( 'orderplaced', 'OrderPlaced' === ( $placed['event_name'] ?? '' ) && (bool) $stored->get_meta( '_famma_orderplaced_sent' ), 'Worker executes real hook and persists acknowledged OrderPlaced.' );
 			self::check( 'creation-time', $stored->get_date_created()->getTimestamp() === ( $placed['event_time'] ?? 0 ), 'OrderPlaced time equals real order creation time.' );
-			self::check( 'stage-and-value', 'order_placed' === ( $placed['custom_data']['famma_stage'] ?? '' ) && 79.0 === (float) ( $placed['custom_data']['value'] ?? -1 ), 'OrderPlaced business stage and actual WooCommerce total preserved.' );
+			self::check( 'stage-and-value', ! isset( $placed['custom_data']['famma_stage'] ) && 79.0 === (float) ( $placed['custom_data']['value'] ?? -1 ), 'Standard data profile (lot 5, A14): famma_stage is no longer sent; actual WooCommerce total preserved.' );
 			self::check( 'normalization', hash( 'sha256', 'synthetic@example.invalid' ) === ( $placed['user_data']['em'] ?? '' ) && hash( 'sha256', '21620000000' ) === ( $placed['user_data']['ph'] ?? '' ), 'Real billing getters, normalization and SHA256 work together.' );
 			self::check( 'no-global-test', ! isset( self::$requests[0]['payload']['test_event_code'] ), 'Global test setting does not divert an actual lifecycle event.' );
 			do_action( 'famma_capi_orderplaced_send', $order->get_id() );
@@ -130,17 +133,19 @@ final class Famma_Capi_Integration {
 				self::run_action( $failed->get_id() );
 				$failed = wc_get_order( $failed->get_id() );
 				$state = self::delivery_state( $failed );
-				$expected_state = 503 === $code ? 'uncertain' : 'rejected';
+				// Lot 5 (A2): 429 with Meta rate-limit code 4 is transient, like 503; 401 with code 190 is an access refusal.
+				$transient      = in_array( $code, array( 429, 503 ), true );
+				$expected_state = $transient ? 'uncertain' : 'rejected';
 				$rejected = ! $failed->get_meta( '_famma_orderplaced_sent' ) && 1 === (int) $failed->get_meta( '_famma_orderplaced_attempts' ) && $state === $expected_state;
-				self::check( 'rejected-' . $code, $rejected, 'HTTP4xx with explicit Meta code is rejected; HTTP503 is uncertain, never acknowledged.' );
+				self::check( 'rejected-' . $code, $rejected, 'HTTP401 with Meta code 190 is rejected; HTTP429 (rate limit, code 4) and HTTP503 are uncertain, never acknowledged.' );
 				$old_time                           = $failed->get_meta( '_famma_orderplaced_event_time' );
 				$count_before_retry                 = count( self::$requests );
 				self::$response['response']['code'] = 200;
 				self::$response['body']             = '{"events_received":1}';
 				do_action( 'famma_capi_orderplaced_send', $failed->get_id() );
 				$retry = wc_get_order( $failed->get_id() );
-				$retry_ok = 503 === $code ? ! $retry->get_meta( '_famma_orderplaced_sent' ) && count( self::$requests ) === $count_before_retry && 'uncertain' === self::delivery_state( $retry ) : (bool) $retry->get_meta( '_famma_orderplaced_sent' ) && $old_time === $retry->get_meta( '_famma_orderplaced_event_time' );
-				self::check( 'retry-' . $code, $retry_ok, 'Explicit rejected requests may retry; uncertain503 is held without another HTTP request.' );
+				$retry_ok = $transient ? ! $retry->get_meta( '_famma_orderplaced_sent' ) && count( self::$requests ) === $count_before_retry && 'uncertain' === self::delivery_state( $retry ) : (bool) $retry->get_meta( '_famma_orderplaced_sent' ) && $old_time === $retry->get_meta( '_famma_orderplaced_event_time' );
+				self::check( 'retry-' . $code, $retry_ok, 'Explicit rejected requests may retry; uncertain 429/503 are held without another HTTP request (the bounded famma_capi_retry owns them).' );
 			}
 			$ambiguous = self::order( $product );
 			self::$response['response']['code'] = 429;
@@ -335,6 +340,17 @@ final class Famma_Capi_Integration {
 			foreach ( self::$orders as $id ) {
 				try {
 					as_unschedule_all_actions( 'famma_capi_orderplaced_send', array( 'order_id' => $id ), 'famma-capi' );
+					// Lot 5 (D1): a transient failure also plans a bounded famma_capi_retry.
+					foreach ( array( 'OrderPlaced', 'Purchase' ) as $event_name ) {
+						as_unschedule_all_actions(
+							'famma_capi_retry',
+							array(
+								'order_id'   => $id,
+								'event_name' => $event_name,
+							),
+							'famma-capi'
+						);
+					}
 					if ( class_exists( '\Famma\Core\Order_Emails' ) ) {
 						as_unschedule_all_actions( \Famma\Core\Order_Emails::ACTION, array( $id ), \Famma\Core\Order_Emails::GROUP );
 					}

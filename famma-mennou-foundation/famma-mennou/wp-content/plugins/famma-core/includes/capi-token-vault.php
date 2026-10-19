@@ -10,7 +10,7 @@
  * `wp-config.php` ne livre plus le jeton.
  *
  * - un jeton en clair est chiffré à sa première lecture, sans action du
- *   propriétaire ;
+ *   propriétaire (jamais une valeur fournie par un filtre d'option) ;
  * - la constante `FAMMA_META_ACCESS_TOKEN` reste prioritaire (Config) ;
  * - si le déchiffrement échoue (clés du site changées), le jeton est traité
  *   comme absent : avis « jeton à ressaisir » et état de santé rouge.
@@ -61,9 +61,12 @@ final class Capi_Token_Vault {
 			return '';
 		}
 		if ( ! self::is_sealed( $stored ) ) {
-			// Migration transparente : le jeton en clair est chiffré dès sa première lecture.
-			$sealed      = self::seal( $stored );
 			self::$state = 'plain';
+			if ( self::filtered() ) {
+				return $stored;
+			}
+			// Migration transparente : le jeton en clair est chiffré dès sa première lecture.
+			$sealed = self::seal( $stored );
 			if ( '' !== $sealed && update_option( self::OPTION, $sealed, false ) ) {
 				self::$state = 'sealed';
 			}
@@ -94,6 +97,20 @@ final class Capi_Token_Vault {
 	public static function last4(): string {
 		$token = self::read();
 		return '' === $token ? '' : substr( $token, -4 );
+	}
+
+	/**
+	 * La valeur lue vient-elle d'un filtre plutôt que de la base ?
+	 *
+	 * Un jeton fourni par `pre_option_famma_meta_access_token` ou
+	 * `option_famma_meta_access_token` (configuration serveur, banc de test)
+	 * n'est jamais écrit en base par la migration : il remplacerait la
+	 * valeur réellement enregistrée.
+	 *
+	 * @return bool
+	 */
+	private static function filtered(): bool {
+		return false !== has_filter( 'pre_option_' . self::OPTION ) || false !== has_filter( 'option_' . self::OPTION );
 	}
 
 	/**
