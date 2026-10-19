@@ -157,7 +157,8 @@ function check_admin_referer( string $action ): int {
 	return 1;
 }
 function current_user_can( string $capability ): bool {
-	return true;
+	// Lot 5 (S1) : capacités réglables par test ; tout est permis par défaut, comme avant.
+	return $GLOBALS['wp_test_caps'][ $capability ] ?? true;
 }
 function wp_die( $message = '' ): void {
 	throw new RuntimeException( 'wp_die: ' . (string) $message );
@@ -256,7 +257,7 @@ function is_checkout(): bool {
 	return ! empty( $GLOBALS['wc_test_is_checkout'] );
 }
 function is_order_received_page(): bool {
-	return false;
+	return ! empty( $GLOBALS['wc_test_is_order_received'] );
 }
 function wp_doing_ajax(): bool {
 	return ! empty( $GLOBALS['wc_test_doing_ajax'] );
@@ -287,6 +288,13 @@ final class WC_Test_Cart {
 			$total += (float) $line['data']->get_price() * (float) $line['quantity'];
 		}
 		return $total;
+	}
+	public function get_cart_hash(): string {
+		$ids = array();
+		foreach ( $this->lines as $line ) {
+			$ids[] = array( $line['data']->get_id(), $line['quantity'] );
+		}
+		return array() === $ids ? '' : md5( (string) json_encode( $ids ) . $this->get_total() );
 	}
 }
 final class WC_Test_Store {
@@ -326,6 +334,7 @@ final class WC_Order {
 	public string $state               = '';
 	public string $country             = '';
 	public string $payment             = 'cod';
+	public string $order_key           = 'wc_order_unit_test';
 	public ?DateTimeImmutable $paid_at = null;
 	public function __construct( public int $id = 901 ) {
 		$GLOBALS['wc_test_orders'][ $id ] = $this;
@@ -362,6 +371,9 @@ final class WC_Order {
 	}
 	public function get_created_via(): string {
 		return $this->created_via;
+	}
+	public function key_is_valid( $key ): bool {
+		return hash_equals( $this->order_key, (string) $key );
 	}
 	public function get_items(): array {
 		return $this->items;

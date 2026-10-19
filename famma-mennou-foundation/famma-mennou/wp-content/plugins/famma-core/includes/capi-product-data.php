@@ -40,8 +40,9 @@ final class Capi_Product_Data {
 	 *
 	 * Une ligne dont le produit n'existe plus est ignorée partout, pour que
 	 * `contents`, `content_ids` et `num_items` restent cohérents entre eux.
-	 * `content_ids` reprend exactement `contents[].id` (SKU, sinon ID du
-	 * produit ou de la variation), sans doublon. `famma_product` porte le
+	 * `content_ids` reprend exactement `contents[].id`, fabriqué par la règle
+	 * unique `Meta_Ids::content_id()` (la même que le navigateur et l'express,
+	 * filtre `famma_meta_content_id` compris), sans doublon. `famma_product` porte le
 	 * slug du produit parent : les tailles d'un même produit variable ne
 	 * donnent qu'un seul slug.
 	 *
@@ -65,8 +66,7 @@ final class Capi_Product_Data {
 			}
 
 			$quantity = max( 0, (int) $item->get_quantity() );
-			$sku      = (string) $product->get_sku();
-			$id       = '' !== $sku ? $sku : (string) $product->get_id();
+			$id       = Meta_Ids::content_id( $product );
 
 			$contents[] = array(
 				'id'         => $id,

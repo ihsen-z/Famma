@@ -1,6 +1,6 @@
 <?php
 /**
- * Événements Meta du tunnel — ViewContent, AddToCart, InitiateCheckout.
+ * Événements Meta du tunnel — ViewContent, AddToCart, InitiateCheckout, OrderPlaced.
  *
  * Jusqu'ici le Pixel n'envoyait que `PageView`, et la CAPI que `Purchase` au
  * passage au statut « livré ». Entre les deux, rien : Meta voyait des visites
@@ -33,13 +33,20 @@
  * pas de rendu suivant : c'est l'écouteur JavaScript qui prend le relais. Les
  * deux chemins s'excluent (voir `remember_add_to_cart()`), jamais de doublon.
  *
- * ── `eventID` ───────────────────────────────────────────────────────────────
+ * ── `eventID` (lot 5, S3-a) ─────────────────────────────────────────────────
  *
- * Chaque événement porte un `eventID`. Aujourd'hui il ne sert à rien, puisque
- * ces trois événements ne partent que du navigateur. Il est là pour le jour où
- * ils partiront aussi par la CAPI : sans lui, Meta compterait deux fois le même
- * événement. Le poser maintenant coûte une ligne ; l'ajouter après coup
- * demanderait de rouvrir chaque appel.
+ * L'identifiant des événements navigateur est tiré **dans le navigateur**
+ * (`fammaEventId()`, posé avec le Pixel par `Tracking`) : une page servie par
+ * le cache LiteSpeed ne fige plus le même identifiant pour tous les visiteurs
+ * (H-N2). Aucun UUID fabriqué en PHP n'est imprimé dans le HTML. Seuls gardent
+ * un identifiant serveur : AddToCart et InitiateCheckout de l'express
+ * (`famma_add_<prep>`, `famma_checkout_<prep>`, réponse AJAX jamais mise en
+ * cache) et OrderPlaced (`famma_orderplaced_<id>`, le même que la CAPI).
+ *
+ * ── Visiteurs internes (S1) et profil de données (R3) ───────────────────────
+ *
+ * Rien n'est émis pour un visiteur interne (`Tracking::browser_tracking_allowed()`).
+ * Les paramètres suivent le profil choisi dans « Mesure » (`profile_params()`).
  *
  * @package famma-core
  */
@@ -59,6 +66,31 @@ final class Tracking_Events {
 	 * @var string
 	 */
 	private const PENDING = 'famma_pending_add_to_cart';
+
+	/**
+	 * Enveloppe « une seule fois par session de navigation » (sessionStorage).
+	 *
+	 * `%1$s` : clé JSON ; `%2$s` : corps qui émet puis renvoie `true`. Sans
+	 * stockage disponible, l'événement part quand même (il vaut mieux un
+	 * doublon, dédupliqué par Meta quand l'eventID est fixe, qu'une perte).
+	 */
+	public const ONCE_SCRIPT = '(function(k,f){var s=null;try{s=window.sessionStorage;if(s.getItem(k)){return;}}catch(e){s=null;}if(!f()){return;}try{if(s){s.setItem(k,"1");}}catch(e){}})(%1$s,function(){%2$s});';
+
+	/**
+	 * Champs retirés côté navigateur par le profil `standard` (les mêmes que la CAPI).
+	 */
+	private const STANDARD_EXCLUDED = Capi_Data_Profile::STANDARD_EXCLUDED;
+
+	/**
+	 * Seuls champs gardés côté navigateur par le profil `minimal`.
+	 */
+	public const MINIMAL_FIELDS = array( 'value', 'currency', 'content_ids', 'content_type' );
+
+	/**
+	 * Priorité du complément OrderPlaced sur la réponse de l'express : après
+	 * Capi (999) et Express_Idempotency (10000), qui pose `famma_request_id`.
+	 */
+	private const EXPRESS_RESULT_PRIORITY = 10010;
 
 	/**
 	 * Instance partagée.
@@ -94,26 +126,7 @@ final class Tracking_Events {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_events' ), 20 );
 		add_action( 'woocommerce_add_to_cart', array( $this, 'remember_add_to_cart' ), 10, 6 );
 		add_filter( 'woocommerce_loop_add_to_cart_args', array( $this, 'loop_button_data' ), 10, 2 );
-	}
-
-	/**
-	 * Identifiant catalogue d'un produit, tel que Meta doit le voir.
-	 *
-	 * Meta rapproche les événements du catalogue produit par cet identifiant.
-	 * Tant qu'aucun catalogue n'est branché, l'identifiant WooCommerce est le
-	 * seul choix défendable. Mais les flux générés par les extensions de
-	 * catalogue préfixent souvent l'identifiant (`wc_post_id_123`), et un
-	 * décalage ici casse silencieusement tout le rapprochement — les événements
-	 * arrivent, sans jamais se relier à un produit.
-	 *
-	 * D'où le filtre : le jour où le catalogue est branché, la correspondance
-	 * s'aligne sans toucher à ce fichier.
-	 *
-	 * @param \WC_Product $product Produit concerné.
-	 * @return string
-	 */
-	private function content_id( \WC_Product $product ): string {
-		return (string) apply_filters( 'famma_meta_content_id', (string) $product->get_id(), $product );
+		add_filter( 'woocommerce_payment_successful_result', array( $this, 'express_order_placed' ), self::EXPRESS_RESULT_PRIORITY, 2 );
 	}
 
 	/**
@@ -121,32 +134,69 @@ final class Tracking_Events {
 	 *
 	 * @return bool
 	 */
-	private function pixel_active(): bool {
+	private function pixel_configured(): bool {
 		return '' !== Config::instance()->meta_pixel_id();
 	}
 
 	/**
-	 * Ajoute la valeur et la devise aux boutons d'ajout de la boucle produit.
+	 * Indique si des événements navigateur doivent partir pour cette requête :
+	 * Pixel configuré et visiteur non interne (ou dérogation active).
+	 *
+	 * @return bool
+	 */
+	private function pixel_active(): bool {
+		return $this->pixel_configured() && Tracking::browser_tracking_allowed();
+	}
+
+	/**
+	 * Applique le profil de données (R3) aux paramètres d'un événement navigateur.
+	 *
+	 * - `standard` (défaut) : sans `content_name`, `famma_stage` ni `famma_product` ;
+	 * - `minimal` : seulement `value`, `currency`, `content_ids` et `content_type`.
+	 *
+	 * Comme côté serveur, l'ancien comportement ne revient que par le filtre de
+	 * code `famma_meta_data_profile_legacy` ; `famma_meta_browser_params`
+	 * reçoit le résultat final.
+	 *
+	 * @param array<string, mixed> $params     Paramètres complets.
+	 * @param string               $event_name Événement concerné.
+	 * @return array<string, mixed>
+	 */
+	public static function profile_params( array $params, string $event_name ): array {
+		$profile  = Config::instance()->meta_data_profile();
+		$filtered = 'minimal' === $profile
+			? array_intersect_key( $params, array_flip( self::MINIMAL_FIELDS ) )
+			: array_diff_key( $params, array_flip( self::STANDARD_EXCLUDED ) );
+		if ( true === apply_filters( 'famma_meta_data_profile_legacy', false, $event_name, null ) ) {
+			$filtered = $params;
+		}
+		$final = apply_filters( 'famma_meta_browser_params', $filtered, $profile, $event_name );
+
+		return is_array( $final ) ? $final : $filtered;
+	}
+
+	/**
+	 * Ajoute la valeur, la devise et l'identifiant Meta aux boutons de la boucle produit.
 	 *
 	 * L'écouteur JavaScript ne reçoit de WooCommerce que le bouton cliqué. Le
 	 * bouton porte déjà `data-product_id` ; il lui manque le prix, que Meta
-	 * attend pour `AddToCart`. Le poser ici évite à l'écouteur d'aller le
-	 * chercher dans le DOM de la carte, où le prix barré et le prix promo se
-	 * ressemblent trop pour être distingués de façon fiable.
+	 * attend pour `AddToCart`, et l'identifiant de la règle unique (S3-b), qui
+	 * n'est l'ID WooCommerce que pour un produit sans SKU.
 	 *
 	 * @param array<string, mixed> $args    Attributs du bouton.
 	 * @param \WC_Product          $product Produit de la carte.
 	 * @return array<string, mixed>
 	 */
 	public function loop_button_data( array $args, \WC_Product $product ): array {
-		if ( ! $this->pixel_active() ) {
+		if ( ! $this->pixel_configured() ) {
 			return $args;
 		}
 
 		$attributes = isset( $args['attributes'] ) && is_array( $args['attributes'] ) ? $args['attributes'] : array();
 
-		$attributes['data-famma-value']    = wc_format_decimal( (string) wc_get_price_to_display( $product ), wc_get_price_decimals() );
-		$attributes['data-famma-currency'] = get_woocommerce_currency();
+		$attributes['data-famma-value']      = wc_format_decimal( (string) wc_get_price_to_display( $product ), wc_get_price_decimals() );
+		$attributes['data-famma-currency']   = get_woocommerce_currency();
+		$attributes['data-famma-content-id'] = Meta_Ids::content_id( $product );
 
 		$args['attributes'] = $attributes;
 
@@ -198,7 +248,7 @@ final class Tracking_Events {
 		}
 
 		$pending[] = array(
-			'id'       => $this->content_id( $product ),
+			'id'       => Meta_Ids::content_id( $product ),
 			'quantity' => (float) $quantity,
 			'value'    => (float) wc_get_price_to_display( $product ) * (float) $quantity,
 			'currency' => get_woocommerce_currency(),
@@ -234,18 +284,29 @@ final class Tracking_Events {
 	/**
 	 * Construit un appel `fbq` complet, prêt à être inséré.
 	 *
-	 * `wp_json_encode` sur chaque moitié plutôt qu'une concaténation de
-	 * chaînes : les paramètres viennent de données de boutique — un nom de
-	 * devise, un identifiant filtré — et rien de tout cela n'a à être supposé
-	 * sûr au moment d'entrer dans du JavaScript.
+	 * `wp_json_encode` sur les paramètres plutôt qu'une concaténation : ils
+	 * viennent de données de boutique, et rien n'a à être supposé sûr au
+	 * moment d'entrer dans du JavaScript. L'eventID est tiré dans le
+	 * navigateur, à chaque affichage (S3-a).
 	 *
 	 * @param string               $event  Nom de l'événement standard Meta.
-	 * @param array<string, mixed> $params Paramètres de l'événement.
+	 * @param array<string, mixed> $params Paramètres complets de l'événement.
 	 * @return string
 	 */
 	private function fbq_call( string $event, array $params ): string {
-		return 'fbq("track",' . wp_json_encode( $event ) . ',' . wp_json_encode( $params )
-			. ',{eventID:' . wp_json_encode( wp_generate_uuid4() ) . '});';
+		return 'fbq("track",' . wp_json_encode( $event ) . ',' . wp_json_encode( self::profile_params( $params, $event ) )
+			. ',{eventID:fammaEventId()});';
+	}
+
+	/**
+	 * Enveloppe un émetteur pour qu'il ne parte qu'une fois par session de navigation.
+	 *
+	 * @param string $key  Clé sessionStorage.
+	 * @param string $emit Appel `fbq` complet.
+	 * @return string
+	 */
+	private function once( string $key, string $emit ): string {
+		return sprintf( self::ONCE_SCRIPT, wp_json_encode( $key ), $emit . 'return true;' );
 	}
 
 	/**
@@ -266,9 +327,7 @@ final class Tracking_Events {
 
 		return $this->fbq_call(
 			'ViewContent',
-			array(
-				'content_type' => 'product',
-				'content_ids'  => array( $this->content_id( $product ) ),
+			Meta_Ids::view_target( $product ) + array(
 				'content_name' => $product->get_name(),
 				'value'        => (float) wc_get_price_to_display( $product ),
 				'currency'     => get_woocommerce_currency(),
@@ -277,7 +336,10 @@ final class Tracking_Events {
 	}
 
 	/**
-	 * Paramètres `InitiateCheckout` du panier en cours.
+	 * `InitiateCheckout` du panier en cours, une seule fois par panier et par session.
+	 *
+	 * La clé de session porte l'empreinte du panier : recharger /commande/ ne
+	 * renvoie rien (T3.2), modifier le panier ouvre une nouvelle intention.
 	 *
 	 * @return string Chaîne vide hors du checkout, ou sur un panier vide.
 	 */
@@ -296,7 +358,7 @@ final class Tracking_Events {
 				continue;
 			}
 
-			$id         = $this->content_id( $product );
+			$id         = Meta_Ids::content_id( $product );
 			$ids[]      = $id;
 			$contents[] = array(
 				'id'       => $id,
@@ -308,15 +370,24 @@ final class Tracking_Events {
 			return '';
 		}
 
-		return $this->fbq_call(
-			'InitiateCheckout',
-			array(
-				'content_type' => 'product',
-				'content_ids'  => $ids,
-				'contents'     => $contents,
-				'num_items'    => (int) WC()->cart->get_cart_contents_count(),
-				'value'        => (float) WC()->cart->get_total( 'edit' ),
-				'currency'     => get_woocommerce_currency(),
+		$value = (float) WC()->cart->get_total( 'edit' );
+		$hash  = (string) WC()->cart->get_cart_hash();
+		if ( '' === $hash ) {
+			$hash = md5( (string) wp_json_encode( array( $contents, $value ) ) );
+		}
+
+		return $this->once(
+			'famma_ic_' . $hash,
+			$this->fbq_call(
+				'InitiateCheckout',
+				array(
+					'content_type' => 'product',
+					'content_ids'  => array_values( array_unique( $ids ) ),
+					'contents'     => $contents,
+					'num_items'    => (int) WC()->cart->get_cart_contents_count(),
+					'value'        => $value,
+					'currency'     => get_woocommerce_currency(),
+				)
 			)
 		);
 	}
@@ -351,36 +422,165 @@ final class Tracking_Events {
 	}
 
 	/**
+	 * Identifiant d'OrderPlaced, le même côté navigateur et côté CAPI.
+	 *
+	 * @param \WC_Order $order Commande.
+	 * @return string
+	 */
+	public static function order_placed_event_id( \WC_Order $order ): string {
+		return 'famma_orderplaced_' . $order->get_id();
+	}
+
+	/**
+	 * Paramètres d'OrderPlaced navigateur : le bloc de la CAPI, même profil.
+	 *
+	 * @param \WC_Order $order Commande acceptée.
+	 * @return array<string, mixed>
+	 */
+	public static function order_placed_params( \WC_Order $order ): array {
+		$params                = array(
+			'currency'     => $order->get_currency(),
+			'value'        => round( (float) $order->get_total(), 3 ),
+			'order_id'     => (string) $order->get_id(),
+			'content_type' => 'product',
+		) + Capi_Product_Data::for_order( $order );
+		$params['famma_stage'] = 'order_placed';
+
+		return self::profile_params( $params, 'OrderPlaced' );
+	}
+
+	/**
+	 * Commande de la page de confirmation, si sa clé est valide.
+	 *
+	 * La clé de commande de l'URL est l'autorisation de WooCommerce sur cette
+	 * page : sans elle, rien n'est lu ni imprimé.
+	 *
+	 * @return \WC_Order|null
+	 */
+	private function received_order(): ?\WC_Order {
+		$order_id = absint( get_query_var( 'order-received' ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- lecture seule ; la clé de commande est l'autorisation de WooCommerce sur cette page.
+		$key   = isset( $_GET['key'] ) && is_string( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
+		$order = $order_id > 0 ? wc_get_order( $order_id ) : false;
+
+		if ( ! $order instanceof \WC_Order || '' === $key || ! $order->key_is_valid( $key ) ) {
+			return null;
+		}
+		if ( 'checkout' !== $order->get_created_via() || $order->has_status( array( 'failed', 'cancelled' ) ) ) {
+			return null;
+		}
+
+		return $order;
+	}
+
+	/**
+	 * OrderPlaced navigateur sur la page de confirmation, une seule fois (S3-a).
+	 *
+	 * Coupé par défaut (`Config::meta_orderplaced_browser()`, E6) : à moins de
+	 * 5 minutes d'écart, Meta garde la version navigateur, moins riche que la
+	 * CAPI. Même eventID que le serveur ; un rechargement ou un retour arrière
+	 * ne le renvoie pas (clé sessionStorage = eventID).
+	 *
+	 * @return string
+	 */
+	private function order_placed(): string {
+		if ( ! Config::instance()->meta_orderplaced_browser() || ! is_order_received_page() ) {
+			return '';
+		}
+
+		$order = $this->received_order();
+
+		if ( null === $order ) {
+			return '';
+		}
+
+		$event_id = self::order_placed_event_id( $order );
+
+		return $this->once(
+			$event_id,
+			'fbq("trackCustom","OrderPlaced",' . wp_json_encode( self::order_placed_params( $order ) ) . ',{eventID:' . wp_json_encode( $event_id ) . '});'
+		);
+	}
+
+	/**
+	 * Joint l'OrderPlaced navigateur à la réponse de succès de l'express.
+	 *
+	 * Le script l'émet avant la redirection, avec la même clé sessionStorage
+	 * que la page de confirmation : l'événement ne part qu'une fois. Rien n'est
+	 * ajouté hors de l'express, sans l'interrupteur, ou pour un visiteur interne.
+	 *
+	 * @param array $result   Réponse de succès de WooCommerce.
+	 * @param int   $order_id Commande créée.
+	 * @return array
+	 */
+	public function express_order_placed( array $result, int $order_id ): array {
+		if ( 'success' !== ( $result['result'] ?? '' ) || empty( $result['famma_request_id'] ) ) {
+			return $result;
+		}
+		if ( ! Config::instance()->meta_orderplaced_browser() || ! $this->pixel_active() ) {
+			return $result;
+		}
+
+		$order = wc_get_order( $order_id );
+
+		if ( ! $order instanceof \WC_Order ) {
+			return $result;
+		}
+
+		$result['famma_order_placed'] = array(
+			'event_id' => self::order_placed_event_id( $order ),
+			'params'   => self::order_placed_params( $order ),
+		);
+
+		return $result;
+	}
+
+	/**
 	 * Écouteur des ajouts au panier faits en AJAX.
 	 *
 	 * WooCommerce déclenche `added_to_cart` sur `document.body` une fois la
 	 * réponse serveur reçue — donc après un ajout réussi, pas au clic.
 	 *
 	 * jQuery est une dépendance assumée : c'est WooCommerce qui déclenche
-	 * l'événement, et il le fait par jQuery. Un `addEventListener` natif ne le
-	 * verrait jamais. Le garde-fou `window.jQuery` évite l'erreur de console
-	 * sur une page où WooCommerce ne l'aurait pas chargé.
+	 * l'événement, et il le fait par jQuery. Le script du Pixel pouvant être
+	 * dans le `<head>` (chargement immédiat, D6), avant jQuery, l'écouteur est
+	 * branché dès que jQuery est là : tout de suite, sinon à DOMContentLoaded
+	 * ou à `load`. Les clés gardées suivent le profil de données.
 	 *
 	 * @return string
 	 */
 	private function ajax_listener(): string {
-		return '(function(){if(!window.jQuery||!window.fbq){return;}'
+		$keys = array_keys(
+			self::profile_params(
+				array(
+					'content_type' => 'product',
+					'content_ids'  => array(),
+					'contents'     => array(),
+					'value'        => 0.0,
+					'currency'     => '',
+				),
+				'AddToCart'
+			)
+		);
+
+		return '(function(){var done=false,keep=' . wp_json_encode( array_values( $keys ) ) . ';function go(){if(done||!window.jQuery||!window.fbq){return;}done=true;'
 			. 'jQuery(document.body).on("added_to_cart",function(e,f,c,btn){try{'
 			. 'var b=btn&&btn.length?btn[0]:btn;if(!b){return;}'
-			. 'var id=b.getAttribute("data-product_id");if(!id){return;}'
+			. 'var id=b.getAttribute("data-famma-content-id")||b.getAttribute("data-product_id");if(!id){return;}'
 			. 'var v=parseFloat(b.getAttribute("data-famma-value")||"0");'
 			. 'var q=parseFloat(b.getAttribute("data-quantity")||"1")||1;'
-			. 'fbq("track","AddToCart",{content_type:"product",content_ids:[id],'
-			. 'contents:[{id:id,quantity:q}],value:v*q,'
-			. 'currency:b.getAttribute("data-famma-currency")||undefined},'
-			. '{eventID:(window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+"-"+id});'
-			. '}catch(err){}});})();';
+			. 'var p={content_type:"product",content_ids:[id],contents:[{id:id,quantity:q}],value:v*q,'
+			. 'currency:b.getAttribute("data-famma-currency")||undefined},o={};'
+			. 'keep.forEach(function(x){if(x in p){o[x]=p[x];}});'
+			. 'fbq("track","AddToCart",o,{eventID:window.fammaEventId?fammaEventId():String(Date.now())+"-"+id});'
+			. '}catch(err){}});}'
+			. 'go();if(!done){document.addEventListener("DOMContentLoaded",go);window.addEventListener("load",go);}})();';
 	}
 
 	/**
 	 * Met les événements en file d'attente derrière le Pixel.
 	 *
-	 * Un seul script inline pour les trois événements : chaque appel à
+	 * Un seul script inline pour tous les événements : chaque appel à
 	 * `wp_add_inline_script` sur le même handle produit un fragment distinct,
 	 * et les empiler n'apporte rien ici.
 	 *
@@ -394,10 +594,10 @@ final class Tracking_Events {
 			return;
 		}
 
-		$script = $this->view_content() . $this->add_to_cart() . $this->initiate_checkout();
+		$script = $this->view_content() . $this->add_to_cart() . $this->initiate_checkout() . $this->order_placed();
 
 		if ( '' !== $script ) {
-			$script = 'if(window.fbq){' . $script . '}';
+			$script = 'if(window.fbq&&window.fammaEventId){' . $script . '}';
 		}
 
 		$script .= $this->ajax_listener();

@@ -38,6 +38,7 @@ require_once __DIR__ . '/includes/returns-content.php';
 require_once __DIR__ . '/includes/newsletter.php';
 require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';
+require_once __DIR__ . '/includes/meta-ids.php';
 require_once __DIR__ . '/includes/tracking-events.php';
 require_once __DIR__ . '/includes/product-sizes.php';
 require_once __DIR__ . '/includes/product-sizes-admin.php';
@@ -2003,8 +2004,42 @@ final class WhatsApp {
  *
  * Only public identifiers ever reach the browser. The Meta access token is
  * read server-side and is never enqueued, printed or logged.
+ *
+ * Lot 5 :
+ * - S1 : un visiteur interne (administrateur ou gérant connecté) ne reçoit
+ *   ni Pixel, ni événement navigateur, ni GA4, ni TikTok. Les envois serveur
+ *   (OrderPlaced, Purchase) et les données enregistrées sur la commande ne
+ *   sont jamais coupés ;
+ * - S3-a : l'eventID de PageView (et des événements de `Tracking_Events`) est
+ *   tiré dans le navigateur, jamais figé par le cache ;
+ * - D6 : chargement immédiat (code standard de Meta, dans le `<head>`) par
+ *   défaut, ou différé (comportement de la 0.3.1) ;
+ * - R12 : la capture UTM ne dépend plus d'aucun Pixel, et chaque commande
+ *   reçoit une source de synthèse `_famma_order_source`.
  */
 final class Tracking {
+
+	/**
+	 * Paramètres de campagne recopiés sur la commande (`_famma_utm_*`).
+	 */
+	private const UTM_KEYS = array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term' );
+
+	/**
+	 * Générateur d'eventID du navigateur (S3-a) : `crypto.randomUUID()`, sinon
+	 * un UUID v4 tiré de `crypto.getRandomValues()`, sinon horloge et hasard.
+	 */
+	public const EVENT_ID_SCRIPT = 'window.fammaEventId=window.fammaEventId||function(){var c=window.crypto,b,h="",i;if(c&&c.randomUUID){return c.randomUUID();}if(c&&c.getRandomValues){b=new Uint8Array(16);c.getRandomValues(b);b[6]=b[6]&15|64;b[8]=b[8]&63|128;for(i=0;i<16;i++){h+=(b[i]+256).toString(16).slice(1)+(3===i||5===i||7===i||9===i?"-":"");}return h;}return Date.now().toString(36)+"-"+Math.random().toString(36).slice(2)+"-"+Math.random().toString(36).slice(2);};';
+
+	/**
+	 * Capture first-party de la provenance (§20, R12), indépendante de tout Pixel.
+	 *
+	 * Cookie `famma_utm`, 30 jours : les `utm_*` de l'arrivée (inchangé), plus
+	 * `fbclid` (présence) et `ref` (site référent externe). Une arrivée avec
+	 * UTM remplace le cookie ; une arrivée sans UTM mais avec fbclid ou
+	 * référent externe ne remplace qu'un cookie sans UTM, pour que les
+	 * `_famma_utm_*` gardent exactement leur sens d'avant.
+	 */
+	public const UTM_SCRIPT = '(function(){try{var p=new URLSearchParams(location.search),k=["utm_source","utm_medium","utm_campaign","utm_content","utm_term"],o={},h=false,a=";path=/;max-age="+(60*60*24*30)+";SameSite=Lax",r="",u=false,c=document.cookie.match(/(?:^|;\s*)famma_utm=([^;]*)/),n=function(x){return String(x||"").toLowerCase().replace(/^www\./,"");};k.forEach(function(x){var v=p.get(x);if(v){o[x]=v;h=true;}});try{r=document.referrer?n(new URL(document.referrer).hostname):"";}catch(e){r="";}if(r===n(location.hostname)){r="";}if(p.get("fbclid")){o.fbclid=1;}if(r){o.ref=r.slice(0,100);}if(!h&&c){try{u=/utm_/.test(decodeURIComponent(c[1]));}catch(e){u=false;}}if(h||((o.fbclid||r)&&!u)){document.cookie="famma_utm="+encodeURIComponent(JSON.stringify(o))+a;}}catch(e){}})();';
 
 	/**
 	 * Singleton instance.
@@ -2033,10 +2068,114 @@ final class Tracking {
 	 */
 	private function hooks(): void {
 		add_action( 'wp_head', array( $this, 'site_verification' ), 5 );
+		add_action( 'template_redirect', array( $this, 'internal_cache_guard' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_tracking' ) );
 		add_action( 'woocommerce_checkout_create_order', array( $this, 'stamp_utm_on_order' ), 30 );
 		add_action( 'woocommerce_checkout_create_order', array( $this, 'stamp_capi_signals' ), 31 );
 		// Le déclencheur du Purchase serveur vit dans Capi (priorité 20, après l'encaissement).
+		add_filter( 'wp_inline_script_attributes', array( $this, 'immediate_attributes' ) );
+		add_filter( 'litespeed_optimize_js_excludes', array( $this, 'litespeed_exclude' ) );
+		add_filter( 'litespeed_optm_js_defer_exc', array( $this, 'litespeed_exclude' ) );
+	}
+
+	/**
+	 * Chargement différé du Pixel (D6) : réglage `famma_meta_pixel_loading`,
+	 * que le filtre de code `famma_defer_pixels` peut encore forcer.
+	 *
+	 * @return bool
+	 */
+	private static function deferred(): bool {
+		return (bool) apply_filters( 'famma_defer_pixels', 'deferred' === Config::instance()->meta_pixel_loading() );
+	}
+
+	/**
+	 * En chargement immédiat, LiteSpeed ne retarde ni ne diffère le Pixel.
+	 *
+	 * Sans ces attributs, l'option « JS différé / retardé » de LiteSpeed
+	 * remettrait le code de base à après une interaction : exactement la perte
+	 * que le chargement immédiat corrige (T3.5). Mêmes attributs que
+	 * `Capi_Signals::no_optimize_attributes()`. En différé, rien ne change.
+	 *
+	 * @param mixed $attributes Attributs de la balise inline.
+	 * @return array<string, string|bool>
+	 */
+	public function immediate_attributes( $attributes ): array {
+		$attributes = (array) $attributes;
+		if ( 'famma-pixels-js-after' === ( $attributes['id'] ?? '' ) && ! self::deferred() ) {
+			$attributes['data-no-optimize'] = '1';
+			$attributes['data-no-defer']    = '1';
+			$attributes['data-cfasync']     = 'false';
+		}
+
+		return $attributes;
+	}
+
+	/**
+	 * Filet de sécurité : `famma-pixels` dans les exclusions JS de LiteSpeed, en immédiat seulement.
+	 *
+	 * @param mixed $excludes Liste d'exclusions de LiteSpeed Cache.
+	 * @return array<int, string>
+	 */
+	public function litespeed_exclude( $excludes ): array {
+		$excludes = is_array( $excludes ) ? $excludes : array_filter( (array) $excludes );
+		if ( ! self::deferred() ) {
+			$excludes[] = 'famma-pixels';
+		}
+
+		return array_values( array_unique( $excludes ) );
+	}
+
+	/**
+	 * Visiteur interne (S1) : utilisateur connecté qui gère le site ou la boutique.
+	 *
+	 * Même règle que le mu-plugin `famma-google-tags.php` (`manage_options` ou
+	 * `manage_woocommerce`) : GA4 et Meta excluent les mêmes personnes. Les
+	 * clients connectés restent mesurés. Filtre `famma_tracking_exclude_visitor`.
+	 *
+	 * @return bool
+	 */
+	public static function is_internal_visitor(): bool {
+		$internal = function_exists( 'is_user_logged_in' ) && is_user_logged_in()
+			&& ( current_user_can( 'manage_options' ) || current_user_can( 'manage_woocommerce' ) );
+
+		return (bool) apply_filters( 'famma_tracking_exclude_visitor', $internal );
+	}
+
+	/**
+	 * Le navigateur de cette requête doit-il recevoir le suivi (Pixel, événements, TikTok, GA4) ?
+	 *
+	 * Vrai pour tout visiteur non interne, et pour un visiteur interne quand
+	 * la dérogation « Suivre mes visites (mode test) » est active
+	 * (`Config::track_internal_visitors()`, constante `FAMMA_TRACK_INTERNAL`).
+	 * Ne concerne jamais les envois serveur.
+	 *
+	 * @return bool
+	 */
+	public static function browser_tracking_allowed(): bool {
+		return ! self::is_internal_visitor() || Config::instance()->track_internal_visitors();
+	}
+
+	/**
+	 * Une page vue par un visiteur interne n'est jamais mise en cache.
+	 *
+	 * LiteSpeed ne sert déjà jamais son cache public à un utilisateur connecté,
+	 * et la variante « connecté » qu'il peut garder est privée (liée au cookie
+	 * de session de cet utilisateur) : une page sans Pixel ne peut pas être
+	 * servie à un visiteur. Ce garde va plus loin : il couvre une exclusion
+	 * élargie par le filtre à un visiteur non connecté, et rend effet immédiat
+	 * à la bascule de la dérogation (pas de page privée périmée 30 minutes).
+	 *
+	 * @return void
+	 */
+	public function internal_cache_guard(): void {
+		if ( is_admin() || ! self::is_internal_visitor() ) {
+			return;
+		}
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- API de LiteSpeed Cache (sans effet s'il est absent).
+		do_action( 'litespeed_control_set_nocache', 'famma-core : visiteur interne, page propre à la mesure' );
+		if ( function_exists( 'wc_maybe_define_constant' ) ) {
+			wc_maybe_define_constant( 'DONOTCACHEPAGE', true );
+		}
 	}
 
 	/**
@@ -2059,10 +2198,32 @@ final class Tracking {
 	 * than raw <script> echoes, so third parties can dequeue them and the
 	 * loading strategy stays under WordPress's control (§23).
 	 *
+	 * Le handle `famma-pixels` existe désormais sur toute page : il porte au
+	 * moins la capture UTM (R12). En chargement immédiat (D6, défaut), il est
+	 * imprimé dans le `<head>`, comme le code standard de Meta ; en différé,
+	 * en pied de page comme en 0.3.1.
+	 *
 	 * @return void
 	 */
 	public function enqueue_tracking(): void {
 		$cfg = Config::instance();
+
+		/*
+		 * Différé : les files fbq / ttq sont créées tout de suite, mais le
+		 * téléchargement des bibliothèques tierces attend la fin du chargement
+		 * et un moment d'inactivité (PERF-07). Immédiat : la bibliothèque part
+		 * aussitôt, en asynchrone ; un départ rapide ne perd plus les
+		 * événements (T3.5). Le filtre `famma_defer_pixels` suit le réglage.
+		 */
+		$deferred = self::deferred();
+
+		wp_register_script( 'famma-pixels', false, array(), FAMMA_CORE_VERSION, array( 'in_footer' => $deferred ) );
+		wp_enqueue_script( 'famma-pixels' );
+
+		if ( ! self::browser_tracking_allowed() ) {
+			wp_add_inline_script( 'famma-pixels', self::UTM_SCRIPT );
+			return;
+		}
 
 		$ga = $cfg->ga4_measurement_id();
 		if ( '' !== $ga ) {
@@ -2081,77 +2242,125 @@ final class Tracking {
 
 		$pixel = $cfg->meta_pixel_id();
 		$ttk   = $cfg->tiktok_pixel_id();
-		if ( '' === $pixel && '' === $ttk ) {
-			return;
-		}
 
-		wp_register_script( 'famma-pixels', false, array(), FAMMA_CORE_VERSION, true );
-		wp_enqueue_script( 'famma-pixels' );
-
-		/*
-		 * Les files fbq / ttq sont créées tout de suite, mais le téléchargement
-		 * des bibliothèques tierces (~190 Kio pour Meta) attend la fin du
-		 * chargement et un moment d'inactivité : il ne concurrence plus le
-		 * premier affichage (PERF-07). Aucun événement n'est perdu, la file
-		 * est rejouée quand la bibliothèque arrive.
-		 *
-		 * Filtre `famma_defer_pixels` : false pour revenir au chargement immédiat.
-		 */
-		$defer = (bool) apply_filters( 'famma_defer_pixels', true );
-		wp_add_inline_script(
-			'famma-pixels',
-			$defer
-				? 'window.fammaDefer=window.fammaDefer||function(f){var r=function(){"requestIdleCallback" in window?requestIdleCallback(f,{timeout:3000}):setTimeout(f,1);};"complete"===document.readyState?r():addEventListener("load",r,{once:true});};'
-				: 'window.fammaDefer=window.fammaDefer||function(f){f();};'
-		);
-
-		if ( '' !== $pixel ) {
+		if ( '' !== $pixel || '' !== $ttk ) {
 			wp_add_inline_script(
 				'famma-pixels',
-				"!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];fammaDefer(function(){t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)})}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init'," . wp_json_encode( $pixel ) . ");fbq('track','PageView');"
+				$deferred
+					? 'window.fammaDefer=window.fammaDefer||function(f){var r=function(){"requestIdleCallback" in window?requestIdleCallback(f,{timeout:3000}):setTimeout(f,1);};"complete"===document.readyState?r():addEventListener("load",r,{once:true});};'
+					: 'window.fammaDefer=window.fammaDefer||function(f){f();};'
 			);
+		}
+
+		if ( '' !== $pixel ) {
+			wp_add_inline_script( 'famma-pixels', self::EVENT_ID_SCRIPT . self::meta_base_code( $pixel, $deferred ) );
 		}
 
 		if ( '' !== $ttk ) {
+			$load = 'ttq.load(' . wp_json_encode( $ttk ) . ')';
 			wp_add_inline_script(
 				'famma-pixels',
-				'!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"];ttq.setAndDefer=function(e,n){e[n]=function(){e.push([n].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.load=function(e){var n="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=n;ttq._t=ttq._t||{};ttq._t[e]=+new Date;var o=d.createElement("script");o.type="text/javascript";o.async=!0;o.src=n+"?sdkid="+e;var a=d.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};fammaDefer(function(){ttq.load(' . wp_json_encode( $ttk ) . ')});ttq.page()}(window,document,"ttq");'
+				'!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"];ttq.setAndDefer=function(e,n){e[n]=function(){e.push([n].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.load=function(e){var n="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=n;ttq._t=ttq._t||{};ttq._t[e]=+new Date;var o=d.createElement("script");o.type="text/javascript";o.async=!0;o.src=n+"?sdkid="+e;var a=d.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};'
+				. ( $deferred ? 'fammaDefer(function(){' . $load . '});' : $load . ';' )
+				. 'ttq.page()}(window,document,"ttq");'
 			);
 		}
 
-		// UTM persistence (§20) — independent of any pixel being configured.
-		wp_add_inline_script(
-			'famma-pixels',
-			'(function(){try{var p=new URLSearchParams(location.search),k=["utm_source","utm_medium","utm_campaign","utm_content","utm_term"],o={},h=false;k.forEach(function(x){var v=p.get(x);if(v){o[x]=v;h=true;}});if(h){document.cookie="famma_utm="+encodeURIComponent(JSON.stringify(o))+";path=/;max-age="+(60*60*24*30)+";SameSite=Lax";}}catch(e){}})();'
-		);
+		// UTM persistence (§20, R12) — independent of any pixel being configured.
+		wp_add_inline_script( 'famma-pixels', self::UTM_SCRIPT );
 	}
 
 	/**
-	 * Copies the captured UTM parameters onto the order (§20).
+	 * Code de base du Pixel Meta : un seul `fbq('init')` et le PageView.
+	 *
+	 * Immédiat : le code standard de Meta (bibliothèque insérée en `async`
+	 * aussitôt). Différé : la même file, la bibliothèque attend `fammaDefer`.
+	 * L'eventID du PageView est tiré dans le navigateur.
+	 *
+	 * @param string $pixel    Identifiant public du Pixel.
+	 * @param bool   $deferred Chargement différé.
+	 * @return string
+	 */
+	private static function meta_base_code( string $pixel, bool $deferred ): string {
+		$insert = 't=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)';
+
+		return "!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];"
+			. ( $deferred ? 'fammaDefer(function(){' . $insert . '})' : $insert )
+			. "}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init'," . wp_json_encode( $pixel ) . ");fbq('track','PageView',{},{eventID:fammaEventId()});";
+	}
+
+	/**
+	 * Cookie de provenance `famma_utm`, décodé ; tableau vide s'il est absent ou invalide.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function utm_cookie(): array {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only attribution cookie, not an action.
+		$raw = isset( $_COOKIE['famma_utm'] ) && is_string( $_COOKIE['famma_utm'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['famma_utm'] ) ) : '';
+		if ( '' === $raw || strlen( $raw ) > 2048 ) {
+			return array();
+		}
+
+		$parsed = json_decode( $raw, true );
+
+		return is_array( $parsed ) ? $parsed : array();
+	}
+
+	/**
+	 * Copies the captured UTM parameters and the synthetic source onto the order (§20, R12).
 	 *
 	 * The cookie is attacker-controllable, so each value is length-capped and
-	 * sanitised individually before being stored.
+	 * sanitised individually before being stored. `_famma_order_source` est
+	 * toujours écrit, même sans cookie (« direct »).
 	 *
 	 * @param \WC_Order $order Order being created.
 	 * @return void
 	 */
 	public function stamp_utm_on_order( \WC_Order $order ): void {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only attribution cookie, not an action.
-		$raw = isset( $_COOKIE['famma_utm'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['famma_utm'] ) ) : '';
-		if ( '' === $raw || strlen( $raw ) > 2048 ) {
-			return;
-		}
+		$parsed = self::utm_cookie();
 
-		$parsed = json_decode( $raw, true );
-		if ( ! is_array( $parsed ) ) {
-			return;
-		}
-
-		foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term' ) as $k ) {
+		foreach ( self::UTM_KEYS as $k ) {
 			if ( ! empty( $parsed[ $k ] ) && is_scalar( $parsed[ $k ] ) ) {
 				$order->update_meta_data( '_famma_' . $k, substr( sanitize_text_field( (string) $parsed[ $k ] ), 0, 255 ) );
 			}
 		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only Meta click cookie, validated by Capi_Signals.
+		$fbc = isset( $_COOKIE['_fbc'] ) && is_string( $_COOKIE['_fbc'] ) ? Capi_Signals::clean_cookie( sanitize_text_field( wp_unslash( $_COOKIE['_fbc'] ) ) ) : '';
+		$order->update_meta_data( '_famma_order_source', self::order_source( $parsed, '' !== $fbc ) );
+	}
+
+	/**
+	 * Source de synthèse d'une commande, au format « source / support » (R12).
+	 *
+	 * Même ordre que le parcours visiteurs : UTM d'abord (`facebook / paid`),
+	 * puis fbclid (`facebook / fbclid`), puis site référent externe
+	 * (`google.com / referral`), puis un cookie `_fbc` valide (clic Meta
+	 * antérieur au cookie de provenance), sinon `direct`.
+	 *
+	 * @param array<string, mixed> $cookie  Cookie `famma_utm` décodé.
+	 * @param bool                 $has_fbc Un cookie `_fbc` valide accompagne la commande.
+	 * @return string
+	 */
+	public static function order_source( array $cookie, bool $has_fbc ): string {
+		$clean  = static function ( $value ): string {
+			return is_scalar( $value ) ? strtolower( substr( trim( sanitize_text_field( (string) $value ) ), 0, 64 ) ) : '';
+		};
+		$source = $clean( $cookie['utm_source'] ?? '' );
+		if ( '' !== $source ) {
+			$medium = $clean( $cookie['utm_medium'] ?? '' );
+			return '' !== $medium ? $source . ' / ' . $medium : $source;
+		}
+		if ( ! empty( $cookie['fbclid'] ) ) {
+			return 'facebook / fbclid';
+		}
+		$ref = is_scalar( $cookie['ref'] ?? null ) ? (string) preg_replace( '/[^a-z0-9.-]/', '', strtolower( (string) $cookie['ref'] ) ) : '';
+		$ref = substr( (string) preg_replace( '/^www\./', '', $ref ), 0, 100 );
+		if ( '' !== $ref ) {
+			return $ref . ' / referral';
+		}
+
+		return $has_fbc ? 'facebook / fbclid' : 'direct';
 	}
 
 	/**
