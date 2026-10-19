@@ -313,18 +313,20 @@ final class WC_Order_Item_Product {
 	}
 }
 final class WC_Order {
-	public array $meta         = array();
-	public array $notes        = array();
-	public array $items        = array();
-	public string $status      = 'delivered';
-	public string $created_via = 'checkout';
-	public string $email       = '';
-	public string $phone       = '';
-	public string $first_name  = '';
-	public string $last_name   = '';
-	public string $city        = '';
-	public string $state       = '';
-	public string $country     = '';
+	public array $meta                 = array();
+	public array $notes                = array();
+	public array $items                = array();
+	public string $status              = 'delivered';
+	public string $created_via         = 'checkout';
+	public string $email               = '';
+	public string $phone               = '';
+	public string $first_name          = '';
+	public string $last_name           = '';
+	public string $city                = '';
+	public string $state               = '';
+	public string $country             = '';
+	public string $payment             = 'cod';
+	public ?DateTimeImmutable $paid_at = null;
 	public function __construct( public int $id = 901 ) {
 		$GLOBALS['wc_test_orders'][ $id ] = $this;
 	}
@@ -341,6 +343,22 @@ final class WC_Order {
 	public function save(): void {}
 	public function has_status( $status ): bool {
 		return in_array( $this->status, (array) $status, true );
+	}
+	public function get_status(): string {
+		return $this->status;
+	}
+	public function payment_complete(): bool {
+		$this->notes[] = 'payment_complete';
+		return true;
+	}
+	public function get_payment_method(): string {
+		return $this->payment;
+	}
+	public function get_date_paid(): ?DateTimeImmutable {
+		return $this->paid_at;
+	}
+	public function get_date_modified(): ?DateTimeImmutable {
+		return $this->paid_at;
 	}
 	public function get_created_via(): string {
 		return $this->created_via;

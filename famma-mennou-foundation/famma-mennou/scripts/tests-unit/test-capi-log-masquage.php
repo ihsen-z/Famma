@@ -3,22 +3,16 @@
  * T1.6 — The CAPI token never reaches the famma-capi log, the order notes,
  * the request URL or the admin redirect; only its last 4 characters in the admin.
  * Run with: php scripts/tests-unit/test-capi-log-masquage.php [--json]
- * Real Capi, Config, Tunisia, Capi_Signals, Capi_Log, Capi_Product_Data and
- * Tracking_Settings; only the delivery registry is doubled. Fake pixel and token.
+ * Real Capi, Config, Tunisia, Capi_Signals, Capi_Log, Capi_Product_Data, the
+ * lot 5 collaborators (transport, user data, vault…) and Tracking_Settings;
+ * only the delivery registry is doubled. Fake pixel and token.
  *
  * @package Famma_Test_Scenarios
  */
 
 // Standalone runner: WordPress is never loaded, see bootstrap.php for the doubles.
-require __DIR__ . '/bootstrap.php';
-require __DIR__ . '/double-capi-registry.php';
+require __DIR__ . '/bootstrap-capi.php';
 
-Famma_Unit_Harness::load_core_class( 'Config', 'Order_Statuses' );
-Famma_Unit_Harness::load_core_class( 'Tunisia', 'WhatsApp' );
-Famma_Unit_Harness::load_core_class( 'Capi', 'Dashboard' );
-Famma_Unit_Harness::load_include( 'capi-signals.php' );
-Famma_Unit_Harness::load_include( 'capi-log.php' );
-Famma_Unit_Harness::load_include( 'capi-product-data.php' );
 Famma_Unit_Harness::load_include( 'tracking-settings.php' );
 
 $fake_token                 = 'QA-FAKE-TOKEN-NOT-REAL';

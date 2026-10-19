@@ -961,7 +961,8 @@ final class Famma_Express_Test {
 		if ( $cookies ) {
 			self::assert( 'orderplaced-fbc-fbp', 'fb.1.1760000000000.IwFixtureClickIdLocalOnly' === ( $event['user_data']['fbc'] ?? '' ) && 'fb.1.1760000000000.1234567890' === ( $event['user_data']['fbp'] ?? '' ), 'fbc and fbp from the checkout cookies are sent.' );
 		}
-		$lines = self::log_lines( 'OrderPlaced', $order->get_id() );
+		// Lot 5 (D7): the forced replay now writes its own « already_sent » line; only real sends carry http=.
+		$lines = array_values( array_filter( self::log_lines( 'OrderPlaced', $order->get_id() ), static fn( string $line ): bool => false !== strpos( $line, ' http=' ) ) );
 		self::assert( 'orderplaced-logged-once', 1 === count( $lines ) && false !== strpos( $lines[0], 'state=accepted' ) && false !== strpos( $lines[0], 'currency=TND' ) && false !== strpos( $lines[0], 'ph=oui' ) && false !== strpos( $lines[0], 'fbc=' . ( $cookies ? 'oui' : 'non' ) ), 'One famma-capi journal line per send, with state, currency and signal presence: ' . implode( ' | ', self::$logs ) );
 		foreach ( self::$logs as $line ) {
 			self::assert( 'log-without-token', false === strpos( $line, 'INTEGRATION_FAKE_TOKEN' ) && false === strpos( $line, '20123456' ) && false === strpos( $line, 'IwFixtureClickId' ), 'The journal never contains the token, the phone or the cookie values.' );

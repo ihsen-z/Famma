@@ -2,7 +2,7 @@
 /**
  * T1.4 — Normalisation and hashing of the CAPI user_data block, against the Meta rules.
  * Run with: php scripts/tests-unit/test-capi-normalisation.php [--json]
- * The real Capi::user_data(), Config, Tunisia and Capi_Signals are exercised; no network.
+ * The real Capi_User_Data::build() (lot 5, A13), Config, Tunisia and Capi_Signals are exercised; no network.
  *
  * Reference: Meta, Conversions API, Customer Information Parameters
  * https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/customer-information-parameters
@@ -12,14 +12,17 @@
  */
 
 // Standalone runner: WordPress is never loaded, see bootstrap.php for the doubles.
-require __DIR__ . '/bootstrap.php';
+require __DIR__ . '/bootstrap-capi.php';
 
-Famma_Unit_Harness::load_core_class( 'Config', 'Order_Statuses' );
-Famma_Unit_Harness::load_core_class( 'Tunisia', 'WhatsApp' );
-Famma_Unit_Harness::load_core_class( 'Capi', 'Dashboard' );
-Famma_Unit_Harness::load_include( 'capi-signals.php' );
-
-$capi_client = Famma_Unit_Harness::bare( '\Famma\Core\Capi' );
+/**
+ * User data of a website order (browser known), as sent by Capi.
+ *
+ * @param WC_Order $order Order.
+ * @return array
+ */
+function l5_user_data( WC_Order $order ): array { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- Test helper of a CLI runner.
+	return \Famma\Core\Capi_User_Data::build( $order, true );
+}
 
 // Meta rules quoted per field (customer-information-parameters page).
 $meta_rules = array(
@@ -97,7 +100,7 @@ foreach ( $cases as $index => $test_case ) {
 	$test_order                             = new WC_Order( $base_id + $index );
 	$test_order->$field                     = $input;
 	$test_order->country                    = 'country' === $field ? $input : '';
-	$user_data                              = Famma_Unit_Harness::call( $capi_client, 'user_data', array( $test_order ) );
+	$user_data                              = l5_user_data( $test_order );
 	$sent                                   = $user_data[ $key ] ?? null;
 	$accepted_hashes                        = null === $accepted ? array() : array_map(
 		static function ( string $plain ): string {
@@ -125,7 +128,7 @@ $signal_order->meta['_famma_fbc']       = 'fb.1.1760000000000.IwQATESTfbclidSynt
 $signal_order->meta['_famma_fbp']       = 'fb.1.1760000000000.123456789';
 $signal_order->meta['_famma_client_ip'] = '2001:db8::1';
 $signal_order->meta['_famma_client_ua'] = 'Mozilla/5.0 (QA synthetic)';
-$signals                                = Famma_Unit_Harness::call( $capi_client, 'user_data', array( $signal_order ) );
+$signals                                = l5_user_data( $signal_order );
 foreach ( array(
 	'fbc' => array( 'fbc', '_famma_fbc' ),
 	'fbp' => array( 'fbp', '_famma_fbp' ),
@@ -154,7 +157,7 @@ $full_order->last_name  = 'Client';
 $full_order->city       = 'Sousse';
 $full_order->state      = 'TN-51';
 $full_order->country    = 'TN';
-$full_keys              = array_keys( Famma_Unit_Harness::call( $capi_client, 'user_data', array( $full_order ) ) );
+$full_keys              = array_keys( l5_user_data( $full_order ) );
 foreach ( array( 'external_id', 'zp' ) as $missing_key ) {
 	$present = in_array( $missing_key, $full_keys, true );
 	// zp is optional for Meta and the Tunisian checkout collects no postcode: information only.

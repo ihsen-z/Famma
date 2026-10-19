@@ -54,14 +54,40 @@ namespace Famma\Core {
 			$ip = trim( $raw );
 			return false !== filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
 		}
-		public static function test_event_code(): string {
+		public static function test_mode_enabled(): bool {
 			// Test mode is off by default, whatever the configured code.
-			return '';
+			return false;
 		}
 	}
 	final class Capi_Log {
 		public static function write( array $fields, string $secret = '' ): void {
 			$GLOBALS['capi_log'][] = $fields;
+		}
+		public static function outcome( array $base, string $state, string $reason = '' ): void {
+			$GLOBALS['capi_outcomes'][] = $base + array(
+				'state'  => $state,
+				'reason' => $reason,
+			);
+		}
+	}
+	final class Capi_Health {
+		public static function signal( string $key, array $data = array() ): void {
+			$GLOBALS['health_signals'][] = $key;
+		}
+		public static function record_outcome( string $response_class, array $result ): void {
+			$GLOBALS['health_outcomes'][] = $response_class;
+		}
+	}
+	final class Capi_Retry {
+		public const HOOK = 'famma_capi_retry';
+		public static function schedule( int $order_id, string $event_name, int $attempts, int $event_time ): string {
+			$GLOBALS['retries'][] = array( $order_id, $event_name, $attempts );
+			return 'scheduled';
+		}
+	}
+	final class Order_Statuses {
+		public static function is_cod_order( \WC_Order $order ): bool {
+			return true;
 		}
 	}
 	final class Capi_Product_Data {
@@ -80,7 +106,12 @@ namespace Famma\Core {
 namespace {
 	define( 'ABSPATH', __DIR__ );
 	final class WC_Order {
-		public array $meta         = array();
+		/**
+		 * Order metadata; a browser order by default: its user agent was stored at checkout (website event).
+		 *
+		 * @var array
+		 */
+		public array $meta         = array( '_famma_client_ua' => 'ScenarioDefaultAgent' );
 		public array $notes        = array();
 		public string $status      = 'delivered';
 		public string $created_via = 'checkout';
@@ -116,6 +147,12 @@ namespace {
 		public function get_created_via(): string {
 			return $this->created_via;
 		}
+		public function get_status(): string {
+			return $this->status;
+		}
+		public function get_payment_method(): string {
+			return 'cod';
+		}
 		public function get_billing_email(): string {
 			return $this->email;
 		}
@@ -147,7 +184,9 @@ namespace {
 			return 'https://example.invalid/order-received/901/';
 		}
 		public function get_date_created(): \DateTimeImmutable {
-			return new \DateTimeImmutable( '2020-01-01' );
+			// Two days old: an old order, yet within the 6-day window Meta still accepts (lot 5).
+			$GLOBALS['created_at'] ??= time() - 2 * 86400;
+			return ( new \DateTimeImmutable() )->setTimestamp( $GLOBALS['created_at'] );
 		}
 		public function add_order_note( string $note ): void {
 			$this->notes[] = $note;
@@ -217,6 +256,16 @@ namespace {
 	function wp_remote_retrieve_body( array $response ): string {
 		return $response['body'];
 	}
+	function wp_remote_retrieve_header( array $response, string $header ): string {
+		return (string) ( $response['headers'][ $header ] ?? '' );
+	}
+	function update_option( string $name, $value, $autoload = null ): bool {
+		$GLOBALS['options'][ $name ] = $value;
+		return true;
+	}
+	function wp_salt( string $scheme = 'auth' ): string {
+		return 'scenario-salt-' . $scheme;
+	}
 	function current_time( string $type ): string {
 		return '2026-10-09 12:00:00';
 	}
@@ -264,6 +313,10 @@ namespace {
 	$tunisia_end   = strpos( $source, 'final class WhatsApp', $tunisia_start );
 	// phpcs:ignore Squiz.PHP.Eval.Discouraged -- Runs the real plugin source read from the plugin file, never external input.
 	eval( 'namespace Famma\\Core;' . substr( $source, $tunisia_start, $tunisia_end - $tunisia_start ) );
+	// Real lot 5 collaborators: token vault, single transport, user data normalisation, data profile.
+	foreach ( array( 'capi-token-vault.php', 'capi-transport.php', 'capi-user-data.php', 'capi-data-profile.php' ) as $famma_include ) {
+		require dirname( __DIR__ ) . '/wp-content/plugins/famma-core/includes/' . $famma_include;
+	}
 	$GLOBALS['options']                            = array(
 		'famma_meta_pixel_id'        => '123456789',
 		'famma_meta_access_token'    => 'test-token-not-a-secret',
@@ -359,7 +412,7 @@ namespace {
 	$client->send_queued_order_placed( 901 );
 	$placed = $GLOBALS['calls'][0][1]['data'][0];
 	check( 'OrderPlaced' === $placed['event_name'] && 'famma_orderplaced_901' === $placed['event_id'], 'OrderPlaced uses a separate stable event name and identifier.' );
-	check( 'order_placed' === $placed['custom_data']['famma_stage'], 'OrderPlaced carries a distinct public business stage for custom conversion.' );
+	check( ! isset( $placed['custom_data']['famma_stage'] ) && ! isset( $placed['custom_data']['famma_product'] ), 'Standard data profile (lot 5, R3): OrderPlaced no longer carries famma_stage nor famma_product.' );
 	check( $test_order->get_date_created()->getTimestamp() === $placed['event_time'], 'OrderPlaced carries the creation timestamp.' );
 	check( (bool) $test_order->get_meta( '_famma_orderplaced_sent' ) && ! $test_order->get_meta( '_famma_purchase_sent' ), 'OrderPlaced acceptance cannot consume the delivered Purchase.' );
 	$client->order_placed_after_checkout( $result, 901 );
@@ -482,7 +535,8 @@ namespace {
 	$test_order->city                          = '';
 	$test_order->state                         = '';
 	$test_order->country                       = '';
-	$GLOBALS['response']                       = array(
+	unset( $test_order->meta['_famma_client_ua'] );
+	$GLOBALS['response'] = array(
 		'code' => 400,
 		'body' => '{"error":{"message":"Synthetic missing identifiers"}}',
 	);
@@ -500,13 +554,14 @@ namespace {
 	$GLOBALS['jobs']           = array();
 	$GLOBALS['queue_failure']  = true;
 	$client->order_placed_after_checkout( $result, 901 );
-	check( array() === $GLOBALS['jobs'] && (bool) $test_order->get_meta( '_famma_orderplaced_checkout_accepted' ) && array() === $test_order->notes, 'FINDING: failed scheduling is not surfaced or recovered.' );
+	$queue_outcome = end( $GLOBALS['capi_outcomes'] );
+	check( array() === $GLOBALS['jobs'] && (bool) $test_order->get_meta( '_famma_orderplaced_checkout_accepted' ) && 'queue_failed' === $queue_outcome['state'], 'Lot 5 (D7): a failed scheduling now writes one queue_failed journal line.' );
 	$GLOBALS['queue_failure']   = false;
 	$test_order                 = new WC_Order();
 	$GLOBALS['network_message'] = 'Synthetic error containing test-token-not-a-secret';
 	$GLOBALS['response']        = new WP_Error();
 	$client->send_purchase( $test_order, 'famma_purchase_901' );
-	check( str_contains( $test_order->notes[0], 'test-token-not-a-secret' ), 'FINDING: untrusted network error text is stored without secret redaction.' );
+	check( ! str_contains( implode( ' ', $test_order->notes ), 'test-token-not-a-secret' ), 'Order notes keep a fixed outcome summary, never the network error text (no secret).' );
 	unset( $GLOBALS['network_message'] );
 	$test_order             = new WC_Order();
 	$test_order->first_name = 'ÉRIC';
@@ -517,7 +572,7 @@ namespace {
 	);
 	$client->send_purchase( $test_order, 'famma_purchase_901' );
 	$last = $GLOBALS['calls'][ array_key_last( $GLOBALS['calls'] ) ];
-	check( hash( 'sha256', 'Éric' ) === $last[1]['data'][0]['user_data']['fn'] && hash( 'sha256', 'bja' ) === $last[1]['data'][0]['user_data']['ct'], 'FINDING: non-ASCII name/city normalization loses accent information.' );
+	check( hash( 'sha256', 'éric' ) === $last[1]['data'][0]['user_data']['fn'] && hash( 'sha256', 'béja' ) === $last[1]['data'][0]['user_data']['ct'], 'Lot 5 (A13): non-ASCII name and city are lowercased in UTF-8, accents kept.' );
 	echo 'ASSERTIONS=' . $GLOBALS['assertions'] . PHP_EOL;
 	echo 'No network requests or database writes were performed.' . PHP_EOL;
 }
