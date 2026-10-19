@@ -1,5 +1,65 @@
 # Changelog — FAMMA Core
 
+## 0.3.2 — 2026-10-19 (non déployée)
+
+Lot 5 du plan `docs/PLAN-TESTS-PIXEL-2026-10-19.md` : stratégie S1 à S3,
+résilience aux évolutions de Meta (S6, mécanismes P0) et correctifs des
+défauts prouvés par les tests des lots 0 à 4 (D1 à D7).
+
+### API Conversions (serveur)
+
+- Version de l'API Meta réglable : constante `FAMMA_META_GRAPH_VERSION`, puis
+  réglage « Mesure », puis `v26.0` par défaut. Fin des deux `v21.0` en dur
+  (v21.0 prend fin le 21/01/2027). Avertissement à J-60, bandeau critique si
+  une version expirée reste réglée.
+- Transport unique vers Meta (`Capi_Transport`), partagé par les vrais envois
+  et le bouton « Test CAPI » ; chaque réponse est classée (accepté, avec
+  avertissement, transitoire, accès, contrat) et journalisée avec la version
+  demandée et la version servie.
+- Envois incertains (coupure réseau, délai, 5xx) relancés par Action
+  Scheduler (`famma_capi_retry` : 5 min, 30 min, 2 h, 6 h) avec le même
+  event_id, sur 6 jours au plus : un Purchase n'est plus perdu (D1).
+- Garde d'environnement : hors production, aucun envoi réel vers Meta
+  (dérogation : `FAMMA_META_ALLOW_NON_PRODUCTION`) (D4).
+- « Terminée » vaut « Livrée » pour une commande en paiement à la livraison :
+  encaissement (priorité 10) puis un seul Purchase (priorité 20). Commande
+  créée dans l'admin : `action_source` = `other` (D5).
+- Une ligne de journal `famma-capi` par issue (9 sur 9) ; jeton chiffré au
+  repos (seuls ses 4 derniers caractères sont affichés) ; code de test
+  validé ; normalisation `user_data` conforme à la doc Meta (accents et arabe
+  conservés, `st` sans tiret) (D7).
+- Profil de données « standard » (sans `famma_stage`, `famma_product` ni
+  `content_name`) ou « minimal ».
+- Santé de la mesure : sonde hebdomadaire sans événement, état
+  vert / orange / rouge (Mesure, commandes, tableau de bord), e-mail au rouge
+  au plus une fois par 24 h, écran de rapprochement sur 14 jours avec renvoi
+  borné ; mu-plugin `famma-measurement-watchdog.php` indépendant de famma-core.
+
+### Navigateur
+
+- Visites de l'équipe (`manage_options`, `manage_woocommerce`) exclues du
+  pixel, de TikTok et de GA4 famma-core ; réglage « Suivre mes visites (mode
+  test) » (S1).
+- eventID de PageView et ViewContent générés dans le navigateur : fin de
+  l'identifiant figé par le cache LiteSpeed ; InitiateCheckout une seule fois
+  par panier et par session ; OrderPlaced navigateur optionnel (coupé par
+  défaut) avec l'event_id du serveur (S3-a).
+- Identifiant produit unique (`Meta_Ids`) pour le navigateur, l'express et la
+  CAPI : SKU de la variation, sinon ID de la variation, sinon SKU du produit,
+  sinon ID du produit (S3-b).
+- Pixel chargé immédiatement (asynchrone) par défaut ; réglage « différé »
+  pour l'ancien comportement (D6).
+- Commande express : champs d'attribution WooCommerce transmis (origine des
+  commandes renseignée) ; capture UTM indépendante du pixel et méta de
+  synthèse `_famma_order_source` (D7, R12).
+
+### Tunnel et cache
+
+- Redirections (ancien slug, URL héritées, canoniques) : chaîne de requête du
+  visiteur conservée et réponse jamais mise en cache par LiteSpeed (D2).
+- Checkout classique : verrou atomique par session et panier ; une double
+  soumission ne crée plus deux commandes (D3).
+
 ## 0.3.1 — 2026-10-17
 
 ### Parcours visiteurs (FAMMA → Parcours visiteurs)

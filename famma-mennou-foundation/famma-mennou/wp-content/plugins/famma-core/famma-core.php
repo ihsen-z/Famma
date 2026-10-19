@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.3.1
+ * Version:           0.3.2
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.3.1' );
+define( 'FAMMA_CORE_VERSION', '0.3.2' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -47,6 +47,7 @@ require_once __DIR__ . '/includes/product-sizes-admin.php';
 require_once __DIR__ . '/includes/express-order.php';
 require_once __DIR__ . '/includes/express-checkout.php';
 require_once __DIR__ . '/includes/express-idempotency.php';
+require_once __DIR__ . '/includes/checkout-idempotency.php';
 require_once __DIR__ . '/includes/express-preparation.php';
 require_once __DIR__ . '/includes/capi-delivery-registry.php';
 require_once __DIR__ . '/includes/capi-signals.php';
@@ -75,6 +76,7 @@ require_once __DIR__ . '/includes/seo-admin.php';
 require_once __DIR__ . '/includes/hardening.php';
 require_once __DIR__ . '/includes/performance.php';
 require_once __DIR__ . '/includes/cache-warmup.php';
+require_once __DIR__ . '/includes/redirect-cache.php';
 require_once __DIR__ . '/includes/visitor-store.php';
 require_once __DIR__ . '/includes/visitor-context.php';
 require_once __DIR__ . '/includes/visitor-collector.php';
@@ -3414,6 +3416,7 @@ function boot(): void {
 	Product_Sizes::instance();
 	Express_Order::instance();
 	Express_Idempotency::instance();
+	Checkout_Idempotency::instance();
 	Express_Preparation::instance();
 	Express_Checkout::instance();
 	Express_Cart_Isolation::instance();
@@ -3436,6 +3439,7 @@ function boot(): void {
 	Hardening::instance();
 	Performance::instance();
 	Cache_Warmup::instance();
+	Redirect_Cache::instance();
 	Visitor_Store::instance();
 	Visitor_Collector::instance();
 	Visitor_Commerce::instance();
