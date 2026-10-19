@@ -349,6 +349,9 @@
 				<element value="famma_po_parse"/>
 				<element value="famma_po_unquote"/>
 				<element value="famma_env_define_constants"/>
+				<element value="famma_google_tags_enqueue_ga4"/>
+				<element value="famma_google_tags_should_load"/>
+				<element value="famma_google_tags_verification"/>
 				<element value="famma_legacy_urls_redirect"/>
 				<element value="famma_local_mail_from"/>
 				<element value="famma_local_mail_use_mailpit"/>
