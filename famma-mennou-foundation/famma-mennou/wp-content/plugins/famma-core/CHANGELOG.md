@@ -58,7 +58,12 @@ défauts prouvés par les tests des lots 0 à 4 (D1 à D7).
 - Redirections (ancien slug, URL héritées, canoniques) : chaîne de requête du
   visiteur conservée et réponse jamais mise en cache par LiteSpeed (D2).
 - Checkout classique : verrou atomique par session et panier ; une double
-  soumission ne crée plus deux commandes (D3).
+  soumission ne crée plus deux commandes (D3). La clé inclut l'empreinte des
+  coordonnées saisies (facturation, livraison, note, paiement ; ni le jeton
+  ni les champs de mesure) : une re-commande corrigée (autre téléphone, autre
+  adresse) ou la commande d'un autre client saisie depuis la même session crée
+  bien une nouvelle commande, seule une soumission identique est renvoyée vers
+  la commande existante (relecture du lot 5, C1).
 
 ## 0.3.1 — 2026-10-17
 

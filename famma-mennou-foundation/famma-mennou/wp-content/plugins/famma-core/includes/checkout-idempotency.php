@@ -9,7 +9,11 @@
  *
  * Déroulé (WC_Checkout::process_checkout(), WooCommerce 11.1.2) :
  * 1. `woocommerce_before_checkout_process`, juste après la vérification du
- *    jeton : verrou atomique par session client et empreinte du panier.
+ *    jeton : verrou atomique par session client, empreinte du panier et
+ *    empreinte des coordonnées saisies (facturation, livraison, note, moyen de
+ *    paiement). Une re-commande corrigée (autre téléphone, autre adresse) ou
+ *    la commande d'un autre client saisie depuis la même session n'est donc
+ *    jamais prise pour un doublon : seule une soumission identique l'est.
  *    Verrou déjà pris : attente bornée (5 s) de la soumission qui le détient.
  *    Elle a créé la commande : renvoi vers sa confirmation, panier vidé comme
  *    après son paiement. Elle a échoué sans commande : celle-ci reprend la
@@ -123,14 +127,38 @@ final class Checkout_Idempotency {
 	}
 
 	/**
-	 * Clé de soumission : HMAC de la session client et de l'empreinte du panier.
+	 * Empreinte des coordonnées postées : champs `billing_*` et `shipping_*`
+	 * (mode de livraison compris), note, moyen de paiement et case « adresse de
+	 * livraison différente ». Jamais le jeton, ni les champs d'attribution ou
+	 * de mesure, qui changent d'une page à l'autre sans changer la commande.
+	 * Casse et espaces ignorés : « 20 123 456 » vaut « 20123456 ».
+	 *
+	 * @param array<string,mixed> $posted Champs postés (non assainis).
+	 * @return string
+	 */
+	public static function intent_hash( array $posted ): string {
+		$intent = array();
+		foreach ( $posted as $name => $value ) {
+			$name = (string) $name;
+			if ( 1 === preg_match( '/^(?:billing_|shipping_|order_comments$|payment_method$|ship_to_different_address$)/', $name ) ) {
+				$intent[ $name ] = self::normalize( wc_clean( wp_unslash( $value ) ) );
+			}
+		}
+		ksort( $intent );
+		return hash( 'sha256', (string) wp_json_encode( $intent ) );
+	}
+
+	/**
+	 * Clé de soumission : HMAC de la session client, de l'empreinte du panier et
+	 * de celle des coordonnées postées.
 	 *
 	 * @param string $session Empreinte de session (Express_Idempotency::session_hash()).
 	 * @param string $cart    Empreinte du panier.
+	 * @param string $intent  Empreinte des coordonnées (intent_hash()).
 	 * @return string
 	 */
-	public static function key( string $session, string $cart ): string {
-		return hash_hmac( 'sha256', $session . '|' . $cart, wp_salt( 'nonce' ) );
+	public static function key( string $session, string $cart, string $intent = '' ): string {
+		return hash_hmac( 'sha256', $session . '|' . $cart . '|' . $intent, wp_salt( 'nonce' ) );
 	}
 
 	/**
@@ -143,7 +171,9 @@ final class Checkout_Idempotency {
 		if ( ! $this->applies() || null === WC()->session || null === WC()->cart || WC()->cart->is_empty() ) {
 			return; // Panier vide : WooCommerce refuse lui-même juste après.
 		}
-		$key    = self::key( Express_Idempotency::session_hash(), self::cart_hash( WC()->cart->get_cart(), WC()->cart->get_applied_coupons() ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC_Checkout::process_checkout() vérifie le jeton avant ce crochet ; intent_hash() assainit chaque champ retenu.
+		$intent = self::intent_hash( $_POST );
+		$key    = self::key( Express_Idempotency::session_hash(), self::cart_hash( WC()->cart->get_cart(), WC()->cart->get_applied_coupons() ), $intent );
 		$state  = $this->acquire( $key );
 		$waited = 'busy' === $state;
 		for ( $step = self::wait_steps(); 'busy' === $state && $step > 0; --$step ) {
@@ -239,6 +269,19 @@ final class Checkout_Idempotency {
 		$this->key   = '';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- purge bornée des verrous échus, par préfixe indexé.
 		$wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE option_name LIKE %s AND CAST( SUBSTRING_INDEX( option_value, '|', 1 ) AS UNSIGNED ) < %d LIMIT 20", $wpdb->options, $wpdb->esc_like( self::LOCK_PREFIX ) . '%', time() ) );
+	}
+
+	/**
+	 * Valeur comparable : sans espaces ni majuscules, tableaux parcourus.
+	 *
+	 * @param mixed $value Valeur assainie par wc_clean().
+	 * @return mixed
+	 */
+	private static function normalize( mixed $value ): mixed {
+		if ( is_array( $value ) ) {
+			return array_map( static fn( mixed $item ): mixed => self::normalize( $item ), $value );
+		}
+		return strtolower( (string) preg_replace( '/\s+/u', '', (string) $value ) );
 	}
 
 	/**

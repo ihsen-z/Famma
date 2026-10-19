@@ -78,6 +78,16 @@ function esc_url_raw( string $url ): string {
 function wp_json_encode( $value ) {
 	return json_encode( $value );
 }
+// Sanitizing: WooCommerce 11.1.2 wc_clean() (wc-formatting-functions.php), simplified sanitize_text_field().
+function wp_unslash( $value ) {
+	return is_array( $value ) ? array_map( 'wp_unslash', $value ) : ( is_string( $value ) ? stripslashes( $value ) : $value );
+}
+function sanitize_text_field( $str ): string {
+	return trim( (string) preg_replace( '/[\r\n\t ]+/', ' ', strip_tags( (string) $str ) ) );
+}
+function wc_clean( $value ) {
+	return is_array( $value ) ? array_map( 'wc_clean', $value ) : ( is_scalar( $value ) ? sanitize_text_field( $value ) : $value );
+}
 function wp_salt( string $scheme = 'auth' ): string {
 	return 'test-salt-' . $scheme;
 }
@@ -276,7 +286,8 @@ $reset    = static function ( ?WC_Test_Cart $basket = null, string $customer = '
 	$GLOBALS['t_emptied'] = 0;
 	$GLOBALS['wpdb']      = new Famma_Test_Wpdb();
 	$GLOBALS['t_store']   = new WC_Test_Store( $basket ?? $cart( array( $line( 9001, 1, 'M' ) ) ), new WC_Test_Session( $customer ) );
-	unset( $GLOBALS['t_on_sleep'], $_POST['woocommerce_checkout_update_totals'] );
+	unset( $GLOBALS['t_on_sleep'] );
+	$_POST = array();
 };
 $refill   = static function () use ( $line, $cart ): void {
 	$GLOBALS['t_store']->cart = $cart( array( $line( 9001, 1, 'M' ) ) );
@@ -306,6 +317,33 @@ $check( 'empreinte change avec la taille (clé de ligne)', Checkout_Idempotency:
 $check( 'empreinte change avec un code promo', Checkout_Idempotency::cart_hash( $cart( array( $a ) )->get_cart(), array() ) !== Checkout_Idempotency::cart_hash( $cart( array( $a ) )->get_cart(), array( 'qa-l5' ) ) );
 $check( 'clé différente pour une autre session', Checkout_Idempotency::key( 's1', 'c' ) !== Checkout_Idempotency::key( 's2', 'c' ) );
 $check( 'clé stable pour la même session et le même panier', Checkout_Idempotency::key( 's1', 'c' ) === Checkout_Idempotency::key( 's1', 'c' ) );
+$check( 'C1 : clé différente pour d’autres coordonnées, même session et même panier', Checkout_Idempotency::key( 's1', 'c', 'i1' ) !== Checkout_Idempotency::key( 's1', 'c', 'i2' ) );
+
+// 1 bis. C1 — empreinte des coordonnées : la commande, pas le jeton ni la mesure.
+$posted = static fn( string $phone, array $extra = array() ): array => $extra + array(
+	'billing_first_name'                 => 'QA Relecture',
+	'billing_phone'                      => $phone,
+	'billing_state'                      => 'TN13',
+	'billing_address_1'                  => 'QA adresse 1',
+	'payment_method'                     => 'cod',
+	'shipping_method'                    => array( 'flat_rate:1' ),
+	'terms'                              => 'on',
+	'woocommerce-process-checkout-nonce' => 'nonce-a',
+	'_wp_http_referer'                   => '/?wc-ajax=update_order_review',
+	'wc_order_attribution_session_pages' => '3',
+);
+$intent = Checkout_Idempotency::intent_hash( $posted( '20123456' ) );
+$noise  = array(
+	'woocommerce-process-checkout-nonce' => 'nonce-b',
+	'_wp_http_referer'                   => '/commande/',
+	'wc_order_attribution_session_pages' => '9',
+	'famma_event_prep'                   => 'x',
+);
+$check( 'C1 : empreinte indépendante du jeton, du référent et de l’attribution', Checkout_Idempotency::intent_hash( $posted( '20123456', $noise ) ) === $intent );
+$check( 'C1 : empreinte indépendante des espaces et de la casse', Checkout_Idempotency::intent_hash( $posted( ' 20 123 456 ', array( 'billing_first_name' => 'qa  RELECTURE' ) ) ) === $intent );
+$check( 'C1 : empreinte change avec le téléphone', Checkout_Idempotency::intent_hash( $posted( '98765432' ) ) !== $intent );
+$check( 'C1 : empreinte change avec l’adresse ou le gouvernorat', Checkout_Idempotency::intent_hash( $posted( '20123456', array( 'billing_address_1' => 'QA adresse 2' ) ) ) !== $intent && Checkout_Idempotency::intent_hash( $posted( '20123456', array( 'billing_state' => 'TN11' ) ) ) !== $intent );
+$check( 'C1 : empreinte change avec le mode de livraison, la note ou le paiement', Checkout_Idempotency::intent_hash( $posted( '20123456', array( 'shipping_method' => array( 'local_pickup:2' ) ) ) ) !== $intent && Checkout_Idempotency::intent_hash( $posted( '20123456', array( 'order_comments' => 'sonner deux fois' ) ) ) !== $intent && Checkout_Idempotency::intent_hash( $posted( '20123456', array( 'payment_method' => 'bacs' ) ) ) !== $intent );
 
 // 2. Câblage : crochets et priorités (Capi 999 et Express_Idempotency 10000 inchangés).
 $reset();
@@ -501,6 +539,40 @@ $GLOBALS['t_on_sleep'] = static function (): void {
 	$GLOBALS['wpdb']->fail = true;
 };
 $check( 'attente : base indisponible pendant l’attente, la vente n’est pas bloquée', 'continue' === $guard( new Checkout_Idempotency() ) && in_array( 'warning famma-checkout checkout_duplicate reason=lock_error order=0', $GLOBALS['t_log'], true ) );
+
+// 10 ter. C1 — re-commande séquentielle, même session et même panier (rejeu de la relecture du
+// 19/10 : commande 826 au 20123456, puis 98765432 renvoyé vers 826 sans nouvelle commande).
+$reset();
+$_POST = $posted( '20123456' );
+$probe = new Checkout_Idempotency();
+$guard( $probe );
+$placed = new WC_Order( 7010 );
+$probe->stamp( $placed );
+$probe->settled( array( 'result' => 'success' ) );
+$GLOBALS['t_orders'] = array( $placed );
+$refill();
+$_POST     = $posted( '98765432', array( 'woocommerce-process-checkout-nonce' => 'nonce-c' ) );
+$corrected = new Checkout_Idempotency();
+$check( 'C1 : téléphone corrigé : le checkout continue, aucun renvoi vers 7010', 'continue' === $guard( $corrected ) && ! WC()->cart->is_empty() && 0 === $GLOBALS['t_emptied'] && ! in_array( 'info famma-checkout checkout_duplicate reason=replayed order=7010', $GLOBALS['t_log'], true ) );
+$second_order = new WC_Order( 7011 );
+$corrected->stamp( $second_order );
+$check( 'C1 : la nouvelle commande porte sa propre clé', 64 === strlen( (string) $second_order->get_meta( Checkout_Idempotency::META_KEY ) ) && $second_order->get_meta( Checkout_Idempotency::META_KEY ) !== $placed->get_meta( Checkout_Idempotency::META_KEY ) );
+$corrected->settled( array( 'result' => 'success' ) );
+$GLOBALS['t_orders'] = array( $second_order, $placed );
+$refill();
+$_POST = $posted( '22333444', array( 'billing_first_name' => 'QA Client 2' ) );
+$check( 'C1 : commande d’un autre client saisie depuis la même session (gérant) : nouvelle commande', 'continue' === $guard( new Checkout_Idempotency() ) && ! WC()->cart->is_empty() );
+$GLOBALS['wpdb']->rows = array();
+$_POST                 = $posted( '20 123 456', array( 'woocommerce-process-checkout-nonce' => 'nonce-d' ) );
+$check( 'C1 : mêmes coordonnées et même panier (renvoi du formulaire) : toujours un doublon, renvoi vers 7010', 'json' === $guard( new Checkout_Idempotency() ) && 7010 === $GLOBALS['t_exit']->payload['order_id'] );
+
+// 10 quater. C1 — deux POST simultanés : identiques, un seul passe ; coordonnées différentes, deux verrous.
+$reset();
+$_POST = $posted( '20123456' );
+$guard( new Checkout_Idempotency() );
+$check( 'C1 : POST simultané identique : refusé', 'exception' === $guard( new Checkout_Idempotency() ) && 1 === count( $locks() ) );
+$_POST = $posted( '98765432' );
+$check( 'C1 : POST simultané avec d’autres coordonnées : verrou distinct', 'continue' === $guard( new Checkout_Idempotency() ) && 2 === count( $locks() ) );
 
 $waits = array(
 	0    => 0,
