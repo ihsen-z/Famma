@@ -13,7 +13,11 @@
  *   propriétaire (jamais une valeur fournie par un filtre d'option) ;
  * - la constante `FAMMA_META_ACCESS_TOKEN` reste prioritaire (Config) ;
  * - si le déchiffrement échoue (clés du site changées), le jeton est traité
- *   comme absent : avis « jeton à ressaisir » et état de santé rouge.
+ *   comme absent : avis « jeton à ressaisir » et état de santé rouge ;
+ * - retour arrière vers la 0.3.1 : celle-ci lit l'option sans la déchiffrer et
+ *   enverrait la valeur chiffrée à Meta. `unseal()` remet le jeton en clair et
+ *   suspend le rechiffrement 7 jours (`HOLD`), le temps de remettre les
+ *   fichiers ; `reseal()` lève la suspension (`Capi_Token_Rollback`).
  *
  * @package Famma\Core
  */
@@ -31,6 +35,16 @@ final class Capi_Token_Vault {
 	 * Option qui abrite le jeton.
 	 */
 	public const OPTION = 'famma_meta_access_token';
+
+	/**
+	 * Option : date à laquelle le jeton a été remis en clair pour un retour arrière.
+	 */
+	public const HOLD = 'famma_meta_access_token_hold';
+
+	/**
+	 * Durée de la suspension du rechiffrement, en secondes (7 jours).
+	 */
+	public const HOLD_TTL = 604800;
 
 	/**
 	 * Préfixe d'une valeur chiffrée.
@@ -62,7 +76,7 @@ final class Capi_Token_Vault {
 		}
 		if ( ! self::is_sealed( $stored ) ) {
 			self::$state = 'plain';
-			if ( self::filtered() ) {
+			if ( self::filtered() || self::held() ) {
 				return $stored;
 			}
 			// Migration transparente : le jeton en clair est chiffré dès sa première lecture.
@@ -87,6 +101,50 @@ final class Capi_Token_Vault {
 			self::read();
 		}
 		return self::$state;
+	}
+
+	/**
+	 * Le rechiffrement est-il suspendu (jeton remis en clair il y a moins de 7 jours) ?
+	 *
+	 * @param int $now Horloge (tests), maintenant par défaut.
+	 * @return bool
+	 */
+	public static function held( int $now = 0 ): bool {
+		$since = (int) get_option( self::HOLD, 0 );
+		return $since > 0 && ( $now > 0 ? $now : time() ) - $since < self::HOLD_TTL;
+	}
+
+	/**
+	 * Remet le jeton enregistré en clair, avant un retour à la 0.3.1, et
+	 * suspend son rechiffrement. Jamais pour une valeur fournie par un filtre.
+	 *
+	 * @return bool Vrai si l'option contient désormais le jeton en clair.
+	 */
+	public static function unseal(): bool {
+		$stored = trim( (string) get_option( self::OPTION, '' ) );
+		$plain  = self::is_sealed( $stored ) ? self::open( $stored ) : $stored;
+		if ( '' === $plain || self::filtered() ) {
+			return false;
+		}
+		// La suspension d'abord : une lecture concurrente ne rechiffre pas le jeton.
+		update_option( self::HOLD, time(), false );
+		if ( $plain !== $stored ) {
+			update_option( self::OPTION, $plain, false );
+		}
+		self::$state = 'plain';
+		return true;
+	}
+
+	/**
+	 * Lève la suspension et rechiffre aussitôt le jeton.
+	 *
+	 * @return bool Vrai si l'option contient désormais le jeton chiffré.
+	 */
+	public static function reseal(): bool {
+		delete_option( self::HOLD );
+		self::$state = '';
+		self::read();
+		return 'sealed' === self::$state;
 	}
 
 	/**

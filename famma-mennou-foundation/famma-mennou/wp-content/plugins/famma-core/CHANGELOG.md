@@ -35,6 +35,26 @@ défauts prouvés par les tests des lots 0 à 4 (D1 à D7).
   au plus une fois par 24 h, écran de rapprochement sur 14 jours avec renvoi
   borné ; mu-plugin `famma-measurement-watchdog.php` indépendant de famma-core.
 
+### Retour arrière vers la 0.3.1 : le jeton CAPI d'abord
+
+La 0.3.2 chiffre le jeton enregistré dans « Mesure » dès sa première lecture
+(premier envoi CAPI ou première page d'administration). La 0.3.1 lit cette
+option sans la déchiffrer : remise en place telle quelle, elle enverrait
+« famma-enc:v1:… » comme jeton, Meta refuserait chaque OrderPlaced et chaque
+Purchase, et rien ne l'alerterait (relecture du lot 5, SEC-1 / R-CACHE-1).
+
+1. **Juste avant** de remettre les fichiers de la 0.3.1 : FAMMA → Mesure →
+   « Retour à la version 0.3.1 » → « Remettre le jeton en clair » (droits
+   `manage_options` et `manage_woocommerce`). Sans administration :
+   `wp eval 'var_export( Famma\Core\Capi_Token_Vault::unseal() );'` doit
+   afficher `true`. Le rechiffrement est alors suspendu 7 jours
+   (option `famma_meta_access_token_hold`), y compris pour un jeton ressaisi.
+2. Étape oubliée, 0.3.1 déjà en place : ressaisir le jeton dans « Mesure »
+   (0.3.1), ou le définir en constante `FAMMA_META_ACCESS_TOKEN` sur le
+   serveur, prioritaire dans les deux versions et jamais chiffrée.
+3. Retour arrière annulé, ou 0.3.2 remise : « Rechiffrer maintenant », sinon
+   le jeton est rechiffré automatiquement à la première lecture après 7 jours.
+
 ### Navigateur
 
 - Visites de l'équipe (`manage_options`, `manage_woocommerce`) exclues du

@@ -54,6 +54,7 @@ require_once __DIR__ . '/includes/capi-signals.php';
 require_once __DIR__ . '/includes/capi-log.php';
 require_once __DIR__ . '/includes/capi-product-data.php';
 require_once __DIR__ . '/includes/capi-token-vault.php';
+require_once __DIR__ . '/includes/capi-token-rollback.php';
 require_once __DIR__ . '/includes/capi-transport.php';
 require_once __DIR__ . '/includes/capi-user-data.php';
 require_once __DIR__ . '/includes/capi-data-profile.php';
@@ -3454,6 +3455,7 @@ function boot(): void {
 		Pages_Content::instance();
 		Topbar_Content::instance();
 		Tracking_Settings::instance();
+		Capi_Token_Rollback::instance();
 		Measurement_Settings::instance();
 		Capi_Health_View::instance();
 		Capi_Graph_Version::instance();

@@ -26,6 +26,11 @@ function update_option( string $name, $value, $autoload = null ): bool {
 	$GLOBALS['wp_test_options'][ $name ] = $value;
 	return true;
 }
+function delete_option( string $name ): bool {
+	$found = array_key_exists( $name, $GLOBALS['wp_test_options'] ?? array() );
+	unset( $GLOBALS['wp_test_options'][ $name ] );
+	return $found;
+}
 function wp_salt( string $scheme = 'auth' ): string {
 	return $GLOBALS['wp_test_salt'] ?? 'unit-test-salt-' . $scheme;
 }

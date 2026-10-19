@@ -263,8 +263,9 @@ final class Tracking_Settings {
 			return $submitted;
 		}
 
-		$clean  = sanitize_text_field( $submitted );
-		$sealed = Capi_Token_Vault::seal( $clean );
+		$clean = sanitize_text_field( $submitted );
+		// Retour arrière vers la 0.3.1 préparé : le jeton reste en clair jusqu'à la fin de la suspension.
+		$sealed = Capi_Token_Vault::held() ? '' : Capi_Token_Vault::seal( $clean );
 
 		return '' !== $sealed ? $sealed : $clean;
 	}
@@ -316,6 +317,12 @@ final class Tracking_Settings {
 					esc_html_e( 'Aucun token enregistré : la Conversions API est inactive.', 'famma-core' );
 				} elseif ( 'broken' === Capi_Token_Vault::state() ) {
 					esc_html_e( 'Le token enregistré est illisible (clés du site modifiées ?) : ressaisissez-le.', 'famma-core' );
+				} elseif ( 'plain' === Capi_Token_Vault::state() ) {
+					printf(
+						/* translators: %s: last four characters of the stored token. */
+						esc_html__( 'Un token est enregistré, en clair (se termine par %s). Saisir « supprimer » l’efface.', 'famma-core' ),
+						'<code>' . esc_html( Capi_Token_Vault::last4() ) . '</code>'
+					);
 				} else {
 					printf(
 						/* translators: %s: last four characters of the stored token. */
@@ -408,6 +415,7 @@ final class Tracking_Settings {
 				</form>
 				<?php Capi_Probe::instance()->render(); ?>
 				<?php Capi_Reconcile_View::render(); ?>
+				<?php Capi_Token_Rollback::render(); ?>
 			<?php endif; ?>
 		</div>
 		<?php

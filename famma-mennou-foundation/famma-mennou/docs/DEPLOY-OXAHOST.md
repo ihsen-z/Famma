@@ -318,6 +318,24 @@ bash scripts/deploy/deploy.sh
 `deploy.sh` **ne touche jamais à la base de production.** Écraser une base est
 irréversible : la migration de base reste un geste séparé et délibéré.
 
+### Retour arrière de famma-core 0.3.2 vers 0.3.1 : le jeton CAPI d'abord
+
+La 0.3.2 chiffre en base le jeton CAPI saisi dans « Mesure ». La 0.3.1 ne sait
+pas le déchiffrer : remettre ses fichiers sans autre geste lui ferait envoyer
+une valeur chiffrée à Meta, qui refuserait tous les OrderPlaced et Purchase,
+**sans erreur ni alerte**. Avant d'extraire l'archive de retour arrière :
+
+1. FAMMA → Mesure → « Retour à la version 0.3.1 » → **Remettre le jeton en
+   clair** (ou, avec WP-CLI : `wp eval 'var_export(
+   Famma\Core\Capi_Token_Vault::unseal() );'`, qui doit afficher `true`).
+2. Extraire l'archive de la 0.3.1, puis vérifier dans « Mesure » (0.3.1) que
+   les 4 derniers caractères affichés sont ceux du vrai jeton.
+3. Si l'étape 1 a été oubliée : ressaisir le jeton dans « Mesure », ou le
+   poser en constante `FAMMA_META_ACCESS_TOKEN` (lue en priorité par les deux
+   versions, jamais chiffrée).
+
+Détails : `wp-content/plugins/famma-core/CHANGELOG.md`, section 0.3.2.
+
 ---
 
 ## Deux réglages à ne pas oublier après la mise en ligne
