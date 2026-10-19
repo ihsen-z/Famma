@@ -2,7 +2,8 @@
 /**
  * Doubles and real sources of the browser side of the pixel (lot 5, flux B),
  * on top of bootstrap-capi.php: the real Tracking class, Meta_Ids,
- * Tracking_Events and Express_Preparation. Inline scripts are captured in
+ * Tracking_Events, Browser_Order_Placed, Order_Source and Express_Preparation.
+ * Inline scripts are captured in
  * memory; no database, no network, no browser.
  *
  * @package Famma_Test_Scenarios
@@ -68,6 +69,8 @@ class WC_Product_Variable extends WC_Product {
 
 Famma_Unit_Harness::load_core_class( 'Tracking', 'Capi' );
 Famma_Unit_Harness::load_include( 'tracking-events.php' );
+Famma_Unit_Harness::load_include( 'browser-order-placed.php' );
+Famma_Unit_Harness::load_include( 'order-source.php' );
 Famma_Unit_Harness::load_include( 'express-preparation.php' );
 
 /**

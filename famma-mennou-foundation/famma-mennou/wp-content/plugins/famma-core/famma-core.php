@@ -40,6 +40,8 @@ require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';
 require_once __DIR__ . '/includes/meta-ids.php';
 require_once __DIR__ . '/includes/tracking-events.php';
+require_once __DIR__ . '/includes/browser-order-placed.php';
+require_once __DIR__ . '/includes/order-source.php';
 require_once __DIR__ . '/includes/product-sizes.php';
 require_once __DIR__ . '/includes/product-sizes-admin.php';
 require_once __DIR__ . '/includes/express-order.php';
@@ -2015,31 +2017,15 @@ final class WhatsApp {
  * - D6 : chargement immédiat (code standard de Meta, dans le `<head>`) par
  *   défaut, ou différé (comportement de la 0.3.1) ;
  * - R12 : la capture UTM ne dépend plus d'aucun Pixel, et chaque commande
- *   reçoit une source de synthèse `_famma_order_source`.
+ *   reçoit une source de synthèse `_famma_order_source` (`Order_Source`).
  */
 final class Tracking {
-
-	/**
-	 * Paramètres de campagne recopiés sur la commande (`_famma_utm_*`).
-	 */
-	private const UTM_KEYS = array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term' );
 
 	/**
 	 * Générateur d'eventID du navigateur (S3-a) : `crypto.randomUUID()`, sinon
 	 * un UUID v4 tiré de `crypto.getRandomValues()`, sinon horloge et hasard.
 	 */
 	public const EVENT_ID_SCRIPT = 'window.fammaEventId=window.fammaEventId||function(){var c=window.crypto,b,h="",i;if(c&&c.randomUUID){return c.randomUUID();}if(c&&c.getRandomValues){b=new Uint8Array(16);c.getRandomValues(b);b[6]=b[6]&15|64;b[8]=b[8]&63|128;for(i=0;i<16;i++){h+=(b[i]+256).toString(16).slice(1)+(3===i||5===i||7===i||9===i?"-":"");}return h;}return Date.now().toString(36)+"-"+Math.random().toString(36).slice(2)+"-"+Math.random().toString(36).slice(2);};';
-
-	/**
-	 * Capture first-party de la provenance (§20, R12), indépendante de tout Pixel.
-	 *
-	 * Cookie `famma_utm`, 30 jours : les `utm_*` de l'arrivée (inchangé), plus
-	 * `fbclid` (présence) et `ref` (site référent externe). Une arrivée avec
-	 * UTM remplace le cookie ; une arrivée sans UTM mais avec fbclid ou
-	 * référent externe ne remplace qu'un cookie sans UTM, pour que les
-	 * `_famma_utm_*` gardent exactement leur sens d'avant.
-	 */
-	public const UTM_SCRIPT = '(function(){try{var p=new URLSearchParams(location.search),k=["utm_source","utm_medium","utm_campaign","utm_content","utm_term"],o={},h=false,a=";path=/;max-age="+(60*60*24*30)+";SameSite=Lax",r="",u=false,c=document.cookie.match(/(?:^|;\s*)famma_utm=([^;]*)/),n=function(x){return String(x||"").toLowerCase().replace(/^www\./,"");};k.forEach(function(x){var v=p.get(x);if(v){o[x]=v;h=true;}});try{r=document.referrer?n(new URL(document.referrer).hostname):"";}catch(e){r="";}if(r===n(location.hostname)){r="";}if(p.get("fbclid")){o.fbclid=1;}if(r){o.ref=r.slice(0,100);}if(!h&&c){try{u=/utm_/.test(decodeURIComponent(c[1]));}catch(e){u=false;}}if(h||((o.fbclid||r)&&!u)){document.cookie="famma_utm="+encodeURIComponent(JSON.stringify(o))+a;}}catch(e){}})();';
 
 	/**
 	 * Singleton instance.
@@ -2221,7 +2207,7 @@ final class Tracking {
 		wp_enqueue_script( 'famma-pixels' );
 
 		if ( ! self::browser_tracking_allowed() ) {
-			wp_add_inline_script( 'famma-pixels', self::UTM_SCRIPT );
+			wp_add_inline_script( 'famma-pixels', Order_Source::UTM_SCRIPT );
 			return;
 		}
 
@@ -2267,7 +2253,7 @@ final class Tracking {
 		}
 
 		// UTM persistence (§20, R12) — independent of any pixel being configured.
-		wp_add_inline_script( 'famma-pixels', self::UTM_SCRIPT );
+		wp_add_inline_script( 'famma-pixels', Order_Source::UTM_SCRIPT );
 	}
 
 	/**
@@ -2290,77 +2276,17 @@ final class Tracking {
 	}
 
 	/**
-	 * Cookie de provenance `famma_utm`, décodé ; tableau vide s'il est absent ou invalide.
-	 *
-	 * @return array<string, mixed>
-	 */
-	private static function utm_cookie(): array {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only attribution cookie, not an action.
-		$raw = isset( $_COOKIE['famma_utm'] ) && is_string( $_COOKIE['famma_utm'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['famma_utm'] ) ) : '';
-		if ( '' === $raw || strlen( $raw ) > 2048 ) {
-			return array();
-		}
-
-		$parsed = json_decode( $raw, true );
-
-		return is_array( $parsed ) ? $parsed : array();
-	}
-
-	/**
 	 * Copies the captured UTM parameters and the synthetic source onto the order (§20, R12).
 	 *
-	 * The cookie is attacker-controllable, so each value is length-capped and
-	 * sanitised individually before being stored. `_famma_order_source` est
-	 * toujours écrit, même sans cookie (« direct »).
+	 * Point d'accroche `woocommerce_checkout_create_order` (priorité 30, avant
+	 * les signaux CAPI en 31), conservé comme API publique ; la logique vit
+	 * dans `Order_Source::stamp()`.
 	 *
 	 * @param \WC_Order $order Order being created.
 	 * @return void
 	 */
 	public function stamp_utm_on_order( \WC_Order $order ): void {
-		$parsed = self::utm_cookie();
-
-		foreach ( self::UTM_KEYS as $k ) {
-			if ( ! empty( $parsed[ $k ] ) && is_scalar( $parsed[ $k ] ) ) {
-				$order->update_meta_data( '_famma_' . $k, substr( sanitize_text_field( (string) $parsed[ $k ] ), 0, 255 ) );
-			}
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only Meta click cookie, validated by Capi_Signals.
-		$fbc = isset( $_COOKIE['_fbc'] ) && is_string( $_COOKIE['_fbc'] ) ? Capi_Signals::clean_cookie( sanitize_text_field( wp_unslash( $_COOKIE['_fbc'] ) ) ) : '';
-		$order->update_meta_data( '_famma_order_source', self::order_source( $parsed, '' !== $fbc ) );
-	}
-
-	/**
-	 * Source de synthèse d'une commande, au format « source / support » (R12).
-	 *
-	 * Même ordre que le parcours visiteurs : UTM d'abord (`facebook / paid`),
-	 * puis fbclid (`facebook / fbclid`), puis site référent externe
-	 * (`google.com / referral`), puis un cookie `_fbc` valide (clic Meta
-	 * antérieur au cookie de provenance), sinon `direct`.
-	 *
-	 * @param array<string, mixed> $cookie  Cookie `famma_utm` décodé.
-	 * @param bool                 $has_fbc Un cookie `_fbc` valide accompagne la commande.
-	 * @return string
-	 */
-	public static function order_source( array $cookie, bool $has_fbc ): string {
-		$clean  = static function ( $value ): string {
-			return is_scalar( $value ) ? strtolower( substr( trim( sanitize_text_field( (string) $value ) ), 0, 64 ) ) : '';
-		};
-		$source = $clean( $cookie['utm_source'] ?? '' );
-		if ( '' !== $source ) {
-			$medium = $clean( $cookie['utm_medium'] ?? '' );
-			return '' !== $medium ? $source . ' / ' . $medium : $source;
-		}
-		if ( ! empty( $cookie['fbclid'] ) ) {
-			return 'facebook / fbclid';
-		}
-		$ref = is_scalar( $cookie['ref'] ?? null ) ? (string) preg_replace( '/[^a-z0-9.-]/', '', strtolower( (string) $cookie['ref'] ) ) : '';
-		$ref = substr( (string) preg_replace( '/^www\./', '', $ref ), 0, 100 );
-		if ( '' !== $ref ) {
-			return $ref . ' / referral';
-		}
-
-		return $has_fbc ? 'facebook / fbclid' : 'direct';
+		Order_Source::stamp( $order );
 	}
 
 	/**
@@ -3484,6 +3410,7 @@ function boot(): void {
 	Tunisia::instance();
 	Tracking::instance();
 	Tracking_Events::instance();
+	Browser_Order_Placed::instance();
 	Product_Sizes::instance();
 	Express_Order::instance();
 	Express_Idempotency::instance();

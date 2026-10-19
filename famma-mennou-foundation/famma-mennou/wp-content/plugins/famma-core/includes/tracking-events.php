@@ -41,7 +41,8 @@
  * (H-N2). Aucun UUID fabriqué en PHP n'est imprimé dans le HTML. Seuls gardent
  * un identifiant serveur : AddToCart et InitiateCheckout de l'express
  * (`famma_add_<prep>`, `famma_checkout_<prep>`, réponse AJAX jamais mise en
- * cache) et OrderPlaced (`famma_orderplaced_<id>`, le même que la CAPI).
+ * cache) et OrderPlaced (`famma_orderplaced_<id>`, le même que la CAPI), émis
+ * par `Browser_Order_Placed`.
  *
  * ── Visiteurs internes (S1) et profil de données (R3) ───────────────────────
  *
@@ -87,10 +88,21 @@ final class Tracking_Events {
 	public const MINIMAL_FIELDS = array( 'value', 'currency', 'content_ids', 'content_type' );
 
 	/**
-	 * Priorité du complément OrderPlaced sur la réponse de l'express : après
-	 * Capi (999) et Express_Idempotency (10000), qui pose `famma_request_id`.
+	 * Écouteur des ajouts au panier faits en AJAX (liste produits) ; `%s` :
+	 * clés gardées par le profil de données, en JSON.
+	 *
+	 * WooCommerce déclenche `added_to_cart` sur `document.body`, par jQuery,
+	 * une fois la réponse serveur reçue : après un ajout réussi, pas au clic.
+	 * En chargement immédiat (D6, défaut), ce script est imprimé dans le
+	 * `<head>`, où `document.body` vaut encore `null` : y brancher l'écouteur
+	 * le poserait sur un ensemble vide, et l'événement serait perdu sans trace.
+	 * L'écouteur n'est donc posé qu'une fois jQuery ET `document.body`
+	 * présents : tout de suite, sinon à DOMContentLoaded, à `load`, à
+	 * `DOMContentLiteSpeedLoaded` (JS retardé de LiteSpeed), et en dernier
+	 * recours par un court sondage relancé à chaque interaction (jQuery chargé
+	 * tardivement). Jamais deux fois. `fbq` est lu au moment de l'ajout.
 	 */
-	private const EXPRESS_RESULT_PRIORITY = 10010;
+	public const AJAX_LISTENER_SCRIPT = '(function(keep){var done=false,t=0,n=0,d=document,w=window;function go(){if(done||!w.jQuery||!d.body){return;}done=true;if(t){clearInterval(t);t=0;}w.jQuery(d.body).on("added_to_cart",function(e,f,c,btn){try{if(!w.fbq){return;}var b=btn&&btn.length?btn[0]:btn;if(!b||!b.getAttribute){return;}var id=b.getAttribute("data-famma-content-id")||b.getAttribute("data-product_id");if(!id){return;}var v=parseFloat(b.getAttribute("data-famma-value")||"0"),q=parseFloat(b.getAttribute("data-quantity")||"1")||1,p={content_type:"product",content_ids:[id],contents:[{id:id,quantity:q}],value:v*q,currency:b.getAttribute("data-famma-currency")||undefined},o={};keep.forEach(function(x){if(x in p){o[x]=p[x];}});w.fbq("track","AddToCart",o,{eventID:w.fammaEventId?w.fammaEventId():String(Date.now())+"-"+id});}catch(err){}});}function poll(){if(done||t){return;}n=0;t=setInterval(function(){go();if(!done&&++n>=40){clearInterval(t);t=0;}},500);}go();if(!done){d.addEventListener("DOMContentLoaded",go);d.addEventListener("DOMContentLiteSpeedLoaded",go);w.addEventListener("DOMContentLiteSpeedLoaded",go);w.addEventListener("load",function(){go();poll();});["pointerdown","keydown","touchstart","scroll"].forEach(function(x){w.addEventListener(x,poll,{passive:true});});}})(%s);';
 
 	/**
 	 * Instance partagée.
@@ -126,7 +138,6 @@ final class Tracking_Events {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_events' ), 20 );
 		add_action( 'woocommerce_add_to_cart', array( $this, 'remember_add_to_cart' ), 10, 6 );
 		add_filter( 'woocommerce_loop_add_to_cart_args', array( $this, 'loop_button_data' ), 10, 2 );
-		add_filter( 'woocommerce_payment_successful_result', array( $this, 'express_order_placed' ), self::EXPRESS_RESULT_PRIORITY, 2 );
 	}
 
 	/**
@@ -134,7 +145,7 @@ final class Tracking_Events {
 	 *
 	 * @return bool
 	 */
-	private function pixel_configured(): bool {
+	private static function pixel_configured(): bool {
 		return '' !== Config::instance()->meta_pixel_id();
 	}
 
@@ -144,8 +155,8 @@ final class Tracking_Events {
 	 *
 	 * @return bool
 	 */
-	private function pixel_active(): bool {
-		return $this->pixel_configured() && Tracking::browser_tracking_allowed();
+	public static function pixel_active(): bool {
+		return self::pixel_configured() && Tracking::browser_tracking_allowed();
 	}
 
 	/**
@@ -188,7 +199,7 @@ final class Tracking_Events {
 	 * @return array<string, mixed>
 	 */
 	public function loop_button_data( array $args, \WC_Product $product ): array {
-		if ( ! $this->pixel_configured() ) {
+		if ( ! self::pixel_configured() ) {
 			return $args;
 		}
 
@@ -226,7 +237,7 @@ final class Tracking_Events {
 	 * @phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter
 	 */
 	public function remember_add_to_cart( $key, $id, $quantity, $variation, $data, $items ): void {
-		if ( ! $this->pixel_active() || ! WC()->session ) {
+		if ( ! self::pixel_active() || ! WC()->session ) {
 			return;
 		}
 
@@ -305,7 +316,7 @@ final class Tracking_Events {
 	 * @param string $emit Appel `fbq` complet.
 	 * @return string
 	 */
-	private function once( string $key, string $emit ): string {
+	public static function once( string $key, string $emit ): string {
 		return sprintf( self::ONCE_SCRIPT, wp_json_encode( $key ), $emit . 'return true;' );
 	}
 
@@ -376,7 +387,7 @@ final class Tracking_Events {
 			$hash = md5( (string) wp_json_encode( array( $contents, $value ) ) );
 		}
 
-		return $this->once(
+		return self::once(
 			'famma_ic_' . $hash,
 			$this->fbq_call(
 				'InitiateCheckout',
@@ -422,130 +433,11 @@ final class Tracking_Events {
 	}
 
 	/**
-	 * Identifiant d'OrderPlaced, le même côté navigateur et côté CAPI.
+	 * Écouteur des ajouts au panier faits en AJAX (`AJAX_LISTENER_SCRIPT`).
 	 *
-	 * @param \WC_Order $order Commande.
-	 * @return string
-	 */
-	public static function order_placed_event_id( \WC_Order $order ): string {
-		return 'famma_orderplaced_' . $order->get_id();
-	}
-
-	/**
-	 * Paramètres d'OrderPlaced navigateur : le bloc de la CAPI, même profil.
-	 *
-	 * @param \WC_Order $order Commande acceptée.
-	 * @return array<string, mixed>
-	 */
-	public static function order_placed_params( \WC_Order $order ): array {
-		$params                = array(
-			'currency'     => $order->get_currency(),
-			'value'        => round( (float) $order->get_total(), 3 ),
-			'order_id'     => (string) $order->get_id(),
-			'content_type' => 'product',
-		) + Capi_Product_Data::for_order( $order );
-		$params['famma_stage'] = 'order_placed';
-
-		return self::profile_params( $params, 'OrderPlaced' );
-	}
-
-	/**
-	 * Commande de la page de confirmation, si sa clé est valide.
-	 *
-	 * La clé de commande de l'URL est l'autorisation de WooCommerce sur cette
-	 * page : sans elle, rien n'est lu ni imprimé.
-	 *
-	 * @return \WC_Order|null
-	 */
-	private function received_order(): ?\WC_Order {
-		$order_id = absint( get_query_var( 'order-received' ) );
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- lecture seule ; la clé de commande est l'autorisation de WooCommerce sur cette page.
-		$key   = isset( $_GET['key'] ) && is_string( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
-		$order = $order_id > 0 ? wc_get_order( $order_id ) : false;
-
-		if ( ! $order instanceof \WC_Order || '' === $key || ! $order->key_is_valid( $key ) ) {
-			return null;
-		}
-		if ( 'checkout' !== $order->get_created_via() || $order->has_status( array( 'failed', 'cancelled' ) ) ) {
-			return null;
-		}
-
-		return $order;
-	}
-
-	/**
-	 * OrderPlaced navigateur sur la page de confirmation, une seule fois (S3-a).
-	 *
-	 * Coupé par défaut (`Config::meta_orderplaced_browser()`, E6) : à moins de
-	 * 5 minutes d'écart, Meta garde la version navigateur, moins riche que la
-	 * CAPI. Même eventID que le serveur ; un rechargement ou un retour arrière
-	 * ne le renvoie pas (clé sessionStorage = eventID).
-	 *
-	 * @return string
-	 */
-	private function order_placed(): string {
-		if ( ! Config::instance()->meta_orderplaced_browser() || ! is_order_received_page() ) {
-			return '';
-		}
-
-		$order = $this->received_order();
-
-		if ( null === $order ) {
-			return '';
-		}
-
-		$event_id = self::order_placed_event_id( $order );
-
-		return $this->once(
-			$event_id,
-			'fbq("trackCustom","OrderPlaced",' . wp_json_encode( self::order_placed_params( $order ) ) . ',{eventID:' . wp_json_encode( $event_id ) . '});'
-		);
-	}
-
-	/**
-	 * Joint l'OrderPlaced navigateur à la réponse de succès de l'express.
-	 *
-	 * Le script l'émet avant la redirection, avec la même clé sessionStorage
-	 * que la page de confirmation : l'événement ne part qu'une fois. Rien n'est
-	 * ajouté hors de l'express, sans l'interrupteur, ou pour un visiteur interne.
-	 *
-	 * @param array $result   Réponse de succès de WooCommerce.
-	 * @param int   $order_id Commande créée.
-	 * @return array
-	 */
-	public function express_order_placed( array $result, int $order_id ): array {
-		if ( 'success' !== ( $result['result'] ?? '' ) || empty( $result['famma_request_id'] ) ) {
-			return $result;
-		}
-		if ( ! Config::instance()->meta_orderplaced_browser() || ! $this->pixel_active() ) {
-			return $result;
-		}
-
-		$order = wc_get_order( $order_id );
-
-		if ( ! $order instanceof \WC_Order ) {
-			return $result;
-		}
-
-		$result['famma_order_placed'] = array(
-			'event_id' => self::order_placed_event_id( $order ),
-			'params'   => self::order_placed_params( $order ),
-		);
-
-		return $result;
-	}
-
-	/**
-	 * Écouteur des ajouts au panier faits en AJAX.
-	 *
-	 * WooCommerce déclenche `added_to_cart` sur `document.body` une fois la
-	 * réponse serveur reçue — donc après un ajout réussi, pas au clic.
-	 *
-	 * jQuery est une dépendance assumée : c'est WooCommerce qui déclenche
-	 * l'événement, et il le fait par jQuery. Le script du Pixel pouvant être
-	 * dans le `<head>` (chargement immédiat, D6), avant jQuery, l'écouteur est
-	 * branché dès que jQuery est là : tout de suite, sinon à DOMContentLoaded
-	 * ou à `load`. Les clés gardées suivent le profil de données.
+	 * Dépendance assumée à jQuery : c'est WooCommerce qui déclenche
+	 * l'événement, et il le fait par jQuery. Les clés gardées suivent le
+	 * profil de données.
 	 *
 	 * @return string
 	 */
@@ -563,18 +455,7 @@ final class Tracking_Events {
 			)
 		);
 
-		return '(function(){var done=false,keep=' . wp_json_encode( array_values( $keys ) ) . ';function go(){if(done||!window.jQuery||!window.fbq){return;}done=true;'
-			. 'jQuery(document.body).on("added_to_cart",function(e,f,c,btn){try{'
-			. 'var b=btn&&btn.length?btn[0]:btn;if(!b){return;}'
-			. 'var id=b.getAttribute("data-famma-content-id")||b.getAttribute("data-product_id");if(!id){return;}'
-			. 'var v=parseFloat(b.getAttribute("data-famma-value")||"0");'
-			. 'var q=parseFloat(b.getAttribute("data-quantity")||"1")||1;'
-			. 'var p={content_type:"product",content_ids:[id],contents:[{id:id,quantity:q}],value:v*q,'
-			. 'currency:b.getAttribute("data-famma-currency")||undefined},o={};'
-			. 'keep.forEach(function(x){if(x in p){o[x]=p[x];}});'
-			. 'fbq("track","AddToCart",o,{eventID:window.fammaEventId?fammaEventId():String(Date.now())+"-"+id});'
-			. '}catch(err){}});}'
-			. 'go();if(!done){document.addEventListener("DOMContentLoaded",go);window.addEventListener("load",go);}})();';
+		return sprintf( self::AJAX_LISTENER_SCRIPT, wp_json_encode( array_values( $keys ) ) );
 	}
 
 	/**
@@ -590,11 +471,11 @@ final class Tracking_Events {
 	 * @return void
 	 */
 	public function enqueue_events(): void {
-		if ( ! $this->pixel_active() ) {
+		if ( ! self::pixel_active() ) {
 			return;
 		}
 
-		$script = $this->view_content() . $this->add_to_cart() . $this->initiate_checkout() . $this->order_placed();
+		$script = $this->view_content() . $this->add_to_cart() . $this->initiate_checkout() . Browser_Order_Placed::confirmation_script();
 
 		if ( '' !== $script ) {
 			$script = 'if(window.fbq&&window.fammaEventId){' . $script . '}';

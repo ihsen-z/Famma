@@ -14,7 +14,7 @@
 // Standalone runner: WordPress is never loaded, see bootstrap-browser.php.
 require __DIR__ . '/bootstrap-browser.php';
 
-use Famma\Core\Tracking;
+use Famma\Core\Order_Source;
 
 // ── Synthèse de la source ───────────────────────────────────────────────────
 // Each case: label, cookie famma_utm decoded, valid _fbc present, expected source.
@@ -67,10 +67,10 @@ $cases = array(
 );
 foreach ( $cases as $case ) {
 	list( $label, $cookie, $has_fbc, $expected ) = $case;
-	$got = Tracking::order_source( $cookie, $has_fbc );
+	$got = Order_Source::source( $cookie, $has_fbc );
 	l5_check( $expected === $got, "Source « {$label} » = {$expected} (obtenu {$got})" );
 }
-l5_check( 64 === strlen( Tracking::order_source( array( 'utm_source' => str_repeat( 'a', 300 ) ), false ) ), 'Source bornée (64 caractères par partie).' );
+l5_check( 64 === strlen( Order_Source::source( array( 'utm_source' => str_repeat( 'a', 300 ) ), false ) ), 'Source bornée (64 caractères par partie).' );
 
 // ── Recopie sur la commande ─────────────────────────────────────────────────
 $tracking = Famma_Unit_Harness::bare( '\Famma\Core\Tracking' );
@@ -120,15 +120,24 @@ l5_check( 'direct' === $stamped->get_meta( '_famma_order_source' ), 'Cookie trop
 $stamped = $stamp( null, 'fb.1.pas-un-fbc' );
 l5_check( 'direct' === $stamped->get_meta( '_famma_order_source' ) && false === get_option( 'famma_capi_fbc_rejected', false ), 'Un _fbc invalide ne compte pas comme clic Meta, et la source ne touche pas au compteur fbc_rejected.' );
 
+// Tracking::stamp_utm_on_order() (hook à 30, API publique de la 0.3.1) délègue à Order_Source::stamp().
+$_COOKIE['famma_utm'] = (string) json_encode( $full );
+$direct               = new WC_Order( 6390 );
+Order_Source::stamp( $direct );
+unset( $_COOKIE['famma_utm'] );
+l5_check( $stamp( (string) json_encode( $full ) )->meta === $direct->meta, 'Tracking::stamp_utm_on_order() et Order_Source::stamp() écrivent exactement les mêmes métas.' );
+$core = (string) file_get_contents( ABSPATH . 'wp-content/plugins/famma-core/famma-core.php' );
+l5_check( 1 === substr_count( $core, "add_action( 'woocommerce_checkout_create_order', array( \$this, 'stamp_utm_on_order' ), 30 );" ) && 1 === substr_count( $core, "require_once __DIR__ . '/includes/order-source.php';" ) && ! str_contains( $core, 'UTM_SCRIPT = ' ) && ! str_contains( $core, 'function order_source(' ), 'Un seul hook de recopie (priorité 30), une seule définition de la capture (Order_Source).' );
+
 // ── V8 / T2.9 : capture UTM sans aucun Pixel ──────────────────────────────────
 lb_reset( array( 'famma_meta_pixel_id' => '' ) );
 $scripts = lb_render_page();
 $inline  = lb_inline( 'famma-pixels' );
-l5_check( isset( $scripts['famma-pixels'] ) && str_contains( $inline, 'famma_utm=' ) && str_contains( $inline, Tracking::UTM_SCRIPT ), 'V8 Pixel vidé : le script qui pose famma_utm est imprimé quand même.' );
+l5_check( isset( $scripts['famma-pixels'] ) && str_contains( $inline, 'famma_utm=' ) && str_contains( $inline, Order_Source::UTM_SCRIPT ), 'V8 Pixel vidé : le script qui pose famma_utm est imprimé quand même.' );
 l5_check( ! str_contains( $inline, 'fbq(' ) && ! isset( $scripts['famma-fbc'] ), 'V8 Pixel vidé : ni fbq ni famma-fbc.' );
 lb_reset();
 lb_render_page();
-l5_check( 1 === substr_count( lb_inline( 'famma-pixels' ), Tracking::UTM_SCRIPT ), 'Pixel configuré : une seule capture UTM par page.' );
+l5_check( 1 === substr_count( lb_inline( 'famma-pixels' ), Order_Source::UTM_SCRIPT ), 'Pixel configuré : une seule capture UTM par page.' );
 
 echo 'CHECKS=' . $GLOBALS['l5_checks'] . PHP_EOL;
 echo 'No network requests or database writes were performed.' . PHP_EOL;

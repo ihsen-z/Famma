@@ -21,6 +21,7 @@
 // Standalone runner: WordPress is never loaded, see bootstrap-browser.php.
 require __DIR__ . '/bootstrap-browser.php';
 
+use Famma\Core\Browser_Order_Placed;
 use Famma\Core\Tracking;
 use Famma\Core\Tracking_Events;
 
@@ -36,9 +37,10 @@ l5_check( 1 === preg_match( '/fbq\("track","ViewContent",\{.*?\},\{eventID:famma
 l5_check( strpos( $html, 'window.fammaEventId=' ) < strpos( $html, "fbq('init'," ) && str_contains( $html, 'c.randomUUID' ) && str_contains( $html, 'c.getRandomValues' ), 'fammaEventId() est défini avant le Pixel, avec crypto.randomUUID et un repli.' );
 l5_check( lb_product_page( $product ) === $html, 'Deux rendus de la même fiche donnent le même HTML (page cachable, identifiants tirés à l’exécution).' );
 $sources = (string) file_get_contents( ABSPATH . 'wp-content/plugins/famma-core/includes/tracking-events.php' );
+$placing = (string) file_get_contents( ABSPATH . 'wp-content/plugins/famma-core/includes/browser-order-placed.php' );
 $core    = (string) file_get_contents( ABSPATH . 'wp-content/plugins/famma-core/famma-core.php' );
 $class   = substr( $core, (int) strpos( $core, 'final class Tracking {' ), (int) strpos( $core, 'final class Capi {' ) - (int) strpos( $core, 'final class Tracking {' ) );
-l5_check( ! str_contains( $sources, 'wp_generate_uuid4' ) && ! str_contains( $class, 'wp_generate_uuid4' ), 'Ni Tracking ni Tracking_Events n’appellent plus wp_generate_uuid4().' );
+l5_check( ! str_contains( $sources . $placing, 'wp_generate_uuid4' ) && ! str_contains( $class, 'wp_generate_uuid4' ), 'Ni Tracking, ni Tracking_Events, ni Browser_Order_Placed n’appellent wp_generate_uuid4().' );
 
 // AddToCart of a classic product-page POST, replayed on the next page: browser ID too.
 lb_reset();
@@ -57,7 +59,8 @@ $GLOBALS['wc_test_store']->session->set(
 $add = (string) Famma_Unit_Harness::call( $events, 'add_to_cart' );
 l5_check( str_contains( $add, '"AddToCart"' ) && str_contains( $add, '{eventID:fammaEventId()}' ) && 0 === preg_match( $uuid, $add ), 'AddToCart (fiche, POST) : eventID tiré dans le navigateur.' );
 $listener = (string) Famma_Unit_Harness::call( $events, 'ajax_listener' );
-l5_check( str_contains( $listener, 'fammaEventId()' ) && str_contains( $listener, 'data-famma-content-id' ) && str_contains( $listener, 'DOMContentLoaded' ), 'AddToCart (liste, AJAX) : eventID navigateur, identifiant Meta du bouton, écouteur branché même si jQuery arrive après le Pixel.' );
+l5_check( str_contains( $listener, 'fammaEventId()' ) && str_contains( $listener, 'data-famma-content-id' ) && str_contains( $listener, 'DOMContentLoaded' ) && str_contains( $listener, '!w.jQuery||!d.body' ), 'AddToCart (liste, AJAX) : eventID navigateur, identifiant Meta du bouton, écouteur posé seulement quand jQuery et document.body existent (exécution réelle : test-browser-scripts.js).' );
+l5_check( 0 === preg_match( '/%[^s]/', Tracking_Events::AJAX_LISTENER_SCRIPT ) && 1 === substr_count( Tracking_Events::AJAX_LISTENER_SCRIPT, '%s' ) && str_ends_with( $listener, '})(["content_type","content_ids","contents","value","currency"]);' ), 'Écouteur AJAX : un seul emplacement %s, rempli par les clés du profil.' );
 
 // ── InitiateCheckout : une seule fois par panier et par session (T3.2) ────────
 lb_reset();
@@ -84,7 +87,7 @@ $confirmation    = static function ( string $order_key ) use ( $events ): string
 	$GLOBALS['wc_test_is_order_received']            = true;
 	$GLOBALS['wp_test_query_vars']['order-received'] = '6100';
 	$_GET['key']                                     = $order_key;
-	$out = (string) Famma_Unit_Harness::call( $events, 'order_placed' );
+	$out = Browser_Order_Placed::confirmation_script();
 	unset( $_GET['key'] );
 	return $out;
 };
@@ -101,8 +104,9 @@ l5_check( '' === $confirmation( 'wc_order_unit_test' ), 'Commande créée dans l
 $placed->created_via = 'checkout';
 
 // Express success response.
-$express = static function ( array $result ) use ( $events ): array {
-	return $events->express_order_placed( $result, 6100 );
+$placer  = Famma_Unit_Harness::bare( '\Famma\Core\Browser_Order_Placed' );
+$express = static function ( array $result ) use ( $placer ): array {
+	return $placer->express_order_placed( $result, 6100 );
 };
 $success = array(
 	'result'           => 'success',
@@ -120,7 +124,11 @@ unset( $classic['famma_request_id'] );
 l5_check( $classic === $express( $classic ), 'Checkout classique : réponse inchangée (la page de confirmation s’en charge).' );
 lb_login( array( 'manage_woocommerce' ) );
 l5_check( ! isset( $express( $success )['famma_order_placed'] ), 'Express, visiteur interne : rien n’est joint.' );
-l5_check( str_contains( $core, "add_filter( 'woocommerce_payment_successful_result', array( \$this, 'order_placed_after_checkout' ), 999, 2 );" ) && str_contains( $sources, 'private const EXPRESS_RESULT_PRIORITY = 10010;' ), 'Priorités : Capi 999, Express_Idempotency 10000, OrderPlaced navigateur 10010.' );
+l5_check( str_contains( $core, "add_filter( 'woocommerce_payment_successful_result', array( \$this, 'order_placed_after_checkout' ), 999, 2 );" ) && str_contains( $placing, 'private const EXPRESS_RESULT_PRIORITY = 10010;' ) && str_contains( $placing, "add_filter( 'woocommerce_payment_successful_result', array( \$this, 'express_order_placed' ), self::EXPRESS_RESULT_PRIORITY, 2 );" ), 'Priorités : Capi 999, Express_Idempotency 10000, OrderPlaced navigateur 10010.' );
+l5_check( ! str_contains( $sources, 'woocommerce_payment_successful_result' ) && 1 === substr_count( $core, 'Browser_Order_Placed::instance();' ) && 1 === substr_count( $core, "require_once __DIR__ . '/includes/browser-order-placed.php';" ), 'OrderPlaced navigateur : une seule classe branchée (Browser_Order_Placed, instanciée une fois dans boot()), plus rien dans Tracking_Events.' );
+$GLOBALS['wp_test_hooks'] = array();
+$instance                 = Browser_Order_Placed::instance();
+l5_check( Browser_Order_Placed::instance() === $instance && 1 === count( $GLOBALS['wp_test_hooks']['woocommerce_payment_successful_result'] ?? array() ), 'Browser_Order_Placed::instance() : singleton, filtre posé une seule fois.' );
 
 // ── D6 : chargement immédiat (défaut) ou différé ──────────────────────────────
 $tiktok = array( 'famma_tiktok_pixel_id' => 'TTQAL5FAKE' );
