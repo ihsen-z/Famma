@@ -1,0 +1,29 @@
+# ============================================================
+# FAMMA MINNOU — surcouche du clone QA pixel (plan pixel, lot 0, T0.3)
+#
+# S'utilise TOUJOURS avec le fichier de base et le nom de projet forcé,
+# depuis famma-mennou/ :
+#
+#   docker compose -p famma-qa-pixel \
+#     -f scripts/compose-integration.yml \
+#     -f scripts/qa/compose-qa-pixel.yml <commande>
+#
+# Le nom de projet forcé donne des volumes propres au clone
+# (famma-qa-pixel_integration_db / _wp) : aucun volume d'un autre worktree
+# n'est réutilisé. Les chemins relatifs sont résolus depuis scripts/, dossier
+# du premier fichier.
+#
+# Ajout unique : le mu-plugin qa-pixel-guard.php (HTTP sortant intercepté et
+# journalisé, balises Google neutralisées, fbq enregistré dans le navigateur),
+# monté en lecture seule dans le serveur web ET dans le conteneur WP-CLI.
+# famma-google-tags.php n'est volontairement pas monté.
+#
+# Arrêt : `stop` uniquement. Jamais `down -v` (efface les volumes du clone).
+# ============================================================
+services:
+  wordpress:
+    volumes:
+      - ./qa/qa-pixel-guard.php:/var/www/html/wp-content/mu-plugins/qa-pixel-guard.php:ro
+  cli:
+    volumes:
+      - ./qa/qa-pixel-guard.php:/var/www/html/wp-content/mu-plugins/qa-pixel-guard.php:ro
