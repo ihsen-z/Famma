@@ -463,6 +463,19 @@ Le lot n'est joué qu'**une seule fois**, sur la version corrigée, pour ne pass
 
 > **Pendant l'essai (T6.3 à T6.6)** : les événements de test **comptent** (E5). Les ensembles OLYMPE doivent être en pause et la liste des commandes vérifiée avant et après. Dans le rapport, la ou les commandes d'essai sont signalées par leur numéro, pour qu'on puisse les écarter de la lecture des résultats.
 
+**Résultat du lot 6 (20/10/2026, sur la 0.3.3)** — rapport : `E:\Ecom\audit-preuves\2026-10-19-pixel\lot-6\RAPPORT-LOT-6.md`.
+- **Commande d'essai : n° 297** (49 DT). Elle compte chez Meta (1 OrderPlaced et 1 Purchase le 20/10) : il faut l'écarter des chiffres.
+- **T6.3** : fbc reçu par Meta. L'EMQ d'OrderPlaced passe de 6,4 à **7,8/10**, avec fbc à 50 % (la 297 l'a ; la 296, venue sans clic de pub, ne l'a pas).
+  - Écarts : l'écran ne propose pas de mode test CAPI (lecture faite par l'aperçu d'Events Manager et par l'API, pas dans Test Events) ; Meta affiche le code TEST91392 ; la commande express ne demande ni ville ni adresse.
+- **T6.4** : un seul Purchase à « Livrée » (49 TND, accepté). Retour puis nouvelle livraison : aucun second envoi (`already_sent`, `marker`).
+- **T6.5** : remise en état complète. La 297 est à la corbeille (pas supprimée), le bandeau est vert.
+- **T6.6 : non joué**, la plateforme a refusé de cocher l'interrupteur. Recommandation : le laisser coupé, car le serveur transmet déjà fbc et la version navigateur ne porte ni ph, ni fn, ni st. Décision du propriétaire attendue.
+- **Couverts au passage** : T6.1 (événements navigateur visibles dans Test Events), T6.8 (v26.0 servie sur les envois réels), T6.10 (bandeau vert après purge).
+- **Non joués** : T6.2, T6.7, T6.9, T6.11.
+- **Pour le lot 7** :
+  - diagnostic Meta « prix des Purchase web », ouvert depuis le 11/10 ;
+  - `total_sales` de WooCommerce reste à 0 après « Livrée » : à vérifier, car les statuts FAMMA ne déclenchent peut-être pas ce compteur.
+
 ### Lot 7 — Synthèse et décision
 
 | ID | Livrable |
