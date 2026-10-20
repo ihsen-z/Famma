@@ -74,6 +74,16 @@ NORMALIZE = [
     (re.compile(r"\"commandes\": \[[0-9, ]*\]"), '"commandes": [<ids>]'),
     (re.compile(r"QA-L2 \d{8}"), "QA-L2 <tel>"),
     (re.compile(r"qa-l2-\d{8}"), "qa-l2-<tel>"),
+    # Lot 5 : identifiants de tâche Action Scheduler, dates SQL et affichées,
+    # clés de jour, durées mesurées et fichiers wc-logs datés.
+    (re.compile(r"\"action\": \"?\d+\"?"), '"action": <id>'),
+    (re.compile(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"), "<date>"),
+    (re.compile(r"\d{2}/\d{2}/\d{4} \d{2}:\d{2}"), "<date>"),
+    (re.compile(r"\"\d{4}-\d{2}-\d{2}\":"), '"<jour>":'),
+    (re.compile(r"\"duree_s\": [0-9.]+"), '"duree_s": <s>'),
+    (re.compile(r"wc-logs/([a-z-]+?)-\d{4}-\d{2}-\d{2}-[0-9a-f]{32}\.log"), r"wc-logs/\1-<jour>.log"),
+    (re.compile(r"QA-L5I \d{8}"), "QA-L5I <tel>"),
+    (re.compile(r"qa-l5i-\d{8}"), "qa-l5i-<tel>"),
 ]
 
 

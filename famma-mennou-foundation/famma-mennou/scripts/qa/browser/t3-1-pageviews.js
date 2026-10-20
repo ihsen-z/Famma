@@ -8,6 +8,10 @@
  * requêtes bloquées hors du clone.
  *
  * Succès attendu : 1 init et 1 PageView par page.
+ *
+ * Lot 5 (0.3.2, S3-a) : le PageView porte un eventID tiré dans le navigateur
+ * (« fbq('track','PageView',{},{eventID:fammaEventId()}) ») ; le motif du HTML
+ * accepte les deux formes et chaque page relève la présence de cet eventID.
  */
 'use strict';
 
@@ -19,7 +23,8 @@ function htmlCounts( html ) {
 	return {
 		loader: count( /if\(f\.fbq\)return;/g ),
 		initCalls: count( /fbq\('init',/g ),
-		pageViewCalls: count( /fbq\('track','PageView'\)/g ),
+		pageViewCalls: count( /fbq\('track','PageView'(?:,\{\},\{eventID:fammaEventId\(\)\})?\)/g ),
+		pageViewWithBrowserEventId: count( /fbq\('track','PageView',\{\},\{eventID:fammaEventId\(\)\}\)/g ),
 		fammaPixelsHandle: count( /id="famma-pixels-js-after"/g ),
 		recorder: count( /id="famma-qa-fbq-recorder"/g ),
 	};
@@ -76,13 +81,16 @@ async function record( s, label, res ) {
 		.filter( ( el ) => 'hidden' !== el.type )
 		.map( ( el ) => ( { name: el.name, type: el.type || el.tagName.toLowerCase(), required: el.required || !! el.closest( '.validate-required' ) } ) ) );
 
+	const pageViewIds = ( p ) => p.calls.filter( ( c ) => 'track' === c[ 0 ] && 'PageView' === c[ 1 ] ).map( ( c ) => ( c[ 3 ] && c[ 3 ].eventID ) || null );
 	const verdict = pages.map( ( p ) => ( {
 		page: p.label,
 		init: p.summary.init,
 		pageView: p.summary.pageView,
+		pageViewEventIDs: pageViewIds( p ),
 		autres: p.summary.track.filter( ( t ) => 'PageView' !== t ),
 		ok: 1 === p.summary.init && 1 === p.summary.pageView,
 	} ) );
+	const allIds = verdict.flatMap( ( v ) => v.pageViewEventIDs ).filter( Boolean );
 
 	const out = {
 		test: 'T3.1',
@@ -90,13 +98,15 @@ async function record( s, label, res ) {
 		date: new Date().toISOString(),
 		outil: 'Chromium 124 sans interface (zenika/alpine-chrome:with-puppeteer), contexte vierge, visiteur anonyme',
 		verdict,
+		pageViewEventIDsDistincts: new Set( allIds ).size,
+		pageViewEventIDsAttendus: verdict.reduce( ( n, v ) => n + v.pageView, 0 ),
 		pages,
 		checkoutFields,
 		blockedOutsideClone: s.blocked,
 		consoleErrors: s.console,
 	};
 	writeProof( 't3-1-pageviews.json', out );
-	console.log( JSON.stringify( { verdict, blocked: s.blocked.length, consoleErrors: s.console.length }, null, 1 ) );
+	console.log( JSON.stringify( { verdict, pageViewEventIDsDistincts: out.pageViewEventIDsDistincts, htmlParPage: pages.map( ( p ) => p.html ), blocked: s.blocked.length, consoleErrors: s.console.length }, null, 1 ) );
 	await browser.close();
 } )().catch( ( e ) => {
 	console.error( e );

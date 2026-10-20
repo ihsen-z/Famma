@@ -109,6 +109,9 @@ for u in /wp-admin/ "/wp-admin/admin.php?page=famma-tracking" "/wp-admin/admin.p
 	"/wp-admin/tools.php?page=action-scheduler&s=famma"; do
 	scan admin "${u}" -H "Cookie: ${cookie}"
 done
+# Lot 5 (D7) : sur options.php, le jeton doit apparaître chiffré (famma-enc:v1:…), jamais en clair.
+f_opt="${W}/page-$(printf '%s' "admin/wp-admin/options.php" | md5sum | cut -c1-12)"
+echo "# options.php : famma-enc:v1:=$(grep -o 'famma-enc:v1:' "${f_opt}" | wc -l | tr -d ' ') jeton_en_clair=$(grep -o "${NEEDLE}" "${f_opt}" | wc -l | tr -d ' ') champ_famma_meta_access_token=$(grep -o 'name="famma_meta_access_token"' "${f_opt}" | wc -l | tr -d ' ')"
 for id in "$@"; do
 	if [ "${hpos}" = "yes" ]; then
 		scan admin "/wp-admin/admin.php?page=wc-orders&action=edit&id=${id}" -H "Cookie: ${cookie}"

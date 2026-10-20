@@ -169,4 +169,61 @@ async function fillExpress( page, data ) {
 	return page.evaluate( () => document.querySelector( '.famma-express__form select[name="billing_state"]' ).value );
 }
 
-module.exports = { BASE, OUT, launch, cleanPage, fbqCalls, fbqSessionLog, summarize, cookies, writeProof, sleep, waitForFbq, tracked, fillExpress };
+/**
+ * Identifiants de l'admin QA (fichier monté par « run.sh --admin » sur
+ * /secrets/qa-admin.txt). Jamais imprimés ni écrits dans une preuve.
+ */
+function adminCredentials() {
+	const raw = fs.readFileSync( '/secrets/qa-admin.txt', 'utf8' );
+	const get = ( k ) => {
+		const m = raw.match( new RegExp( '^' + k + '=(.*)$', 'm' ) );
+		return m ? m[ 1 ].trim() : '';
+	};
+	return { user: get( 'user' ), pass: get( 'password' ) };
+}
+
+/**
+ * Connexion de l'admin QA par wp-login.php du clone (lot 5). Renvoie un
+ * constat sans aucun secret : saisie complète, message d'erreur, URL après.
+ */
+async function adminLogin( s ) {
+	const cred = adminCredentials();
+	if ( ! cred.user || ! cred.pass ) {
+		throw new Error( 'Identifiants QA absents de /secrets/qa-admin.txt' );
+	}
+	await s.page.goto( BASE + '/wp-login.php', { waitUntil: 'load' } );
+	// wp-login.php sélectionne le champ identifiant 200 ms après le chargement.
+	await sleep( 800 );
+	await s.page.$eval( '#user_login', ( el, v ) => {
+		el.value = v;
+	}, cred.user );
+	await s.page.$eval( '#user_pass', ( el, v ) => {
+		el.value = v;
+	}, cred.pass );
+	const typedOk = await s.page.evaluate( ( u, n ) => document.getElementById( 'user_login' ).value === u && document.getElementById( 'user_pass' ).value.length === n, cred.user, cred.pass.length );
+	await Promise.all( [ s.page.waitForNavigation( { waitUntil: 'load' } ), s.page.click( '#wp-submit' ) ] );
+	const jar = await cookies( s.page );
+	return {
+		saisieComplete: typedOk,
+		messageErreur: ( await s.page.evaluate( () => ( document.getElementById( 'login_error' ) || {} ).textContent || '' ) ).trim().slice( 0, 200 ),
+		urlApres: s.page.url(),
+		connecte: jar.some( ( c ) => /^wordpress_logged_in_/.test( c.name ) ),
+	};
+}
+
+/** En-têtes de réponse utiles aux preuves de cache (aucun cookie recopié). */
+function cacheHeaders( res ) {
+	if ( ! res ) {
+		return null;
+	}
+	const h = res.headers();
+	const out = {};
+	for ( const k of Object.keys( h ) ) {
+		if ( /^(cache-control|expires|pragma|vary|location|x-redirect-by|x-qa-l5n-|x-litespeed)/i.test( k ) ) {
+			out[ k ] = h[ k ];
+		}
+	}
+	return out;
+}
+
+module.exports = { BASE, OUT, launch, cleanPage, fbqCalls, fbqSessionLog, summarize, cookies, writeProof, sleep, waitForFbq, tracked, fillExpress, adminCredentials, adminLogin, cacheHeaders };

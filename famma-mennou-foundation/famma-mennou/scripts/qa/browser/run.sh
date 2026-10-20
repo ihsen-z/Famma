@@ -15,6 +15,12 @@
 #   (lot 0) sur /secrets/qa-admin.txt. Son contenu n'est jamais imprimé.
 #
 # Preuves écrites dans QA_EVIDENCE_DIR (défaut : lot-3 des preuves du 19/10).
+# QA_PREFIX (facultatif) : préfixe des données fictives saisies par les
+# scénarios (défaut QA-L3 ; QA-L5N pour le testeur navigateur du lot 5).
+# QA_IP (facultatif) : adresse fixe du navigateur sur le réseau du clone
+# (ex. 172.23.0.201). Chaque visiteur simulé peut ainsi avoir sa propre
+# connexion : le garde-fou de famma-core compte 5 commandes par IP et par
+# heure (Anti_Abuse), et le navigateur de test garderait sinon la même IP.
 # Aucun conteneur n'est laissé derrière (--rm). Aucun autre projet touché.
 # ============================================================
 set -euo pipefail
@@ -35,6 +41,12 @@ for flag in "$@"; do
 		*) extra+=( -e "QA_ARG=${flag}" ) ;;
 	esac
 done
+if [ -n "${QA_PREFIX:-}" ]; then
+	extra+=( -e "QA_PREFIX=${QA_PREFIX}" )
+fi
+if [ -n "${QA_IP:-}" ] && [ "$network" != "bridge" ]; then
+	extra+=( --ip "${QA_IP}" )
+fi
 
 docker run --rm --init --shm-size=512m \
 	--network "$network" \

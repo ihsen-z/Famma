@@ -15,16 +15,22 @@
  *
  * Succès : chaque AddToCart porte value, currency, content_ids et eventID ;
  * InitiateCheckout part une seule fois.
+ *
+ * Lot 5 (0.3.2) : préfixe des données fictives réglable (QA_PREFIX, défaut
+ * QA-L3) ; chaque contrôle relève aussi l'absence de content_name (profil
+ * « standard », R3/D7).
  */
 'use strict';
 
 const { BASE, launch, cleanPage, fbqCalls, writeProof, sleep, tracked, fillExpress } = require( './qa-lib' );
 
+const PREFIX = process.env.QA_PREFIX || 'QA-L3';
+
 const REFUS = JSON.stringify( {
 	result: 'failure',
 	famma_state: 'failed',
 	famma_code: 'validation_failed',
-	messages: '<ul class="woocommerce-error" role="alert"><li>QA-L3 : refus simulé par le navigateur de test (aucune commande créée)</li></ul>',
+	messages: '<ul class="woocommerce-error" role="alert"><li>' + ( process.env.QA_PREFIX || 'QA-L3' ) + ' : refus simulé par le navigateur de test (aucune commande créée)</li></ul>',
 	refresh: false,
 	reload: false,
 } );
@@ -36,6 +42,7 @@ function check( ev ) {
 		currency: 'string' === typeof p.currency && '' !== p.currency,
 		content_ids: Array.isArray( p.content_ids ) && p.content_ids.length > 0,
 		eventID: !! ( ev.options && ev.options.eventID ),
+		sansContentName: ! Object.prototype.hasOwnProperty.call( p, 'content_name' ),
 	};
 }
 
@@ -151,7 +158,7 @@ async function fichePost( s, slug, clickSel, prep ) {
 		}
 	} );
 	await c.page.goto( BASE + '/produit/qa-simple-sku/', { waitUntil: 'load' } );
-	await fillExpress( c.page, { firstName: 'QA-L3 Express T32', phone: '29000301', stateLabel: 'Sousse' } );
+	await fillExpress( c.page, { firstName: PREFIX + ' Express T32', phone: '29000301', stateLabel: 'Sousse' } );
 	const clicks = [];
 	for ( let i = 1; i <= 2; i++ ) {
 		const n = ( result.express.checkoutIntercepte || 0 );
@@ -166,7 +173,7 @@ async function fichePost( s, slug, clickSel, prep ) {
 	}
 	// Rechargement de la fiche, même onglet (sessionStorage conservé), troisième clic.
 	await c.page.goto( BASE + '/produit/qa-simple-sku/', { waitUntil: 'load' } );
-	await fillExpress( c.page, { firstName: 'QA-L3 Express T32', phone: '29000301', stateLabel: 'Sousse' } );
+	await fillExpress( c.page, { firstName: PREFIX + ' Express T32', phone: '29000301', stateLabel: 'Sousse' } );
 	{
 		const n = ( result.express.checkoutIntercepte || 0 );
 		await c.page.click( '.famma-express__submit' );

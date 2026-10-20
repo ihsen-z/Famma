@@ -9,13 +9,14 @@
  * La lecture des méta et de la requête CAPI interceptée se fait ensuite par
  * WP-CLI (voir t3-3-verifier.sh).
  *
- * Données 100 % fictives, préfixées « QA-L3 ». Téléphones de test au format
+ * Données 100 % fictives, préfixées « QA-L3 » (ou QA_PREFIX, lot 5). Téléphones de test au format
  * tunisien (8 chiffres), jamais contactés : le clone bloque courriel et HTTP.
  */
 'use strict';
 
 const { BASE, launch, cleanPage, fbqCalls, cookies, writeProof, sleep, tracked, fillExpress } = require( './qa-lib' );
 
+const PREFIX = process.env.QA_PREFIX || 'QA-L3';
 const FBC_RE = /^fb\.1\.(\d{13})\.FAMMATEST123$/;
 const FBP_RE = /^fb\.1\.\d{13}\.\d{10}$/;
 
@@ -69,7 +70,7 @@ function pick( list, name ) {
 
 	// 2. Commande express.
 	if ( 'classique' !== PHASE ) {
-		await fillExpress( s.page, { firstName: 'QA-L3 Express T33', phone: '29000333', stateLabel: 'Sousse' } );
+		await fillExpress( s.page, { firstName: PREFIX + ' Express T33', phone: '29000333', stateLabel: 'Sousse' } );
 		await Promise.all( [
 			s.page.waitForNavigation( { waitUntil: 'load', timeout: 90000 } ),
 			s.page.click( '.famma-express__submit' ),
@@ -92,9 +93,9 @@ function pick( list, name ) {
 	await s.page.goto( BASE + '/commande/', { waitUntil: 'load' } );
 	await sleep( 1500 );
 	const icClassique = tracked( await fbqCalls( s.page ), 'InitiateCheckout' );
-	await retype( s.page, '#billing_first_name', 'QA-L3 Classique T33' );
+	await retype( s.page, '#billing_first_name', PREFIX + ' Classique T33' );
 	await retype( s.page, '#billing_phone', '29000334' );
-	await retype( s.page, '#billing_address_1', 'QA-L3 adresse fictive 1' );
+	await retype( s.page, '#billing_address_1', PREFIX + ' adresse fictive 1' );
 	if ( await s.page.$( '#billing_city' ) ) {
 		await retype( s.page, '#billing_city', 'Sousse' );
 	}

@@ -38,7 +38,12 @@
  *   signals/config/<id> 104 801 o, demandée par la bibliothèque après son
  *   exécution ; les événements ne partent qu'une fois la config reçue.
  *
- * Usage : bash scripts/qa/browser/run.sh t3-5-slow.js <slow3g|fast3g|aucun>[:mesure]
+ * Usage : bash scripts/qa/browser/run.sh t3-5-slow.js <slow3g|fast3g|aucun>[:mesure][:etiquette]
+ *
+ * Lot 5 (0.3.2, D6) : une 3e partie facultative (ex. « differe ») est
+ * ajoutée au nom de la preuve, pour distinguer un passage fait avec le
+ * réglage « différé » ; chaque instantané relève le mode réellement servi
+ * (code de base dans le <head> ou en pied de page, variante de fammaDefer).
  */
 'use strict';
 
@@ -50,7 +55,7 @@ const CONDITIONS = {
 	fast3g: { label: 'Fast 3G (CDP)', net: PredefinedNetworkConditions[ 'Fast 3G' ] },
 	aucun: { label: 'sans bridage', net: null },
 };
-const [ KEY, MODEL_KEY = '190k' ] = ( process.env.QA_ARG || 'slow3g' ).split( ':' );
+const [ KEY, MODEL_KEY = '190k', TAG = '' ] = ( process.env.QA_ARG || 'slow3g' ).split( ':' );
 const COND = CONDITIONS[ KEY ];
 const MODELS = {
 	'190k': { label: '1 requête de 190 Kio (commentaire PERF-07 de famma-core)', lib: 190 * 1024, config: 0, suffix: '' },
@@ -65,7 +70,7 @@ function transferDelay( bytes ) {
 }
 const LIB_DELAY = transferDelay( MODEL.lib );
 const CONFIG_DELAY = transferDelay( MODEL.config );
-const PROOF = 't3-5-' + KEY + MODEL.suffix + '.json';
+const PROOF = 't3-5-' + KEY + MODEL.suffix + ( TAG ? '-' + TAG.replace( /[^a-z0-9-]/gi, '' ) : '' ) + '.json';
 const DEPART_MS = 1500;
 const TRIALS = 5;
 const FICHE = BASE + '/produit/qa-simple-sku/';
@@ -141,6 +146,18 @@ function snapshot( page ) {
 			fausseBibliothequeChargeeMs: window.__qaFakeLibAt || null,
 			configPixelRecueMs: window.__qaConfigAt || null,
 			panneauIntegrationIgnore: window.__qaT35 ? window.__qaT35.panelIgnored.length : null,
+			modeServi: ( () => {
+				const el = document.getElementById( 'famma-pixels-js-after' );
+				if ( ! el ) {
+					return null;
+				}
+				const txt = el.textContent || '';
+				return {
+					dansLeHead: !! el.closest( 'head' ),
+					fammaDeferDiffere: -1 !== txt.indexOf( 'requestIdleCallback' ),
+					pageViewAvecEventId: -1 !== txt.indexOf( "fbq('track','PageView',{},{eventID:fammaEventId()})" ),
+				};
+			} )(),
 		};
 	} );
 }
@@ -255,6 +272,7 @@ async function runTrial( browser, scenario, essai, temoin ) {
 		delaiBibliothequeSimuleMs: LIB_DELAY,
 		delaiConfigSimuleMs: CONFIG_DELAY,
 		departMsApresAffichage: DEPART_MS,
+		etiquette: TAG || null,
 		essais: [],
 	};
 	for ( const scenario of [ 'fiche', 'ajout' ] ) {
