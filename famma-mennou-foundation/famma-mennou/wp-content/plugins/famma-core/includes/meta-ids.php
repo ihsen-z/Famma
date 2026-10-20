@@ -9,11 +9,14 @@
  * toutes les tailles portaient alors le même identifiant (T1.7, H-N4).
  *
  * Règle unique, appliquée partout (navigateur, express, CAPI, futur flux
- * catalogue) :
+ * catalogue) : l'ID WooCommerce, jamais le SKU (décision du propriétaire du
+ * 20/10/2026). Un SKU saisi ou modifié plus tard changerait l'identifiant en
+ * silence et couperait le lien avec l'historique et les audiences Meta ;
+ * l'ID, lui, ne change jamais et vaut déjà ce que Meta reçoit (ex. 279).
  *
- * 1. variation : son SKU propre (contexte `edit`, sans héritage du parent),
- *    sinon son ID ;
- * 2. autre produit : son SKU, sinon son ID.
+ * 1. variation WooCommerce : son ID ;
+ * 2. autre produit : son ID. Les tailles de famma-core (Product_Sizes) sont des
+ *    options d'un produit simple : toutes les tailles partagent son ID.
  *
  * Les tailles d'un produit variable sont regroupées par `item_group_id`, l'ID
  * du produit parent. Le filtre `famma_meta_content_id` s'applique à chaque
@@ -39,10 +42,7 @@ final class Meta_Ids {
 	 * @return string Jamais vide.
 	 */
 	public static function content_id( \WC_Product $product ): string {
-		// Contexte `edit` pour une variation : jamais le SKU hérité du parent.
-		$sku = self::is_variation( $product ) ? $product->get_sku( 'edit' ) : $product->get_sku();
-		$sku = trim( (string) $sku );
-		$id  = '' !== $sku ? $sku : (string) $product->get_id();
+		$id = (string) $product->get_id();
 
 		$filtered = apply_filters( 'famma_meta_content_id', $id, $product );
 

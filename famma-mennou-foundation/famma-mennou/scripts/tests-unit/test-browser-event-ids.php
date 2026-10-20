@@ -97,7 +97,7 @@ lb_reset( array( 'famma_meta_orderplaced_browser' => true ) );
 $op = $confirmation( 'wc_order_unit_test' );
 l5_check( str_contains( $op, '("famma_orderplaced_6100",function(){fbq("trackCustom","OrderPlaced",' ) && str_contains( $op, '{eventID:"famma_orderplaced_6100"});return true;' ), 'I2 Interrupteur actif : OrderPlaced avec eventID famma_orderplaced_<id>, clé de session = eventID (I3).' );
 $params = json_decode( (string) ( preg_match( '/"OrderPlaced",(\{.*?\}),\{eventID:/', $op, $m ) ? $m[1] : '' ), true );
-l5_check( is_array( $params ) && 49.0 === (float) $params['value'] && 'TND' === $params['currency'] && array( 'QA-L5-SKU' ) === $params['content_ids'] && ! isset( $params['content_name'] ) && ! isset( $params['famma_stage'] ) && ! isset( $params['famma_product'] ), 'OrderPlaced navigateur : valeur, devise, content_ids ; profil standard sans content_name, famma_stage ni famma_product.' );
+l5_check( is_array( $params ) && 49.0 === (float) $params['value'] && 'TND' === $params['currency'] && array( '16' ) === $params['content_ids'] && ! isset( $params['content_name'] ) && ! isset( $params['famma_stage'] ) && ! isset( $params['famma_product'] ), 'OrderPlaced navigateur : valeur, devise, content_ids ; profil standard sans content_name, famma_stage ni famma_product.' );
 l5_check( '' === $confirmation( 'wc_order_mauvaise_cle' ) && '' === $confirmation( '' ), 'Clé de commande absente ou fausse : rien n’est lu ni imprimé.' );
 $placed->created_via = 'admin';
 l5_check( '' === $confirmation( 'wc_order_unit_test' ), 'Commande créée dans l’administration : pas d’OrderPlaced navigateur.' );

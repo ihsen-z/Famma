@@ -71,10 +71,12 @@ Purchase, et rien ne l'alerterait (relecture du lot 5, SEC-1 / R-CACHE-1).
 - eventID de PageView et ViewContent générés dans le navigateur : fin de
   l'identifiant figé par le cache LiteSpeed ; InitiateCheckout une seule fois
   par panier et par session ; OrderPlaced navigateur optionnel (coupé par
-  défaut) avec l'event_id du serveur (S3-a).
+  défaut, à évaluer au test T6.6 avant toute activation) avec l'event_id du
+  serveur (S3-a).
 - Identifiant produit unique (`Meta_Ids`) pour le navigateur, l'express et la
-  CAPI : SKU de la variation, sinon ID de la variation, sinon SKU du produit,
-  sinon ID du produit (S3-b).
+  CAPI : toujours l'ID WooCommerce, jamais le SKU (décision du 20/10/2026 :
+  un SKU ajouté plus tard changerait l'identifiant en silence) ; les tailles
+  famma-core partagent l'ID du produit (S3-b).
 - Pixel chargé immédiatement (asynchrone) par défaut ; réglage « différé »
   pour l'ancien comportement (D6).
 - Commande express : champs d'attribution WooCommerce transmis (origine des

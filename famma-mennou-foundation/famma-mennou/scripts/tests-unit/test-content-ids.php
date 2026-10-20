@@ -4,8 +4,8 @@
  * generator: browser (Tracking_Events: ViewContent, AddToCart, InitiateCheckout,
  * AJAX loop button), express (Express_Preparation) and CAPI (Capi_Product_Data).
  *
- * Rule under test (Meta_Ids): own SKU of the variation (edit context, never the
- * parent's), else the variation ID, else the product SKU, else the product ID;
+ * Rule under test (Meta_Ids, owner decision of 2026-10-20): always the WooCommerce
+ * ID (the variation ID for a variation), never the SKU;
  * item_group_id = parent ID; the famma_meta_content_id filter applies everywhere.
  * Before lot 5 this runner was a diagnostic (CHECKS=5 ECARTS=4); it now fails on
  * any gap.
@@ -32,9 +32,9 @@ $variation_bar = new WC_Product_Variation( 401, $parent_bare, '', 'TEST Produit 
 
 // Label => array( product shown, item bought, expected content_id, expected item_group_id ).
 $cases = array(
-	'simple avec SKU'                       => array( $simple_sku, $simple_sku, 'TEST-SKU-A', '' ),
+	'simple avec SKU'                       => array( $simple_sku, $simple_sku, '101', '' ),
 	'simple sans SKU'                       => array( $simple_bare, $simple_bare, '102', '' ),
-	'variation M avec son propre SKU'       => array( $parent_sku, $variation_own, 'TEST-VAR-M', '200' ),
+	'variation M avec son propre SKU'       => array( $parent_sku, $variation_own, '201', '200' ),
 	'variation M sans SKU, parent avec SKU' => array( $parent_inh, $variation_inh, '301', '300' ),
 	'variation M sans SKU, parent sans SKU' => array( $parent_bare, $variation_bar, '401', '400' ),
 );
@@ -145,7 +145,7 @@ add_filter(
 		return '';
 	}
 );
-l5_check( 'TEST-SKU-A' === \Famma\Core\Meta_Ids::content_id( $simple_sku ), 'Filtre renvoyant une valeur vide : identifiant d’origine gardé' );
+l5_check( '101' === \Famma\Core\Meta_Ids::content_id( $simple_sku ), 'Filtre renvoyant une valeur vide : identifiant d’origine gardé' );
 $GLOBALS['wp_test_hooks']['famma_meta_content_id'] = array();
 
 if ( in_array( '--json', $argv, true ) ) {
