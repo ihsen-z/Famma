@@ -20,6 +20,9 @@
  * - `contract` : refus du contenu (code 100…) ou réponse inconnue ;
  * - `blocked_environment` : garde d'environnement (D4), aucune requête.
  *
+ * La sonde (0.3.3) lit `GET /{version}/me?fields=id` ; son résultat porte en
+ * plus un `verdict` (`Capi_Probe_Verdict`).
+ *
  * Limite connue (écart déclaré à V2 / T1.6, H-S8) : l'API HTTP de WordPress
  * transmet les arguments de la requête, donc le corps (`access_token`) et
  * l'en-tête `Authorization` de la sonde, aux crochets `http_request_args`,
@@ -116,35 +119,48 @@ final class Capi_Transport {
 				'body'        => wp_json_encode( $payload + array( 'access_token' => $token ) ),
 			)
 		);
-		return self::classify( $response, $version, '' );
+		return self::classify( $response, $version );
 	}
 
 	/**
-	 * Sonde sans événement (R6) : GET /{version}/{pixel}?fields=id.
+	 * URL de la sonde : l'identifiant du titulaire du jeton (utilisateur système).
 	 *
-	 * Le jeton part dans l'en-tête Authorization, jamais dans l'URL. Aucun
-	 * événement n'est créé chez Meta.
+	 * @param string $version Version de l'API Graph.
+	 * @return string
+	 */
+	public static function probe_url( string $version ): string {
+		return self::HOST . rawurlencode( $version ) . '/me?fields=id';
+	}
+
+	/**
+	 * Sonde sans événement (R6) : GET /{version}/me?fields=id.
 	 *
-	 * @param string $pixel   Identifiant du Pixel.
+	 * Vérifie le jeton et la version servie par une lecture que tout jeton
+	 * valide peut faire (son propre identifiant) ; l'accès au jeu de données
+	 * reste prouvé par les vrais envois. Le jeton part dans l'en-tête
+	 * Authorization, jamais dans l'URL. Aucun événement n'est créé chez Meta.
+	 *
 	 * @param string $token   Jeton CAPI.
 	 * @param string $version Version forcée, sinon celle de Config.
-	 * @return array<string, mixed> Résultat classé.
+	 * @return array<string, mixed> Résultat classé, avec son `verdict`.
 	 */
-	public static function probe( string $pixel, string $token, string $version = '' ): array {
+	public static function probe( string $token, string $version = '' ): array {
 		$cfg     = Config::instance();
 		$version = '' !== $version ? $version : $cfg->meta_graph_version();
 		if ( ! $cfg->meta_sending_allowed() ) {
 			return self::blocked( $version, $cfg->environment_type() );
 		}
-		$response = wp_remote_get(
-			self::HOST . rawurlencode( $version ) . '/' . rawurlencode( $pixel ) . '?fields=id',
+		$response          = wp_remote_get(
+			self::probe_url( $version ),
 			array(
 				'timeout'     => self::TIMEOUT,
 				'redirection' => 0,
 				'headers'     => array( 'Authorization' => 'Bearer ' . $token ),
 			)
 		);
-		return self::classify( $response, $version, $pixel );
+		$result            = self::classify( $response, $version, true );
+		$result['verdict'] = Capi_Probe_Verdict::of( $result, $response );
+		return $result;
 	}
 
 	/**
@@ -152,10 +168,10 @@ final class Capi_Transport {
 	 *
 	 * @param mixed  $response Réponse de l'API HTTP de WordPress, ou WP_Error.
 	 * @param string $version  Version demandée.
-	 * @param string $pixel    Pour la sonde : identifiant attendu dans `id` ; vide pour un envoi.
+	 * @param bool   $probe    Sonde : l'accusé est un `id` numérique ; sinon `events_received` = 1.
 	 * @return array<string, mixed>
 	 */
-	public static function classify( $response, string $version, string $pixel = '' ): array {
+	public static function classify( $response, string $version, bool $probe = false ): array {
 		$result = self::empty_result( $version );
 		if ( is_wp_error( $response ) ) {
 			$message          = (string) $response->get_error_message();
@@ -183,7 +199,7 @@ final class Capi_Transport {
 		$result['error']            = (string) ( $error['error_user_msg'] ?? ( $error['message'] ?? '' ) );
 
 		if ( $http >= 200 && $http < 300 && ( array() === $error || 0 === $result['code'] ) ) {
-			$acknowledged = '' === $pixel ? 1 === $result['events_received'] : (string) ( $body['id'] ?? '' ) === $pixel;
+			$acknowledged = $probe ? self::has_id( $body ) : 1 === $result['events_received'];
 			if ( $acknowledged && array() === $error ) {
 				$warning          = $result['messages'] > 0 || $result['version_mismatch'];
 				$result['class']  = $warning ? 'accepted_warning' : 'accepted';
@@ -198,6 +214,17 @@ final class Capi_Transport {
 		$result['class']  = self::error_class( $http, $result['code'], $result['is_transient'] );
 		$result['reason'] = 0 !== $result['code'] ? 'code_' . $result['code'] : 'http_' . $http;
 		return $result;
+	}
+
+	/**
+	 * Accusé de la sonde : un identifiant numérique non vide (`id` du titulaire du jeton).
+	 *
+	 * @param array<string, mixed> $body Corps décodé.
+	 * @return bool
+	 */
+	private static function has_id( array $body ): bool {
+		$id = $body['id'] ?? '';
+		return ( is_string( $id ) || is_int( $id ) ) && 1 === preg_match( '/^\d+$/', (string) $id );
 	}
 
 	/**

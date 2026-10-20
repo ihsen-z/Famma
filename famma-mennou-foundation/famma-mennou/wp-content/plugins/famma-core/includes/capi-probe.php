@@ -2,12 +2,13 @@
 /**
  * Sonde sans événement et battement de cœur de la CAPI (lot 5, R6, R7, A3).
  *
- * - Sonde : `GET /{version}/{pixel}?fields=id`, chaque semaine (Action
+ * - Sonde : `GET /{version}/me?fields=id` (0.3.3), chaque semaine (Action
  *   Scheduler, groupe `famma-capi-health`), à la demande (« Vérifier
  *   maintenant » dans « Mesure ») et après un changement de jeton, de Pixel
- *   ou de version. Elle valide le jeton et la version sans créer le moindre
- *   événement chez Meta : jamais de POST /events. Hors production, aucune
- *   requête (D4).
+ *   ou de version. Elle valide le jeton et la version servie sans créer le
+ *   moindre événement chez Meta : jamais de POST /events. L'accès au jeu de
+ *   données reste prouvé par les vrais envois (`Capi_Probe_Verdict`). Hors
+ *   production, aucune requête (D4).
  * - Battement de cœur : une tâche quotidienne qui note l'heure, reprend les
  *   envois interrompus et recalcule l'état de santé. S'il cesse plus de 36 h,
  *   c'est que les tâches planifiées ne tournent plus (règle vérifiée sur
@@ -108,6 +109,11 @@ final class Capi_Probe {
 		if ( ! as_has_scheduled_action( self::HEARTBEAT_HOOK, array(), self::GROUP ) ) {
 			as_schedule_recurring_action( time() + 300, DAY_IN_SECONDS, self::HEARTBEAT_HOOK, array(), self::GROUP, true );
 		}
+		$probe = Capi_Health::signals()['probe'] ?? array();
+		if ( array() !== $probe && ! array_key_exists( 'verdict', $probe ) ) {
+			// Sonde de la 0.3.2 (objet Pixel) : la rejouer sur /me.
+			$this->settings_changed();
+		}
 	}
 
 	/**
@@ -157,7 +163,7 @@ final class Capi_Probe {
 				'version_requested' => $cfg->meta_graph_version(),
 			);
 		} else {
-			$result = Capi_Transport::probe( $pixel, $token );
+			$result = Capi_Transport::probe( $token );
 		}
 		Capi_Log::write(
 			array(
@@ -182,7 +188,7 @@ final class Capi_Probe {
 			wp_die( esc_html__( 'Accès refusé.', 'famma-core' ), '', array( 'response' => 403 ) );
 		}
 		$result = self::run();
-		wp_safe_redirect( add_query_arg( 'famma_capi_probe', sanitize_key( (string) $result['class'] ), admin_url( 'admin.php?page=famma-tracking' ) ) );
+		wp_safe_redirect( add_query_arg( 'famma_capi_probe', sanitize_key( Capi_Probe_Verdict::outcome( $result ) ), admin_url( 'admin.php?page=famma-tracking' ) ) );
 		exit;
 	}
 
@@ -199,20 +205,20 @@ final class Capi_Probe {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only fixed result identifier.
 		$done = isset( $_GET['famma_capi_probe'] ) ? sanitize_key( wp_unslash( $_GET['famma_capi_probe'] ) ) : '';
 		?>
-		<h2><?php esc_html_e( 'Vérifier la connexion à Meta', 'famma-core' ); ?></h2>
+		<h2><?php esc_html_e( 'Vérifier le jeton Meta', 'famma-core' ); ?></h2>
 		<?php if ( '' !== $done ) : ?>
-			<div class="notice notice-<?php echo esc_attr( in_array( $done, array( 'accepted', 'accepted_warning' ), true ) ? 'success' : 'warning' ); ?> inline"><p><?php echo esc_html( self::label( $done ) ); ?></p></div>
+			<div class="notice notice-<?php echo esc_attr( in_array( $done, array( 'accepted', 'accepted_warning' ), true ) ? 'success' : ( 'token' === $done ? 'error' : 'warning' ) ); ?> inline"><p><?php echo esc_html( Capi_Probe_Verdict::label( $done ) ); ?></p></div>
 		<?php endif; ?>
-		<p><?php esc_html_e( 'Interroge Meta sur le Pixel avec le jeton et la version configurés, sans envoyer aucun événement. Automatique chaque semaine et après un changement de réglage.', 'famma-core' ); ?></p>
+		<p><?php esc_html_e( 'Demande à Meta l’identifiant du titulaire du jeton (utilisateur système), avec la version configurée, sans envoyer aucun événement : vérifie le jeton et la version servie. L’accès au Pixel est vérifié par les vrais envois et le rapprochement. Automatique chaque semaine et après un changement de réglage.', 'famma-core' ); ?></p>
 		<?php if ( array() !== $probe ) : ?>
 			<p>
 				<?php
 				echo esc_html(
 					sprintf(
-						/* translators: 1: date of the last check, 2: result class, 3: requested version, 4: version served by Meta. */
+						/* translators: 1: date of the last check, 2: probe outcome, 3: requested version, 4: version served by Meta. */
 						__( 'Dernière vérification le %1$s : %2$s (version demandée %3$s, servie %4$s).', 'famma-core' ),
 						wp_date( 'd/m/Y H:i', (int) ( $probe['at'] ?? 0 ) ),
-						self::label( (string) ( $probe['class'] ?? '' ) ),
+						Capi_Probe_Verdict::label( Capi_Probe_Verdict::outcome( $probe ) ),
 						(string) ( $probe['requested'] ?? '-' ),
 						Capi_Transport::served_label( (string) ( $probe['served'] ?? '' ) )
 					)
@@ -226,24 +232,5 @@ final class Capi_Probe {
 			<?php submit_button( __( 'Vérifier maintenant', 'famma-core' ), 'secondary', 'submit', false ); ?>
 		</form>
 		<?php
-	}
-
-	/**
-	 * Libellé d'un résultat de sonde.
-	 *
-	 * @param string $result_class Classe du transport.
-	 * @return string
-	 */
-	public static function label( string $result_class ): string {
-		$labels = array(
-			'accepted'            => __( 'connexion valide', 'famma-core' ),
-			'accepted_warning'    => __( 'connexion valide, avec un avertissement de version', 'famma-core' ),
-			'transient'           => __( 'Meta injoignable pour l’instant', 'famma-core' ),
-			'access'              => __( 'jeton ou droits refusés', 'famma-core' ),
-			'contract'            => __( 'réponse inattendue de Meta', 'famma-core' ),
-			'blocked_environment' => __( 'aucune requête : ce site n’est pas la production', 'famma-core' ),
-			'not_configured'      => __( 'Pixel ou jeton absent', 'famma-core' ),
-		);
-		return $labels[ $result_class ] ?? $result_class;
 	}
 }

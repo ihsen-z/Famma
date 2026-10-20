@@ -96,6 +96,10 @@ function as_has_scheduled_action( string $hook, $args = null, string $group = ''
 function as_enqueue_async_action( string $hook, array $args = array(), string $group = '', bool $unique = false ): int {
 	return as_schedule_single_action( time(), $hook, $args, $group, $unique );
 }
+// A recurring action is stored as a single one: Capi_Probe::ensure_scheduled() only needs it to exist.
+function as_schedule_recurring_action( int $timestamp, int $interval, string $hook, array $args = array(), string $group = '', bool $unique = false ): int {
+	return as_schedule_single_action( $timestamp, $hook, $args, $group, $unique );
+}
 function as_get_scheduled_actions( array $args = array(), string $return_format = 'OBJECT' ): array {
 	// The health rule asks for late actions by date: fixture. Any other query reads the in-memory queue.
 	if ( isset( $args['date'] ) ) {
@@ -149,7 +153,7 @@ Famma_Unit_Harness::load_core_class( 'Config', 'Order_Statuses' );
 Famma_Unit_Harness::load_core_class( 'Order_Statuses', 'Stock' );
 Famma_Unit_Harness::load_core_class( 'Tunisia', 'WhatsApp' );
 Famma_Unit_Harness::load_core_class( 'Capi', 'Dashboard' );
-foreach ( array( 'meta-ids.php', 'capi-signals.php', 'capi-log.php', 'capi-product-data.php', 'capi-token-vault.php', 'capi-transport.php', 'capi-user-data.php', 'capi-data-profile.php', 'capi-retry.php', 'capi-health.php', 'capi-health-alert.php', 'capi-health-rules.php', 'capi-graph-version.php', 'capi-probe.php', 'capi-reconcile.php', 'capi-purchase-gaps.php' ) as $famma_include ) {
+foreach ( array( 'meta-ids.php', 'capi-signals.php', 'capi-log.php', 'capi-product-data.php', 'capi-token-vault.php', 'capi-transport.php', 'capi-user-data.php', 'capi-data-profile.php', 'capi-retry.php', 'capi-health.php', 'capi-health-alert.php', 'capi-health-rules.php', 'capi-graph-version.php', 'capi-probe-verdict.php', 'capi-probe.php', 'capi-reconcile.php', 'capi-purchase-gaps.php' ) as $famma_include ) {
 	Famma_Unit_Harness::load_include( $famma_include );
 }
 

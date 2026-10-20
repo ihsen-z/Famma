@@ -73,6 +73,9 @@ final class Famma_Qa_L5_Acceptance {
 	/** Pixel factice du clone. */
 	private const FAKE_PIXEL = '000000000000001';
 
+	/** Utilisateur système factice renvoyé par GET /me (sonde 0.3.3). */
+	private const FAKE_SYSTEM_USER = '000000000000042';
+
 	/** Un jour, en secondes. */
 	private const DAY = 86400;
 
@@ -759,18 +762,19 @@ final class Famma_Qa_L5_Acceptance {
 		self::check( 'V3', 'hote-graph-en-un-seul-endroit', array( 'includes/capi-transport.php' ) === $hosts, 'graph.facebook.com présent dans le code (hors commentaires) de capi-transport.php seulement', $hosts );
 		self::$report['V3']['observations'] = array(
 			'wp_remote_get' => $gets,
-			'remarque'      => 'Le bouton « Test CAPI » (G3) et les envois réels passent par Capi_Transport::send_events() ; la sonde par Capi_Transport::probe() (GET).',
+			'remarque'      => 'Le bouton « Test CAPI » (G3) et les envois réels passent par Capi_Transport::send_events() ; la sonde par Capi_Transport::probe() (GET /me, 0.3.3).',
 		);
 	}
 
-	/** Probe: 200, 190, own error. */
+	/** Probe on GET /me (0.3.3): 200, 190, « Missing Permission », own error. */
 	private static function v4(): void {
 		self::$scenario = 'V4';
 		$rows           = array();
 		foreach ( array(
-			'ok'      => 'vert',
-			'code190' => 'probe_token',
-			'http500' => 'probe_unavailable',
+			'ok'                 => 'vert',
+			'code190'            => 'probe_token',
+			'missing_permission' => 'probe_permission',
+			'http500'            => 'probe_unavailable',
 		) as $mode => $expected ) {
 			Famma_Qa_L5_Sandbox::set( 'famma_capi_health_signals', array() );
 			self::$meta    = $mode;
@@ -789,9 +793,11 @@ final class Famma_Qa_L5_Acceptance {
 				'raisons'      => array_map( static fn( array $r ): string => $r['code'] . ':' . $r['niveau'], $state['raisons'] ),
 			);
 		}
-		$probe_ok = static fn( array $r ): bool => 'GET' === $r['methode'] && '/v26.0/' . self::FAKE_PIXEL === $r['chemin'] && 'fields=id' === $r['requete'] && false === $r['jeton_url'] && true === $r['jeton_entete'];
-		self::check( 'V4', 'sonde-200-vert', 'accepted' === $rows['ok']['classe'] && $probe_ok( $rows['ok'] ) && ! preg_grep( '/^probe_/', $rows['ok']['raisons'] ), 'GET /v26.0/<pixel>?fields=id, jeton dans Authorization : aucune raison sonde', $rows['ok'] );
-		self::check( 'V4', 'sonde-190-rouge', in_array( 'probe_token:rouge', $rows['code190']['raisons'], true ), 'rouge « probe_token »', $rows['code190'] );
+		$probe_ok = static fn( array $r ): bool => 'GET' === $r['methode'] && '/v26.0/me' === $r['chemin'] && 'fields=id' === $r['requete'] && false === $r['jeton_url'] && true === $r['jeton_entete'];
+		self::check( 'V4', 'sonde-200-vert', 'accepted' === $rows['ok']['classe'] && $probe_ok( $rows['ok'] ) && ! preg_grep( '/^probe_/', $rows['ok']['raisons'] ), 'GET /v26.0/me?fields=id, jeton dans Authorization : aucune raison sonde', $rows['ok'] );
+		self::check( 'V4', 'sonde-ne-lit-plus-le-pixel', array() === array_filter( $rows, static fn( array $r ): bool => str_contains( (string) $r['chemin'], self::FAKE_PIXEL ) ), 'aucune sonde sur /<pixel> (0.3.2 : « (#100) Missing Permission » en production)', array_column( $rows, 'chemin' ) );
+		self::check( 'V4', 'sonde-190-rouge', in_array( 'probe_token:rouge', $rows['code190']['raisons'], true ) && $probe_ok( $rows['code190'] ), 'rouge « probe_token »', $rows['code190'] );
+		self::check( 'V4', 'sonde-droits-orange', in_array( 'probe_permission:orange', $rows['missing_permission']['raisons'], true ) && ! in_array( 'probe_unavailable:orange', $rows['missing_permission']['raisons'], true ) && ! preg_grep( '/^probe_.*:rouge$/', $rows['missing_permission']['raisons'] ), '« Missing Permission » sur /me : orange « droits du jeton à vérifier », jamais rouge', $rows['missing_permission'] );
 		self::check( 'V4', 'sonde-indisponible-orange', in_array( 'probe_unavailable:orange', $rows['http500']['raisons'], true ) && ! preg_grep( '/:rouge$/', array_filter( $rows['http500']['raisons'], static fn( string $r ): bool => str_starts_with( $r, 'probe' ) ) ), 'orange « probe_unavailable », jamais rouge', $rows['http500'] );
 		$posts = array_filter( self::$requests, static fn( array $r ): bool => 'V4' === $r['scenario'] && 'GET' !== $r['method'] );
 		self::check( 'V4', 'jamais-post-events', array() === $posts, 'aucune requête POST /events pendant la sonde', count( $posts ) );
@@ -1120,10 +1126,12 @@ final class Famma_Qa_L5_Acceptance {
 				return self::reply( 400, '{"error":{"message":"QA-L5I simulation: invalid token","type":"OAuthException","code":190,"fbtrace_id":"QA-L5I"}}', $headers );
 			case 'code100':
 				return self::reply( 400, '{"error":{"message":"QA-L5I simulation: invalid parameter","type":"OAuthException","code":100,"fbtrace_id":"QA-L5I"}}', $headers );
+			case 'missing_permission':
+				return self::reply( 400, '{"error":{"message":"(#100) Missing Permission","type":"OAuthException","code":100,"fbtrace_id":"QA-L5I"}}', $headers );
 			case 'messages':
 				return self::reply( 200, '{"events_received":1,"messages":["QA-L5I simulated warning"],"fbtrace_id":"QA-L5I"}', $headers );
 			default:
-				return $probe ? self::reply( 200, '{"id":"' . self::FAKE_PIXEL . '"}', $headers ) : self::reply( 200, '{"events_received":1,"messages":[],"fbtrace_id":"QA-L5I"}', $headers );
+				return $probe ? self::reply( 200, '{"id":"' . self::FAKE_SYSTEM_USER . '"}', $headers ) : self::reply( 200, '{"events_received":1,"messages":[],"fbtrace_id":"QA-L5I"}', $headers );
 		}
 	}
 

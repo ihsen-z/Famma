@@ -1,6 +1,42 @@
 # Changelog — FAMMA Core
 
-## 0.3.2 — 2026-10-19 (non déployée)
+## 0.3.3 — 2026-10-20
+
+### Santé de la mesure : la sonde vérifie le jeton, plus l'objet Pixel
+
+Constaté en production le 20/10/2026 : la sonde de la 0.3.2 lisait
+`GET /v26.0/{pixel}?fields=id` avec le jeton de l'API Conversions. Meta
+répondait HTTP 400 « (#100) Missing Permission » (version servie v26.0,
+jeton valide : aucune erreur 190) ; ce jeton envoie des événements mais ne
+peut pas lire l'objet Pixel. Le bandeau de santé restait orange en
+permanence (« Sonde indisponible (code 100) »), ce qui rendait l'alerte
+inutile.
+
+- La sonde lit désormais `GET /{version}/me?fields=id` : le jeton d'un
+  utilisateur système renvoie l'identifiant de cet utilisateur (doc Meta,
+  « Facebook Login for Business », requête `/me` avec un jeton d'utilisateur
+  système). Elle vérifie le jeton et la version servie (en-tête
+  `facebook-api-version`, toujours lu et comparé) ; l'accès au jeu de
+  données reste prouvé par les vrais envois (transport, rapprochement,
+  santé). Toujours aucun POST /events, aucune requête hors production, jeton
+  dans l'en-tête `Authorization` et jamais dans le journal `famma-capi`.
+- Verdict de la sonde (`Capi_Probe_Verdict`) : jeton invalide ou expiré
+  (codes 190 et 102, sous-codes 463 et 467) → rouge `probe_token` ; droits
+  refusés sur `/me` (codes 10, 200 à 299 dont 294, 368, ou « Missing
+  Permission ») → orange `probe_permission` « droits du jeton à vérifier » ;
+  transitoire, réponse inattendue ou sans identifiant → orange
+  `probe_unavailable` « sonde indisponible » ; identifiant reçu → vert.
+- Une sonde valide n'efface plus qu'un refus d'envoi dû au jeton (190, 102) :
+  un refus de droits sur le jeu de données attend un envoi accepté.
+- Signal de sonde laissé par la 0.3.2 : seul son refus de jeton (190) compte
+  encore ; il est rejoué sur `/me` par Action Scheduler à la prochaine
+  vérification quotidienne de la planification (ou « Vérifier maintenant »).
+- Textes de l'écran « Mesure » et raisons de santé revus (« jeton valide,
+  version servie vérifiée » au lieu de « connexion valide »).
+- Retour arrière vers la 0.3.2 : rien à reprendre ; elle ignore le champ
+  `verdict` et relira l'objet Pixel (bandeau orange de nouveau).
+
+## 0.3.2 — 2026-10-19 (déployée le 20/10/2026)
 
 Lot 5 du plan `docs/PLAN-TESTS-PIXEL-2026-10-19.md` : stratégie S1 à S3,
 résilience aux évolutions de Meta (S6, mécanismes P0) et correctifs des

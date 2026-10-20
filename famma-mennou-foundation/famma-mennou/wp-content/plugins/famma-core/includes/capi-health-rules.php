@@ -6,12 +6,13 @@
  * d'envoi indisponible, battement de cœur de plus de 36 h, tâche
  * `famma-capi` en retard de plus de 2 h, commande livrée (ou terminée) sans
  * Purchase depuis plus de 24 h et encore renvoyable, version critique (R1),
- * jeton refusé par la sonde (190).
+ * jeton invalide ou expiré selon la sonde `/me` (190, 102, 463, 467).
  * Orange : non configuré, envoi bloqué par l'environnement (D4), version
  * servie différente de la demandée, profil « minimal » actif, fbc refusés
  * localement sur 7 jours, mode test sans code valide, refus de contrat,
- * sonde indisponible, Purchase manquant qu'aucun renvoi ne peut plus
- * rattraper (`Capi_Purchase_Gaps`).
+ * droits du jeton à vérifier ou sonde indisponible (`Capi_Probe_Verdict`),
+ * Purchase manquant qu'aucun renvoi ne peut plus rattraper
+ * (`Capi_Purchase_Gaps`).
  *
  * @package Famma\Core
  */
@@ -93,21 +94,21 @@ final class Capi_Health_Rules {
 	}
 
 	/**
-	 * Raisons tirées de la dernière sonde : seul un jeton refusé (190) est rouge.
+	 * Raisons tirées de la dernière sonde (`/me`) : seul un jeton invalide ou expiré est rouge.
 	 *
 	 * @param array<string, array<string, mixed>> $signals Signaux enregistrés.
 	 * @return array<int, array<string, string>>
 	 */
 	private static function probe_reasons( array $signals ): array {
-		$probe = $signals['probe'] ?? array();
-		$class = (string) ( $probe['class'] ?? '' );
-		if ( 'access' === $class && 190 === (int) ( $probe['code'] ?? 0 ) ) {
-			return array( self::reason( 'probe_token', 'rouge' ) );
-		}
-		if ( in_array( $class, array( 'access', 'transient', 'contract' ), true ) ) {
-			return array( self::reason( 'probe_unavailable', 'orange', (string) (int) ( $probe['code'] ?? 0 ) ) );
-		}
-		return array();
+		$probe  = $signals['probe'] ?? array();
+		$detail = (string) (int) ( $probe['code'] ?? 0 );
+		$codes  = array(
+			Capi_Probe_Verdict::TOKEN       => array( 'probe_token', 'rouge' ),
+			Capi_Probe_Verdict::PERMISSION  => array( 'probe_permission', 'orange' ),
+			Capi_Probe_Verdict::UNAVAILABLE => array( 'probe_unavailable', 'orange' ),
+		);
+		$found  = $codes[ Capi_Probe_Verdict::stored( $probe ) ] ?? null;
+		return null === $found ? array() : array( self::reason( $found[0], $found[1], $detail ) );
 	}
 
 	/**
@@ -223,7 +224,10 @@ final class Capi_Health_Rules {
 			/* translators: %s: number of rejected cookies. */
 			'fbc_rejected'      => sprintf( __( '%s identifiant(s) de clic fbc refusé(s) localement sur 7 jours.', 'famma-core' ), $detail ),
 			'test_code_invalid' => __( 'Mode test Meta actif sans code TEST valide : les envois sont bloqués.', 'famma-core' ),
-			'probe_token'       => __( 'La sonde Meta signale un jeton refusé (code 190).', 'famma-core' ),
+			/* translators: %s: Meta error code. */
+			'probe_token'       => sprintf( __( 'La sonde Meta signale un jeton invalide ou expiré (code %s) : générez un nouveau jeton et ressaisissez-le dans FAMMA → Mesure.', 'famma-core' ), $detail ),
+			/* translators: %s: Meta error code. */
+			'probe_permission'  => sprintf( __( 'Droits du jeton à vérifier (code %s) : Meta reconnaît le jeton mais refuse de lire son utilisateur système ; contrôlez ses autorisations dans le Gestionnaire d’entreprise.', 'famma-core' ), $detail ),
 			/* translators: %s: Meta error code. */
 			'probe_unavailable' => sprintf( __( 'Sonde indisponible (code %s) : vérification impossible pour l’instant.', 'famma-core' ), $detail ),
 		);

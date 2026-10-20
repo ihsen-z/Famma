@@ -137,6 +137,10 @@ final class Capi_Health {
 	/**
 	 * Retient le résultat de la sonde, puis recalcule l'état.
 	 *
+	 * Une sonde valide (`/me`) prouve le jeton, pas l'accès au jeu de
+	 * données : elle n'efface qu'un refus d'envoi dû au jeton (190, 102) ;
+	 * un refus de droits attend un envoi accepté.
+	 *
 	 * @param array<string, mixed> $result Résultat du transport.
 	 * @return void
 	 */
@@ -144,6 +148,7 @@ final class Capi_Health {
 		$signals          = self::signals();
 		$signals['probe'] = array(
 			'class'     => (string) ( $result['class'] ?? '' ),
+			'verdict'   => (string) ( $result['verdict'] ?? '' ),
 			'code'      => (int) ( $result['code'] ?? 0 ),
 			'http'      => (int) ( $result['http'] ?? 0 ),
 			'requested' => (string) ( $result['version_requested'] ?? '' ),
@@ -151,7 +156,9 @@ final class Capi_Health {
 			'at'        => time(),
 		);
 		if ( in_array( $signals['probe']['class'], array( 'accepted', 'accepted_warning' ), true ) ) {
-			unset( $signals['access'] );
+			if ( isset( $signals['access'] ) && Capi_Probe_Verdict::is_token_error( (int) ( $signals['access']['code'] ?? 0 ) ) ) {
+				unset( $signals['access'] );
+			}
 			$signals['served'] = array(
 				'requested' => $signals['probe']['requested'],
 				'served'    => $signals['probe']['served'],

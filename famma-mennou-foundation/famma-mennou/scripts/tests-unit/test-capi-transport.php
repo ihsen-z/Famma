@@ -103,20 +103,39 @@ l5_check( ! str_contains( implode( "\n", $lines ), $token ), 'The token never re
 l5_check( ! str_contains( $GLOBALS['wp_test_http'][0]['url'], $token ) && str_contains( (string) $GLOBALS['wp_test_http'][0]['args']['body'], $token ), 'The token travels in the body, never in the URL.' );
 l5_check( 8 === $GLOBALS['wp_test_http'][0]['args']['timeout'] && 0 === $GLOBALS['wp_test_http'][0]['args']['redirection'], 'Timeout 8 s, no redirection.' );
 
-// Probe (R6): GET /{version}/{pixel}?fields=id, token in a header, never POST /events.
+// Probe (R6, 0.3.3): GET /{version}/me?fields=id, token in a header, never POST /events.
+// The CAPI token of a system user may send events without reading the Pixel object
+// (0.3.2 in production: GET /{pixel} → 400 « (#100) Missing Permission »), so the
+// probe reads the token holder instead; dataset access stays proven by real sends.
 l5_reset();
-$GLOBALS['wp_test_http_response'] = l5_response( 200, '{"id":"000000000000001"}', array( 'facebook-api-version' => 'v26.0' ) );
+$GLOBALS['wp_test_http_response'] = l5_response( 200, '{"id":"000000000000042"}', array( 'facebook-api-version' => 'v26.0' ) );
 $probe                            = \Famma\Core\Capi_Probe::run();
 $request                          = $GLOBALS['wp_test_http'][0];
-l5_check( 'accepted' === $probe['class'] && 'GET' === $request['method'] && 'https://graph.facebook.com/v26.0/000000000000001?fields=id' === $request['url'], 'V4: probe 200 → accepted, by GET ?fields=id.' );
+l5_check( 'accepted' === $probe['class'] && 'ok' === $probe['verdict'] && 'GET' === $request['method'] && 'https://graph.facebook.com/v26.0/me?fields=id' === $request['url'], 'V4: probe 200 → accepted, by GET /v26.0/me?fields=id.' );
+l5_check( ! str_contains( $request['url'], '000000000000001' ), 'V4: the probe no longer reads the Pixel object.' );
 l5_check( 'Bearer ' . $token === $request['args']['headers']['Authorization'] && ! str_contains( $request['url'], $token ) && ! str_contains( $request['url'], '/events' ), 'V4: probe token in the Authorization header, no /events call.' );
 l5_check( 'vert' === \Famma\Core\Capi_Health::state()['statut'], 'V4: probe 200 → health green.' );
 $GLOBALS['wp_test_http_response'] = l5_response( 400, $json( array( 'code' => 190 ) ) );
 \Famma\Core\Capi_Probe::run();
 l5_check( 'rouge' === \Famma\Core\Capi_Health::state()['statut'], 'V4: probe 190 → health red.' );
+$GLOBALS['wp_test_http_response'] = l5_response(
+	400,
+	$json(
+		array(
+			'code'    => 100,
+			'message' => '(#100) Missing Permission',
+			'type'    => 'OAuthException',
+		)
+	),
+	array( 'facebook-api-version' => 'v26.0' )
+);
+\Famma\Core\Capi_Probe::run();
+$state = \Famma\Core\Capi_Health::state();
+l5_check( 'orange' === $state['statut'] && in_array( 'probe_permission', array_column( $state['raisons'], 'code' ), true ), 'V4: « Missing Permission » on /me → orange « droits du jeton à vérifier », never red.' );
 $GLOBALS['wp_test_http_response'] = l5_response( 400, $json( array( 'code' => 100 ) ) );
 \Famma\Core\Capi_Probe::run();
-l5_check( 'orange' === \Famma\Core\Capi_Health::state()['statut'], 'V4: probe-specific error → orange « sonde indisponible », never red.' );
+$state = \Famma\Core\Capi_Health::state();
+l5_check( 'orange' === $state['statut'] && in_array( 'probe_unavailable', array_column( $state['raisons'], 'code' ), true ), 'V4: other probe-specific error → orange « sonde indisponible », never red.' );
 $GLOBALS['wp_test_environment'] = 'local';
 $GLOBALS['wp_test_http']        = array();
 l5_check( 'blocked_environment' === \Famma\Core\Capi_Probe::run()['class'] && array() === $GLOBALS['wp_test_http'], 'V4: outside production, the probe sends no request.' );
