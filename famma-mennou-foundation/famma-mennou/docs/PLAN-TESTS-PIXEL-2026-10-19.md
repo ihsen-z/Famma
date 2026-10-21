@@ -469,7 +469,15 @@ Le lot n'est joué qu'**une seule fois**, sur la version corrigée, pour ne pass
   - Écarts : l'écran ne propose pas de mode test CAPI (lecture faite par l'aperçu d'Events Manager et par l'API, pas dans Test Events) ; Meta affiche le code TEST91392 ; la commande express ne demande ni ville ni adresse.
 - **T6.4** : un seul Purchase à « Livrée » (49 TND, accepté). Retour puis nouvelle livraison : aucun second envoi (`already_sent`, `marker`).
 - **T6.5** : remise en état complète. La 297 est à la corbeille (pas supprimée), le bandeau est vert.
-- **T6.6 : non joué**, la plateforme a refusé de cocher l'interrupteur. Recommandation : le laisser coupé, car le serveur transmet déjà fbc et la version navigateur ne porte ni ph, ni fn, ni st. Décision du propriétaire attendue.
+- **T6.6, le 20/10 : non joué**, la plateforme a refusé de cocher l'interrupteur. Il a été joué le 21/10 (voir plus bas).
+- **T6.6 joué le 21/10, de nuit, avec le propriétaire** (commandes d'essai 298 et 299).
+  - Mise en place : case cochée par le propriétaire ; mode test CAPI activé par un mu-plugin temporaire envoyé sur accord, puis rangé dans `/backups`.
+  - **Résultat** : Meta garde l'OrderPlaced navigateur (IP + agent utilisateur seulement) et marque « Dédoublonné » la version serveur, qui portait 9 clés. **L'interrupteur reste coupé.**
+  - La correspondance automatique ne capte pas les champs `billing_*` de l'express.
+  - Les commandes 298 et 299 sont annulées et à la corbeille ; elles sont à écarter des chiffres du 21/10.
+  - Rapport détaillé : `E:\Ecom\audit-preuves\2026-10-19-pixel\emq\RAPPORT-EMQ-2026-10-21.md`.
+  - Leviers et défauts de normalisation relevés : D1 à D7.
+  - Aucune note EMQ n'est fiable avant le 23/10 à 02:00.
 - **Couverts au passage** : T6.1 (événements navigateur visibles dans Test Events), T6.8 (v26.0 servie sur les envois réels), T6.10 (bandeau vert après purge).
 - **Non joués** : T6.2, T6.7, T6.9, T6.11.
 - **Pour le lot 7** :
