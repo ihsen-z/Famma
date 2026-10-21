@@ -1,6 +1,6 @@
 # Changelog — FAMMA Core
 
-## 0.3.4 — 2026-10-21 (non déployée)
+## 0.3.4 — 2026-10-21 (déployée le 21/10/2026)
 
 ### Qualité de correspondance : noms, code postal, ville et fbc de secours
 
