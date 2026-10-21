@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.3.3
+ * Version:           0.3.4
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.3.3' );
+define( 'FAMMA_CORE_VERSION', '0.3.4' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -51,11 +51,13 @@ require_once __DIR__ . '/includes/checkout-idempotency.php';
 require_once __DIR__ . '/includes/express-preparation.php';
 require_once __DIR__ . '/includes/capi-delivery-registry.php';
 require_once __DIR__ . '/includes/capi-signals.php';
+require_once __DIR__ . '/includes/capi-click-id.php';
 require_once __DIR__ . '/includes/capi-log.php';
 require_once __DIR__ . '/includes/capi-product-data.php';
 require_once __DIR__ . '/includes/capi-token-vault.php';
 require_once __DIR__ . '/includes/capi-token-rollback.php';
 require_once __DIR__ . '/includes/capi-transport.php';
+require_once __DIR__ . '/includes/capi-person-name.php';
 require_once __DIR__ . '/includes/capi-user-data.php';
 require_once __DIR__ . '/includes/capi-data-profile.php';
 require_once __DIR__ . '/includes/capi-retry.php';

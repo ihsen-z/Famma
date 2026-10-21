@@ -2,7 +2,7 @@
 /**
  * T1.4 — Normalisation and hashing of the CAPI user_data block, against the Meta rules.
  * Run with: php scripts/tests-unit/test-capi-normalisation.php [--json]
- * The real Capi_User_Data::build() (lot 5, A13), Config, Tunisia and Capi_Signals are exercised; no network.
+ * The real Capi_User_Data::build() (lot 5, A13; 0.3.4, D1 to D6), Config, Tunisia and Capi_Signals are exercised; no network.
  *
  * Reference: Meta, Conversions API, Customer Information Parameters
  * https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/customer-information-parameters
@@ -28,10 +28,11 @@ function l5_user_data( WC_Order $order ): array { // phpcs:ignore WordPress.Nami
 $meta_rules = array(
 	'em'      => 'Trim any leading and trailing spaces. Convert all characters to lowercase. Hashing required.',
 	'ph'      => 'Remove symbols, letters, and any leading zeros. Phone numbers must include a country code. Hashing required.',
-	'fn'      => 'Roman alphabet a-z recommended. Lowercase only with no punctuation. Special characters: UTF-8. Hashing required.',
+	'fn'      => 'Roman alphabet a-z recommended. Lowercase only with no punctuation. Special characters: UTF-8. Hashing required. Pixel and Parameter Builder also strip whitespace.',
 	'ln'      => 'Same rules as fn. Hashing required.',
 	'ct'      => 'Lowercase only with no punctuation, no special characters, and no spaces. Special characters: UTF-8. Hashing required.',
 	'st'      => '2-character ANSI code in lowercase; outside the U.S.: lowercase with no punctuation, no special characters, and no spaces. Hashing required.',
+	'zp'      => 'Lowercase with no spaces and no dash. Only the first 5 digits for U.S. zip codes. Hashing required.',
 	'country' => 'Lowercase, 2-letter country codes in ISO 3166-1 alpha-2. Hashing required.',
 	'fbc'     => 'Do not hash. fb.{subdomain_index}.{creation_time}.{fbclid}.',
 	'fbp'     => 'Do not hash. fb.{subdomain_index}.{creation_time}.{random_number}.',
@@ -41,6 +42,8 @@ $meta_rules = array(
 /*
  * One case = one order field. `accepted` lists every value the Meta rules allow
  * (UTF-8 form and a-z transliteration); null means the field must be omitted.
+ * fn / ln: whitespace stripped too, as the pixel (fbevents.js 2.9.426) and the
+ * Parameter Builder do (D1, D7): « Ben Salah » is only accepted as bensalah.
  */
 $cases = array(
 	array( 'ph', 'phone', '22123456', array( '21622123456' ) ),
@@ -54,7 +57,11 @@ $cases = array(
 	array( 'fn', 'first_name', 'ÉLODIE', array( 'élodie', 'elodie' ) ),
 	array( 'fn', 'first_name', 'محمد', array( 'محمد' ) ),
 	array( 'fn', 'first_name', '  Test  ', array( 'test' ) ),
-	array( 'ln', 'last_name', 'Ben-Salah', array( 'bensalah', 'ben salah' ) ),
+	array( 'ln', 'last_name', 'Ben-Salah', array( 'bensalah' ) ),
+	array( 'ln', 'last_name', 'Ben Salah', array( 'bensalah' ) ),
+	array( 'ln', 'last_name', 'Ben Ali Trabelsi', array( 'benalitrabelsi' ) ),
+	array( 'ln', 'last_name', 'بن صالح', array( 'بنصالح' ) ),
+	array( 'fn', 'first_name', 'Jean Marie', array( 'jeanmarie' ) ),
 	array( 'ln', 'last_name', 'الطرابلسي', array( 'الطرابلسي' ) ),
 	array( 'ct', 'city', 'Médenine', array( 'médenine', 'medenine' ) ),
 	array( 'ct', 'city', 'Ben Arous', array( 'benarous' ) ),
@@ -62,6 +69,11 @@ $cases = array(
 	array( 'ct', 'city', 'Sousse', array( 'sousse' ) ),
 	array( 'st', 'state', 'TN-82', array( 'tn82', '82', 'medenine', 'médenine' ) ),
 	array( 'st', 'state', 'TN-51', array( 'tn51', '51', 'sousse' ) ),
+	array( 'zp', 'postcode', '4000', array( '4000' ) ),
+	array( 'zp', 'postcode', ' 40 00 ', array( '4000' ) ),
+	array( 'zp', 'postcode', '94035-1234', array( '94035' ) ),
+	array( 'zp', 'postcode', 'M1 1AE', array( 'm11ae' ) ),
+	array( 'zp', 'postcode', '', null ),
 	array( 'country', 'country', 'TN', array( 'tn' ) ),
 	array( 'em', 'email', '', null ),
 	array( 'em', 'email', '  Client.Test@Example.INVALID ', array( 'client.test@example.invalid' ) ),
@@ -160,14 +172,14 @@ $full_order->country    = 'TN';
 $full_keys              = array_keys( l5_user_data( $full_order ) );
 foreach ( array( 'external_id', 'zp' ) as $missing_key ) {
 	$present = in_array( $missing_key, $full_keys, true );
-	// zp is optional for Meta and the Tunisian checkout collects no postcode: information only.
+	// zp is optional for Meta and only sent when a postcode was entered (0.3.4, D4): this order has none, information only.
 	$verdict = $present ? 'CONFORME' : ( 'zp' === $missing_key ? 'INFO' : 'ECART' );
 	$ecarts += 'ECART' === $verdict ? 1 : 0;
 	$rows[]  = array(
 		'champ'          => $missing_key,
-		'entree'         => 'commande complète (e-mail, téléphone, nom, ville, gouvernorat, pays)',
+		'entree'         => 'commande complète (e-mail, téléphone, nom, ville, gouvernorat, pays), sans code postal',
 		'attendu_meta'   => 'external_id: hashing recommended; zp: hashing required when sent',
-		'envoye'         => $present ? 'présent' : '(jamais construit)',
+		'envoye'         => $present ? 'présent' : ( 'zp' === $missing_key ? '(omis : aucun code postal saisi)' : '(jamais construit)' ),
 		'hash_envoye'    => '',
 		'verdict'        => $verdict,
 		'regle_meta'     => 'external_id recommandé (identifiant annonceur) ; zp facultatif',

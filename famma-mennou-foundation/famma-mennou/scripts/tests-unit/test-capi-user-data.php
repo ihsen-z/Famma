@@ -21,10 +21,10 @@ $name_cases = array(
 	"O'Neil"      => 'oneil',
 	'محمد'        => 'محمد',
 	'الطرابلسي'   => 'الطرابلسي',
-	'Jean  Marie' => 'jean marie',
+	'Jean  Marie' => 'jeanmarie',
 );
 foreach ( $name_cases as $input => $expected ) {
-	l5_check( Capi_User_Data::name( $input ) === $expected, 'fn/ln: « ' . $input . ' » → « ' . $expected . ' » (UTF-8 lowercase, no punctuation).' );
+	l5_check( Capi_User_Data::name( $input ) === $expected, 'fn/ln: « ' . $input . ' » → « ' . $expected . ' » (UTF-8 lowercase, no punctuation, no space since 0.3.4).' );
 }
 $cities = array(
 	'Médenine'      => 'médenine',

@@ -153,7 +153,7 @@ Famma_Unit_Harness::load_core_class( 'Config', 'Order_Statuses' );
 Famma_Unit_Harness::load_core_class( 'Order_Statuses', 'Stock' );
 Famma_Unit_Harness::load_core_class( 'Tunisia', 'WhatsApp' );
 Famma_Unit_Harness::load_core_class( 'Capi', 'Dashboard' );
-foreach ( array( 'meta-ids.php', 'capi-signals.php', 'capi-log.php', 'capi-product-data.php', 'capi-token-vault.php', 'capi-transport.php', 'capi-user-data.php', 'capi-data-profile.php', 'capi-retry.php', 'capi-health.php', 'capi-health-alert.php', 'capi-health-rules.php', 'capi-graph-version.php', 'capi-probe-verdict.php', 'capi-probe.php', 'capi-reconcile.php', 'capi-purchase-gaps.php' ) as $famma_include ) {
+foreach ( array( 'meta-ids.php', 'capi-signals.php', 'capi-click-id.php', 'capi-log.php', 'capi-product-data.php', 'capi-token-vault.php', 'capi-transport.php', 'capi-person-name.php', 'capi-user-data.php', 'capi-data-profile.php', 'capi-retry.php', 'capi-health.php', 'capi-health-alert.php', 'capi-health-rules.php', 'capi-graph-version.php', 'capi-probe-verdict.php', 'capi-probe.php', 'capi-reconcile.php', 'capi-purchase-gaps.php' ) as $famma_include ) {
 	Famma_Unit_Harness::load_include( $famma_include );
 }
 

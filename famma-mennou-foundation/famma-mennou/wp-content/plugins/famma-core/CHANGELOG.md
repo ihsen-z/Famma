@@ -1,5 +1,96 @@
 # Changelog — FAMMA Core
 
+## 0.3.4 — 2026-10-21 (non déployée)
+
+### Qualité de correspondance : noms, code postal, ville et fbc de secours
+
+Corrige les défauts D1, D2, D4, D5, D6 et D7 du rapport sur la qualité de
+correspondance du 21/10/2026 (`audit-preuves/2026-10-19-pixel/emq/`), ceux
+qui ne demandent aucune décision du propriétaire. Rien ne change dans les
+données enregistrées sur la commande : seul le bloc `user_data` envoyé à
+Meta (OrderPlaced et Purchase) est concerné.
+
+- Prénom et nom (D1) : les espaces sont retirés en plus de la ponctuation et
+  des symboles, comme le font le pixel (fbevents.js 2.9.426,
+  `whitespace_and_punctuation`) et le Parameter Builder officiel
+  (`getNormalizedName`). « Ben Salah » est haché en `bensalah` (et non plus
+  `ben salah`), « بن صالح » en `بنصالح` ; minuscules UTF-8 après composition
+  NFC, aucune translittération. Ces deux outils ne retirent que la
+  ponctuation ASCII : FAMMA retire aussi la ponctuation et les symboles
+  Unicode (’, « », ، , emoji), ainsi que les caractères invisibles (marques
+  de direction, espaces et liants de largeur nulle, sélecteurs de variante
+  d'emoji) ; pour ces caractères, l'empreinte diffère de celle du pixel.
+- Civilités (D2, F1, F2) : si le premier mot du prénom est une civilité
+  d'une courte liste (M, Mr, Mme, Mlle, Melle, Mrs, Ms, Dr, السيد, السيدة,
+  السيده, الآنسة, الانسة ; casse et point ou virgule final ignorés, virgule
+  arabe « ، » comprise, marque de direction en tête comprise) et qu'un autre
+  mot suit, elle est retirée du bloc envoyé ; une ponctuation isolée
+  (« M . Ali ») ne compte pas comme un mot. Le découpage du nom complet à la
+  commande faisait de « Mme Leila Ben Ali » le prénom `mme` : le prénom
+  envoyé devient `leila`, le nom `benali`. Suivie d'un seul mot
+  (« Mme Trabelsi », « M. Ali », ou prénom « Mme » et nom « Trabelsi »), la
+  civilité est supposée précéder le nom de famille (convention retenue le
+  21/10) : ce mot part en `ln` et aucun `fn` n'est envoyé (F1 ; la 0.3.3
+  envoyait `fn` = `mme`) ; un prénom tapé seul après une civilité
+  (« Mme Leila ») part donc en `ln`. Une civilité seule reste inchangée ;
+  aucune abréviation n'est développée. Limite connue : un nom de famille
+  composé après une civilité (« M. » / « Ben Ali ») part en `fn` = `ben`,
+  `ln` = `ali`, comme avant.
+- Code postal (D4) : nouvelle clé `zp`, hachée, depuis le code postal de
+  facturation, sinon d'expédition, seulement s'il a été saisi (minuscules,
+  lettres et chiffres seuls, sans espace ni tiret ; un code américain au
+  format 12345-6789 ne garde que ses 5 premiers chiffres). Un code contenant
+  une lettre ou un chiffre hors ASCII (chiffres arabes) est écarté entier,
+  jamais tronqué ni converti ; moins de 2 caractères, rien n'est envoyé,
+  comme pour le pixel et le Parameter Builder. Jamais déduit de la ville ni
+  du gouvernorat. Le checkout ne propose pas ce champ : `zp` ne partira que
+  pour un code saisi ailleurs (administration, formulaire express).
+- Ville (D5) : si la ville de facturation ne donne rien une fois normalisée
+  (vide, tiret, espace insécable), la ville d'expédition est lue. Même règle
+  pour le code postal. Normalisation de `ct` inchangée (les accents restent,
+  à trancher par un test).
+- fbc de secours (D6, nouveau fichier `includes/capi-click-id.php`) : sans
+  cookie `_fbc` enregistré à la commande, `fbc` est reconstruit depuis
+  l'attribution des commandes de WooCommerce si l'URL d'entrée de la session
+  (`_wc_order_attribution_session_entry`) porte un fbclid valide :
+  `fb.1.<début de session en ms>.<fbclid exact>`. Le début de session
+  (`_wc_order_attribution_session_start_time`) est lu en UTC, format
+  `AAAA-MM-JJ HH:MM:SS` de WooCommerce, quel que soit le fuseau de PHP ou du
+  site ; c'est l'instant où WooCommerce a observé l'URL d'entrée, ce que Meta
+  demande pour `creationTime` faute de cookie. Le fbclid suit les règles du
+  cookie (`[A-Za-z0-9_-]`, 500 caractères au plus), casse conservée ; si
+  l'URL en porte plusieurs, le premier est retenu, comme dans le navigateur.
+  Le début de session vient de l'horloge du téléphone : s'il est postérieur
+  à la création de la commande de 24 h au plus (horloge en avance), la date
+  de création de la commande sert de `creationTime`, instant où le serveur
+  a observé ce fbclid au plus tard (F3) ; au-delà de 24 h, ou plus de 90
+  jours avant la commande (durée de vie du cookie), pas de `fbc`. Une
+  métadonnée absente ou invalide : pas de `fbc`. Le cookie reste
+  prioritaire ; OrderPlaced et Purchase portent la même valeur, tant que la
+  date de création de la commande n'est pas modifiée dans l'administration.
+  Le journal `famma-capi` n'écrit toujours que `fbc=oui` ou `fbc=non`, et la
+  colonne « fbc présent » de l'écran de rapprochement suit désormais le
+  `fbc` réellement envoyé (cookie ou attribution), sans jamais afficher la
+  valeur.
+- Tests (D7) : `test-capi-normalisation.php` n'accepte plus que `bensalah` ;
+  nouveau `scripts/tests-unit/test-capi-match-keys.php` (D1, D2, D4, D5, D6 :
+  noms d'un et trois mots, arabe, tiret, civilité seule ou suivie d'un nom,
+  codes postaux, ville d'expédition, fbclid absent, invalide ou valide,
+  cookie prioritaire, fuseau du début de session, OrderPlaced puis Purchase
+  par la vraie classe Capi), complété après relecture : caractères
+  invisibles, codes postaux mixtes ou d'un caractère, repli d'expédition
+  après normalisation, fbclid en double, colonne fbc du rapprochement ;
+  puis civilité suivie d'un mot, variantes de civilité (virgule arabe,
+  ponctuation isolée comprises) et horloge en avance (F1 à F3).
+- Découpage (F4, nouveau fichier `includes/capi-person-name.php`) : la
+  normalisation des prénoms et noms et le retrait de la civilité passent
+  dans la classe `Capi_Person_Name`, chargée avant `capi-user-data.php`.
+  `Capi_User_Data::name()` et `Capi_User_Data::without_civility()` restent
+  disponibles et lui délèguent. Aucun autre résultat ne change (sonde sur
+  45 paires prénom et nom, avec et sans intl).
+- Retour arrière vers la 0.3.3 : rien à reprendre ; aucune donnée n'est
+  écrite par la 0.3.4, les envois reprennent l'ancienne normalisation.
+
 ## 0.3.3 — 2026-10-20
 
 ### Santé de la mesure : la sonde vérifie le jeton, plus l'objet Pixel

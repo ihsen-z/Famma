@@ -119,6 +119,10 @@ function sanitize_title( string $title ): string {
 	// Simplified: ASCII slug only (WordPress also transliterates accents).
 	return trim( (string) preg_replace( '/[^a-z0-9]+/', '-', strtolower( $title ) ), '-' );
 }
+function wp_parse_url( $url, $component = -1 ) {
+	// Same contract as wp-includes/http.php for absolute URLs.
+	return parse_url( $url, $component ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- This is the wp_parse_url() double.
+}
 function wp_unslash( $value ) {
 	return is_string( $value ) ? stripslashes( $value ) : $value;
 }
@@ -321,21 +325,25 @@ final class WC_Order_Item_Product {
 	}
 }
 final class WC_Order {
-	public array $meta                 = array();
-	public array $notes                = array();
-	public array $items                = array();
-	public string $status              = 'delivered';
-	public string $created_via         = 'checkout';
-	public string $email               = '';
-	public string $phone               = '';
-	public string $first_name          = '';
-	public string $last_name           = '';
-	public string $city                = '';
-	public string $state               = '';
-	public string $country             = '';
-	public string $payment             = 'cod';
-	public string $order_key           = 'wc_order_unit_test';
-	public ?DateTimeImmutable $paid_at = null;
+	public array $meta                    = array();
+	public array $notes                   = array();
+	public array $items                   = array();
+	public string $status                 = 'delivered';
+	public string $created_via            = 'checkout';
+	public string $email                  = '';
+	public string $phone                  = '';
+	public string $first_name             = '';
+	public string $last_name              = '';
+	public string $city                   = '';
+	public string $postcode               = '';
+	public string $shipping_city          = '';
+	public string $shipping_postcode      = '';
+	public string $state                  = '';
+	public string $country                = '';
+	public string $payment                = 'cod';
+	public string $order_key              = 'wc_order_unit_test';
+	public ?DateTimeImmutable $paid_at    = null;
+	public ?DateTimeImmutable $created_at = null;
 	public function __construct( public int $id = 901 ) {
 		$GLOBALS['wc_test_orders'][ $id ] = $this;
 	}
@@ -396,6 +404,15 @@ final class WC_Order {
 	public function get_billing_city(): string {
 		return $this->city;
 	}
+	public function get_billing_postcode(): string {
+		return $this->postcode;
+	}
+	public function get_shipping_city(): string {
+		return $this->shipping_city;
+	}
+	public function get_shipping_postcode(): string {
+		return $this->shipping_postcode;
+	}
 	public function get_billing_state(): string {
 		return $this->state;
 	}
@@ -409,7 +426,7 @@ final class WC_Order {
 		return '49.000';
 	}
 	public function get_date_created(): DateTimeImmutable {
-		return new DateTimeImmutable( '2026-10-19 10:00:00' );
+		return $this->created_at ?? new DateTimeImmutable( '2026-10-19 10:00:00' );
 	}
 	public function add_order_note( string $note ): void {
 		$this->notes[] = $note;

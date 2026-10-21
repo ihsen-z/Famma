@@ -210,6 +210,15 @@ namespace {
 		public function get_billing_city(): string {
 			return 'Tunis';
 		}
+		public function get_billing_postcode(): string {
+			return '';
+		}
+		public function get_shipping_city(): string {
+			return '';
+		}
+		public function get_shipping_postcode(): string {
+			return '';
+		}
 		public function get_billing_state(): string {
 			return 'TN-11';
 		}
@@ -333,7 +342,7 @@ namespace {
 	// phpcs:ignore Squiz.PHP.Eval.Discouraged -- Runs the real Capi source read from the plugin file, never external input.
 	eval( 'namespace Famma\\Core;' . substr( $source, $start, $end - $start ) );
 	// Real lot 5 collaborators: single transport, user data normalisation, data profile.
-	foreach ( array( 'capi-transport.php', 'capi-user-data.php', 'capi-data-profile.php' ) as $famma_include ) {
+	foreach ( array( 'capi-click-id.php', 'capi-transport.php', 'capi-person-name.php', 'capi-user-data.php', 'capi-data-profile.php' ) as $famma_include ) {
 		require dirname( __DIR__ ) . '/wp-content/plugins/famma-core/includes/' . $famma_include;
 	}
 	$client                    = \Famma\Core\Capi::instance();

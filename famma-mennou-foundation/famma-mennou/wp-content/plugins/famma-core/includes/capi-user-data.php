@@ -1,22 +1,32 @@
 <?php
 /**
- * Bloc `user_data` des événements serveur Meta, normalisé selon la doc (lot 5, A13).
+ * Bloc `user_data` des événements serveur Meta, normalisé selon la doc (lot 5, A13 ; 0.3.4, D1 à D6, F1 à F4).
  *
  * Référence : Meta, Conversions API, « Customer Information Parameters »
  * (developers.facebook.com/documentation/ads-commerce/conversions-api/
  * parameters/customer-information-parameters), relue le 19/10/2026 :
  *
- * - fn, ln : « Lowercase only with no punctuation. If using special
- *   characters, the text must be encoded in UTF-8 format » (Valéry → valéry) ;
+ * - fn, ln : « Lowercase only with no punctuation », sans espace depuis la
+ *   0.3.4 (D1) ; civilité de tête retirée du bloc envoyé, jamais de la
+ *   commande (D2, F1, F2). Voir Capi_Person_Name (0.3.4, F4) ;
  * - ct : « Lowercase only with no punctuation, no special characters, and no
- *   spaces », lettres UTF-8 conservées (accents, arabe) ;
+ *   spaces », lettres UTF-8 conservées (accents, arabe). Ville de facturation,
+ *   sinon d'expédition si celle de facturation ne donne rien une fois
+ *   normalisée (0.3.4, D5) ;
+ * - zp : « lowercase with no spaces and no dash. Use only the first 5 digits
+ *   for U.S. zip codes ». Code postal de facturation, sinon d'expédition,
+ *   envoyé seulement s'il a été saisi ; jamais déduit de la ville ni du
+ *   gouvernorat, jamais tronqué ni converti, 2 caractères au moins comme le
+ *   pixel et le Parameter Builder (0.3.4, D4) ;
  * - st : « Normalize states outside the US in lowercase with no punctuation,
  *   no special characters, and no spaces ». Forme retenue : le code ISO du
  *   gouvernorat sans tiret (TN-82 → tn82), filtrable par `famma_capi_state_value` ;
  * - country : code ISO 3166-1 alpha-2 en minuscules (tn) ;
  * - ph : indicatif compris, chiffres seuls (déjà conforme, inchangé) ;
  * - client_user_agent : « required for website events » — il n'est envoyé,
- *   comme event_source_url, que pour un événement `website`.
+ *   comme event_source_url, que pour un événement `website` ;
+ * - fbc : cookie `_fbc` figé à la commande, sinon reconstruit depuis
+ *   l'attribution WooCommerce (0.3.4, D6, voir Capi_Click_Id).
  *
  * Avant la 0.3.2, prénom et ville passaient par `strtolower()` ASCII :
  * « Élodie » gardait sa majuscule accentuée, « Médenine » devenait
@@ -54,14 +64,17 @@ final class Capi_User_Data {
 	 * @return array<string, string>
 	 */
 	public static function build( \WC_Order $order, bool $website ): array {
+		list( $first, $last ) = Capi_Person_Name::without_civility( (string) $order->get_billing_first_name(), (string) $order->get_billing_last_name() );
+
 		$data = array_filter(
 			array(
 				'em'      => self::hash( self::email( (string) $order->get_billing_email() ) ),
 				'ph'      => self::hash( self::phone( (string) $order->get_billing_phone() ) ),
-				'fn'      => self::hash( self::name( (string) $order->get_billing_first_name() ) ),
-				'ln'      => self::hash( self::name( (string) $order->get_billing_last_name() ) ),
-				'ct'      => self::hash( self::city( (string) $order->get_billing_city() ) ),
+				'fn'      => self::hash( Capi_Person_Name::normalize( $first ) ),
+				'ln'      => self::hash( Capi_Person_Name::normalize( $last ) ),
+				'ct'      => self::hash( self::billing_or_shipping( self::city( (string) $order->get_billing_city() ), self::city( (string) $order->get_shipping_city() ) ) ),
 				'st'      => self::hash( self::state( (string) $order->get_billing_state(), (string) $order->get_billing_country() ) ),
+				'zp'      => self::hash( self::billing_or_shipping( self::postcode( (string) $order->get_billing_postcode() ), self::postcode( (string) $order->get_shipping_postcode() ) ) ),
 				'country' => self::hash( self::country( (string) $order->get_billing_country() ) ),
 			)
 		);
@@ -71,14 +84,13 @@ final class Capi_User_Data {
 		 * viennent toujours des métadonnées figées à la commande — jamais de
 		 * la requête courante, qui pour Purchase est celle de l'admin.
 		 */
-		foreach ( array(
-			'fbp' => '_famma_fbp',
-			'fbc' => '_famma_fbc',
-		) as $key => $meta ) {
-			$value = Capi_Signals::clean_cookie( (string) $order->get_meta( $meta ) );
-			if ( '' !== $value ) {
-				$data[ $key ] = $value;
-			}
+		$fbp = Capi_Signals::clean_cookie( (string) $order->get_meta( '_famma_fbp' ) );
+		if ( '' !== $fbp ) {
+			$data['fbp'] = $fbp;
+		}
+		$fbc = Capi_Click_Id::for_order( $order );
+		if ( '' !== $fbc ) {
+			$data['fbc'] = $fbc;
 		}
 		$ip = Capi_Signals::clean_ip( (string) $order->get_meta( '_famma_client_ip' ) );
 		if ( '' !== $ip ) {
@@ -150,15 +162,63 @@ final class Capi_User_Data {
 	}
 
 	/**
-	 * Prénom ou nom : minuscules UTF-8, sans ponctuation ni symbole, espaces réduits.
+	 * Prénom ou nom normalisé (D1), voir Capi_Person_Name::normalize().
 	 *
 	 * @param string $name Valeur saisie.
 	 * @return string
 	 */
 	public static function name( string $name ): string {
-		$name = (string) preg_replace( '/[\p{P}\p{S}]+/u', '', self::lower( $name ) );
+		return Capi_Person_Name::normalize( $name );
+	}
 
-		return trim( (string) preg_replace( '/\s+/u', ' ', $name ) );
+	/**
+	 * Prénom et nom envoyés à Meta (D2, F1, F2), voir Capi_Person_Name::without_civility().
+	 *
+	 * @param string $first Prénom enregistré.
+	 * @param string $last  Nom enregistré.
+	 * @return array{0: string, 1: string} Prénom, nom.
+	 */
+	public static function without_civility( string $first, string $last ): array {
+		return Capi_Person_Name::without_civility( $first, $last );
+	}
+
+	/**
+	 * Valeur de facturation normalisée, sinon celle d'expédition (D4, D5).
+	 *
+	 * Le choix se fait après normalisation : une ville de facturation faite
+	 * d'un tiret ou d'un espace insécable ne masque pas celle d'expédition.
+	 *
+	 * @param string $billing  Valeur de facturation déjà normalisée.
+	 * @param string $shipping Valeur d'expédition déjà normalisée.
+	 * @return string
+	 */
+	private static function billing_or_shipping( string $billing, string $shipping ): string {
+		return '' !== $billing ? $billing : $shipping;
+	}
+
+	/**
+	 * Code postal : minuscules, lettres et chiffres seuls, sans espace ni tiret (D4).
+	 *
+	 * Un code américain au format 12345-6789 ne garde que ses 5 premiers
+	 * chiffres, comme le demande Meta. Un code contenant une lettre ou un
+	 * chiffre hors ASCII (chiffres arabes, lettre accentuée) est écarté entier,
+	 * jamais tronqué ni converti. Moins de 2 caractères : rien n'est envoyé,
+	 * comme pour le pixel et le Parameter Builder.
+	 *
+	 * @param string $postcode Valeur saisie.
+	 * @return string
+	 */
+	public static function postcode( string $postcode ): string {
+		$value = (string) preg_replace( '/[\s\p{Z}\p{Cf}]+/u', '', self::lower( $postcode ) );
+		if ( 1 === preg_match( '/^([0-9]{5})-[0-9]{4}$/D', $value, $zip ) ) {
+			return $zip[1];
+		}
+		if ( 1 === preg_match( '/[\p{L}\p{N}]/u', (string) preg_replace( '/[a-z0-9]+/', '', $value ) ) ) {
+			return '';
+		}
+		$value = (string) preg_replace( '/[^a-z0-9]+/', '', $value );
+
+		return strlen( $value ) >= 2 ? $value : '';
 	}
 
 	/**
@@ -200,10 +260,12 @@ final class Capi_User_Data {
 	/**
 	 * Minuscules UTF-8, après composition canonique quand intl est présent.
 	 *
+	 * Partagée avec Capi_Person_Name.
+	 *
 	 * @param string $value Valeur saisie.
 	 * @return string
 	 */
-	private static function lower( string $value ): string {
+	public static function lower( string $value ): string {
 		$value = trim( $value );
 		if ( '' === $value || ! mb_check_encoding( $value, 'UTF-8' ) ) {
 			return '';

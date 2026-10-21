@@ -178,6 +178,15 @@ namespace {
 		public function get_billing_city(): string {
 			return $this->city;
 		}
+		public function get_billing_postcode(): string {
+			return '';
+		}
+		public function get_shipping_city(): string {
+			return '';
+		}
+		public function get_shipping_postcode(): string {
+			return '';
+		}
 		public function get_billing_state(): string {
 			return $this->state;
 		}
@@ -327,7 +336,7 @@ namespace {
 	// phpcs:ignore Squiz.PHP.Eval.Discouraged -- Runs the real plugin source read from the plugin file, never external input.
 	eval( 'namespace Famma\\Core;' . substr( $source, $tunisia_start, $tunisia_end - $tunisia_start ) );
 	// Real lot 5 collaborators: token vault, single transport, user data normalisation, data profile.
-	foreach ( array( 'capi-token-vault.php', 'capi-transport.php', 'capi-user-data.php', 'capi-data-profile.php' ) as $famma_include ) {
+	foreach ( array( 'capi-token-vault.php', 'capi-click-id.php', 'capi-transport.php', 'capi-person-name.php', 'capi-user-data.php', 'capi-data-profile.php' ) as $famma_include ) {
 		require dirname( __DIR__ ) . '/wp-content/plugins/famma-core/includes/' . $famma_include;
 	}
 	$GLOBALS['options']                            = array(

@@ -122,7 +122,8 @@ final class Capi_Reconcile {
 		return array(
 			'order'       => $order,
 			'test'        => (bool) $order->get_meta( '_famma_test_order' ),
-			'fbc'         => '' !== (string) $order->get_meta( '_famma_fbc' ),
+			// Le fbc réellement envoyé (cookie, sinon attribution), jamais affiché.
+			'fbc'         => '' !== Capi_Click_Id::for_order( $order ),
 			'orderplaced' => $this->cell( $order, 'OrderPlaced', $records['OrderPlaced'] ?? array(), $now ),
 			'purchase'    => $this->cell( $order, 'Purchase', $records['Purchase'] ?? array(), $now ),
 		);
