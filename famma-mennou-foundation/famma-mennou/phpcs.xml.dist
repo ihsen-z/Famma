@@ -115,6 +115,17 @@
 				<element value="famma_child_brand_logo"/>
 				<element value="famma_child_drop_gallery_zoom"/>
 				<element value="famma_child_kses_image"/>
+				<element value="famma_child_home_hero_style"/>
+				<element value="famma_child_home_hero_image"/>
+				<element value="famma_child_home_hero_thumb"/>
+				<element value="famma_child_home_hero_price"/>
+				<element value="famma_child_home_hero_stack_slot"/>
+				<element value="famma_child_home_hero_hidden_attr"/>
+				<element value="famma_child_home_hero_chevron"/>
+				<element value="famma_child_home_hero_media"/>
+				<element value="famma_child_home_hero_stack"/>
+				<element value="famma_child_home_hero_showcase"/>
+				<element value="famma_child_home_hero_thumbs"/>
 				<element value="famma_child_defer_image"/>
 				<element value="famma_child_remove_parent_callback"/>
 				<element value="famma_child_swap_scrollbar_script"/>
