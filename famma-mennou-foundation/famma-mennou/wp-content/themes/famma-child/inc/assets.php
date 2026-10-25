@@ -300,13 +300,27 @@ function famma_child_enqueue_home(): void {
 		);
 	}
 
+	// Feuille des styles pile / vitrine / vignettes : jamais servie au style
+	// classique, qui n'en a pas l'usage.
+	if ( 'classic' !== famma_child_home_hero_style() && file_exists( $dir . '/assets/css/hero-variants.css' ) ) {
+		wp_enqueue_style(
+			'famma-hero-variants',
+			$uri . '/assets/css/hero-variants.css',
+			array( 'famma-home' ),
+			(string) filemtime( $dir . '/assets/css/hero-variants.css' )
+		);
+	}
+
 	if ( file_exists( $dir . '/assets/js/hero.js' ) ) {
 		wp_enqueue_script(
 			'famma-hero',
 			$uri . '/assets/js/hero.js',
 			array(),
 			(string) filemtime( $dir . '/assets/js/hero.js' ),
-			true
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
 		);
 	}
 

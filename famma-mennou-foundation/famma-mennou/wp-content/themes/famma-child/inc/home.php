@@ -157,6 +157,7 @@ function famma_child_home_hero_products(): array {
 function famma_child_home_hero(): void {
 	$products = famma_child_home_hero_products();
 	$slides   = count( $products );
+	$style    = famma_child_home_hero_style();
 	$shop_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/' );
 
 	$perks = array(
@@ -178,7 +179,7 @@ function famma_child_home_hero(): void {
 		),
 	);
 	?>
-	<section class="famma-hero2<?php echo $slides > 1 ? ' has-carousel' : ''; ?>">
+	<section class="famma-hero2 famma-hero2--<?php echo esc_attr( $style ); ?><?php echo $slides > 1 ? ' has-carousel' : ''; ?>">
 		<div class="famma-hero2__text">
 			<?php
 			/*
@@ -231,7 +232,9 @@ function famma_child_home_hero(): void {
 			</a>
 		</div>
 
-		<?php if ( $slides > 0 ) : ?>
+		<?php if ( $slides > 0 && 'classic' !== $style ) : ?>
+			<?php famma_child_home_hero_media( $style, $products ); ?>
+		<?php elseif ( $slides > 0 ) : ?>
 			<div class="famma-hero2__media">
 				<span class="famma-hero2__disc" aria-hidden="true"></span>
 				<span class="famma-hero2__base" aria-hidden="true"></span>
@@ -243,28 +246,7 @@ function famma_child_home_hero(): void {
 							href="<?php echo esc_url( (string) $product->get_permalink() ); ?>"
 							<?php echo 0 === $index ? '' : 'aria-hidden="true" tabindex="-1"'; ?>
 						>
-							<?php
-							/*
-							 * La première diapo est l'élément LCP de l'accueil mobile :
-							 * priorité haute, jamais différée. Les suivantes sont
-							 * cachées au chargement et ne doivent pas lui disputer
-							 * la bande passante (audit perf du 23/09, PERF-09).
-							 */
-							$famma_hero_attr = 0 === $index
-								? array(
-									'loading'       => 'eager',
-									'fetchpriority' => 'high',
-								)
-								: array(
-									'loading'       => 'lazy',
-									'fetchpriority' => 'low',
-								);
-							$famma_hero_img  = $product->get_image( 'woocommerce_single', $famma_hero_attr );
-							if ( 0 !== $index ) {
-								$famma_hero_img = famma_child_defer_image( $famma_hero_img );
-							}
-							echo famma_child_kses_image( $famma_hero_img ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- échappé par famma_child_kses_image().
-							?>
+							<?php echo famma_child_home_hero_image( $product, $index ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- échappé par famma_child_kses_image(). ?>
 							<span class="screen-reader-text"><?php echo esc_html( $product->get_name() ); ?></span>
 						</a>
 					<?php endforeach; ?>
