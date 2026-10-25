@@ -34,6 +34,9 @@ foreach ( array( 'FAMMA_META_ACCESS_TOKEN', 'FAMMA_META_PIXEL_ID', 'FAMMA_META_T
 if ( '' !== (string) get_option( 'famma_meta_access_token', '' ) ) {
 	throw new RuntimeException( 'Clear the stored CAPI token in this clone first.' );
 }
+// Lot 5 (D4) : hors production, famma-core n'envoie rien à Meta. Ce clone jetable intercepte
+// déjà toute requête sortante : la suite lève la garde pour son seul processus.
+add_filter( 'famma_meta_sending_allowed', '__return_true' );
 
 /** Scénarios fbc/fbp sur de vraies commandes WooCommerce. */
 final class Famma_Capi_Fbc_Integration {
@@ -69,7 +72,8 @@ final class Famma_Capi_Fbc_Integration {
 			}
 			update_option( 'famma_meta_pixel_id', '123456789' );
 			update_option( 'famma_meta_access_token', 'INTEGRATION_FAKE_TOKEN_NOT_A_SECRET', false );
-			update_option( 'famma_meta_test_event_code', 'TEST_FAKE_INTEGRATION' );
+			// Lot 5 (A12) : un code de test valide est TEST suivi de chiffres.
+			update_option( 'famma_meta_test_event_code', 'TEST12345' );
 			update_option( 'famma_meta_orderplaced_enabled', true );
 			delete_option( 'famma_meta_capi_test_mode' );
 
@@ -122,13 +126,12 @@ final class Famma_Capi_Fbc_Integration {
 			self::check( 'no-test-code', ! isset( self::$requests[0]['payload']['test_event_code'] ), 'Mode test éteint : aucun test_event_code.' );
 			// Recharge le produit : le slug n'est attribué qu'à l'enregistrement en base.
 			$product = wc_get_product( $product->get_id() );
+			// Lot 5 (A14) : le profil « standard » retire famma_stage, famma_product et content_name.
 			$mono    = array(
-				'content_ids'   => array( (string) $product->get_id() ),
-				'content_name'  => $product->get_name(),
-				'num_items'     => 1,
-				'famma_product' => $product->get_slug(),
+				'content_ids' => array( (string) $product->get_id() ),
+				'num_items'   => 1,
 			);
-			self::check( 'orderplaced-product-mono', self::product_data_matches( $placed, $mono ) && 'order_placed' === ( $placed['custom_data']['famma_stage'] ?? '' ), 'OrderPlaced mono-produit : content_ids, content_name, num_items, famma_product.' );
+			self::check( 'orderplaced-product-mono', self::product_data_matches( $placed, $mono ) && self::standard_profile( $placed ), 'OrderPlaced mono-produit, profil standard : content_ids et num_items, ni famma_stage, ni famma_product, ni content_name.' );
 
 			// 4. Purchase depuis « l'admin » : autre IP, autre navigateur, autres cookies.
 			$_COOKIE['_fbc']            = 'fb.1.1760000000999.ADMIN_SESSION_CLICK';
@@ -140,7 +143,7 @@ final class Famma_Capi_Fbc_Integration {
 			$pud      = $purchase['user_data'] ?? array();
 			self::check( 'purchase-signals', 'Purchase' === ( $purchase['event_name'] ?? '' ) && self::FBC === ( $pud['fbc'] ?? '' ) && self::FBP === ( $pud['fbp'] ?? '' ) && self::CLIENT_IP === ( $pud['client_ip_address'] ?? '' ) && self::CLIENT_UA === ( $pud['client_user_agent'] ?? '' ), 'Purchase : valeurs de la commande, jamais celles de l’admin.' );
 			self::check( 'purchase-identity', 'famma_purchase_' . $order->get_id() === ( $purchase['event_id'] ?? '' ), 'event_id Purchase inchangé.' );
-			self::check( 'purchase-product-mono', self::product_data_matches( $purchase, $mono ) && ! isset( $purchase['custom_data']['famma_stage'] ), 'Purchase mono-produit : même bloc produit que OrderPlaced.' );
+			self::check( 'purchase-product-mono', self::product_data_matches( $purchase, $mono ) && self::standard_profile( $purchase ), 'Purchase mono-produit : même bloc produit que OrderPlaced, profil standard.' );
 
 			// 5. Commande antérieure à 0.2.6, sans métadonnées.
 			$legacy = self::order( $product, false );
@@ -161,11 +164,13 @@ final class Famma_Capi_Fbc_Integration {
 			update_option( 'famma_meta_capi_test_mode', 1 );
 			$test = self::order( $product, false );
 			wc_get_order( $test->get_id() )->update_status( 'delivered', 'Local integration: test mode.' );
-			self::check( 'test-mode-on', 'TEST_FAKE_INTEGRATION' === ( self::$requests[4]['payload']['test_event_code'] ?? '' ), 'Mode test : test_event_code joint.' );
+			self::check( 'test-mode-on', 'TEST12345' === ( self::$requests[4]['payload']['test_event_code'] ?? '' ), 'Mode test : test_event_code joint.' );
 			update_option( 'famma_meta_test_event_code', 'not-a-test-code' );
-			$test2 = self::order( $product, false );
+			$test2       = self::order( $product, false );
+			$before_test = count( self::$requests );
 			wc_get_order( $test2->get_id() )->update_status( 'delivered', 'Local integration: invalid test code.' );
-			self::check( 'test-mode-invalid', ! isset( self::$requests[5]['payload']['test_event_code'] ), 'Code hors format TEST… : rien joint.' );
+			// Lot 5 (A12) : en mode test, un code hors format bloque l'envoi au lieu de partir en réel.
+			self::check( 'test-mode-invalid', count( self::$requests ) === $before_test && ! wc_get_order( $test2->get_id() )->get_meta( '_famma_purchase_sent' ), 'Code hors format TEST… : envoi bloqué, rien ne part.' );
 			delete_option( 'famma_meta_capi_test_mode' );
 
 			// 8. Panne réseau : la commande passe quand même.
@@ -177,6 +182,10 @@ final class Famma_Capi_Fbc_Integration {
 			$after = wc_get_order( $down->get_id() );
 			self::check( 'non-blocking', $result === $success && $after->has_status( 'delivered' ) && ! $after->get_meta( '_famma_purchase_sent' ), 'Échec Meta : aucune exception, commande livrée normalement.' );
 			self::$network_down = false;
+
+			// 9 et 10 : mise en forme du bloc produit complet (0.2.7), rétablie par le filtre
+			// famma_meta_data_profile_legacy du lot 5.
+			add_filter( 'famma_meta_data_profile_legacy', '__return_true' );
 
 			// 9. Multi-produit : SKU repris, quantités sommées, « | » neutralisé.
 			$second = new WC_Product_Simple();
@@ -246,6 +255,7 @@ final class Famma_Capi_Fbc_Integration {
 			wc_get_order( $varorder->get_id() )->update_status( 'delivered', 'Local integration: variation.' );
 			$vpur = self::last_event();
 			self::check( 'purchase-product-variation', 'Purchase' === ( $vpur['event_name'] ?? '' ) && self::product_data_matches( $vpur, $var_data ) && ( $vp['custom_data']['content_name'] ?? '' ) === ( $vpur['custom_data']['content_name'] ?? null ), 'Purchase variation : même bloc produit que OrderPlaced.' );
+			remove_filter( 'famma_meta_data_profile_legacy', '__return_true' );
 		} finally {
 			$_SERVER = $server_backup;
 			$_COOKIE = $cookie_backup;
@@ -388,6 +398,17 @@ final class Famma_Capi_Fbc_Integration {
 	}
 
 	/**
+	 * Profil de données « standard » (lot 5, A14) : ni étape, ni slug, ni nom de produit.
+	 *
+	 * @param array $event Événement Meta décodé.
+	 * @return bool
+	 */
+	private static function standard_profile( array $event ): bool {
+		$cd = $event['custom_data'] ?? array();
+		return is_array( $cd ) && ! array_intersect_key( $cd, array_flip( array( 'famma_stage', 'famma_product', 'content_name' ) ) );
+	}
+
+	/**
 	 * Enregistre une assertion.
 	 *
 	 * @param string $name    Identifiant.
@@ -411,6 +432,17 @@ final class Famma_Capi_Fbc_Integration {
 		global $wpdb;
 		foreach ( self::$orders as $id ) {
 			as_unschedule_all_actions( 'famma_capi_orderplaced_send', array( 'order_id' => $id ), 'famma-capi' );
+			// Lot 5 (D1) : un échec transitoire planifie aussi une relance bornée famma_capi_retry.
+			foreach ( array( 'OrderPlaced', 'Purchase' ) as $event_name ) {
+				as_unschedule_all_actions(
+					'famma_capi_retry',
+					array(
+						'order_id'   => $id,
+						'event_name' => $event_name,
+					),
+					'famma-capi'
+				);
+			}
 			$order = wc_get_order( $id );
 			if ( $order && self::$run_id === $order->get_meta( '_famma_integration_run' ) ) {
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Suite-owned registry rows only.
@@ -433,6 +465,7 @@ final class Famma_Capi_Fbc_Integration {
 		}
 		remove_filter( 'pre_http_request', array( self::class, 'intercept' ), PHP_INT_MAX );
 		remove_filter( 'pre_wp_mail', '__return_true', PHP_INT_MAX );
+		remove_filter( 'famma_meta_data_profile_legacy', '__return_true' );
 	}
 }
 

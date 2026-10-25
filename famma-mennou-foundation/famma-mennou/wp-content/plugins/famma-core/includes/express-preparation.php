@@ -116,41 +116,15 @@ final class Express_Preparation {
 			wp_send_json( $response );
 			return;
 		}
-		$previous   = $isolation->previous_quantity();
-		$delta      = max( 0.0, $quantity - $previous );
-		$sku        = (string) $product->get_sku();
-		$content_id = '' !== $sku ? $sku : (string) $product_id;
-		$params     = array(
-			'content_ids'  => array( $content_id ),
-			'content_type' => 'product',
-			'currency'     => get_woocommerce_currency(),
-			'value'        => round( $delta * (float) wc_get_price_to_display( $product ), wc_get_price_decimals() ),
-			'contents'     => array(
-				array(
-					'id'       => $content_id,
-					'quantity' => $delta,
-				),
-			),
-		);
-		$response   = array(
+		$previous = $isolation->previous_quantity();
+		$delta    = max( 0.0, $quantity - $previous );
+		$response = array(
 			'result'         => 'success',
 			'preparation_id' => $id,
 			'cart_hash'      => $hash,
 			'summary'        => self::summary(),
 			'other_items'    => $isolation->other_items(),
-			'tracking'       => array(
-				'add_to_cart'       => array(
-					'emit'     => $delta > 0,
-					'event_id' => 'famma_add_' . $id,
-					'params'   => $params,
-					'previous' => $previous,
-					'unit'     => (float) wc_get_price_to_display( $product ),
-				),
-				'initiate_checkout' => array(
-					'event_id' => 'famma_checkout_' . $id,
-					'params'   => self::cart_tracking(),
-				),
-			),
+			'tracking'       => self::tracking( $id, $product, $delta, $previous ),
 		);
 		$isolation->restore();
 		$preparations[ $id ] = array(
@@ -303,18 +277,74 @@ final class Express_Preparation {
 		return hash( 'sha256', (string) wp_json_encode( array( self::summary(), WC()->cart->get_cart_hash(), WC()->customer->get_shipping_country(), WC()->customer->get_shipping_state() ) ) );
 	}
 
-	/** Full cart Meta parameters for acknowledged InitiateCheckout. @return array */
+	/**
+	 * Bloc `tracking` du devis : AddToCart et InitiateCheckout acquittés.
+	 *
+	 * Les identifiants restent ceux du serveur (`famma_add_<prep>`,
+	 * `famma_checkout_<prep>`), dans une réponse AJAX jamais mise en cache.
+	 * Vide pour un visiteur interne (S1) : le script n'émet alors rien.
+	 *
+	 * @param string      $id       Identifiant de préparation.
+	 * @param \WC_Product $product  Produit de la fiche.
+	 * @param float       $delta    Quantité réellement ajoutée.
+	 * @param float       $previous Quantité déjà au panier avant le devis.
+	 * @return array<string, mixed>
+	 */
+	private static function tracking( string $id, \WC_Product $product, float $delta, float $previous ): array {
+		if ( ! Tracking::browser_tracking_allowed() ) {
+			return array();
+		}
+		$content_id = Meta_Ids::content_id( $product );
+		$unit       = (float) wc_get_price_to_display( $product );
+		$params     = array(
+			'content_ids'  => array( $content_id ),
+			'content_type' => 'product',
+			'currency'     => get_woocommerce_currency(),
+			'value'        => round( $delta * $unit, wc_get_price_decimals() ),
+			'contents'     => array(
+				array(
+					'id'       => $content_id,
+					'quantity' => $delta,
+				),
+			),
+		);
+		return array(
+			'add_to_cart'       => array(
+				'emit'     => $delta > 0,
+				'event_id' => 'famma_add_' . $id,
+				'params'   => Tracking_Events::profile_params( $params, 'AddToCart' ),
+				'previous' => $previous,
+				'unit'     => $unit,
+			),
+			'initiate_checkout' => array(
+				'event_id' => 'famma_checkout_' . $id,
+				'params'   => Tracking_Events::profile_params( self::cart_tracking(), 'InitiateCheckout' ),
+			),
+		);
+	}
+
+	/**
+	 * Paramètres Meta complets du panier isolé, pour InitiateCheckout.
+	 *
+	 * Identifiant de chaque ligne : la règle unique `Meta_Ids::content_id()`,
+	 * appliquée au produit réellement au panier (la variation, s'il y en a une).
+	 *
+	 * @return array<string, mixed>
+	 */
 	private static function cart_tracking(): array {
 		$contents = array();
 		foreach ( WC()->cart->get_cart() as $item ) {
-			$sku        = (string) $item['data']->get_sku();
+			$product = $item['data'] ?? null;
+			if ( ! $product instanceof \WC_Product ) {
+				continue;
+			}
 			$contents[] = array(
-				'id'       => '' !== $sku ? $sku : (string) $item['product_id'],
+				'id'       => Meta_Ids::content_id( $product ),
 				'quantity' => (float) $item['quantity'],
 			);
 		}
 		return array(
-			'content_ids'  => array_column( $contents, 'id' ),
+			'content_ids'  => array_values( array_unique( array_column( $contents, 'id' ) ) ),
 			'contents'     => $contents,
 			'content_type' => 'product',
 			'currency'     => get_woocommerce_currency(),

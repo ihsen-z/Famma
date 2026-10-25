@@ -90,6 +90,8 @@ function setup(responses = [], options = {}) {
   const cartQty = element('input', '1');
   const inputs = { billing_first_name: name, billing_phone: phone, billing_state: state, famma_quantity: qty,
     famma_hp_site: trap, payment_method: payment, billing_country: country, famma_product_id: id };
+  // Champs cachés de <wc-order-attribution-inputs> (WooCommerce), quand l'élément est dans le formulaire.
+  Object.entries(options.extraInputs || {}).forEach(([k, v]) => { inputs[k] = element('input', v); });
   const map = { '.famma-express__submit': button, '.famma-express__notices': notices, '.famma-express__info': info,
     '.famma-express__total': total };
   Object.entries(inputs).forEach(([k, v]) => { map[`[name="${k}"]`] = v; });
@@ -133,6 +135,9 @@ function setup(responses = [], options = {}) {
   };
   if (options.crypto !== false) window.crypto = { randomUUID: () => '00000000-0000-4000-8000-' + String(++sequence).padStart(12, '0') };
   if (options.pixel !== false) window.fbq = (...args) => { events.push(args); };
+  // Bibliothèque Meta chargée : fbevents.js pose callMethod sur la file fbq.
+  if (options.pixel !== false && options.fbqLoaded) window.fbq.callMethod = () => {};
+  if (options.wcAttribution) window.wc_order_attribution = options.wcAttribution;
   class MockFormData {
     constructor(target) {
       this.values = [];
@@ -691,6 +696,79 @@ async function test(name, run) {
     n.submit(); await flush();
     assert.notEqual(n.record().request_id, key);
     assert.equal(n.window.location.href, accepted.redirect);
+  });
+
+  // ── Lot 5 : attribution WooCommerce (D7, T2.10) et OrderPlaced navigateur (S3-a) ──
+  const orderPlacedResult = { ...accepted, famma_request_id: 'req', famma_order_placed: { event_id: 'famma_orderplaced_900',
+    params: { currency: 'TND', value: 79, order_id: '900', content_type: 'product', content_ids: ['123'] } } };
+  const op = s => s.events.filter(e => e[0] === 'trackCustom' && e[1] === 'OrderPlaced');
+
+  await test('Attribution WooCommerce : les champs wc_order_attribution_* du formulaire partent avec la commande', async () => {
+    const s = setup([token, quote(), accepted], { extraInputs: { wc_order_attribution_source_type: 'utm', wc_order_attribution_utm_source: 'facebook' } });
+    s.submit(); await flush();
+    const checkout = s.calls.find(c => c.url === '/express');
+    assert.equal(field(checkout, 'wc_order_attribution_source_type'), 'utm');
+    assert.equal(field(checkout, 'wc_order_attribution_utm_source'), 'facebook');
+    assert.equal(names(checkout).filter(n => n === 'wc_order_attribution_source_type').length, 1, 'jamais en double');
+  });
+
+  await test('Attribution WooCommerce : élément absent (cache, doublon retiré) → valeurs demandées au script WooCommerce', async () => {
+    const wcAttribution = { params: { prefix: 'wc_order_attribution_' },
+      getAttributionData: () => ({ source_type: 'referral', referrer: 'https://l.facebook.com/', utm_source: null }) };
+    const s = setup([token, quote(), accepted], { wcAttribution });
+    s.submit(); await flush();
+    const checkout = s.calls.find(c => c.url === '/express');
+    assert.equal(field(checkout, 'wc_order_attribution_source_type'), 'referral');
+    assert.equal(field(checkout, 'wc_order_attribution_referrer'), 'https://l.facebook.com/');
+    assert.equal(field(checkout, 'wc_order_attribution_utm_source'), '', 'valeur nulle envoyée vide, comme WooCommerce');
+    assert.equal(s.calls.find(c => c.url === '/prepare').values.some(e => /^wc_order_attribution_/.test(e[0])), false, 'le devis ne transporte pas l’attribution');
+  });
+
+  await test('Attribution WooCommerce : élément présent → le script WooCommerce n’est pas relu (aucun doublon)', async () => {
+    let reads = 0;
+    const wcAttribution = { params: { prefix: 'wc_order_attribution_' }, getAttributionData: () => { reads++; return { source_type: 'typein' }; } };
+    const s = setup([token, quote(), accepted], { wcAttribution, extraInputs: { wc_order_attribution_source_type: 'utm' } });
+    s.submit(); await flush();
+    const checkout = s.calls.find(c => c.url === '/express');
+    assert.equal(reads, 0);
+    assert.deepEqual(names(checkout).filter(n => n.startsWith('wc_order_attribution_')), ['wc_order_attribution_source_type']);
+  });
+
+  await test('OrderPlaced navigateur : joint par le serveur → émis une fois avec l’eventID de la CAPI, avant la redirection', async () => {
+    const store = new Map();
+    const s = setup([token, quote(), orderPlacedResult], { storage: store, fbqLoaded: true });
+    s.submit(); await flush();
+    assert.equal(op(s).length, 1);
+    assert.equal(op(s)[0][3].eventID, 'famma_orderplaced_900');
+    assert.equal(op(s)[0][2].value, 79);
+    assert.equal(store.get('famma_orderplaced_900'), '1', 'même clé de session que la page de confirmation');
+    assert.equal(s.window.location.href, accepted.redirect);
+    const again = setup([token, quote(), orderPlacedResult], { storage: store, fbqLoaded: true });
+    again.submit(); await flush();
+    assert.equal(op(again).length, 0, 'jamais une seconde fois dans la session');
+  });
+
+  await test('OrderPlaced navigateur : interrupteur coupé (rien de joint) → aucun OrderPlaced', async () => {
+    const s = setup([token, quote(), accepted], { fbqLoaded: true });
+    s.submit(); await flush();
+    assert.equal(op(s).length, 0);
+  });
+
+  await test('OrderPlaced navigateur : bibliothèque Meta pas encore chargée → laissé à la page de confirmation', async () => {
+    const store = new Map();
+    const s = setup([token, quote(), orderPlacedResult], { storage: store });
+    s.submit(); await flush();
+    assert.equal(op(s).length, 0);
+    assert.equal(store.has('famma_orderplaced_900'), false);
+    assert.equal(s.window.location.href, accepted.redirect);
+  });
+
+  await test('Visiteur interne : bloc tracking vide → aucun AddToCart ni InitiateCheckout, la commande passe', async () => {
+    const internal = call => ({ ...quote()(call), tracking: [] });
+    const s = setup([token, internal, accepted], { fbqLoaded: true });
+    s.submit(); await flush();
+    assert.equal(s.events.length, 0);
+    assert.equal(s.window.location.href, accepted.redirect);
   });
 
   console.log(`RESULT ${passed}/${passed + failed} scénarios front réussis${failed ? `, ${failed} ÉCHEC(S)` : ''}. Aucun réseau WooCommerce ni Meta utilisé.`);

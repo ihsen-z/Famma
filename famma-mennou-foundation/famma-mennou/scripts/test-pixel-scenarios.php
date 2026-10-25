@@ -9,15 +9,119 @@
 
 // Standalone runner: WordPress is never loaded. The doubles below keep the names
 // and signatures of the WordPress and WooCommerce code they replace.
-// phpcs:disable Universal.Namespaces -- The global doubles are grouped in the braced global namespace that wraps this runner.
+// phpcs:disable Universal.Namespaces -- The FAMMA collaborator doubles and the global WordPress doubles must share this single runner.
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals, Generic.Classes.DuplicateClassName -- Doubles keep the names of the API they replace.
 // phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter -- Doubles keep the signatures of the API they replace.
 // phpcs:disable Squiz.Commenting.ClassComment.Missing, Squiz.Commenting.FunctionComment.Missing, Squiz.Commenting.VariableComment.Missing -- Doubles are documented by the API they replace.
 
+namespace Famma\Core {
+	/**
+	 * Since 0.2.4 Capi delegates to four collaborators (includes/capi-*.php).
+	 * The doubles below keep their public signatures. The registry grants
+	 * ownership the way an empty table does (attempt = recorded attempts + 1,
+	 * blocked beyond the maximum); it does not persist uncertain outcomes.
+	 */
+	final class Capi_Delivery_Registry {
+		private static ?self $i = null;
+		public static function instance(): self {
+			self::$i ??= new self();
+			return self::$i;
+		}
+		public function acquire( string $pixel, string $name, string $id, int $order_id, int $time, int $maximum, int $legacy = 0 ): array {
+			$attempt = $legacy + 1;
+			if ( $time <= 0 || $attempt > $maximum ) {
+				return array( 'state' => 'blocked' );
+			}
+			return array(
+				'key'        => hash( 'sha256', $pixel . '|' . $name . '|' . $id ),
+				'state'      => 'sending',
+				'owner'      => 'isolated-owner',
+				'event_time' => $time,
+				'attempt'    => $attempt,
+				'owned'      => true,
+			);
+		}
+		public function finish( array $claim, string $state, int $http, int $received ): bool {
+			$GLOBALS['registry_finishes'][] = array( $state, $http, $received );
+			return ! empty( $claim['owned'] ) && in_array( $state, array( 'accepted', 'rejected', 'uncertain' ), true );
+		}
+	}
+	final class Capi_Signals {
+		public static function clean_cookie( string $raw ): string {
+			return trim( $raw );
+		}
+		public static function clean_ip( string $raw ): string {
+			$ip = trim( $raw );
+			return false !== filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
+		}
+		public static function test_mode_enabled(): bool {
+			// Test mode is off by default, whatever the configured code.
+			return false;
+		}
+	}
+	final class Capi_Log {
+		public static function write( array $fields, string $secret = '' ): void {
+			$GLOBALS['capi_log'][] = $fields;
+		}
+		public static function outcome( array $base, string $state, string $reason = '' ): void {
+			$GLOBALS['capi_outcomes'][] = $base + array(
+				'state'  => $state,
+				'reason' => $reason,
+			);
+		}
+	}
+	final class Capi_Health {
+		public static function signal( string $key, array $data = array() ): void {
+			$GLOBALS['health_signals'][] = $key;
+		}
+		public static function record_outcome( string $response_class, array $result ): void {
+			$GLOBALS['health_outcomes'][] = $response_class;
+		}
+	}
+	final class Capi_Retry {
+		public const HOOK = 'famma_capi_retry';
+		public static function schedule( int $order_id, string $event_name, int $attempts, int $event_time ): string {
+			$GLOBALS['retries'][] = array( $order_id, $event_name, $attempts );
+			return 'scheduled';
+		}
+	}
+	final class Order_Statuses {
+		public static function is_cod_order( \WC_Order $order ): bool {
+			return true;
+		}
+		public static function purchase_ineligibility( \WC_Order $order ): string {
+			// Same rule as the real Order_Statuses::purchase_ineligibility() (tested in tests-unit).
+			if ( $order->has_status( 'delivered' ) ) {
+				return '';
+			}
+			if ( $order->has_status( 'completed' ) ) {
+				return 'yes' === $order->get_meta( '_famma_cod_paid' ) ? '' : 'not_collected';
+			}
+			return 'not_delivered';
+		}
+	}
+	final class Capi_Product_Data {
+		public static function for_order( \WC_Order $order ): array {
+			return array(
+				'contents'      => array(),
+				'content_ids'   => array(),
+				'content_name'  => '',
+				'num_items'     => 0,
+				'famma_product' => '',
+			);
+		}
+	}
+}
+
 namespace {
 	define( 'ABSPATH', __DIR__ );
 	final class WC_Order {
-		public array $meta         = array();
+		/**
+		 * Order metadata; a browser order by default: its user agent was stored at checkout (website event).
+		 *
+		 * @var array
+		 */
+		public array $meta         = array( '_famma_client_ua' => 'ScenarioDefaultAgent' );
 		public array $notes        = array();
 		public string $status      = 'delivered';
 		public string $created_via = 'checkout';
@@ -29,12 +133,17 @@ namespace {
 		public string $city        = 'Tunis';
 		public string $state       = 'TN-11';
 		public string $country     = 'TN';
+		public function __construct() {
+			// The most recent order is the one WooCommerce stores under its identifier.
+			$GLOBALS['latest_order'] = $this;
+		}
 		public function get_meta( string $key ) {
 			return $this->meta[ $key ] ?? '';
 		}
 		public function update_meta_data( string $key, $value ): void {
 			$this->meta[ $key ] = $value;
 		}
+		public function read_meta_data( bool $force_read = false ): void {}
 		public function save(): void {}
 		public function has_status( $status ): bool {
 			return in_array( $this->status, (array) $status, true );
@@ -47,6 +156,12 @@ namespace {
 		}
 		public function get_created_via(): string {
 			return $this->created_via;
+		}
+		public function get_status(): string {
+			return $this->status;
+		}
+		public function get_payment_method(): string {
+			return 'cod';
 		}
 		public function get_billing_email(): string {
 			return $this->email;
@@ -62,6 +177,15 @@ namespace {
 		}
 		public function get_billing_city(): string {
 			return $this->city;
+		}
+		public function get_billing_postcode(): string {
+			return '';
+		}
+		public function get_shipping_city(): string {
+			return '';
+		}
+		public function get_shipping_postcode(): string {
+			return '';
 		}
 		public function get_billing_state(): string {
 			return $this->state;
@@ -79,7 +203,9 @@ namespace {
 			return 'https://example.invalid/order-received/901/';
 		}
 		public function get_date_created(): \DateTimeImmutable {
-			return new \DateTimeImmutable( '2020-01-01' );
+			// Two days old: an old order, yet within the 6-day window Meta still accepts (lot 5).
+			$GLOBALS['created_at'] ??= time() - 2 * 86400;
+			return ( new \DateTimeImmutable() )->setTimestamp( $GLOBALS['created_at'] );
 		}
 		public function add_order_note( string $note ): void {
 			$this->notes[] = $note;
@@ -94,11 +220,22 @@ namespace {
 	function add_filter( string $name, ...$args ): void {
 		$GLOBALS['registered_filters'][] = $name;
 	}
+	function has_filter( string $name, $callback = false ): bool {
+		return in_array( $name, $GLOBALS['registered_filters'] ?? array(), true );
+	}
 	function get_option( string $name, $default_value = false ) {
 		return 'famma_meta_orderplaced_enabled' === $name ? ( $GLOBALS['orderplaced_enabled'] ?? $default_value ) : ( $GLOBALS['options'][ $name ] ?? $default_value );
 	}
 	function wc_get_order( int $id ) {
-		return $GLOBALS['checkout_order'] ?? false;
+		// Capi re-reads the order it dispatches: return the stored order unless the test deleted it.
+		if ( array_key_exists( 'checkout_order', $GLOBALS ) && false === $GLOBALS['checkout_order'] ) {
+			return false;
+		}
+		$order = $GLOBALS['latest_order'] ?? false;
+		return $order instanceof WC_Order && $order->get_id() === $id ? $order : false;
+	}
+	function do_action( string $hook, ...$args ): void {
+		$GLOBALS['actions'][] = $hook;
 	}
 	if ( ! getenv( 'FAMMA_TEST_CRON_FALLBACK' ) ) {
 		function as_enqueue_async_action( string $hook, array $args, string $group, bool $unique ): int {
@@ -140,6 +277,16 @@ namespace {
 	}
 	function wp_remote_retrieve_body( array $response ): string {
 		return $response['body'];
+	}
+	function wp_remote_retrieve_header( array $response, string $header ): string {
+		return (string) ( $response['headers'][ $header ] ?? '' );
+	}
+	function update_option( string $name, $value, $autoload = null ): bool {
+		$GLOBALS['options'][ $name ] = $value;
+		return true;
+	}
+	function wp_salt( string $scheme = 'auth' ): string {
+		return 'scenario-salt-' . $scheme;
 	}
 	function current_time( string $type ): string {
 		return '2026-10-09 12:00:00';
@@ -183,6 +330,15 @@ namespace {
 	$config_end   = strpos( $source, 'final class Order_Statuses', $config_start );
 	// phpcs:ignore Squiz.PHP.Eval.Discouraged -- Runs the real plugin source read from the plugin file, never external input.
 	eval( 'namespace Famma\\Core;' . substr( $source, $config_start, $config_end - $config_start ) );
+	// Config::international_phone() now delegates to the real Tunisia::normalize_phone().
+	$tunisia_start = strpos( $source, 'final class Tunisia {' );
+	$tunisia_end   = strpos( $source, 'final class WhatsApp', $tunisia_start );
+	// phpcs:ignore Squiz.PHP.Eval.Discouraged -- Runs the real plugin source read from the plugin file, never external input.
+	eval( 'namespace Famma\\Core;' . substr( $source, $tunisia_start, $tunisia_end - $tunisia_start ) );
+	// Real lot 5 collaborators: token vault, single transport, user data normalisation, data profile.
+	foreach ( array( 'capi-token-vault.php', 'capi-click-id.php', 'capi-transport.php', 'capi-person-name.php', 'capi-user-data.php', 'capi-data-profile.php' ) as $famma_include ) {
+		require dirname( __DIR__ ) . '/wp-content/plugins/famma-core/includes/' . $famma_include;
+	}
 	$GLOBALS['options']                            = array(
 		'famma_meta_pixel_id'        => '123456789',
 		'famma_meta_access_token'    => 'test-token-not-a-secret',
@@ -278,7 +434,7 @@ namespace {
 	$client->send_queued_order_placed( 901 );
 	$placed = $GLOBALS['calls'][0][1]['data'][0];
 	check( 'OrderPlaced' === $placed['event_name'] && 'famma_orderplaced_901' === $placed['event_id'], 'OrderPlaced uses a separate stable event name and identifier.' );
-	check( 'order_placed' === $placed['custom_data']['famma_stage'], 'OrderPlaced carries a distinct public business stage for custom conversion.' );
+	check( ! isset( $placed['custom_data']['famma_stage'] ) && ! isset( $placed['custom_data']['famma_product'] ), 'Standard data profile (lot 5, R3): OrderPlaced no longer carries famma_stage nor famma_product.' );
 	check( $test_order->get_date_created()->getTimestamp() === $placed['event_time'], 'OrderPlaced carries the creation timestamp.' );
 	check( (bool) $test_order->get_meta( '_famma_orderplaced_sent' ) && ! $test_order->get_meta( '_famma_purchase_sent' ), 'OrderPlaced acceptance cannot consume the delivered Purchase.' );
 	$client->order_placed_after_checkout( $result, 901 );
@@ -401,7 +557,8 @@ namespace {
 	$test_order->city                          = '';
 	$test_order->state                         = '';
 	$test_order->country                       = '';
-	$GLOBALS['response']                       = array(
+	unset( $test_order->meta['_famma_client_ua'] );
+	$GLOBALS['response'] = array(
 		'code' => 400,
 		'body' => '{"error":{"message":"Synthetic missing identifiers"}}',
 	);
@@ -419,13 +576,14 @@ namespace {
 	$GLOBALS['jobs']           = array();
 	$GLOBALS['queue_failure']  = true;
 	$client->order_placed_after_checkout( $result, 901 );
-	check( array() === $GLOBALS['jobs'] && (bool) $test_order->get_meta( '_famma_orderplaced_checkout_accepted' ) && array() === $test_order->notes, 'FINDING: failed scheduling is not surfaced or recovered.' );
+	$queue_outcome = end( $GLOBALS['capi_outcomes'] );
+	check( array() === $GLOBALS['jobs'] && (bool) $test_order->get_meta( '_famma_orderplaced_checkout_accepted' ) && 'queue_failed' === $queue_outcome['state'], 'Lot 5 (D7): a failed scheduling now writes one queue_failed journal line.' );
 	$GLOBALS['queue_failure']   = false;
 	$test_order                 = new WC_Order();
 	$GLOBALS['network_message'] = 'Synthetic error containing test-token-not-a-secret';
 	$GLOBALS['response']        = new WP_Error();
 	$client->send_purchase( $test_order, 'famma_purchase_901' );
-	check( str_contains( $test_order->notes[0], 'test-token-not-a-secret' ), 'FINDING: untrusted network error text is stored without secret redaction.' );
+	check( ! str_contains( implode( ' ', $test_order->notes ), 'test-token-not-a-secret' ), 'Order notes keep a fixed outcome summary, never the network error text (no secret).' );
 	unset( $GLOBALS['network_message'] );
 	$test_order             = new WC_Order();
 	$test_order->first_name = 'ÉRIC';
@@ -436,7 +594,7 @@ namespace {
 	);
 	$client->send_purchase( $test_order, 'famma_purchase_901' );
 	$last = $GLOBALS['calls'][ array_key_last( $GLOBALS['calls'] ) ];
-	check( hash( 'sha256', 'Éric' ) === $last[1]['data'][0]['user_data']['fn'] && hash( 'sha256', 'bja' ) === $last[1]['data'][0]['user_data']['ct'], 'FINDING: non-ASCII name/city normalization loses accent information.' );
+	check( hash( 'sha256', 'éric' ) === $last[1]['data'][0]['user_data']['fn'] && hash( 'sha256', 'béja' ) === $last[1]['data'][0]['user_data']['ct'], 'Lot 5 (A13): non-ASCII name and city are lowercased in UTF-8, accents kept.' );
 	echo 'ASSERTIONS=' . $GLOBALS['assertions'] . PHP_EOL;
 	echo 'No network requests or database writes were performed.' . PHP_EOL;
 }
