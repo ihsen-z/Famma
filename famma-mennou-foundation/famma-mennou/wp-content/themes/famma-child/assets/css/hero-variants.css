@@ -1,0 +1,570 @@
+/* ============================================================
+   FAMMA — styles du carrousel du héros : pile, vitrine, vignettes.
+
+   Chargée sur l'accueil seulement, et seulement quand le style
+   choisi en administration n'est pas « classique » (voir
+   famma_child_enqueue_home). Elle surcharge les règles du héros
+   classique de home.css, chargée avant elle.
+
+   Mêmes règles que home.css : jetons uniquement, propriétés
+   logiques, rupture unique à 1000px, mouvement sous garde
+   prefers-reduced-motion. Seuls transform et opacity sont animés.
+   ============================================================ */
+
+/* --- Ordre mobile : le produit dans le premier écran ---
+
+   Mesuré en prod (375px) : le héros classique faisait 864px de
+   haut et la photo arrivait sous le bouton, hors du premier écran.
+   Sous 1000px, le bloc texte s'efface (`display: contents`) pour
+   que le visuel s'intercale entre l'accroche et les avantages. */
+
+/* `nowrap` : en colonne, une ligne flexible qui passe à la ligne prend la
+   largeur de son élément le plus large — le héros débordait de 100px à 320px. */
+.famma-hero2:not(.famma-hero2--classic) {
+	flex-direction: column;
+	flex-wrap: nowrap;
+	align-items: stretch;
+	gap: var(--sp-4);
+}
+
+.famma-hero2:not(.famma-hero2--classic) .famma-hero2__text {
+	display: contents;
+}
+
+.famma-hero2:not(.famma-hero2--classic) .famma-hero2__perks,
+.famma-hero2:not(.famma-hero2--classic) .famma-hero2__cta {
+	order: 2;
+}
+
+.famma-hero2:not(.famma-hero2--classic) .famma-hero2__media {
+	order: 1;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	justify-items: center;
+	gap: var(--sp-3);
+	block-size: auto;
+	margin-block: var(--sp-2);
+}
+
+@media (min-width: 1000px) {
+	.famma-hero2:not(.famma-hero2--classic) {
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--sp-8);
+	}
+
+	.famma-hero2:not(.famma-hero2--classic) .famma-hero2__text {
+		display: flex;
+	}
+
+	.famma-hero2:not(.famma-hero2--classic) .famma-hero2__media {
+		margin-block: 0;
+	}
+}
+
+/* --- Socle commun --- */
+
+:is(.famma-hero2__media--stack, .famma-hero2__media--showcase, .famma-hero2__media--thumbs) .famma-hero2__slides {
+	position: relative;
+	inset: auto;
+	inline-size: 100%;
+	max-inline-size: 25rem;
+}
+
+:is(.famma-hero2__media--stack, .famma-hero2__media--showcase, .famma-hero2__media--thumbs) .famma-hero2__slide img {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+	object-fit: cover;
+	-webkit-user-drag: none;
+}
+
+/* Le prix WooCommerce : prix barré discret, prix courant en gras. */
+.famma-hero2__price del {
+	margin-inline-end: var(--sp-1);
+	font-size: var(--fs-caption);
+	font-weight: var(--fw-regular);
+	opacity: 0.7;
+}
+
+.famma-hero2__price ins {
+	text-decoration: none;
+}
+
+/* Les boutons du carrousel : le parent (Kadence) peint tout `button`. */
+.famma-hero2__step,
+.famma-hero2__bar,
+.famma-hero2__thumb {
+	padding: 0;
+	border: 0;
+	box-shadow: none;
+	cursor: pointer;
+}
+
+[dir="rtl"] .famma-hero2__chevron {
+	transform: scaleX(-1);
+}
+
+/* ============================================================
+   Pile de cartes
+   ============================================================ */
+
+.famma-hero2__media--stack .famma-hero2__deck {
+	aspect-ratio: 1;
+	max-inline-size: 20rem;
+	margin-block-end: var(--sp-4);
+	touch-action: pan-y;
+	user-select: none;
+}
+
+.famma-hero2__media--stack .famma-hero2__slide {
+	position: absolute;
+	inset: 0;
+	display: block;
+	overflow: hidden;
+	border-radius: var(--famma-radius-lg);
+	background: var(--famma-surface-media);
+	box-shadow: var(--elev-photo);
+	opacity: 1;
+	pointer-events: none;
+	transition:
+		transform var(--dur-slide) var(--ease-drawer),
+		opacity var(--dur-base) ease;
+}
+
+.famma-hero2__media--stack .famma-hero2__slide.is-active {
+	pointer-events: auto;
+}
+
+/* Les cartes de dessous sont légèrement assombries : la profondeur se
+   lit sans qu'aucun indicateur ne soit nécessaire. */
+.famma-hero2__card::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: var(--famma-blue);
+	opacity: 0;
+	transition: opacity var(--dur-slide) ease;
+}
+
+.famma-hero2__card[data-pos="1"]::after,
+.famma-hero2__card[data-pos="2"]::after {
+	opacity: 0.18;
+}
+
+.famma-hero2__card[data-pos="0"] {
+	z-index: 4;
+	transform: none;
+}
+
+.famma-hero2__card[data-pos="1"] {
+	z-index: 3;
+	transform: translate(8%, 4%) rotate(5deg) scale(0.92);
+}
+
+.famma-hero2__card[data-pos="2"] {
+	z-index: 2;
+	transform: translate(-7%, 6%) rotate(-6deg) scale(0.86);
+}
+
+.famma-hero2__card[data-pos="out"] {
+	z-index: 1;
+	transform: translateY(8%) scale(0.8);
+	opacity: 0;
+}
+
+/* Carte qui part : sortie plus rapide que l'entrée. */
+.famma-hero2__card.is-leaving {
+	z-index: 5;
+	transform: translateX(-125%) rotate(-14deg);
+	opacity: 0;
+	transition:
+		transform var(--dur-exit) var(--ease-out-strong),
+		opacity var(--dur-exit) ease;
+}
+
+.famma-hero2__card.is-leaving.is-leaving-end {
+	transform: translateX(125%) rotate(14deg);
+}
+
+/* Pendant le glisser, la carte suit le doigt sans retard. */
+.famma-hero2__card.is-dragging {
+	transition: none;
+}
+
+.famma-hero2__nav {
+	display: flex;
+	align-items: center;
+	gap: var(--sp-3);
+	inline-size: 100%;
+	max-inline-size: 22.5rem;
+}
+
+.famma-hero2__step {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	border: 1px solid var(--famma-overlay-line);
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-blue-600);
+	color: var(--famma-white);
+	transition:
+		transform var(--dur-fast) var(--ease-out),
+		background-color var(--dur-base) ease;
+}
+
+.famma-hero2__step:hover,
+.famma-hero2__step:focus-visible {
+	background: var(--famma-blue-600);
+	color: var(--famma-white);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.famma-hero2__step:hover {
+		background: var(--famma-overlay-line);
+	}
+}
+
+.famma-hero2__step:active {
+	transform: scale(0.94);
+}
+
+.famma-hero2__step .famma-icon {
+	inline-size: 1.25rem;
+	block-size: 1.25rem;
+}
+
+/* Les légendes sont empilées dans la même case : seule celle de la carte
+   du dessus est visible, la case garde la hauteur de la plus haute. */
+.famma-hero2__captions {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	flex: 1;
+	min-inline-size: 0;
+	text-align: center;
+}
+
+.famma-hero2__caption {
+	grid-area: 1 / 1;
+	display: flex;
+	flex-direction: column;
+	gap: var(--sp-1);
+	margin: 0;
+	opacity: 0;
+	transition: opacity var(--dur-base) ease;
+}
+
+.famma-hero2__caption.is-active {
+	opacity: 1;
+}
+
+.famma-hero2__caption-name {
+	overflow: hidden;
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.famma-hero2__caption-meta {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--sp-2);
+	color: var(--famma-on-dark-3);
+	font-size: var(--fs-caption);
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-hero2__caption-meta .famma-hero2__price {
+	color: var(--famma-white);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-bold);
+}
+
+/* ============================================================
+   Vitrine
+   ============================================================ */
+
+.famma-hero2__frame {
+	aspect-ratio: 1;
+	overflow: hidden;
+	border-radius: var(--famma-radius-lg);
+	background: var(--famma-surface-media);
+	box-shadow: var(--elev-photo);
+	touch-action: pan-y;
+	user-select: none;
+}
+
+.famma-hero2__media--showcase .famma-hero2__slide {
+	display: block;
+	opacity: 0;
+	transform: scale(1.04);
+	transition:
+		opacity var(--dur-fade) ease,
+		transform var(--dur-slide) var(--ease-out-strong);
+}
+
+.famma-hero2__media--showcase .famma-hero2__slide.is-active {
+	opacity: 1;
+	transform: none;
+}
+
+.famma-hero2__chip {
+	position: absolute;
+	inset-inline: var(--sp-3);
+	inset-block-end: var(--sp-3);
+	display: flex;
+	align-items: center;
+	gap: var(--sp-3);
+	padding-block: var(--sp-2);
+	padding-inline: var(--sp-4) var(--sp-2);
+	border-radius: var(--famma-radius);
+	background: var(--famma-white);
+	box-shadow: var(--elev-2);
+	color: var(--famma-ink);
+}
+
+.famma-hero2__chip-text {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-inline-size: 0;
+}
+
+.famma-hero2__chip-name {
+	overflow: hidden;
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.famma-hero2__chip .famma-hero2__price {
+	font-size: var(--fs-body);
+	font-weight: var(--fw-bold);
+}
+
+.famma-hero2__chip .famma-hero2__price del {
+	color: var(--famma-price-old);
+	opacity: 1;
+}
+
+.famma-hero2__chip-go {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	inline-size: 2.75rem;
+	block-size: 2.75rem;
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.famma-hero2__slide:active .famma-hero2__chip-go {
+	transform: scale(0.94);
+}
+
+.famma-hero2__chip-go .famma-icon {
+	inline-size: 1.25rem;
+	block-size: 1.25rem;
+}
+
+/* Barres de temps : la zone cliquable fait 48px de haut (§9), le trait 4px. */
+.famma-hero2__bars {
+	display: flex;
+	gap: var(--sp-2);
+	inline-size: 100%;
+	max-inline-size: 25rem;
+}
+
+.famma-hero2__bar {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	min-inline-size: 0;
+	background: transparent;
+}
+
+.famma-hero2__bar:hover,
+.famma-hero2__bar:focus-visible {
+	background: transparent;
+}
+
+.famma-hero2__bar-track {
+	position: relative;
+	display: block;
+	overflow: hidden;
+	inline-size: 100%;
+	block-size: var(--sp-1);
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-overlay-line);
+}
+
+.famma-hero2__bar-track::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: var(--famma-orange);
+	transform: scaleX(0);
+	transform-origin: left center;
+}
+
+[dir="rtl"] .famma-hero2__bar-track::after {
+	transform-origin: right center;
+}
+
+.famma-hero2__bar.is-done .famma-hero2__bar-track::after,
+.famma-hero2__bar.is-static .famma-hero2__bar-track::after {
+	transform: scaleX(1);
+}
+
+/* Remplissage linéaire : un mouvement constant, qui mesure le temps. */
+.famma-hero2__bar.is-running .famma-hero2__bar-track::after {
+	animation: famma-hero-fill var(--hero-interval) linear forwards;
+}
+
+.famma-hero2__media.is-paused .famma-hero2__bar.is-running .famma-hero2__bar-track::after {
+	animation-play-state: paused;
+}
+
+@keyframes famma-hero-fill {
+	to {
+		transform: scaleX(1);
+	}
+}
+
+/* ============================================================
+   Vignettes
+   ============================================================ */
+
+.famma-hero2__track {
+	display: flex;
+	overflow-x: auto;
+	border-radius: var(--famma-radius-lg);
+	background: var(--famma-surface-media);
+	box-shadow: var(--elev-photo);
+	overscroll-behavior-x: contain;
+	scroll-snap-type: x mandatory;
+	scrollbar-width: none;
+}
+
+.famma-hero2__track::-webkit-scrollbar {
+	display: none;
+}
+
+.famma-hero2__media--thumbs .famma-hero2__slide {
+	position: relative;
+	inset: auto;
+	display: block;
+	flex: 0 0 100%;
+	aspect-ratio: 1;
+	opacity: 1;
+	pointer-events: auto;
+	scroll-snap-align: center;
+	scroll-snap-stop: always;
+	transition: none;
+}
+
+.famma-hero2__tag {
+	position: absolute;
+	inset-block-start: var(--sp-3);
+	inset-inline-end: var(--sp-3);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	padding-block: var(--sp-2);
+	padding-inline: var(--sp-3);
+	border-radius: var(--famma-radius);
+	background: var(--famma-orange);
+	color: var(--famma-blue);
+	font-size: var(--fs-body);
+	font-weight: var(--fw-bold);
+	line-height: var(--lh-tight);
+}
+
+.famma-hero2__name {
+	position: absolute;
+	inset-inline-start: var(--sp-3);
+	inset-block-end: var(--sp-3);
+	overflow: hidden;
+	max-inline-size: calc(100% - 2 * var(--sp-3));
+	padding-block: var(--sp-1);
+	padding-inline: var(--sp-3);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-medium);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.famma-hero2__thumbs {
+	display: flex;
+	justify-content: center;
+	gap: var(--sp-3);
+}
+
+.famma-hero2__thumb {
+	overflow: hidden;
+	inline-size: 3.5rem;
+	block-size: 3.5rem;
+	border-radius: var(--famma-radius);
+	background: var(--famma-surface-media);
+	opacity: 0.5;
+	transform: scale(0.92);
+	transition:
+		opacity var(--dur-base) ease,
+		transform var(--dur-base) var(--ease-out),
+		box-shadow var(--dur-base) ease;
+}
+
+.famma-hero2__thumb:hover,
+.famma-hero2__thumb:focus-visible {
+	background: var(--famma-surface-media);
+}
+
+.famma-hero2__thumb img {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+	object-fit: cover;
+}
+
+.famma-hero2__thumb.is-active {
+	opacity: 1;
+	transform: none;
+	box-shadow: 0 0 0 2px var(--famma-blue), 0 0 0 4px var(--famma-orange);
+}
+
+.famma-hero2__thumb:active {
+	transform: scale(0.88);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.famma-hero2__thumb:not(.is-active):hover {
+		opacity: 0.8;
+	}
+}
+
+/* --- Mouvement réduit : des fondus, aucun déplacement --- */
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-hero2__media--stack .famma-hero2__slide,
+	.famma-hero2__card.is-leaving {
+		transition: opacity var(--dur-base) ease;
+	}
+
+	.famma-hero2__media--showcase .famma-hero2__slide {
+		transform: none;
+		transition: opacity var(--dur-base) ease;
+	}
+
+	.famma-hero2__thumb,
+	.famma-hero2__step {
+		transition: none;
+	}
+}

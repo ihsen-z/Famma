@@ -243,6 +243,17 @@
 	--dur-fast: 120ms;
 	--dur-base: 180ms;
 	--ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+	/* Carrousel du héros (hero-variants.css). La sortie est plus rapide que
+	   l'entrée : le système répond vite, le nouveau contenu arrive posé. */
+	--dur-slide: 420ms;
+	--dur-exit: 260ms;
+	--dur-fade: 450ms;
+	--ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+	--ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+	/* Doit rester égal à INTERVAL dans hero.js. */
+	--hero-interval: 6s;
+	/* Ombre d'une photo posée sur le fond marine du héros. */
+	--elev-photo: 0 30px 60px -20px rgba(0, 0, 0, 0.55);
 
 	/* --- Profondeur ---
 	   Une seule échelle : un z-index écrit en dur ailleurs est un bug.

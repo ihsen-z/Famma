@@ -33,6 +33,7 @@ define( 'FAMMA_CORE_FILE', __FILE__ );
 require_once __DIR__ . '/includes/pages-content.php';
 require_once __DIR__ . '/includes/product-content.php';
 require_once __DIR__ . '/includes/home-content.php';
+require_once __DIR__ . '/includes/home-hero-style.php';
 require_once __DIR__ . '/includes/delivery-content.php';
 require_once __DIR__ . '/includes/returns-content.php';
 require_once __DIR__ . '/includes/newsletter.php';
@@ -2840,6 +2841,7 @@ function boot(): void {
 		Product_Faq::instance();
 		Dashboard::instance();
 		Pages_Content::instance();
+		Home_Hero_Style::instance();
 		Topbar_Content::instance();
 		Tracking_Settings::instance();
 		Seo_Admin::instance();
