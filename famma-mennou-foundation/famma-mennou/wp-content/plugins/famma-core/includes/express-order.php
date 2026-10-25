@@ -107,6 +107,28 @@ final class Express_Order {
 		add_filter( 'litespeed_optimize_css_excludes', array( $this, 'litespeed_css_exclude' ) );
 		// Après le thème enfant (priorité 10), qui pose le message de toutes les commandes.
 		add_filter( 'woocommerce_thankyou_order_received_text', array( $this, 'thankyou_text' ), 20, 2 );
+		// Avant `init` (boot sur plugins_loaded) : WooCommerce lit ce filtre dans son init.
+		add_filter( 'wc_order_attribution_stamp_checkout_html_actions', array( $this, 'attribution_actions' ) );
+	}
+
+	/**
+	 * Point d'accroche du formulaire express dans l'attribution de WooCommerce (D7, T2.10).
+	 *
+	 * WooCommerce imprime son élément `<wc-order-attribution-inputs>` sur les
+	 * actions de ce filtre ; son script y place les champs cachés
+	 * `wc_order_attribution_*`, relus à `woocommerce_checkout_order_created`.
+	 * Ajouter l'action du formulaire express suffit : la commande express passe
+	 * par `process_checkout()` et reçoit la même origine que le checkout
+	 * classique. Si l'attribution est désactivée, WooCommerce n'imprime rien.
+	 *
+	 * @param mixed $actions Actions retenues par WooCommerce.
+	 * @return array<int, string>
+	 */
+	public function attribution_actions( $actions ): array {
+		$actions   = is_array( $actions ) ? $actions : array();
+		$actions[] = 'famma_express_order_attribution';
+
+		return array_values( array_unique( $actions ) );
 	}
 
 	/**
@@ -745,6 +767,10 @@ final class Express_Order {
 				 */
 				?>
 				<?php Anti_Abuse::trap_field(); ?>
+				<?php
+				// Champs d'attribution de WooCommerce (origine de la commande), remplis par son script.
+				do_action( 'famma_express_order_attribution' );
+				?>
 				<input type="hidden" name="payment_method" value="cod" />
 				<input type="hidden" name="billing_country" value="TN" />
 				<input type="hidden" name="famma_product_id" value="<?php echo esc_attr( (string) $product->get_id() ); ?>" />

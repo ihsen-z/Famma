@@ -26,6 +26,9 @@
  *   l'effacer par inadvertance à chaque enregistrement ;
  * - l'option est créée avec `autoload = no`, donc elle n'est pas chargée en
  *   mémoire à chaque page du site, seulement quand la CAPI en a besoin ;
+ * - depuis la 0.3.2, le jeton y est chiffré (`Capi_Token_Vault`) : il
+ *   n'apparaît plus en clair sur `/wp-admin/options.php` ni dans une copie de
+ *   la base ;
  * - le token n'est jamais mis en file d'attente vers le navigateur (§17) —
  *   c'est `Capi` qui l'utilise, côté serveur, et lui seul.
  *
@@ -44,12 +47,12 @@ final class Tracking_Settings {
 	/**
 	 * Groupe de réglages, au sens de la Settings API.
 	 */
-	private const GROUP = 'famma_tracking';
+	public const GROUP = 'famma_tracking';
 
 	/**
 	 * Identifiant de la page d'administration.
 	 */
-	private const SLUG = 'famma-tracking';
+	public const SLUG = 'famma-tracking';
 
 	/**
 	 * Option abritant le token CAPI — la seule qui soit un secret.
@@ -113,7 +116,7 @@ final class Tracking_Settings {
 				'option'   => 'famma_meta_test_event_code',
 				'constant' => 'FAMMA_META_TEST_EVENT_CODE',
 				'label'    => __( 'Meta — code d’événement de test', 'famma-core' ),
-				'help'     => __( 'Utilisé uniquement par le test dédié ci-dessous. Les achats réellement livrés restent des conversions réelles et ne sont jamais envoyés comme tests.', 'famma-core' ),
+				'help'     => __( 'Format TEST suivi de chiffres, copié depuis « Tester les événements » de Meta. Utilisé par le test dédié ci-dessous, et par le mode test s’il est activé sur le serveur : sans code valide, ce mode bloque alors les envois au lieu de les faire partir en réel.', 'famma-core' ),
 			),
 			array(
 				'option'   => 'famma_ga4_measurement_id',
@@ -172,9 +175,7 @@ final class Tracking_Settings {
 				$field['option'],
 				array(
 					'type'              => 'string',
-					'sanitize_callback' => empty( $field['secret'] )
-						? array( $this, 'sanitize_id' )
-						: array( $this, 'sanitize_token' ),
+					'sanitize_callback' => $this->sanitizer( $field ),
 					'default'           => '',
 				)
 			);
@@ -188,6 +189,22 @@ final class Tracking_Settings {
 				$field
 			);
 		}
+	}
+
+	/**
+	 * Fonction d'assainissement d'un champ.
+	 *
+	 * @param array<string, mixed> $field Définition du champ.
+	 * @return callable
+	 */
+	private function sanitizer( array $field ): callable {
+		if ( ! empty( $field['secret'] ) ) {
+			return array( $this, 'sanitize_token' );
+		}
+		if ( 'famma_meta_test_event_code' === $field['option'] ) {
+			return array( Measurement_Settings::class, 'sanitize_test_code' );
+		}
+		return array( $this, 'sanitize_id' );
 	}
 
 	/**
@@ -223,7 +240,9 @@ final class Tracking_Settings {
 	 *
 	 * Le champ ne réaffichant jamais le token, un enregistrement de l'écran
 	 * l'effacerait à chaque fois sans cette garde — et la CAPI cesserait
-	 * d'émettre sans que rien ne le signale.
+	 * d'émettre sans que rien ne le signale. Un nouveau jeton est chiffré
+	 * avant d'être enregistré ; une valeur déjà chiffrée (migration par
+	 * `Capi_Token_Vault`) passe telle quelle.
 	 *
 	 * @param mixed $value Valeur soumise.
 	 * @return string
@@ -240,7 +259,15 @@ final class Tracking_Settings {
 			return '';
 		}
 
-		return sanitize_text_field( $submitted );
+		if ( Capi_Token_Vault::is_sealed( $submitted ) ) {
+			return $submitted;
+		}
+
+		$clean = sanitize_text_field( $submitted );
+		// Retour arrière vers la 0.3.1 préparé : le jeton reste en clair jusqu'à la fin de la suspension.
+		$sealed = Capi_Token_Vault::held() ? '' : Capi_Token_Vault::seal( $clean );
+
+		return '' !== $sealed ? $sealed : $clean;
 	}
 
 	/**
@@ -288,11 +315,19 @@ final class Tracking_Settings {
 				<?php
 				if ( '' === $stored ) {
 					esc_html_e( 'Aucun token enregistré : la Conversions API est inactive.', 'famma-core' );
+				} elseif ( 'broken' === Capi_Token_Vault::state() ) {
+					esc_html_e( 'Le token enregistré est illisible (clés du site modifiées ?) : ressaisissez-le.', 'famma-core' );
+				} elseif ( 'plain' === Capi_Token_Vault::state() ) {
+					printf(
+						/* translators: %s: last four characters of the stored token. */
+						esc_html__( 'Un token est enregistré, en clair (se termine par %s). Saisir « supprimer » l’efface.', 'famma-core' ),
+						'<code>' . esc_html( Capi_Token_Vault::last4() ) . '</code>'
+					);
 				} else {
 					printf(
 						/* translators: %s: last four characters of the stored token. */
-						esc_html__( 'Un token est enregistré (se termine par %s). Saisir « supprimer » l’efface.', 'famma-core' ),
-						'<code>' . esc_html( substr( $stored, -4 ) ) . '</code>'
+						esc_html__( 'Un token est enregistré, chiffré (se termine par %s). Saisir « supprimer » l’efface.', 'famma-core' ),
+						'<code>' . esc_html( Capi_Token_Vault::last4() ) . '</code>'
 					);
 				}
 				?>
@@ -345,6 +380,8 @@ final class Tracking_Settings {
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+			<?php Capi_Health_View::instance()->render_panel(); ?>
+			<?php settings_errors(); ?>
 			<?php $this->render_test_result(); ?>
 			<form action="options.php" method="post" autocomplete="off">
 				<?php
@@ -365,7 +402,7 @@ final class Tracking_Settings {
 						<option value="Purchase"><?php esc_html_e( 'Purchase — achat livré', 'famma-core' ); ?></option>
 					</select>
 					<label for="famma_capi_test_code"><?php esc_html_e( 'Code des événements de test Meta', 'famma-core' ); ?></label>
-					<input id="famma_capi_test_code" name="famma_capi_test_code" type="text" required value="<?php echo esc_attr( Config::instance()->meta_test_event_code() ); ?>" autocomplete="off" />
+					<input id="famma_capi_test_code" name="famma_capi_test_code" type="text" required pattern="TEST[0-9]+" placeholder="TEST12345" value="<?php echo esc_attr( Config::instance()->meta_test_event_code() ); ?>" autocomplete="off" />
 					<label for="famma_capi_test_value"><?php esc_html_e( 'Montant du test', 'famma-core' ); ?></label>
 					<input id="famma_capi_test_value" name="famma_capi_test_value" type="text" inputmode="decimal" pattern="[0-9]+([.,][0-9]{1,3})?" placeholder="25.000" required aria-describedby="famma_capi_test_value_help" autocomplete="off" />
 					<p id="famma_capi_test_value_help">
@@ -376,6 +413,9 @@ final class Tracking_Settings {
 					</p>
 					<?php submit_button( __( 'Envoyer l’événement de test', 'famma-core' ), 'secondary' ); ?>
 				</form>
+				<?php Capi_Probe::instance()->render(); ?>
+				<?php Capi_Reconcile_View::render(); ?>
+				<?php Capi_Token_Rollback::render(); ?>
 			<?php endif; ?>
 		</div>
 		<?php
@@ -390,7 +430,7 @@ final class Tracking_Settings {
 		$test_code = isset( $_POST['famma_capi_test_code'] ) ? sanitize_text_field( wp_unslash( $_POST['famma_capi_test_code'] ) ) : '';
 		$event     = isset( $_POST['famma_capi_test_event'] ) ? sanitize_text_field( wp_unslash( $_POST['famma_capi_test_event'] ) ) : '';
 		$cfg       = Config::instance();
-		if ( ! in_array( $event, array( 'OrderPlaced', 'Purchase' ), true ) || ! preg_match( '/^TEST[A-Za-z0-9_-]+$/', $test_code ) || '' === $cfg->meta_pixel_id() || '' === $cfg->meta_access_token() ) {
+		if ( ! in_array( $event, array( 'OrderPlaced', 'Purchase' ), true ) || ! Config::valid_test_event_code( $test_code ) || '' === $cfg->meta_pixel_id() || '' === $cfg->meta_access_token() ) {
 			$this->redirect_test_result( 'configuration' );
 		}
 		$raw_value = isset( $_POST['famma_capi_test_value'] ) && is_string( $_POST['famma_capi_test_value'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['famma_capi_test_value'] ) ) ) : '';
@@ -405,8 +445,10 @@ final class Tracking_Settings {
 		if ( ! preg_match( '/^[A-Z]{3}$/D', $currency ) || ! array_key_exists( $currency, get_woocommerce_currencies() ) ) {
 			$this->redirect_test_result( 'currency' );
 		}
+		if ( ! $cfg->meta_sending_allowed() ) {
+			$this->redirect_test_result( 'environment' );
+		}
 		$payload = array(
-			'access_token'    => $cfg->meta_access_token(),
 			'test_event_code' => $test_code,
 			'data'            => array(
 				array(
@@ -423,26 +465,24 @@ final class Tracking_Settings {
 				),
 			),
 		);
-		if ( 'OrderPlaced' === $event ) {
-			$payload['data'][0]['custom_data']['famma_stage'] = 'order_placed';
-		}
-		$version  = (string) apply_filters( 'famma_capi_graph_version', 'v21.0' );
-		$response = wp_remote_post(
-			'https://graph.facebook.com/' . rawurlencode( $version ) . '/' . rawurlencode( $cfg->meta_pixel_id() ) . '/events',
+		$token   = $cfg->meta_access_token();
+		$result  = Capi_Transport::send_events( $cfg->meta_pixel_id(), $token, $payload );
+		Capi_Log::write(
 			array(
-				'timeout'     => 8,
-				'redirection' => 0,
-				'headers'     => array( 'Content-Type' => 'application/json' ),
-				'body'        => wp_json_encode( $payload ),
-			)
+				'event_name' => $event,
+				'event_id'   => (string) $payload['data'][0]['event_id'],
+				'value'      => $value,
+				'currency'   => $currency,
+				'user_data'  => $payload['data'][0]['user_data'],
+				'state'      => (string) $result['class'],
+				'test'       => true,
+			) + $result,
+			$token
 		);
-		if ( is_wp_error( $response ) ) {
+		if ( 'transient' === $result['class'] && in_array( $result['reason'], array( 'network', 'timeout' ), true ) ) {
 			$this->redirect_test_result( 'network' );
 		}
-		$code = (int) wp_remote_retrieve_response_code( $response );
-		$body = json_decode( (string) wp_remote_retrieve_body( $response ), true );
-		$ok   = $code >= 200 && $code < 300 && is_array( $body ) && 1 === (int) ( $body['events_received'] ?? 0 ) && ! isset( $body['error'] );
-		$this->redirect_test_result( $ok ? 'accepted' : 'rejected' );
+		$this->redirect_test_result( in_array( $result['class'], array( 'accepted', 'accepted_warning' ), true ) ? 'accepted' : 'rejected' );
 	}
 
 	/**
@@ -465,6 +505,7 @@ final class Tracking_Settings {
 			'amount'        => __( 'Test non envoyé : saisissez un montant positif d’au moins 0.001, avec trois décimales maximum et un point ou une virgule.', 'famma-core' ),
 			'currency'      => __( 'Test non envoyé : la devise configurée dans WooCommerce est invalide.', 'famma-core' ),
 			'network'       => __( 'Test non reçu : la connexion du serveur à Meta a échoué.', 'famma-core' ),
+			'environment'   => __( 'Test non envoyé : ce site n’est pas la production, aucune requête ne part vers Meta.', 'famma-core' ),
 			'rejected'      => __( 'Meta n’a pas confirmé la réception du test. Vérifiez le token, le Pixel et le code de test.', 'famma-core' ),
 		);
 		if ( isset( $messages[ $result ] ) ) {

@@ -21,7 +21,8 @@
  *          total serveur = total affiché ──▶ checkout
  *          total différent ──▶ review (modale ; « Valider ma commande – XX DT »
  *                              ──▶ checkout ; fermer ──▶ idle, nouveau devis)
- *        checkout OK ──▶ redirecting (bouton laissé désactivé) ──▶ page WooCommerce
+ *        checkout OK ──▶ (OrderPlaced navigateur si le serveur l'a joint) ──▶
+ *                         redirecting (bouton laissé désactivé) ──▶ page WooCommerce
  *        checkout refusé (validation) ──▶ idle + messages WooCommerce
  *        checkout perdu / ambigu ──▶ recovery (champs verrouillés ; le bouton
  *                              interroge famma_express_status, jamais une 2e commande)
@@ -909,6 +910,42 @@
 		} );
 	}
 
+	/**
+	 * Champs d'attribution de WooCommerce (origine de la commande, D7).
+	 *
+	 * Normalement fournis par l'élément `<wc-order-attribution-inputs>` du
+	 * formulaire. S'il manque (HTML servi par le cache avant la 0.3.2, ou
+	 * élément retiré par WooCommerce comme doublon d'un autre formulaire de la
+	 * page), les valeurs sont demandées au script de WooCommerce lui-même.
+	 *
+	 * @param {Array} fields Champs déjà lus dans le formulaire.
+	 * @return {Array} Les mêmes champs, complétés au besoin.
+	 */
+	function attributionFields( fields ) {
+		var api = window.wc_order_attribution;
+		var prefix = api && api.params && api.params.prefix;
+		if ( ! prefix || 'function' !== typeof api.getAttributionData ) {
+			return fields;
+		}
+		var present = fields.some( function ( entry ) {
+			return 0 === String( entry[ 0 ] ).indexOf( prefix );
+		} );
+		if ( present ) {
+			return fields;
+		}
+		var data;
+		try {
+			data = api.getAttributionData() || {};
+		} catch ( error ) {
+			return fields;
+		}
+		Object.keys( data ).forEach( function ( key ) {
+			var value = data[ key ];
+			fields.push( [ prefix + key, null === value || undefined === value ? '' : String( value ) ] );
+		} );
+		return fields;
+	}
+
 	function snapshot() {
 		var fields = [];
 		new FormData( form ).forEach( function ( value, name ) {
@@ -916,7 +953,7 @@
 				fields.push( [ name, value ] );
 			}
 		} );
-		return fields;
+		return attributionFields( fields );
 	}
 
 	/**
@@ -1056,6 +1093,47 @@
 		return request( fammaExpress.statusUrl, [ [ 'famma_request_id', record.request_id ] ], true );
 	}
 
+	/**
+	 * OrderPlaced navigateur (S3-a), seulement si le serveur l'a joint à la
+	 * réponse (interrupteur « OrderPlaced côté navigateur », coupé par défaut).
+	 *
+	 * Même eventID que la CAPI (`famma_orderplaced_<id>`), et même clé de
+	 * session que la page de confirmation : l'événement ne part qu'une fois.
+	 * Si la bibliothèque Meta n'est pas encore chargée, rien n'est émis ici :
+	 * la page de confirmation s'en charge, plutôt qu'un appel perdu dans la
+	 * redirection.
+	 *
+	 * @param {Object} result Réponse de succès du checkout.
+	 */
+	function orderPlaced( result ) {
+		var data = result && result.famma_order_placed;
+		if ( ! data || ! data.event_id || ! data.params || ! window.fbq || 'function' !== typeof window.fbq.callMethod ) {
+			return;
+		}
+		var store = null;
+		try {
+			store = window.sessionStorage;
+			if ( store.getItem( data.event_id ) ) {
+				return;
+			}
+		} catch ( error ) {
+			store = null;
+		}
+		try {
+			window.fbq( 'trackCustom', 'OrderPlaced', data.params, { eventID: data.event_id } );
+		} catch ( error ) {
+			// A third-party tracking failure must never block a valid checkout.
+			return;
+		}
+		try {
+			if ( store ) {
+				store.setItem( data.event_id, '1' );
+			}
+		} catch ( error ) {
+			// Meta déduplique par l'eventID si la page de confirmation le renvoie.
+		}
+	}
+
 	function accepted( result ) {
 		record.phase = 'accepted';
 		delete record.fields;
@@ -1067,6 +1145,7 @@
 		} catch ( error ) {
 			// Sans effet sur la commande.
 		}
+		orderPlaced( result );
 		window.location.href = result.redirect;
 	}
 

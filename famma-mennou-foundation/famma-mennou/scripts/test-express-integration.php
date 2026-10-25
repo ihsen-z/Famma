@@ -27,6 +27,9 @@ foreach ( array( 'FAMMA_META_PIXEL_ID', 'FAMMA_META_ACCESS_TOKEN', 'FAMMA_META_T
 if ( '' !== (string) get_option( 'famma_meta_access_token', '' ) || ! class_exists( '\Famma\Core\Express_Idempotency' ) ) {
 	throw new RuntimeException( 'A credential-free clone with the new backend is required.' );
 }
+// Lot 5 (D4): outside production famma-core sends nothing to Meta. This disposable clone
+// already intercepts every outgoing request, so the suite lifts the guard for its own process.
+add_filter( 'famma_meta_sending_allowed', '__return_true' );
 
 /** Signals native wp_die without skipping fixture cleanup. */
 final class Famma_Express_Test_Stop extends Error {}
@@ -792,7 +795,10 @@ final class Famma_Express_Test {
 		$purchase = $purchases();
 		self::assert( 'delivered-paid', $order->is_paid() && 'delivered' === $order->get_status(), 'Delivered marks the COD order paid and keeps the delivered status.' );
 		self::assert( 'purchase-once-real-value', 1 === count( $purchase ) && 77.0 === (float) ( $purchase[0]['custom_data']['value'] ?? 0 ) && 'TND' === ( $purchase[0]['custom_data']['currency'] ?? '' ), 'Delivery sends exactly one Purchase with the real 77 TND value, even when replayed.' );
-		self::assert( 'purchase-logged-once', 1 === count( self::log_lines( 'Purchase', $order->get_id() ) ), 'One famma-capi log line for the Purchase.' );
+		// Lot 5 (D7): the replayed delivery hook now writes its own « already_sent » line; only real sends carry http=.
+		$purchase_lines = self::log_lines( 'Purchase', $order->get_id() );
+		$purchase_sends = array_values( array_filter( $purchase_lines, static fn( string $line ): bool => false !== strpos( $line, ' http=' ) ) );
+		self::assert( 'purchase-logged-once', 1 === count( $purchase_sends ) && false !== strpos( $purchase_sends[0], 'state=accepted' ) && 2 === count( $purchase_lines ) && false !== strpos( $purchase_lines[1], 'state=already_sent' ), 'One famma-capi send line for the Purchase; the replay is journaled as already_sent: ' . implode( ' | ', $purchase_lines ) );
 		self::stale_session_cookie();
 	}
 
@@ -961,7 +967,8 @@ final class Famma_Express_Test {
 		if ( $cookies ) {
 			self::assert( 'orderplaced-fbc-fbp', 'fb.1.1760000000000.IwFixtureClickIdLocalOnly' === ( $event['user_data']['fbc'] ?? '' ) && 'fb.1.1760000000000.1234567890' === ( $event['user_data']['fbp'] ?? '' ), 'fbc and fbp from the checkout cookies are sent.' );
 		}
-		$lines = self::log_lines( 'OrderPlaced', $order->get_id() );
+		// Lot 5 (D7): the forced replay now writes its own « already_sent » line; only real sends carry http=.
+		$lines = array_values( array_filter( self::log_lines( 'OrderPlaced', $order->get_id() ), static fn( string $line ): bool => false !== strpos( $line, ' http=' ) ) );
 		self::assert( 'orderplaced-logged-once', 1 === count( $lines ) && false !== strpos( $lines[0], 'state=accepted' ) && false !== strpos( $lines[0], 'currency=TND' ) && false !== strpos( $lines[0], 'ph=oui' ) && false !== strpos( $lines[0], 'fbc=' . ( $cookies ? 'oui' : 'non' ) ), 'One famma-capi journal line per send, with state, currency and signal presence: ' . implode( ' | ', self::$logs ) );
 		foreach ( self::$logs as $line ) {
 			self::assert( 'log-without-token', false === strpos( $line, 'INTEGRATION_FAKE_TOKEN' ) && false === strpos( $line, '20123456' ) && false === strpos( $line, 'IwFixtureClickId' ), 'The journal never contains the token, the phone or the cookie values.' );
@@ -1228,6 +1235,17 @@ final class Famma_Express_Test {
 		foreach ( self::fixture_orders() as $order ) {
 			if ( function_exists( 'as_unschedule_all_actions' ) ) {
 				as_unschedule_all_actions( 'famma_capi_orderplaced_send', array( 'order_id' => $order->get_id() ), 'famma-capi' );
+				// Lot 5 (D1): a transient failure also plans a bounded famma_capi_retry.
+				foreach ( array( 'OrderPlaced', 'Purchase' ) as $event_name ) {
+					as_unschedule_all_actions(
+						'famma_capi_retry',
+						array(
+							'order_id'   => $order->get_id(),
+							'event_name' => $event_name,
+						),
+						'famma-capi'
+					);
+				}
 				as_unschedule_all_actions( \Famma\Core\Order_Emails::ACTION, array( $order->get_id() ), \Famma\Core\Order_Emails::GROUP ); }
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Delete only exact run-owned custom registry rows; Woo orders use CRUD.
 			$wpdb->delete( \Famma\Core\Capi_Delivery_Registry::instance()->table(), array( 'order_id' => $order->get_id() ), array( '%d' ) );

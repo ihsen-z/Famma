@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.3.1
+ * Version:           0.3.4
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.3.1' );
+define( 'FAMMA_CORE_VERSION', '0.3.4' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -39,17 +39,40 @@ require_once __DIR__ . '/includes/returns-content.php';
 require_once __DIR__ . '/includes/newsletter.php';
 require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';
+require_once __DIR__ . '/includes/meta-ids.php';
 require_once __DIR__ . '/includes/tracking-events.php';
+require_once __DIR__ . '/includes/browser-order-placed.php';
+require_once __DIR__ . '/includes/order-source.php';
 require_once __DIR__ . '/includes/product-sizes.php';
 require_once __DIR__ . '/includes/product-sizes-admin.php';
 require_once __DIR__ . '/includes/express-order.php';
 require_once __DIR__ . '/includes/express-checkout.php';
 require_once __DIR__ . '/includes/express-idempotency.php';
+require_once __DIR__ . '/includes/checkout-idempotency.php';
 require_once __DIR__ . '/includes/express-preparation.php';
 require_once __DIR__ . '/includes/capi-delivery-registry.php';
 require_once __DIR__ . '/includes/capi-signals.php';
+require_once __DIR__ . '/includes/capi-click-id.php';
 require_once __DIR__ . '/includes/capi-log.php';
 require_once __DIR__ . '/includes/capi-product-data.php';
+require_once __DIR__ . '/includes/capi-token-vault.php';
+require_once __DIR__ . '/includes/capi-token-rollback.php';
+require_once __DIR__ . '/includes/capi-transport.php';
+require_once __DIR__ . '/includes/capi-person-name.php';
+require_once __DIR__ . '/includes/capi-user-data.php';
+require_once __DIR__ . '/includes/capi-data-profile.php';
+require_once __DIR__ . '/includes/capi-retry.php';
+require_once __DIR__ . '/includes/capi-health.php';
+require_once __DIR__ . '/includes/capi-health-alert.php';
+require_once __DIR__ . '/includes/capi-health-rules.php';
+require_once __DIR__ . '/includes/capi-health-view.php';
+require_once __DIR__ . '/includes/capi-probe-verdict.php';
+require_once __DIR__ . '/includes/capi-probe.php';
+require_once __DIR__ . '/includes/capi-graph-version.php';
+require_once __DIR__ . '/includes/capi-reconcile.php';
+require_once __DIR__ . '/includes/capi-reconcile-view.php';
+require_once __DIR__ . '/includes/capi-purchase-gaps.php';
+require_once __DIR__ . '/includes/measurement-settings.php';
 require_once __DIR__ . '/includes/order-emails.php';
 require_once __DIR__ . '/includes/anti-abuse.php';
 require_once __DIR__ . '/includes/checkout-lite.php';
@@ -60,6 +83,7 @@ require_once __DIR__ . '/includes/seo-admin.php';
 require_once __DIR__ . '/includes/hardening.php';
 require_once __DIR__ . '/includes/performance.php';
 require_once __DIR__ . '/includes/cache-warmup.php';
+require_once __DIR__ . '/includes/redirect-cache.php';
 require_once __DIR__ . '/includes/visitor-store.php';
 require_once __DIR__ . '/includes/visitor-context.php';
 require_once __DIR__ . '/includes/visitor-collector.php';
@@ -208,10 +232,15 @@ final class Config {
 	/**
 	 * Meta Conversions API token. Server-side only — never enqueued (§17).
 	 *
+	 * La constante du serveur l'emporte toujours. À défaut, l'option est lue
+	 * par `Capi_Token_Vault`, qui la garde chiffrée au repos (lot 5, A11).
+	 *
 	 * @return string
 	 */
 	public function meta_access_token(): string {
-		return $this->setting( 'FAMMA_META_ACCESS_TOKEN' );
+		$value = $this->c( 'FAMMA_META_ACCESS_TOKEN' );
+
+		return '' !== $value ? $value : Capi_Token_Vault::read();
 	}
 
 	/**
@@ -221,6 +250,215 @@ final class Config {
 	 */
 	public function meta_test_event_code(): string {
 		return $this->setting( 'FAMMA_META_TEST_EVENT_CODE' );
+	}
+
+	/**
+	 * Version de l'API Graph utilisée par défaut (S2), à revérifier à chaque montée.
+	 */
+	public const META_GRAPH_VERSION_DEFAULT = 'v26.0';
+
+	/**
+	 * Dates de fin publiées par Meta (R1). Une version absente n'a pas de date connue.
+	 */
+	public const META_GRAPH_VERSION_END_DATES = array(
+		'v21.0' => '2027-01-21',
+		'v22.0' => '2027-05-20',
+		'v23.0' => '2027-10-08',
+		'v24.0' => '2028-02-18',
+		'v25.0' => '2028-07-29',
+	);
+
+	/**
+	 * Filet codé (R1) : après cette date, une version inférieure ou égale au
+	 * plafond ci-dessous affiche un bandeau critique permanent.
+	 */
+	public const META_GRAPH_VERSION_CRITICAL_AFTER = '2026-12-01';
+
+	/**
+	 * Plafond du filet codé (R1).
+	 */
+	public const META_GRAPH_VERSION_CRITICAL_MAX = 'v21.0';
+
+	/**
+	 * Nombre de jours avant la fin d'une version où l'avertissement apparaît (R1).
+	 */
+	public const META_GRAPH_VERSION_NOTICE_DAYS = 60;
+
+	/**
+	 * Profils de données Meta (R3) ; le premier est la valeur par défaut.
+	 */
+	public const META_DATA_PROFILES = array( 'standard', 'minimal' );
+
+	/**
+	 * Modes de chargement du Pixel (D6) ; le premier est la valeur par défaut.
+	 */
+	public const META_PIXEL_LOADING_MODES = array( 'immediate', 'deferred' );
+
+	/**
+	 * Nombre maximal de tentatives d'envoi d'un même événement serveur.
+	 */
+	public const CAPI_MAX_ATTEMPTS = 5;
+
+	/**
+	 * Délais de relance après un échec transitoire (D1) : 5 min, 30 min, 2 h, 6 h.
+	 */
+	public const CAPI_RETRY_DELAYS = array( 300, 1800, 7200, 21600 );
+
+	/**
+	 * Âge maximal d'un event_time encore envoyé ou relancé (6 jours ; Meta refuse au-delà de 7).
+	 */
+	public const CAPI_MAX_EVENT_AGE = 518400;
+
+	/**
+	 * « Renvoyer » (R8) : un envoi rejeté reste renvoyable 6 jours.
+	 */
+	public const CAPI_RESEND_REJECTED_MAX_AGE = 518400;
+
+	/**
+	 * « Renvoyer » (R8) : un envoi incertain reste renvoyable 24 heures.
+	 */
+	public const CAPI_RESEND_UNCERTAIN_MAX_AGE = 86400;
+
+	/**
+	 * Un envoi « en cours » plus vieux que ceci est repris comme incertain (D1).
+	 */
+	public const CAPI_STALE_SENDING = 900;
+
+	/**
+	 * Format accepté pour une version de l'API Graph : vNN.N.
+	 *
+	 * @param string $version Valeur saisie.
+	 * @return bool
+	 */
+	public static function valid_graph_version( string $version ): bool {
+		return 1 === preg_match( '/^v\d{1,2}\.\d$/D', $version );
+	}
+
+	/**
+	 * Version de l'API Graph visée par tous les appels Meta du serveur (S2).
+	 *
+	 * Ordre : constante `FAMMA_META_GRAPH_VERSION`, puis option
+	 * `famma_meta_graph_version` (écran « Mesure »), puis la valeur par défaut.
+	 * Le filtre `famma_capi_graph_version` reste possible ; une valeur filtrée
+	 * hors format est ignorée.
+	 *
+	 * @return string
+	 */
+	public function meta_graph_version(): string {
+		$version = $this->meta_graph_version_unfiltered();
+		$custom  = apply_filters( 'famma_capi_graph_version', $version );
+
+		return is_string( $custom ) && self::valid_graph_version( $custom ) ? $custom : $version;
+	}
+
+	/**
+	 * Origine de la version retenue, pour l'écran « Mesure ».
+	 *
+	 * @return string `constant`, `option` ou `default`.
+	 */
+	public function meta_graph_version_source(): string {
+		if ( self::valid_graph_version( $this->c( 'FAMMA_META_GRAPH_VERSION' ) ) ) {
+			return 'constant';
+		}
+
+		return self::valid_graph_version( trim( (string) get_option( 'famma_meta_graph_version', '' ) ) ) ? 'option' : 'default';
+	}
+
+	/**
+	 * Version retenue avant le filtre de code.
+	 *
+	 * @return string
+	 */
+	private function meta_graph_version_unfiltered(): string {
+		$constant = $this->c( 'FAMMA_META_GRAPH_VERSION' );
+		if ( self::valid_graph_version( $constant ) ) {
+			return $constant;
+		}
+		$option = trim( (string) get_option( 'famma_meta_graph_version', '' ) );
+
+		return self::valid_graph_version( $option ) ? $option : self::META_GRAPH_VERSION_DEFAULT;
+	}
+
+	/**
+	 * Format d'un code de l'outil « Tester les événements » : TEST suivi de chiffres (A12).
+	 *
+	 * @param string $code Code saisi.
+	 * @return bool
+	 */
+	public static function valid_test_event_code( string $code ): bool {
+		return 1 === preg_match( '/^TEST\d+$/D', $code );
+	}
+
+	/**
+	 * Type d'environnement WordPress (`production` si rien n'est déclaré).
+	 *
+	 * @return string
+	 */
+	public function environment_type(): string {
+		return function_exists( 'wp_get_environment_type' ) ? (string) wp_get_environment_type() : 'production';
+	}
+
+	/**
+	 * Garde d'environnement (D4) : un envoi réel à Meta n'est permis qu'en production.
+	 *
+	 * Une copie du site (Local, clone Docker, préproduction) n'envoie rien,
+	 * même avec le vrai jeton, sauf dérogation explicite par la constante
+	 * `FAMMA_META_ALLOW_NON_PRODUCTION` (ou le filtre de code
+	 * `famma_meta_sending_allowed`, pour un banc de test). Une option ne
+	 * suffirait pas : elle voyage avec la base copiée.
+	 *
+	 * @return bool
+	 */
+	public function meta_sending_allowed(): bool {
+		$environment = $this->environment_type();
+		$allowed     = 'production' === $environment
+			|| ( defined( 'FAMMA_META_ALLOW_NON_PRODUCTION' ) && true === filter_var( constant( 'FAMMA_META_ALLOW_NON_PRODUCTION' ), FILTER_VALIDATE_BOOLEAN ) );
+
+		return (bool) apply_filters( 'famma_meta_sending_allowed', $allowed, $environment );
+	}
+
+	/**
+	 * Profil de données Meta (R3) : `standard` par défaut, `minimal` en urgence.
+	 *
+	 * @return string
+	 */
+	public function meta_data_profile(): string {
+		$profile = (string) get_option( 'famma_meta_data_profile', self::META_DATA_PROFILES[0] );
+
+		return in_array( $profile, self::META_DATA_PROFILES, true ) ? $profile : self::META_DATA_PROFILES[0];
+	}
+
+	/**
+	 * Chargement du Pixel (D6) : `immediate` par défaut, ou `deferred`.
+	 *
+	 * @return string
+	 */
+	public function meta_pixel_loading(): string {
+		$mode = (string) get_option( 'famma_meta_pixel_loading', self::META_PIXEL_LOADING_MODES[0] );
+
+		return in_array( $mode, self::META_PIXEL_LOADING_MODES, true ) ? $mode : self::META_PIXEL_LOADING_MODES[0];
+	}
+
+	/**
+	 * Dérogation « Suivre mes visites (mode test) » (S1) : faux par défaut.
+	 *
+	 * @return bool
+	 */
+	public function track_internal_visitors(): bool {
+		if ( defined( 'FAMMA_TRACK_INTERNAL' ) && true === filter_var( constant( 'FAMMA_TRACK_INTERNAL' ), FILTER_VALIDATE_BOOLEAN ) ) {
+			return true;
+		}
+
+		return (bool) get_option( 'famma_track_internal', false );
+	}
+
+	/**
+	 * Envoi d'OrderPlaced aussi par le navigateur (S3-a) : coupé par défaut (E6).
+	 *
+	 * @return bool
+	 */
+	public function meta_orderplaced_browser(): bool {
+		return (bool) get_option( 'famma_meta_orderplaced_browser', false );
 	}
 
 	/**
@@ -322,7 +560,14 @@ final class Order_Statuses {
 	private function hooks(): void {
 		add_action( 'init', array( $this, 'register_post_statuses' ) );
 		add_filter( 'wc_order_statuses', array( $this, 'add_to_wc_list' ) );
-		add_action( 'woocommerce_order_status_delivered', array( $this, 'mark_cod_paid_on_delivery' ) );
+
+		/*
+		 * Encaissement en priorité 10, Purchase en priorité 20 (Capi), sur
+		 * « Livrée » comme sur « Terminée » : la conversion ne part jamais
+		 * avant l'encaissement (lot 5, D5).
+		 */
+		add_action( 'woocommerce_order_status_delivered', array( $this, 'mark_cod_paid_on_delivery' ), 10 );
+		add_action( 'woocommerce_order_status_completed', array( $this, 'mark_cod_paid_on_completion' ), 10 );
 		add_filter( 'woocommerce_reports_order_statuses', array( $this, 'reporting_statuses' ) );
 
 		/*
@@ -333,7 +578,7 @@ final class Order_Statuses {
 		 * "delivered" but with no paid date, and revenue was never counted.
 		 * This is non-negotiable business rule 4 (§12).
 		 */
-		add_filter( 'woocommerce_valid_order_statuses_for_payment_complete', array( $this, 'allow_complete_from_delivered' ) );
+		add_filter( 'woocommerce_valid_order_statuses_for_payment_complete', array( $this, 'allow_complete_from_delivered' ), 10, 2 );
 		add_filter( 'woocommerce_order_is_paid_statuses', array( $this, 'paid_statuses' ) );
 
 		/*
@@ -441,7 +686,76 @@ final class Order_Statuses {
 		if ( ! $o instanceof \WC_Order ) {
 			return;
 		}
+		$this->collect_cod_payment( $o, __( 'COD payment collected on delivery.', 'famma-core' ) );
+	}
 
+	/**
+	 * Encaisse une commande en paiement à la livraison passée à « Terminée » (D5).
+	 *
+	 * Décision par défaut, réversible : pour une commande payée à la
+	 * livraison, « Terminée » vaut « Livrée ». Avant, WooCommerce la marquait
+	 * payée sans encaissement COD ni Purchase (T2.4). Une commande d'un
+	 * autre moyen de paiement garde le comportement de WooCommerce.
+	 *
+	 * @param int $order_id Order identifier.
+	 * @return void
+	 */
+	public function mark_cod_paid_on_completion( int $order_id ): void {
+		$o = wc_get_order( $order_id );
+		if ( ! $o instanceof \WC_Order || ! self::is_cod_order( $o ) ) {
+			return;
+		}
+		$this->collect_cod_payment( $o, __( 'Paiement à la livraison encaissé : commande passée à « Terminée ».', 'famma-core' ) );
+	}
+
+	/**
+	 * La commande est-elle payée à la livraison ?
+	 *
+	 * Le paiement à la livraison est le seul moyen de paiement de la boutique
+	 * (§2) : une commande sans moyen de paiement (créée dans l'administration,
+	 * par exemple) en relève aussi. Filtrable par `famma_order_is_cod`.
+	 *
+	 * @param \WC_Order $order Commande.
+	 * @return bool
+	 */
+	public static function is_cod_order( \WC_Order $order ): bool {
+		$cod = in_array( (string) $order->get_payment_method(), array( 'cod', '' ), true );
+
+		return (bool) apply_filters( 'famma_order_is_cod', $cod, $order );
+	}
+
+	/**
+	 * Pourquoi une commande ne peut pas (encore) donner de Purchase ; vide si elle le peut.
+	 *
+	 * Règle du circuit de commande (§2, D5), seule et partagée par l'émetteur
+	 * (Capi), le rapprochement (R8) et l'état de santé (R7) : « Livrée », ou
+	 * « Terminée » pour une commande payée à la livraison déjà encaissée. Le
+	 * rapprochement reste indépendant de la logique d'envoi (réglages,
+	 * environnement, registre), mais n'attend jamais un Purchase que
+	 * l'émetteur refuserait.
+	 *
+	 * @param \WC_Order $order Commande.
+	 * @return string `not_delivered`, `not_collected` (« Terminée » en paiement à
+	 *                la livraison sans encaissement, cas d'avant la 0.3.2) ou vide.
+	 */
+	public static function purchase_ineligibility( \WC_Order $order ): string {
+		if ( $order->has_status( 'delivered' ) ) {
+			return '';
+		}
+		if ( $order->has_status( 'completed' ) && self::is_cod_order( $order ) ) {
+			return 'yes' === $order->get_meta( '_famma_cod_paid' ) ? '' : 'not_collected';
+		}
+		return 'not_delivered';
+	}
+
+	/**
+	 * Runs the COD bookkeeping once, whatever status triggered it.
+	 *
+	 * @param \WC_Order $o    Order being collected.
+	 * @param string    $note Order note recorded with the collection.
+	 * @return void
+	 */
+	private function collect_cod_payment( \WC_Order $o, string $note ): void {
 		/*
 		 * The guard uses a marker of our own, not is_paid() and not date_paid.
 		 * Both are already true on entry: WC_Abstract_Order::maybe_set_date_paid()
@@ -458,23 +772,29 @@ final class Order_Statuses {
 
 		$o->payment_complete();
 		$o->update_meta_data( '_famma_cod_paid', 'yes' );
-		$o->add_order_note( __( 'COD payment collected on delivery.', 'famma-core' ) );
+		$o->add_order_note( $note );
 		$o->save();
 	}
 
 	/**
-	 * Allows payment_complete() to run from the "delivered" status.
+	 * Allows payment_complete() to run from "delivered", and from "completed"
+	 * for a cash-on-delivery order (D5).
 	 *
-	 * @param string[] $statuses Statuses payment completion is allowed from.
+	 * @param string[]       $statuses Statuses payment completion is allowed from.
+	 * @param \WC_Order|null $order    Order concerned, when WooCommerce passes it.
 	 * @return string[]
 	 */
-	public function allow_complete_from_delivered( array $statuses ): array {
+	public function allow_complete_from_delivered( array $statuses, $order = null ): array {
 		$statuses[] = 'delivered';
+		if ( $order instanceof \WC_Order && $order->has_status( 'completed' ) && self::is_cod_order( $order ) ) {
+			$statuses[] = 'completed';
+		}
 		return $statuses;
 	}
 
 	/**
-	 * Keeps the order in "delivered" instead of jumping to processing/completed.
+	 * Keeps the order in "delivered" instead of jumping to processing/completed,
+	 * and a "completed" order where it is.
 	 *
 	 * @param string         $status   Default target status.
 	 * @param int            $order_id Order identifier.
@@ -484,6 +804,9 @@ final class Order_Statuses {
 	public function stay_delivered_when_paid( string $status, int $order_id, $order = null ): string {
 		if ( $order instanceof \WC_Order && $order->has_status( 'delivered' ) ) {
 			return 'delivered';
+		}
+		if ( $order instanceof \WC_Order && $order->has_status( 'completed' ) ) {
+			return 'completed';
 		}
 		return $status;
 	}
@@ -1692,8 +2015,26 @@ final class WhatsApp {
  *
  * Only public identifiers ever reach the browser. The Meta access token is
  * read server-side and is never enqueued, printed or logged.
+ *
+ * Lot 5 :
+ * - S1 : un visiteur interne (administrateur ou gérant connecté) ne reçoit
+ *   ni Pixel, ni événement navigateur, ni GA4, ni TikTok. Les envois serveur
+ *   (OrderPlaced, Purchase) et les données enregistrées sur la commande ne
+ *   sont jamais coupés ;
+ * - S3-a : l'eventID de PageView (et des événements de `Tracking_Events`) est
+ *   tiré dans le navigateur, jamais figé par le cache ;
+ * - D6 : chargement immédiat (code standard de Meta, dans le `<head>`) par
+ *   défaut, ou différé (comportement de la 0.3.1) ;
+ * - R12 : la capture UTM ne dépend plus d'aucun Pixel, et chaque commande
+ *   reçoit une source de synthèse `_famma_order_source` (`Order_Source`).
  */
 final class Tracking {
+
+	/**
+	 * Générateur d'eventID du navigateur (S3-a) : `crypto.randomUUID()`, sinon
+	 * un UUID v4 tiré de `crypto.getRandomValues()`, sinon horloge et hasard.
+	 */
+	public const EVENT_ID_SCRIPT = 'window.fammaEventId=window.fammaEventId||function(){var c=window.crypto,b,h="",i;if(c&&c.randomUUID){return c.randomUUID();}if(c&&c.getRandomValues){b=new Uint8Array(16);c.getRandomValues(b);b[6]=b[6]&15|64;b[8]=b[8]&63|128;for(i=0;i<16;i++){h+=(b[i]+256).toString(16).slice(1)+(3===i||5===i||7===i||9===i?"-":"");}return h;}return Date.now().toString(36)+"-"+Math.random().toString(36).slice(2)+"-"+Math.random().toString(36).slice(2);};';
 
 	/**
 	 * Singleton instance.
@@ -1722,10 +2063,114 @@ final class Tracking {
 	 */
 	private function hooks(): void {
 		add_action( 'wp_head', array( $this, 'site_verification' ), 5 );
+		add_action( 'template_redirect', array( $this, 'internal_cache_guard' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_tracking' ) );
 		add_action( 'woocommerce_checkout_create_order', array( $this, 'stamp_utm_on_order' ), 30 );
 		add_action( 'woocommerce_checkout_create_order', array( $this, 'stamp_capi_signals' ), 31 );
-		add_action( 'woocommerce_order_status_delivered', array( $this, 'fire_purchase_on_delivery' ) );
+		// Le déclencheur du Purchase serveur vit dans Capi (priorité 20, après l'encaissement).
+		add_filter( 'wp_inline_script_attributes', array( $this, 'immediate_attributes' ) );
+		add_filter( 'litespeed_optimize_js_excludes', array( $this, 'litespeed_exclude' ) );
+		add_filter( 'litespeed_optm_js_defer_exc', array( $this, 'litespeed_exclude' ) );
+	}
+
+	/**
+	 * Chargement différé du Pixel (D6) : réglage `famma_meta_pixel_loading`,
+	 * que le filtre de code `famma_defer_pixels` peut encore forcer.
+	 *
+	 * @return bool
+	 */
+	private static function deferred(): bool {
+		return (bool) apply_filters( 'famma_defer_pixels', 'deferred' === Config::instance()->meta_pixel_loading() );
+	}
+
+	/**
+	 * En chargement immédiat, LiteSpeed ne retarde ni ne diffère le Pixel.
+	 *
+	 * Sans ces attributs, l'option « JS différé / retardé » de LiteSpeed
+	 * remettrait le code de base à après une interaction : exactement la perte
+	 * que le chargement immédiat corrige (T3.5). Mêmes attributs que
+	 * `Capi_Signals::no_optimize_attributes()`. En différé, rien ne change.
+	 *
+	 * @param mixed $attributes Attributs de la balise inline.
+	 * @return array<string, string|bool>
+	 */
+	public function immediate_attributes( $attributes ): array {
+		$attributes = (array) $attributes;
+		if ( 'famma-pixels-js-after' === ( $attributes['id'] ?? '' ) && ! self::deferred() ) {
+			$attributes['data-no-optimize'] = '1';
+			$attributes['data-no-defer']    = '1';
+			$attributes['data-cfasync']     = 'false';
+		}
+
+		return $attributes;
+	}
+
+	/**
+	 * Filet de sécurité : `famma-pixels` dans les exclusions JS de LiteSpeed, en immédiat seulement.
+	 *
+	 * @param mixed $excludes Liste d'exclusions de LiteSpeed Cache.
+	 * @return array<int, string>
+	 */
+	public function litespeed_exclude( $excludes ): array {
+		$excludes = is_array( $excludes ) ? $excludes : array_filter( (array) $excludes );
+		if ( ! self::deferred() ) {
+			$excludes[] = 'famma-pixels';
+		}
+
+		return array_values( array_unique( $excludes ) );
+	}
+
+	/**
+	 * Visiteur interne (S1) : utilisateur connecté qui gère le site ou la boutique.
+	 *
+	 * Même règle que le mu-plugin `famma-google-tags.php` (`manage_options` ou
+	 * `manage_woocommerce`) : GA4 et Meta excluent les mêmes personnes. Les
+	 * clients connectés restent mesurés. Filtre `famma_tracking_exclude_visitor`.
+	 *
+	 * @return bool
+	 */
+	public static function is_internal_visitor(): bool {
+		$internal = function_exists( 'is_user_logged_in' ) && is_user_logged_in()
+			&& ( current_user_can( 'manage_options' ) || current_user_can( 'manage_woocommerce' ) );
+
+		return (bool) apply_filters( 'famma_tracking_exclude_visitor', $internal );
+	}
+
+	/**
+	 * Le navigateur de cette requête doit-il recevoir le suivi (Pixel, événements, TikTok, GA4) ?
+	 *
+	 * Vrai pour tout visiteur non interne, et pour un visiteur interne quand
+	 * la dérogation « Suivre mes visites (mode test) » est active
+	 * (`Config::track_internal_visitors()`, constante `FAMMA_TRACK_INTERNAL`).
+	 * Ne concerne jamais les envois serveur.
+	 *
+	 * @return bool
+	 */
+	public static function browser_tracking_allowed(): bool {
+		return ! self::is_internal_visitor() || Config::instance()->track_internal_visitors();
+	}
+
+	/**
+	 * Une page vue par un visiteur interne n'est jamais mise en cache.
+	 *
+	 * LiteSpeed ne sert déjà jamais son cache public à un utilisateur connecté,
+	 * et la variante « connecté » qu'il peut garder est privée (liée au cookie
+	 * de session de cet utilisateur) : une page sans Pixel ne peut pas être
+	 * servie à un visiteur. Ce garde va plus loin : il couvre une exclusion
+	 * élargie par le filtre à un visiteur non connecté, et rend effet immédiat
+	 * à la bascule de la dérogation (pas de page privée périmée 30 minutes).
+	 *
+	 * @return void
+	 */
+	public function internal_cache_guard(): void {
+		if ( is_admin() || ! self::is_internal_visitor() ) {
+			return;
+		}
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- API de LiteSpeed Cache (sans effet s'il est absent).
+		do_action( 'litespeed_control_set_nocache', 'famma-core : visiteur interne, page propre à la mesure' );
+		if ( function_exists( 'wc_maybe_define_constant' ) ) {
+			wc_maybe_define_constant( 'DONOTCACHEPAGE', true );
+		}
 	}
 
 	/**
@@ -1748,10 +2193,32 @@ final class Tracking {
 	 * than raw <script> echoes, so third parties can dequeue them and the
 	 * loading strategy stays under WordPress's control (§23).
 	 *
+	 * Le handle `famma-pixels` existe désormais sur toute page : il porte au
+	 * moins la capture UTM (R12). En chargement immédiat (D6, défaut), il est
+	 * imprimé dans le `<head>`, comme le code standard de Meta ; en différé,
+	 * en pied de page comme en 0.3.1.
+	 *
 	 * @return void
 	 */
 	public function enqueue_tracking(): void {
 		$cfg = Config::instance();
+
+		/*
+		 * Différé : les files fbq / ttq sont créées tout de suite, mais le
+		 * téléchargement des bibliothèques tierces attend la fin du chargement
+		 * et un moment d'inactivité (PERF-07). Immédiat : la bibliothèque part
+		 * aussitôt, en asynchrone ; un départ rapide ne perd plus les
+		 * événements (T3.5). Le filtre `famma_defer_pixels` suit le réglage.
+		 */
+		$deferred = self::deferred();
+
+		wp_register_script( 'famma-pixels', false, array(), FAMMA_CORE_VERSION, array( 'in_footer' => $deferred ) );
+		wp_enqueue_script( 'famma-pixels' );
+
+		if ( ! self::browser_tracking_allowed() ) {
+			wp_add_inline_script( 'famma-pixels', Order_Source::UTM_SCRIPT );
+			return;
+		}
 
 		$ga = $cfg->ga4_measurement_id();
 		if ( '' !== $ga ) {
@@ -1770,77 +2237,65 @@ final class Tracking {
 
 		$pixel = $cfg->meta_pixel_id();
 		$ttk   = $cfg->tiktok_pixel_id();
-		if ( '' === $pixel && '' === $ttk ) {
-			return;
-		}
 
-		wp_register_script( 'famma-pixels', false, array(), FAMMA_CORE_VERSION, true );
-		wp_enqueue_script( 'famma-pixels' );
-
-		/*
-		 * Les files fbq / ttq sont créées tout de suite, mais le téléchargement
-		 * des bibliothèques tierces (~190 Kio pour Meta) attend la fin du
-		 * chargement et un moment d'inactivité : il ne concurrence plus le
-		 * premier affichage (PERF-07). Aucun événement n'est perdu, la file
-		 * est rejouée quand la bibliothèque arrive.
-		 *
-		 * Filtre `famma_defer_pixels` : false pour revenir au chargement immédiat.
-		 */
-		$defer = (bool) apply_filters( 'famma_defer_pixels', true );
-		wp_add_inline_script(
-			'famma-pixels',
-			$defer
-				? 'window.fammaDefer=window.fammaDefer||function(f){var r=function(){"requestIdleCallback" in window?requestIdleCallback(f,{timeout:3000}):setTimeout(f,1);};"complete"===document.readyState?r():addEventListener("load",r,{once:true});};'
-				: 'window.fammaDefer=window.fammaDefer||function(f){f();};'
-		);
-
-		if ( '' !== $pixel ) {
+		if ( '' !== $pixel || '' !== $ttk ) {
 			wp_add_inline_script(
 				'famma-pixels',
-				"!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];fammaDefer(function(){t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)})}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init'," . wp_json_encode( $pixel ) . ");fbq('track','PageView');"
+				$deferred
+					? 'window.fammaDefer=window.fammaDefer||function(f){var r=function(){"requestIdleCallback" in window?requestIdleCallback(f,{timeout:3000}):setTimeout(f,1);};"complete"===document.readyState?r():addEventListener("load",r,{once:true});};'
+					: 'window.fammaDefer=window.fammaDefer||function(f){f();};'
 			);
+		}
+
+		if ( '' !== $pixel ) {
+			wp_add_inline_script( 'famma-pixels', self::EVENT_ID_SCRIPT . self::meta_base_code( $pixel, $deferred ) );
 		}
 
 		if ( '' !== $ttk ) {
+			$load = 'ttq.load(' . wp_json_encode( $ttk ) . ')';
 			wp_add_inline_script(
 				'famma-pixels',
-				'!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"];ttq.setAndDefer=function(e,n){e[n]=function(){e.push([n].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.load=function(e){var n="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=n;ttq._t=ttq._t||{};ttq._t[e]=+new Date;var o=d.createElement("script");o.type="text/javascript";o.async=!0;o.src=n+"?sdkid="+e;var a=d.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};fammaDefer(function(){ttq.load(' . wp_json_encode( $ttk ) . ')});ttq.page()}(window,document,"ttq");'
+				'!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"];ttq.setAndDefer=function(e,n){e[n]=function(){e.push([n].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.load=function(e){var n="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=n;ttq._t=ttq._t||{};ttq._t[e]=+new Date;var o=d.createElement("script");o.type="text/javascript";o.async=!0;o.src=n+"?sdkid="+e;var a=d.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};'
+				. ( $deferred ? 'fammaDefer(function(){' . $load . '});' : $load . ';' )
+				. 'ttq.page()}(window,document,"ttq");'
 			);
 		}
 
-		// UTM persistence (§20) — independent of any pixel being configured.
-		wp_add_inline_script(
-			'famma-pixels',
-			'(function(){try{var p=new URLSearchParams(location.search),k=["utm_source","utm_medium","utm_campaign","utm_content","utm_term"],o={},h=false;k.forEach(function(x){var v=p.get(x);if(v){o[x]=v;h=true;}});if(h){document.cookie="famma_utm="+encodeURIComponent(JSON.stringify(o))+";path=/;max-age="+(60*60*24*30)+";SameSite=Lax";}}catch(e){}})();'
-		);
+		// UTM persistence (§20, R12) — independent of any pixel being configured.
+		wp_add_inline_script( 'famma-pixels', Order_Source::UTM_SCRIPT );
 	}
 
 	/**
-	 * Copies the captured UTM parameters onto the order (§20).
+	 * Code de base du Pixel Meta : un seul `fbq('init')` et le PageView.
 	 *
-	 * The cookie is attacker-controllable, so each value is length-capped and
-	 * sanitised individually before being stored.
+	 * Immédiat : le code standard de Meta (bibliothèque insérée en `async`
+	 * aussitôt). Différé : la même file, la bibliothèque attend `fammaDefer`.
+	 * L'eventID du PageView est tiré dans le navigateur.
+	 *
+	 * @param string $pixel    Identifiant public du Pixel.
+	 * @param bool   $deferred Chargement différé.
+	 * @return string
+	 */
+	private static function meta_base_code( string $pixel, bool $deferred ): string {
+		$insert = 't=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)';
+
+		return "!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];"
+			. ( $deferred ? 'fammaDefer(function(){' . $insert . '})' : $insert )
+			. "}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init'," . wp_json_encode( $pixel ) . ");fbq('track','PageView',{},{eventID:fammaEventId()});";
+	}
+
+	/**
+	 * Copies the captured UTM parameters and the synthetic source onto the order (§20, R12).
+	 *
+	 * Point d'accroche `woocommerce_checkout_create_order` (priorité 30, avant
+	 * les signaux CAPI en 31), conservé comme API publique ; la logique vit
+	 * dans `Order_Source::stamp()`.
 	 *
 	 * @param \WC_Order $order Order being created.
 	 * @return void
 	 */
 	public function stamp_utm_on_order( \WC_Order $order ): void {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only attribution cookie, not an action.
-		$raw = isset( $_COOKIE['famma_utm'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['famma_utm'] ) ) : '';
-		if ( '' === $raw || strlen( $raw ) > 2048 ) {
-			return;
-		}
-
-		$parsed = json_decode( $raw, true );
-		if ( ! is_array( $parsed ) ) {
-			return;
-		}
-
-		foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term' ) as $k ) {
-			if ( ! empty( $parsed[ $k ] ) && is_scalar( $parsed[ $k ] ) ) {
-				$order->update_meta_data( '_famma_' . $k, substr( sanitize_text_field( (string) $parsed[ $k ] ), 0, 255 ) );
-			}
-		}
+		Order_Source::stamp( $order );
 	}
 
 	/**
@@ -1869,55 +2324,26 @@ final class Tracking {
 			}
 		}
 	}
-
-	/**
-	 * Fires the real Purchase event once, when the order is actually delivered (§17).
-	 *
-	 * A COD order is only revenue at delivery, so this is the only place a
-	 * Purchase may be sent. The event id makes browser/server deduplication
-	 * possible.
-	 *
-	 * @param int $order_id Order identifier.
-	 * @return void
-	 */
-	public function fire_purchase_on_delivery( int $order_id ): void {
-		$order = wc_get_order( $order_id );
-		if ( ! $order instanceof \WC_Order || ! $order->has_status( 'delivered' ) || $order->get_meta( '_famma_purchase_sent' ) ) {
-			return;
-		}
-
-		/*
-		 * The dispatcher owns persistence of event identity, delivery time and
-		 * the success marker under its atomic delivery claim. This hook never
-		 * consumes the right to send merely because delivery was requested.
-		 */
-		$event_id = 'famma_purchase_' . $order_id;
-		// Event identity and time are persisted by the atomic transport owner.
-
-		/**
-		 * Fires when a delivered COD order should be reported as a Purchase.
-		 *
-		 * @param \WC_Order $order    The delivered order.
-		 * @param string    $event_id Deduplication identifier.
-		 */
-		do_action( 'famma_capi_purchase', $order, $event_id );
-	}
 }
 
 /**
  * Meta Conversions API client (§17).
  *
- * Écoute `famma_capi_purchase`, déclenché à la livraison uniquement — une
- * commande COD n'est du chiffre d'affaires qu'une fois l'espèce encaissée.
+ * Deux événements serveur : OrderPlaced (commande acceptée sur le site, mise
+ * en file Action Scheduler) et Purchase (commande livrée, ou « Terminée »
+ * pour un paiement à la livraison, toujours après l'encaissement).
  *
- * Trois règles tenues sans exception :
+ * Règles tenues sans exception :
  *
  *  1. Le token n'est jamais journalisé, jamais renvoyé, jamais imprimé. Les
  *     messages d'erreur ne citent que le code HTTP et le message de Meta.
- *  2. Rien n'est envoyé tant que l'identifiant de pixel ET le token ne sont
- *     pas configurés. Sans eux, la classe est inerte.
+ *  2. Rien n'est envoyé sans Pixel ET token, hors production (D4), ni en
+ *     mode test sans code de test valide (A12).
  *  3. `_famma_purchase_sent` n'est écrit qu'après un envoi réellement
  *     accepté. Un incident réseau laisse donc la commande rejouable.
+ *  4. Chaque issue d'OrderPlaced et de Purchase écrit une ligne du journal
+ *     `famma-capi` (D7), et un échec transitoire est relancé par `Capi_Retry`
+ *     avec le même event_id (D1).
  */
 final class Capi {
 
@@ -1927,19 +2353,6 @@ final class Capi {
 	 * @var Capi|null
 	 */
 	private static ?Capi $i = null;
-
-	/**
-	 * Version de l'API Graph visée.
-	 *
-	 * Filtrable par `famma_capi_graph_version` pour pouvoir la faire monter
-	 * sans toucher au code le jour où Meta retire celle-ci.
-	 */
-	private const GRAPH_VERSION = 'v21.0';
-
-	/**
-	 * Nombre d'échecs au-delà duquel on cesse de réessayer.
-	 */
-	private const MAX_ATTEMPTS = 5;
 
 	/**
 	 * Returns the shared instance, registering hooks on first call.
@@ -1961,9 +2374,14 @@ final class Capi {
 	 */
 	private function hooks(): void {
 		add_action( 'famma_capi_purchase', array( $this, 'send_purchase' ), 10, 2 );
+
+		// Priorité 20 : après l'encaissement COD d'Order_Statuses (priorité 10).
+		add_action( 'woocommerce_order_status_delivered', array( $this, 'fire_purchase_on_status' ), 20 );
+		add_action( 'woocommerce_order_status_completed', array( $this, 'fire_purchase_on_status' ), 20 );
 		add_filter( 'woocommerce_payment_successful_result', array( $this, 'order_placed_after_checkout' ), 999, 2 );
 		add_filter( 'woocommerce_checkout_no_payment_needed_redirect', array( $this, 'order_placed_without_payment' ), 999, 2 );
 		add_action( 'famma_capi_orderplaced_send', array( $this, 'send_queued_order_placed' ) );
+		add_action( Capi_Retry::HOOK, array( $this, 'send_retry' ), 10, 2 );
 	}
 
 	/**
@@ -2001,7 +2419,18 @@ final class Capi {
 	 * @param \WC_Order $order Accepted storefront checkout.
 	 */
 	private function queue_order_placed( \WC_Order $order ): void {
-		if ( ! get_option( 'famma_meta_orderplaced_enabled', false ) || ! $this->eligible_order_placed( $order ) || $order->get_meta( '_famma_orderplaced_sent' ) ) {
+		$base = $this->log_base( $order, 'OrderPlaced' );
+		if ( ! get_option( 'famma_meta_orderplaced_enabled', false ) ) {
+			$this->outcome( $base, 'disabled', 'option' );
+			return;
+		}
+		$reason = $this->order_placed_ineligibility( $order );
+		if ( '' !== $reason ) {
+			$this->outcome( $base, 'ineligible', $reason );
+			return;
+		}
+		if ( $order->get_meta( '_famma_orderplaced_sent' ) ) {
+			$this->outcome( $base, 'already_sent', 'marker' );
 			return;
 		}
 		$order->update_meta_data( '_famma_orderplaced_checkout_accepted', 1 );
@@ -2011,12 +2440,35 @@ final class Capi {
 			$order->update_meta_data( '_famma_orderplaced_event_id', 'famma_orderplaced_' . $order->get_id() );
 		}
 		$order->save();
-		$args = array( 'order_id' => $order->get_id() );
-		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			as_enqueue_async_action( 'famma_capi_orderplaced_send', $args, 'famma-capi', true );
-		} elseif ( ! wp_next_scheduled( 'famma_capi_orderplaced_send', $args ) ) {
-			wp_schedule_single_event( time() + 1, 'famma_capi_orderplaced_send', $args );
+		if ( ! $this->enqueue_order_placed( $order->get_id() ) ) {
+			$this->outcome( $base, 'queue_failed', 'scheduler' );
 		}
+	}
+
+	/**
+	 * Enqueue the unique OrderPlaced task (Action Scheduler, WP-Cron as fallback).
+	 *
+	 * @param int $order_id Order identifier.
+	 * @return bool Whether a task is now waiting for this order.
+	 */
+	private function enqueue_order_placed( int $order_id ): bool {
+		$args = array( 'order_id' => $order_id );
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			if ( as_enqueue_async_action( 'famma_capi_orderplaced_send', $args, 'famma-capi', true ) > 0 ) {
+				return true;
+			}
+			// Une tâche unique déjà en file renvoie 0 : ce n'est pas un échec.
+			if ( function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( 'famma_capi_orderplaced_send', $args, 'famma-capi' ) ) {
+				return true;
+			}
+		}
+		if ( ! function_exists( 'wp_schedule_single_event' ) ) {
+			return false;
+		}
+		if ( wp_next_scheduled( 'famma_capi_orderplaced_send', $args ) ) {
+			return true;
+		}
+		return false !== wp_schedule_single_event( time() + 1, 'famma_capi_orderplaced_send', $args );
 	}
 
 	/**
@@ -2026,112 +2478,107 @@ final class Capi {
 	 */
 	public function send_queued_order_placed( int $order_id ): void {
 		$order = wc_get_order( $order_id );
-		if ( $order instanceof \WC_Order ) {
-			$this->send_order_placed( $order );
+		if ( ! $order instanceof \WC_Order ) {
+			$this->outcome( $this->log_base_for( $order_id, 'OrderPlaced' ), 'ineligible', 'order_missing' );
+			return;
 		}
+		$this->send_order_placed( $order );
 	}
 
 	/**
-	 * Exclude admin orders, unsaved orders, drafts and rejected orders.
+	 * Why a checkout order cannot be reported as OrderPlaced, or an empty string.
+	 *
+	 * Exclut les commandes de l'administration, non enregistrées, brouillons
+	 * et refusées.
 	 *
 	 * @param \WC_Order $order Checkout order.
-	 * @return bool Whether its source and current status are eligible.
+	 * @return string Reason token, empty when eligible.
 	 */
-	private function eligible_order_placed( \WC_Order $order ): bool {
-		return $order->get_id() > 0 && 'checkout' === $order->get_created_via() && ! $order->has_status( array( 'checkout-draft', 'draft', 'failed', 'cancelled', 'trash', 'refused', 'returned', 'failed-delivery' ) );
+	private function order_placed_ineligibility( \WC_Order $order ): string {
+		if ( $order->get_id() <= 0 ) {
+			return 'unsaved';
+		}
+		if ( 'checkout' !== $order->get_created_via() ) {
+			return 'created_via:' . ( '' !== (string) $order->get_created_via() ? (string) $order->get_created_via() : 'unknown' );
+		}
+		if ( $order->has_status( array( 'checkout-draft', 'draft', 'failed', 'cancelled', 'trash', 'refused', 'returned', 'failed-delivery' ) ) ) {
+			return 'status:' . $order->get_status();
+		}
+		return '';
 	}
 
 	/**
 	 * Send a placed order separately from its later delivered Purchase.
 	 *
 	 * @param \WC_Order $order Accepted storefront checkout order.
+	 * @param bool      $retry Whether a bounded retry may reclaim an uncertain send.
+	 * @return string Outcome recorded in the famma-capi journal.
 	 */
-	public function send_order_placed( \WC_Order $order ): void {
+	public function send_order_placed( \WC_Order $order, bool $retry = false ): string {
+		$base = $this->log_base( $order, 'OrderPlaced' );
 		if ( ! get_option( 'famma_meta_orderplaced_enabled', false ) ) {
+			return $this->outcome( $base, 'disabled', 'option' );
+		}
+		$reason = $this->order_placed_ineligibility( $order );
+		if ( '' !== $reason ) {
+			return $this->outcome( $base, 'ineligible', $reason );
+		}
+		if ( ! $order->get_meta( '_famma_orderplaced_checkout_accepted' ) ) {
+			return $this->outcome( $base, 'ineligible', 'checkout_not_accepted' );
+		}
+		return $this->send_order_event( $order, 'OrderPlaced', 'famma_orderplaced_' . $order->get_id(), $retry );
+	}
+
+	/**
+	 * Motif journalisé quand le Purchase est écarté, ou vide s'il peut partir.
+	 *
+	 * La règle vient du circuit de commande (`Order_Statuses::purchase_ineligibility()`),
+	 * la même pour l'émetteur, le rapprochement (R8) et l'état de santé (R7).
+	 *
+	 * @param \WC_Order $order Order concerned.
+	 * @return string `not_collected`, `status:<statut>` ou vide.
+	 */
+	private function purchase_block_reason( \WC_Order $order ): string {
+		$why = Order_Statuses::purchase_ineligibility( $order );
+		if ( '' === $why ) {
+			return '';
+		}
+		return 'not_collected' === $why ? $why : 'status:' . $order->get_status();
+	}
+
+	/**
+	 * Fires the real Purchase once, when the order is delivered or completed (§17, D5).
+	 *
+	 * Priority 20, after the COD collection at priority 10. The event id makes
+	 * browser/server deduplication possible; the dispatcher owns its
+	 * persistence under the atomic delivery claim.
+	 *
+	 * @param int $order_id Order identifier.
+	 * @return void
+	 */
+	public function fire_purchase_on_status( int $order_id ): void {
+		$order = wc_get_order( $order_id );
+		if ( ! $order instanceof \WC_Order ) {
 			return;
 		}
-		if ( ! $this->eligible_order_placed( $order ) || ! $order->get_meta( '_famma_orderplaced_checkout_accepted' ) ) {
+		$base   = $this->log_base( $order, 'Purchase' );
+		$reason = $this->purchase_block_reason( $order );
+		if ( '' !== $reason ) {
+			$this->outcome( $base, 'ineligible', $reason );
 			return;
 		}
-		$this->send_order_event( $order, 'OrderPlaced', 'famma_orderplaced_' . $order->get_id() );
-	}
-
-	/**
-	 * Hashes a value the way Meta expects: normalised, then SHA-256.
-	 *
-	 * @param string $value Raw value.
-	 * @return string Empty string when there is nothing to hash.
-	 */
-	private function hash( string $value ): string {
-		$value = trim( strtolower( $value ) );
-		return '' === $value ? '' : hash( 'sha256', $value );
-	}
-
-	/**
-	 * Normalises a Tunisian phone number to digits with country code.
-	 *
-	 * @param string $phone Raw phone as typed by the customer.
-	 * @return string
-	 */
-	private function normalise_phone( string $phone ): string {
-		// 216 + 8 chiffres nationaux, format attendu par Meta (sans « + » ni zéros).
-		if ( method_exists( Tunisia::class, 'normalize_phone' ) ) {
-			$national = (string) Tunisia::normalize_phone( $phone );
-			if ( '' !== $national ) {
-				return '216' . $national;
-			}
+		if ( $order->get_meta( '_famma_purchase_sent' ) ) {
+			$this->outcome( $base, 'already_sent', 'marker' );
+			return;
 		}
-		return Config::international_phone( $phone );
-	}
 
-	/**
-	 * Builds the user_data block, with every identifier hashed.
-	 *
-	 * @param \WC_Order $order Delivered order.
-	 * @return array<string,string>
-	 */
-	private function user_data( \WC_Order $order ): array {
-		$data = array_filter(
-			array(
-				'em'      => $this->hash( (string) $order->get_billing_email() ),
-				'ph'      => $this->hash( $this->normalise_phone( (string) $order->get_billing_phone() ) ),
-				'fn'      => $this->hash( (string) $order->get_billing_first_name() ),
-				'ln'      => $this->hash( (string) $order->get_billing_last_name() ),
-				'ct'      => $this->hash( preg_replace( '/[^a-z]/', '', strtolower( (string) $order->get_billing_city() ) ) ),
-				'st'      => $this->hash( (string) $order->get_billing_state() ),
-				'country' => $this->hash( (string) $order->get_billing_country() ),
-			)
-		);
-
-		/*
-		 * Ces quatre-là ne sont PAS hachés : Meta les attend en clair. Ils
-		 * viennent toujours des métadonnées figées à la commande — jamais de
-		 * la requête courante, qui pour Purchase est celle de l'admin. Ils
-		 * sont revalidés ici car une commande antérieure à 0.2.6 a pu les
-		 * enregistrer sans contrôle de format ; absents, ils sont omis.
+		/**
+		 * Fires when a delivered COD order should be reported as a Purchase.
+		 *
+		 * @param \WC_Order $order    The delivered order.
+		 * @param string    $event_id Deduplication identifier.
 		 */
-		$raw_meta_map = array(
-			'fbp' => '_famma_fbp',
-			'fbc' => '_famma_fbc',
-		);
-		foreach ( $raw_meta_map as $key => $meta ) {
-			$value = Capi_Signals::clean_cookie( (string) $order->get_meta( $meta ) );
-			if ( '' !== $value ) {
-				$data[ $key ] = $value;
-			}
-		}
-
-		$ip = Capi_Signals::clean_ip( (string) $order->get_meta( '_famma_client_ip' ) );
-		if ( '' !== $ip ) {
-			$data['client_ip_address'] = $ip;
-		}
-
-		$ua = (string) $order->get_meta( '_famma_client_ua' );
-		if ( '' !== $ua ) {
-			$data['client_user_agent'] = $ua;
-		}
-
-		return $data;
+		do_action( 'famma_capi_purchase', $order, 'famma_purchase_' . $order_id );
 	}
 
 	/**
@@ -2142,10 +2589,67 @@ final class Capi {
 	 * @return void
 	 */
 	public function send_purchase( \WC_Order $order, string $event_id ): void {
-		if ( ! $order->has_status( 'delivered' ) ) {
+		$reason = $this->purchase_block_reason( $order );
+		if ( '' !== $reason ) {
+			$this->outcome( $this->log_base( $order, 'Purchase', $event_id ), 'ineligible', $reason );
 			return;
 		}
 		$this->send_order_event( $order, 'Purchase', $event_id );
+	}
+
+	/**
+	 * Bounded retry run by Action Scheduler (D1), same event_id as the first try.
+	 *
+	 * @param int    $order_id   Order identifier.
+	 * @param string $event_name OrderPlaced or Purchase.
+	 * @return void
+	 */
+	public function send_retry( int $order_id, string $event_name = '' ): void {
+		$order = wc_get_order( $order_id );
+		if ( ! $order instanceof \WC_Order ) {
+			$this->outcome( $this->log_base_for( $order_id, $event_name ), 'ineligible', 'order_missing' );
+			return;
+		}
+		if ( in_array( $event_name, array( 'OrderPlaced', 'Purchase' ), true ) ) {
+			$this->resend( $order, $event_name );
+			return;
+		}
+		$this->outcome( $this->log_base_for( $order_id, $event_name ), 'ineligible', 'event_unknown' );
+	}
+
+	/**
+	 * Explicit resend (bounded retry or reconciliation), same event_id.
+	 *
+	 * @param \WC_Order $order      Order concerned.
+	 * @param string    $event_name OrderPlaced or Purchase.
+	 * @return string Outcome recorded in the famma-capi journal.
+	 */
+	public function resend( \WC_Order $order, string $event_name ): string {
+		if ( 'OrderPlaced' === $event_name ) {
+			return $this->send_order_placed( $order, true );
+		}
+		$event_id = 'famma_purchase_' . $order->get_id();
+		$reason   = $this->purchase_block_reason( $order );
+		if ( '' !== $reason ) {
+			return $this->outcome( $this->log_base( $order, 'Purchase', $event_id ), 'ineligible', $reason );
+		}
+		return $this->send_order_event( $order, 'Purchase', $event_id, true );
+	}
+
+	/**
+	 * Order metadata keys of one event.
+	 *
+	 * @param string $event_name OrderPlaced or Purchase.
+	 * @return array{sent: string, time: string, attempts: string, id: string}
+	 */
+	private function meta_keys( string $event_name ): array {
+		$is_purchase = 'Purchase' === $event_name;
+		return array(
+			'sent'     => $is_purchase ? '_famma_purchase_sent' : '_famma_orderplaced_sent',
+			'time'     => $is_purchase ? '_famma_purchase_event_time' : '_famma_orderplaced_event_time',
+			'attempts' => $is_purchase ? '_famma_capi_attempts' : '_famma_orderplaced_attempts',
+			'id'       => $is_purchase ? '_famma_purchase_event_id' : '_famma_orderplaced_event_id',
+		);
 	}
 
 	/**
@@ -2154,166 +2658,230 @@ final class Capi {
 	 * @param \WC_Order $order      Persisted order.
 	 * @param string    $event_name OrderPlaced or Purchase.
 	 * @param string    $event_id   Stable deduplication identifier.
+	 * @param bool      $retry      Whether a bounded retry may reclaim an uncertain send.
+	 * @return string Outcome recorded in the famma-capi journal.
 	 */
-	private function send_order_event( \WC_Order $order, string $event_name, string $event_id ): void {
+	private function send_order_event( \WC_Order $order, string $event_name, string $event_id, bool $retry = false ): string {
 		$cfg   = Config::instance();
 		$pixel = $cfg->meta_pixel_id();
 		$token = $cfg->meta_access_token();
+		$base  = $this->log_base( $order, $event_name, $event_id );
+		$keys  = $this->meta_keys( $event_name );
 
-		// Fonctionnalité non configurée : on ne fait rien, silencieusement.
 		if ( '' === $pixel || '' === $token ) {
-			return;
+			return $this->outcome( $base, 'not_configured', '' === $pixel ? 'pixel' : 'token' );
+		}
+		if ( $order->get_meta( $keys['sent'] ) ) {
+			return $this->outcome( $base, 'already_sent', 'marker' );
+		}
+		if ( ! $cfg->meta_sending_allowed() ) {
+			return $this->outcome( $base, 'blocked_environment', $cfg->environment_type() );
 		}
 
-		$is_purchase = 'Purchase' === $event_name;
-		$sent_key    = $is_purchase ? '_famma_purchase_sent' : '_famma_orderplaced_sent';
-		$time_key    = $is_purchase ? '_famma_purchase_event_time' : '_famma_orderplaced_event_time';
-		$attempt_key = $is_purchase ? '_famma_capi_attempts' : '_famma_orderplaced_attempts';
-		if ( $order->get_meta( $sent_key ) ) {
-			return;
+		// Mode test : un code absent ou invalide bloque l'envoi au lieu de le faire partir en réel (A12).
+		$test_code = '';
+		if ( Capi_Signals::test_mode_enabled() ) {
+			$test_code = $cfg->meta_test_event_code();
+			if ( ! Config::valid_test_event_code( $test_code ) ) {
+				return $this->outcome( $base, 'test_code_invalid', '' === $test_code ? 'missing' : 'format' );
+			}
 		}
 
-		$event_time = (int) $order->get_meta( $time_key );
+		$event_time = (int) $order->get_meta( $keys['time'] );
 		if ( $event_time <= 0 ) {
 			$created    = $order->get_date_created();
-			$event_time = ! $is_purchase && $created ? $created->getTimestamp() : time();
+			$event_time = 'Purchase' !== $event_name && $created ? $created->getTimestamp() : time();
 		}
+		if ( time() - $event_time > Config::CAPI_MAX_EVENT_AGE ) {
+			return $this->outcome( $base, 'too_old', 'event_time' );
+		}
+
 		$registry = Capi_Delivery_Registry::instance();
-		$claim    = $registry->acquire( $pixel, $event_name, $event_id, $order->get_id(), $event_time, self::MAX_ATTEMPTS, (int) $order->get_meta( $attempt_key ) );
-		if ( 'accepted' === $claim['state'] ) {
+		$claim    = $registry->acquire( $pixel, $event_name, $event_id, $order->get_id(), $event_time, Config::CAPI_MAX_ATTEMPTS, (int) $order->get_meta( $keys['attempts'] ), $retry );
+		$state    = (string) ( $claim['state'] ?? '' );
+		if ( 'accepted' === $state ) {
 			$this->persist_event_success( $order->get_id(), $event_name, $event_id, false );
-			return;
+			return $this->outcome( $base, 'already_sent', 'registry' );
+		}
+		if ( 'unavailable' === $state ) {
+			Capi_Health::signal( 'registry_unavailable' );
+			return $this->outcome( $base, 'registry_unavailable', 'table' );
 		}
 		if ( empty( $claim['owned'] ) ) {
-			return;
+			return $this->not_owned( $order->get_id(), $base, $claim, $event_time );
 		}
+
 		// Refresh metadata under ownership: another execution may have saved it.
 		$order = wc_get_order( $order->get_id() );
 		if ( ! $order instanceof \WC_Order ) {
 			$registry->finish( $claim, 'uncertain', 0, 0 );
-			return;
+			return $this->outcome( $base, 'ineligible', 'order_missing' );
 		}
 		$order->read_meta_data( true );
-		if ( $order->get_meta( $sent_key ) ) {
+		if ( $order->get_meta( $keys['sent'] ) ) {
 			$registry->finish( $claim, 'accepted', 0, 0 );
-			return;
+			return $this->outcome( $base, 'already_sent', 'marker' );
 		}
-		if ( $is_purchase && ! $order->has_status( 'delivered' ) ) {
+		$reason = 'Purchase' === $event_name ? $this->purchase_block_reason( $order ) : '';
+		if ( '' !== $reason ) {
 			$registry->finish( $claim, 'rejected', 0, 0 );
-			return;
+			return $this->outcome( $base, 'ineligible', $reason );
 		}
 		$event_time = (int) $claim['event_time'];
 		$attempts   = (int) $claim['attempt'];
-		$order->update_meta_data( $time_key, $event_time );
-		$order->update_meta_data( $is_purchase ? '_famma_purchase_event_id' : '_famma_orderplaced_event_id', $event_id );
-		$order->update_meta_data( $attempt_key, $attempts );
+		$order->update_meta_data( $keys['time'], $event_time );
+		$order->update_meta_data( $keys['id'], $event_id );
+		$order->update_meta_data( $keys['attempts'], $attempts );
 		/* translators: 1: event name, 2: stable event identifier, 3: attempt number. */
 		$order->add_order_note( sprintf( __( 'Meta %1$s dispatch started (%2$s, attempt %3$d).', 'famma-core' ), $event_name, $event_id, $attempts ) );
 		$order->save();
 		do_action( 'famma_capi_delivery_claimed', $claim, $order, $event_name );
 
-		$event = array(
-			'event_name'       => $event_name,
-			'event_time'       => $event_time,
-			'event_id'         => $event_id,
-			'action_source'    => 'website',
-			'event_source_url' => wc_get_checkout_url(),
-			'user_data'        => $this->user_data( $order ),
-			// Bloc produit commun aux deux événements (Capi_Product_Data, 0.2.9).
-			'custom_data'      => array(
-				'currency'     => $order->get_currency(),
-				// Total réel de la commande (lignes, frais, livraison, remises) : jamais une valeur fixe.
-				'value'        => round( (float) $order->get_total(), 3 ),
-				'order_id'     => (string) $order->get_id(),
-				'content_type' => 'product',
-			) + Capi_Product_Data::for_order( $order ),
-		);
-
-		if ( ! $is_purchase ) {
-			$event['custom_data']['famma_stage'] = 'order_placed';
-		}
+		$event   = $this->build_event( $order, $event_name, $event_id, $event_time );
 		$payload = array( 'data' => array( $event ) );
-
-		// Les vraies commandes restent des conversions réelles, sauf mode test
-		// explicitement activé (constante ou option, éteint par défaut).
-		$test_code = Capi_Signals::test_event_code();
 		if ( '' !== $test_code ) {
 			$payload['test_event_code'] = $test_code;
 		}
-
-		$version = (string) apply_filters( 'famma_capi_graph_version', self::GRAPH_VERSION );
-		$url     = 'https://graph.facebook.com/' . rawurlencode( $version ) . '/' . rawurlencode( $pixel ) . '/events';
-
-		$response = wp_remote_post(
-			$url,
-			array(
-				'timeout'     => 8,
-				'redirection' => 0,
-				'headers'     => array( 'Content-Type' => 'application/json' ),
-
-				/*
-				 * Le token voyage dans le corps, jamais dans l'URL : une URL
-				 * finit dans les journaux d'accès, un corps de requête non.
-				 */
-				'body'        => wp_json_encode( $payload + array( 'access_token' => $token ) ),
-			)
-		);
+		$result = Capi_Transport::send_events( $pixel, $token, $payload );
 
 		$log = array(
 			'order_id'   => $order->get_id(),
 			'event_name' => $event_name,
 			'event_id'   => $event_id,
-			'value'      => $event['custom_data']['value'],
-			'currency'   => $event['custom_data']['currency'],
+			'value'      => $event['custom_data']['value'] ?? 0,
+			'currency'   => $event['custom_data']['currency'] ?? '',
 			'user_data'  => $event['user_data'],
 			'attempt'    => $attempts,
+			'test'       => '' !== $test_code,
+		) + $result;
+
+		return $this->finish_dispatch( $order, $claim, $log, $token );
+	}
+
+	/**
+	 * Explain, in the journal, why this execution does not own the send.
+	 *
+	 * Un envoi incertain d'une autre exécution reçoit sa relance bornée si
+	 * elle manque (envoi interrompu repris comme incertain, D1).
+	 *
+	 * @param int                  $order_id   Order identifier.
+	 * @param array<string, mixed> $base       Journal identity of the event.
+	 * @param array<string, mixed> $claim      Registry answer.
+	 * @param int                  $event_time Immutable event time.
+	 * @return string Outcome recorded in the famma-capi journal.
+	 */
+	private function not_owned( int $order_id, array $base, array $claim, int $event_time ): string {
+		$state = (string) ( $claim['state'] ?? '' );
+		if ( 'uncertain' === $state ) {
+			$retry = Capi_Retry::schedule( $order_id, (string) $base['event_name'], (int) ( $claim['attempt'] ?? 1 ), (int) ( $claim['event_time'] ?? $event_time ) );
+			return $this->outcome( $base, 'held_uncertain', 'retry:' . $retry );
+		}
+		if ( 'sending' === $state ) {
+			return $this->outcome( $base, 'in_progress', 'registry' );
+		}
+		return $this->outcome( $base, 'blocked', 'rejected' === $state ? 'attempts' : ( '' !== $state ? $state : 'registry' ) );
+	}
+
+	/**
+	 * Builds the event sent to Meta.
+	 *
+	 * `website` seulement pour une commande passée dans un navigateur
+	 * (user-agent enregistré) ; sinon la source hors site de la doc Meta, sans
+	 * `event_source_url` ni `client_user_agent` (D5, A9). Le bloc
+	 * `custom_data` suit le profil de données (R3).
+	 *
+	 * @param \WC_Order $order      Order being reported.
+	 * @param string    $event_name OrderPlaced or Purchase.
+	 * @param string    $event_id   Stable deduplication identifier.
+	 * @param int       $event_time Immutable event time.
+	 * @return array<string, mixed>
+	 */
+	private function build_event( \WC_Order $order, string $event_name, string $event_id, int $event_time ): array {
+		$website = Capi_User_Data::is_website( $order );
+		$custom  = array(
+			'currency'     => $order->get_currency(),
+			// Total réel de la commande (lignes, frais, livraison, remises) : jamais une valeur fixe.
+			'value'        => round( (float) $order->get_total(), 3 ),
+			'order_id'     => (string) $order->get_id(),
+			'content_type' => 'product',
+		) + Capi_Product_Data::for_order( $order );
+		if ( 'OrderPlaced' === $event_name ) {
+			$custom['famma_stage'] = 'order_placed';
+		}
+		$event = array(
+			'event_name'    => $event_name,
+			'event_time'    => $event_time,
+			'event_id'      => $event_id,
+			'action_source' => $website ? 'website' : Capi_User_Data::offsite_action_source( $order ),
+			'user_data'     => Capi_User_Data::build( $order, $website ),
+			'custom_data'   => Capi_Data_Profile::apply( $custom, $event_name, $order ),
 		);
+		if ( $website ) {
+			$event['event_source_url'] = wc_get_checkout_url();
+		}
+		return $event;
+	}
 
-		if ( is_wp_error( $response ) ) {
-			$registry->finish( $claim, 'uncertain', 0, 0 );
-			Capi_Log::write(
-				$log + array(
-					'state' => 'transport_uncertain',
-					'error' => $response->get_error_message(),
-				),
-				$token
-			);
-			$this->record_failure( $order, 'transport_uncertain; ' . $event_id, $attempts, $event_name );
-			return;
+	/**
+	 * Records the transport outcome: registry first, then journal, then order.
+	 *
+	 * Accepté → marqueur posé ; transitoire → état incertain et relance
+	 * bornée ; accès ou contrat → rejet sans relance automatique, alerte.
+	 *
+	 * @param \WC_Order            $order Order concerned.
+	 * @param array<string, mixed> $claim Owned registry claim.
+	 * @param array<string, mixed> $log   Journal fields, transport result included.
+	 * @param string               $token Secret never written anywhere.
+	 * @return string Outcome recorded in the famma-capi journal.
+	 */
+	private function finish_dispatch( \WC_Order $order, array $claim, array $log, string $token ): string {
+		$registry   = Capi_Delivery_Registry::instance();
+		$class      = (string) $log['class'];
+		$http       = (int) $log['http'];
+		$event_name = (string) $log['event_name'];
+		$event_id   = (string) $log['event_id'];
+		$attempts   = (int) $log['attempt'];
+		Capi_Health::record_outcome( $class, $log );
+
+		if ( in_array( $class, array( 'accepted', 'accepted_warning' ), true ) ) {
+			if ( ! $registry->finish( $claim, 'accepted', $http, 1, $class ) ) {
+				$log['retry'] = Capi_Retry::schedule( $order->get_id(), $event_name, $attempts, (int) $claim['event_time'] );
+				Capi_Log::write( $log + array( 'state' => 'ack_persistence_uncertain' ), $token );
+				$this->record_failure( $order, 'ack_persistence_uncertain; ' . $event_id, $attempts, $event_name );
+				return 'ack_persistence_uncertain';
+			}
+			Capi_Log::write( $log + array( 'state' => 'accepted' ), $token );
+			do_action( 'famma_capi_delivery_acknowledged', $claim, $order, $event_name );
+			$this->persist_event_success( $order->get_id(), $event_name, $event_id );
+			return 'accepted';
 		}
 
-		$code = (int) wp_remote_retrieve_response_code( $response );
-		$body = json_decode( (string) wp_remote_retrieve_body( $response ), true );
-		$body = is_array( $body ) ? $body : array();
-
-		$log['http']            = $code;
-		$log['events_received'] = (int) ( $body['events_received'] ?? 0 );
-		$log['fbtrace_id']      = (string) ( $body['fbtrace_id'] ?? ( $body['error']['fbtrace_id'] ?? '' ) );
-		$log['error']           = isset( $body['error'] ) && is_array( $body['error'] ) ? (string) ( $body['error']['error_user_msg'] ?? $body['error']['message'] ?? '' ) : '';
-
-		if ( $code < 200 || $code >= 300 ) {
-			$rejected = $code >= 400 && $code < 500 && 408 !== $code && isset( $body['error']['code'] ) && is_numeric( $body['error']['code'] );
-			$state    = $rejected ? 'rejected' : 'uncertain';
-			$registry->finish( $claim, $state, $code, 0 );
+		if ( 'transient' === $class || 'blocked_environment' === $class ) {
+			$registry->finish( $claim, 'uncertain', $http, 0, $class );
+			$state        = $this->uncertain_state( (string) $log['reason'] );
+			$log['retry'] = 'blocked_environment' === $class ? 'environment' : Capi_Retry::schedule( $order->get_id(), $event_name, $attempts, (int) $claim['event_time'] );
 			Capi_Log::write( $log + array( 'state' => $state ), $token );
-			$this->record_failure( $order, $state . '; HTTP ' . $code . '; ' . $event_id, $attempts, $event_name );
-			return;
+			$this->record_failure( $order, $state . ( $http > 0 ? '; HTTP ' . $http : '' ) . '; ' . $event_id, $attempts, $event_name );
+			return $state;
 		}
 
-		if ( array() === $body || 1 !== (int) ( $body['events_received'] ?? 0 ) || isset( $body['error'] ) ) {
-			$registry->finish( $claim, 'uncertain', $code, 0 );
-			Capi_Log::write( $log + array( 'state' => 'ack_uncertain' ), $token );
-			$this->record_failure( $order, 'ack_uncertain; ' . $event_id, $attempts, $event_name );
-			return;
+		$registry->finish( $claim, 'rejected', $http, 0, $class );
+		Capi_Log::write( $log + array( 'state' => 'rejected' ), $token );
+		$this->record_failure( $order, 'rejected; ' . $class . '; HTTP ' . $http . '; ' . $event_id, $attempts, $event_name );
+		return 'rejected';
+	}
+
+	/**
+	 * Journal state of an uncertain outcome, by cause (names kept since 0.2.4).
+	 *
+	 * @param string $reason Transport reason.
+	 * @return string
+	 */
+	private function uncertain_state( string $reason ): string {
+		if ( in_array( $reason, array( 'network', 'timeout' ), true ) ) {
+			return 'transport_uncertain';
 		}
-		if ( ! $registry->finish( $claim, 'accepted', $code, 1 ) ) {
-			Capi_Log::write( $log + array( 'state' => 'ack_persistence_uncertain' ), $token );
-			$this->record_failure( $order, 'ack_persistence_uncertain; ' . $event_id, $attempts, $event_name );
-			return;
-		}
-		Capi_Log::write( $log + array( 'state' => 'accepted' ), $token );
-		do_action( 'famma_capi_delivery_acknowledged', $claim, $order, $event_name );
-		$this->persist_event_success( $order->get_id(), $event_name, $event_id );
+		return 'ack_missing' === $reason ? 'ack_uncertain' : 'uncertain';
 	}
 
 	/** Restore an acknowledged delivery without issuing another transport.
@@ -2329,7 +2897,7 @@ final class Capi {
 			return;
 		}
 		$order->read_meta_data( true );
-		$sent_key = 'Purchase' === $event_name ? '_famma_purchase_sent' : '_famma_orderplaced_sent';
+		$sent_key = $this->meta_keys( $event_name )['sent'];
 		if ( $order->get_meta( $sent_key ) ) {
 			return;
 		}
@@ -2351,7 +2919,7 @@ final class Capi {
 	 * Records a failed attempt on the order, without ever exposing the token.
 	 *
 	 * @param \WC_Order $order      Order concerned.
-	 * @param string    $message    Message returned by Meta or by the HTTP layer.
+	 * @param string    $message    Fixed outcome summary (never a response body).
 	 * @param int       $attempts   Attempts made so far.
 	 * @param string    $event_name Event being sent.
 	 * @return void
@@ -2364,10 +2932,54 @@ final class Capi {
 				$event_name,
 				$message,
 				$attempts,
-				self::MAX_ATTEMPTS
+				Config::CAPI_MAX_ATTEMPTS
 			)
 		);
 		$order->save();
+	}
+
+	/**
+	 * Journal identity of an event of an order.
+	 *
+	 * @param \WC_Order $order      Order concerned.
+	 * @param string    $event_name OrderPlaced or Purchase.
+	 * @param string    $event_id   Event identifier, derived when empty.
+	 * @return array{order_id: int, event_name: string, event_id: string}
+	 */
+	private function log_base( \WC_Order $order, string $event_name, string $event_id = '' ): array {
+		$base = $this->log_base_for( $order->get_id(), $event_name );
+		if ( '' !== $event_id ) {
+			$base['event_id'] = $event_id;
+		}
+		return $base;
+	}
+
+	/**
+	 * Journal identity of an event, from the order number alone.
+	 *
+	 * @param int    $order_id   Order identifier.
+	 * @param string $event_name OrderPlaced or Purchase.
+	 * @return array{order_id: int, event_name: string, event_id: string}
+	 */
+	private function log_base_for( int $order_id, string $event_name ): array {
+		return array(
+			'order_id'   => $order_id,
+			'event_name' => $event_name,
+			'event_id'   => 'famma_' . ( 'Purchase' === $event_name ? 'purchase' : 'orderplaced' ) . '_' . $order_id,
+		);
+	}
+
+	/**
+	 * Writes one journal line for a non-dispatch outcome and returns its state.
+	 *
+	 * @param array<string, mixed> $base   Journal identity of the event.
+	 * @param string               $state  Outcome.
+	 * @param string               $reason Short reason token.
+	 * @return string
+	 */
+	private function outcome( array $base, string $state, string $reason ): string {
+		Capi_Log::outcome( $base, $state, $reason );
+		return $state;
 	}
 }
 
@@ -2807,9 +3419,11 @@ function boot(): void {
 	Tunisia::instance();
 	Tracking::instance();
 	Tracking_Events::instance();
+	Browser_Order_Placed::instance();
 	Product_Sizes::instance();
 	Express_Order::instance();
 	Express_Idempotency::instance();
+	Checkout_Idempotency::instance();
 	Express_Preparation::instance();
 	Express_Checkout::instance();
 	Express_Cart_Isolation::instance();
@@ -2819,6 +3433,9 @@ function boot(): void {
 	Capi::instance();
 	Capi_Delivery_Registry::instance();
 	Capi_Signals::instance();
+	// Sonde et battement de cœur : leurs tâches Action Scheduler tournent aussi hors de l'administration.
+	Capi_Health::instance();
+	Capi_Probe::instance();
 	WhatsApp::instance();
 	Product_Video::instance();
 	Seo::instance();
@@ -2829,6 +3446,7 @@ function boot(): void {
 	Hardening::instance();
 	Performance::instance();
 	Cache_Warmup::instance();
+	Redirect_Cache::instance();
 	Visitor_Store::instance();
 	Visitor_Collector::instance();
 	Visitor_Commerce::instance();
@@ -2844,6 +3462,12 @@ function boot(): void {
 		Home_Hero_Style::instance();
 		Topbar_Content::instance();
 		Tracking_Settings::instance();
+		Capi_Token_Rollback::instance();
+		Measurement_Settings::instance();
+		Capi_Health_View::instance();
+		Capi_Graph_Version::instance();
+		Capi_Reconcile::instance();
+		Capi_Purchase_Gaps::instance();
 		Seo_Admin::instance();
 		Visitor_Admin::instance();
 		Visitor_Order_Box::instance();

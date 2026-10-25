@@ -32,9 +32,14 @@ final class Capi_Signals {
 	private const COOKIE_PATTERN = '/^fb\.[0-9]\.[0-9]{10,13}\.[A-Za-z0-9_-]{1,500}(\.[A-Za-z0-9_+\/=-]{1,100})?$/';
 
 	/**
-	 * Format d'un code de l'outil « Tester les événements ».
+	 * Option du compteur de cookies `_fbc` refusés (R7, V9) : `AAAA-MM-JJ` => nombre.
 	 */
-	private const TEST_CODE_PATTERN = '/^TEST[A-Za-z0-9_-]+$/';
+	public const FBC_REJECTED_OPTION = 'famma_capi_fbc_rejected';
+
+	/**
+	 * Fenêtre glissante du compteur, en jours.
+	 */
+	private const FBC_REJECTED_DAYS = 7;
 
 	/**
 	 * Handle du script de cookies ; sert aussi de motif d'exclusion LiteSpeed.
@@ -80,6 +85,10 @@ final class Capi_Signals {
 	/**
 	 * Lit et valide un cookie Meta de la requête courante.
 	 *
+	 * Un `_fbc` présent mais refusé par le format incrémente le compteur
+	 * `famma_capi_fbc_rejected` : la santé distingue ainsi un fbc absent d'un
+	 * fbc refusé localement. Sa valeur n'est jamais journalisée.
+	 *
 	 * @param string $name `_fbc` ou `_fbp`.
 	 * @return string
 	 */
@@ -88,7 +97,44 @@ final class Capi_Signals {
 			return '';
 		}
 
-		return self::clean_cookie( sanitize_text_field( wp_unslash( $_COOKIE[ $name ] ) ) );
+		$raw   = trim( sanitize_text_field( wp_unslash( $_COOKIE[ $name ] ) ) );
+		$clean = self::clean_cookie( $raw );
+		if ( '_fbc' === $name && '' !== $raw && '' === $clean ) {
+			self::count_rejected_fbc();
+		}
+
+		return $clean;
+	}
+
+	/**
+	 * Compte un `_fbc` refusé, au plus une fois par requête, sur 7 jours glissants.
+	 *
+	 * Forme stockée : `array( 'AAAA-MM-JJ' => nombre )` (UTC), celle que lit
+	 * `Capi_Health_Rules::fbc_rejected()`. Seule la date est conservée : ni la
+	 * valeur du cookie, ni la commande, ni le visiteur.
+	 *
+	 * @param int|null $now Horloge (tests) ; heure courante par défaut.
+	 * @return void
+	 */
+	public static function count_rejected_fbc( ?int $now = null ): void {
+		static $counted = false;
+		if ( $counted && null === $now ) {
+			return;
+		}
+		$counted = true;
+		$now     = $now ?? time();
+		$since   = gmdate( 'Y-m-d', $now - ( self::FBC_REJECTED_DAYS - 1 ) * 86400 );
+		$stored  = get_option( self::FBC_REJECTED_OPTION, array() );
+		$counts  = array();
+		foreach ( is_array( $stored ) ? $stored : array() as $day => $count ) {
+			if ( is_string( $day ) && 1 === preg_match( '/^\d{4}-\d{2}-\d{2}$/D', $day ) && $day >= $since ) {
+				$counts[ $day ] = max( 0, (int) $count );
+			}
+		}
+		$today            = gmdate( 'Y-m-d', $now );
+		$counts[ $today ] = ( $counts[ $today ] ?? 0 ) + 1;
+		ksort( $counts );
+		update_option( self::FBC_REJECTED_OPTION, $counts, false );
 	}
 
 	/**
@@ -160,14 +206,14 @@ final class Capi_Signals {
 	/**
 	 * Place le script dans le `<head>`, seul, dès qu'un Pixel Meta est configuré.
 	 *
-	 * Un handle à part (et non `famma-pixels`, en pied de page) : il s'exécute
-	 * avant tout le reste et peut être exclu des optimisations sans toucher
-	 * au Pixel.
+	 * Un handle à part (et non `famma-pixels`) : il s'exécute avant tout le
+	 * reste et peut être exclu des optimisations sans toucher au Pixel. Absent
+	 * pour un visiteur interne (S1), sauf dérogation « Suivre mes visites ».
 	 *
 	 * @return void
 	 */
 	public function enqueue_cookie_script(): void {
-		if ( '' === Config::instance()->meta_pixel_id() ) {
+		if ( '' === Config::instance()->meta_pixel_id() || ! Tracking::browser_tracking_allowed() ) {
 			return;
 		}
 		wp_register_script( self::HANDLE, false, array(), FAMMA_CORE_VERSION, false );
@@ -212,8 +258,9 @@ final class Capi_Signals {
 	 *
 	 * Constante `FAMMA_META_CAPI_TEST_MODE` (true) ou option
 	 * `famma_meta_capi_test_mode` (1). Volontairement absent de l'écran de
-	 * réglages : oublié en production, il transformerait les vraies
-	 * conversions en événements de test que Meta n'attribue pas.
+	 * réglages : oublié en production, il enverrait les vraies conversions
+	 * avec un code de test. Meta les compte quand même (E5) ; le mode test
+	 * rend visible, il n'isole rien.
 	 *
 	 * @return bool
 	 */
@@ -226,10 +273,11 @@ final class Capi_Signals {
 	}
 
 	/**
-	 * Code de test à joindre aux événements réels, ou chaîne vide.
+	 * Code de test valide du mode test, ou chaîne vide.
 	 *
-	 * Rien n'est joint si le mode test est éteint ou si le code n'a pas le
-	 * format de l'outil « Tester les événements ».
+	 * Même règle que la CAPI (A12, `Config::valid_test_event_code()` : TEST
+	 * suivi de chiffres). Mode test actif sans code valide : les envois
+	 * OrderPlaced et Purchase sont bloqués et signalés par la CAPI.
 	 *
 	 * @return string
 	 */
@@ -239,7 +287,7 @@ final class Capi_Signals {
 		}
 		$code = Config::instance()->meta_test_event_code();
 
-		return 1 === preg_match( self::TEST_CODE_PATTERN, $code ) ? $code : '';
+		return Config::valid_test_event_code( $code ) ? $code : '';
 	}
 
 	/**
@@ -252,8 +300,8 @@ final class Capi_Signals {
 			return;
 		}
 		$message = '' === self::test_event_code()
-			? __( 'FAMMA : le mode test Meta est activé, mais aucun code de test valide (TEST…) n’est configuré. Les événements partent normalement.', 'famma-core' )
-			: __( 'FAMMA : le mode test Meta est activé. OrderPlaced et Purchase partent comme événements de TEST et ne comptent pas dans les campagnes. À désactiver avant toute mise en production.', 'famma-core' );
+			? __( 'FAMMA : le mode test Meta est activé, mais aucun code de test valide (TEST suivi de chiffres) n’est configuré. Les envois OrderPlaced et Purchase sont bloqués : saisissez un code valide ou désactivez le mode test.', 'famma-core' )
+			: __( 'FAMMA : le mode test Meta est activé. OrderPlaced et Purchase partent avec le code de test : visibles dans « Tester les événements », ils comptent quand même comme de vraies conversions. À désactiver dès la fin de l’essai.', 'famma-core' );
 		printf( '<div class="notice notice-warning"><p>%s</p></div>', esc_html( $message ) );
 	}
 }
