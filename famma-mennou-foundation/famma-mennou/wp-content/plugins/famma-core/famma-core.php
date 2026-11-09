@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.3.4
+ * Version:           0.3.5
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.3.4' );
+define( 'FAMMA_CORE_VERSION', '0.3.5' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -43,6 +43,9 @@ require_once __DIR__ . '/includes/meta-ids.php';
 require_once __DIR__ . '/includes/tracking-events.php';
 require_once __DIR__ . '/includes/browser-order-placed.php';
 require_once __DIR__ . '/includes/order-source.php';
+require_once __DIR__ . '/includes/order-channel.php';
+require_once __DIR__ . '/includes/order-channel-admin.php';
+require_once __DIR__ . '/includes/order-channel-list.php';
 require_once __DIR__ . '/includes/product-sizes.php';
 require_once __DIR__ . '/includes/product-sizes-admin.php';
 require_once __DIR__ . '/includes/express-order.php';
@@ -3143,6 +3146,7 @@ final class Dashboard {
 			'failed'    => 0,
 			'products'  => array(),
 			'sources'   => array(),
+			'channels'  => array(),
 			'capped'    => count( $orders ) >= self::MAX_ORDERS,
 		);
 
@@ -3171,6 +3175,7 @@ final class Dashboard {
 			$source                    = $order->get_meta( '_famma_utm_source' );
 			$source                    = '' === (string) $source ? __( 'Direct', 'famma-core' ) : (string) $source;
 			$out['sources'][ $source ] = ( $out['sources'][ $source ] ?? 0 ) + 1;
+			Order_Channel::tally( $out['channels'], $order );
 
 			// Seules les commandes livrées comptent comme du chiffre d'affaires (§12).
 			if ( ! $order->has_status( 'delivered' ) ) {
@@ -3305,6 +3310,7 @@ final class Dashboard {
 
 		$this->table( __( 'Top products — 30 days', 'famma-core' ), __( 'Product', 'famma-core' ), __( 'Units delivered', 'famma-core' ), $month['products'] );
 		$this->table( __( 'Acquisition — 30 days', 'famma-core' ), __( 'Source', 'famma-core' ), __( 'Orders', 'famma-core' ), $month['sources'] );
+		Order_Channel::render_dashboard( $month['channels'] ?? array() );
 
 		printf(
 			'<p><a class="button" href="%1$s">%2$s</a> <span class="famma-card__note">%3$s</span></p>',
@@ -3471,6 +3477,9 @@ function boot(): void {
 		Seo_Admin::instance();
 		Visitor_Admin::instance();
 		Visitor_Order_Box::instance();
+		Order_Channel::instance();
+		Order_Channel_Admin::instance();
+		Order_Channel_List::instance();
 		Visitor_Privacy::instance();
 	}
 }
