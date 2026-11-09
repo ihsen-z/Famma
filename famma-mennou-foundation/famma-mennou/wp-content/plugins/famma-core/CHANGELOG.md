@@ -1,5 +1,34 @@
 # Changelog — FAMMA Core
 
+## 0.3.5 — 2026-11-09 (préparée, non déployée)
+
+### Canal de commande (Messenger, WhatsApp, Instagram, téléphone…)
+
+Une commande reçue par message ou par téléphone est saisie à la main dans
+l'admin : rien ne disait plus d'où elle venait. Donnée interne uniquement :
+rien ne change dans ce qui part vers Meta (ni OrderPlaced, ni Purchase, ni
+`action_source`), ni dans la provenance UTM `_famma_order_source`.
+
+- Encadré « Canal de la commande » sur la fiche commande (HPOS et ancien
+  stockage) : canal et « pub ou produit d'origine » (100 caractères au plus),
+  méta `_famma_order_channel` et `_famma_order_channel_ref`. Une commande du
+  site (`created_via = checkout`) est « Site » d'office, sans écriture, et
+  son canal ne se modifie pas. Nonce, capacité `manage_woocommerce`, liste
+  blanche des canaux (`includes/order-channel.php`).
+- FAMMA → Canaux de commande : liste des canaux manuels, un par ligne, 15 au
+  plus ; « Site » réservé ; par défaut Messenger, WhatsApp, Instagram,
+  Téléphone, Autre (option `famma_order_channels`,
+  `includes/order-channel-admin.php`).
+- Liste des commandes : colonne « Canal » (« À préciser » en orange) et
+  filtre par canal (`includes/order-channel-list.php`).
+- Tableau de bord : « Ventes par canal — 30 jours » (commandes, livrées, taux
+  de livraison sur les seules commandes clôturées).
+
+Tests (site Local, HPOS, 09/11/2026) : 21/21 en ligne de commande, puis
+parcours réel dans l'admin (réglage, création d'une commande, colonne,
+filtres WhatsApp et Site, tableau de bord) ; aucun appel à Meta, debug.log
+inchangé ; données de test supprimées.
+
 ## 0.3.4 — 2026-10-21 (déployée le 21/10/2026)
 
 ### Qualité de correspondance : noms, code postal, ville et fbc de secours
