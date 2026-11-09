@@ -148,7 +148,7 @@ final class Visitor_Admin_Views {
 			return;
 		}
 		echo '<table class="widefat striped"><thead><tr>';
-		foreach ( array( __( 'Début', 'famma-core' ), __( 'Durée', 'famma-core' ), __( 'Appareil', 'famma-core' ), __( 'Source', 'famma-core' ), __( 'Pages', 'famma-core' ), __( 'Panier', 'famma-core' ), __( 'Commande', 'famma-core' ), '' ) as $head ) {
+		foreach ( array( __( 'Début', 'famma-core' ), __( 'Durée', 'famma-core' ), __( 'Appareil', 'famma-core' ), __( 'Source', 'famma-core' ), __( 'Type', 'famma-core' ), __( 'Pages', 'famma-core' ), __( 'Panier', 'famma-core' ), __( 'Commande', 'famma-core' ), '' ) as $head ) {
 			echo '<th>' . esc_html( $head ) . '</th>';
 		}
 		echo '</tr></thead><tbody>';
@@ -157,9 +157,11 @@ final class Visitor_Admin_Views {
 			$duration = max( 0, strtotime( $row['ended'] . ' UTC' ) - $start );
 			$source   = trim( $row['source'] . ( '' !== $row['campaign'] ? ' / ' . $row['campaign'] : '' ) );
 			echo '<tr><td>' . esc_html( wp_date( 'd/m H:i', $start ) ) . '</td>';
-			echo '<td>' . esc_html( human_time_diff( 0, $duration ) ) . '</td>';
+			// human_time_diff( 0, 0 ) compterait depuis 1970 : une session d'un seul instant affichait « 57 ans ».
+			echo '<td>' . esc_html( $duration > 0 ? human_time_diff( 0, $duration ) : __( 'moins d\'une seconde', 'famma-core' ) ) . '</td>';
 			echo '<td>' . esc_html( $row['device'] ) . '</td>';
 			echo '<td>' . esc_html( '' !== $source ? $source : 'direct' ) . '</td>';
+			echo '<td>' . Visitor_Session_Type::cell( (string) ( $row['kind'] ?? '' ) ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cell().
 			echo '<td class="num">' . esc_html( $row['pages'] ) . '</td>';
 			echo '<td class="num">' . esc_html( $row['carts'] ) . '</td>';
 			echo '<td>' . self::order_link( (int) $row['order_id'] ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in order_link().

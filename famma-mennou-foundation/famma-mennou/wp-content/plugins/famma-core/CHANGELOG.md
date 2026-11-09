@@ -1,6 +1,23 @@
 # Changelog — FAMMA Core
 
-## 0.3.6 — 2026-11-09 (préparée, non déployée)
+## 0.3.7 — 2026-11-09 (préparée, non déployée)
+
+### Type de chaque session (humain ou robot probable)
+
+FAMMA → Parcours visiteurs : nouvelle colonne « Type » après « Source » et
+tableau « Qui sont ces sessions ? » (répartition de la période, avec le sens
+de chaque type). Le type vient du comportement mesuré par le navigateur :
+action ou ≥ 10 s ou ¼ de page défilé (intéressé), 3 à 10 s (lecture rapide),
+moins de 3 s sans défiler (rebond éclair), page jamais affichée (non
+affichée), plusieurs pages en 2 s sans affichage (robot probable). Les robots
+déclarés et l'équipe connectée n'étaient déjà jamais enregistrés.
+
+- Une seule règle, en SQL (`Visitor_Session_Type`), pour la liste et le
+  décompte ; décompte gardé cinq minutes en transient.
+- Durée d'une session d'un seul instant : « moins d'une seconde » au lieu de
+  « 57 ans » (`human_time_diff( 0, 0 )` comptait depuis 1970).
+
+## 0.3.6 — 2026-11-09 (en production depuis le 09/11)
 
 ### Saisies à relancer
 

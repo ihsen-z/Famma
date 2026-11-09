@@ -240,6 +240,7 @@ final class Visitor_Admin {
 		$paged = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1;
 		Visitor_Admin_Views::summary( $report->summary( $days ) );
 		Visitor_Admin_Views::forms( $report->form_fields( $days ) );
+		Visitor_Session_Type::legend( Visitor_Session_Type::counts( $days ) );
 		Visitor_Admin_Views::sessions( $report->sessions( $days, $paged ), $days, $paged, array( $this, 'url' ) );
 		$this->retention_form();
 	}
