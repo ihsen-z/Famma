@@ -49,6 +49,7 @@ final class Visitor_Inputs_Views {
 		$status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : 'open';
 		$paged  = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1;
 		$saved  = isset( $_GET['saved'] );
+		$done   = isset( $_GET['done'] ) ? absint( wp_unslash( $_GET['done'] ) ) : -1;
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		$labels = self::status_labels();
 		$status = isset( $labels[ $status ] ) || 'all' === $status ? $status : 'open';
@@ -60,6 +61,11 @@ final class Visitor_Inputs_Views {
 		echo '<p>' . esc_html__( 'Ce que les visiteurs ont tapé dans le formulaire de commande sans la valider. Une ligne passe à « Commandé » toute seule dès qu\'une commande arrive avec la même session, le même visiteur ou le même téléphone.', 'famma-core' ) . '</p>';
 		if ( $saved ) {
 			echo '<div class="notice notice-success"><p>' . esc_html__( 'Réglages enregistrés. Purgez le cache LiteSpeed pour qu\'ils s\'appliquent aux pages déjà en cache.', 'famma-core' ) . '</p></div>';
+		}
+		if ( 1 === $done ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Ligne mise à jour.', 'famma-core' ) . '</p></div>';
+		} elseif ( 0 === $done ) {
+			echo '<div class="notice notice-error"><p>' . esc_html__( 'La ligne n\'a pas pu être mise à jour.', 'famma-core' ) . '</p></div>';
 		}
 		if ( ! $store->enabled() ) {
 			echo '<div class="notice notice-warning"><p>' . esc_html__( 'La capture des saisies est désactivée.', 'famma-core' ) . '</p></div>';
