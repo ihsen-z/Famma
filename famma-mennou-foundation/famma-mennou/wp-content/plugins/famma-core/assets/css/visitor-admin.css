@@ -17,3 +17,10 @@
 .famma-vj__rate--good { color: #007a3d; }
 .famma-vj__rate--warn { color: #b26200; }
 .famma-vj__rate--poor { color: #b32d2e; }
+.famma-vj__type { border-radius: 10px; display: inline-block; font-size: 12px; padding-block: 2px; padding-inline: 8px; white-space: nowrap; }
+.famma-vj__type--engaged { background: #e6f4ea; color: #00632e; }
+.famma-vj__type--brief { background: #eef4fb; color: #135e96; }
+.famma-vj__type--bounce { background: #fcf3e6; color: #8a4b00; }
+.famma-vj__type--unseen { background: #f0f0f1; color: #50575e; }
+.famma-vj__type--bot { background: #fcebea; color: #a02222; }
+.famma-vj__types { margin-block-end: 24px; max-inline-size: 960px; }

@@ -150,17 +150,21 @@ final class Visitor_Report {
 	 */
 	public function sessions( int $days, int $page ): array {
 		global $wpdb;
+		// Le type (Visitor_Session_Type) est calculé sur les agrégats de chaque session.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- AGGREGATES and CASE_SQL are class constants, no input.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- paginated read of a custom table.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT session_id, MAX(visitor_id) AS visitor_id, MIN(created_at) AS started, MAX(created_at) AS ended,
-					MAX(device) AS device, MAX(source) AS source, MAX(campaign) AS campaign,
-					SUM(event = 'page_view') AS pages, SUM(event = 'add_to_cart') AS carts,
-					MAX(order_id) AS order_id
-				FROM %i WHERE created_at >= %s
-				GROUP BY session_id
-				ORDER BY started DESC
-				LIMIT %d OFFSET %d",
+				'SELECT s.*, ' . Visitor_Session_Type::CASE_SQL . " AS kind FROM (
+					SELECT session_id, MAX(visitor_id) AS visitor_id, MIN(created_at) AS started, MAX(created_at) AS ended,
+						MAX(device) AS device, MAX(source) AS source, MAX(campaign) AS campaign,
+						SUM(event = 'add_to_cart') AS carts, MAX(order_id) AS order_id,
+						" . Visitor_Session_Type::AGGREGATES . '
+					FROM %i WHERE created_at >= %s
+					GROUP BY session_id
+					ORDER BY started DESC
+					LIMIT %d OFFSET %d
+				) s ORDER BY s.started DESC',
 				$this->table(),
 				$this->since( $days ),
 				self::PER_PAGE,
@@ -168,6 +172,7 @@ final class Visitor_Report {
 			),
 			ARRAY_A
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 		return is_array( $rows ) ? $rows : array();
 	}
 
