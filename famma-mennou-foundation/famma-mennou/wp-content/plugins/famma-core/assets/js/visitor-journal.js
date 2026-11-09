@@ -6,8 +6,9 @@
  * sont mis en file et envoyés par lots : à la sortie de la page, et toutes les
  * 15 secondes s'il y en a en attente.
  *
- * Aucune valeur saisie n'est lue : pour les formulaires, seul le nom du champ
- * touché est envoyé.
+ * Le journal n'envoie que le nom du champ touché. Les valeurs saisies dans les
+ * formulaires de commande partent à part, vers famma/v1/inputs, et seulement
+ * si le réglage « Capture des saisies » est actif (ctx.inputs).
  */
 ( function () {
 	'use strict';
@@ -292,8 +293,105 @@
 		if ( event.target && event.target.matches && event.target.matches( formSelector ) ) {
 			track( 'form_submit', { num: ( Date.now() - started ) / 1000 } );
 			flush();
+			sendInputs();
 		}
 	}, true );
+
+	// ── Saisies : valeurs tapées, envoyées à part (famma/v1/inputs) ──
+	// Actif seulement si le réglage « Capture des saisies » l'est (ctx.inputs).
+	// Une seule ligne par session côté serveur : chaque envoi porte l'état
+	// courant du formulaire, et rien ne part si rien n'a changé.
+	var INPUT_FIELDS = [ 'billing_first_name', 'billing_phone', 'billing_state', 'billing_address_1', 'billing_city', 'famma_size', 'famma_quantity' ];
+	var lastForm = null;
+	var lastSent = '';
+	var inputTimer = 0;
+
+	function snapshot( form ) {
+		var out = {};
+		var filled = false;
+		INPUT_FIELDS.forEach( function ( name ) {
+			var els = form.querySelectorAll( '[name="' + name + '"]' );
+			var value = '';
+			Array.prototype.forEach.call( els, function ( el ) {
+				if ( ( 'radio' === el.type || 'checkbox' === el.type ) && ! el.checked ) {
+					return;
+				}
+				value = String( el.value || '' ).trim().slice( 0, 200 );
+			} );
+			if ( els.length ) {
+				out[ name ] = value;
+				// La quantité vaut 1 par défaut : elle seule ne fait pas une saisie.
+				filled = filled || ( '' !== value && 'famma_quantity' !== name );
+			}
+		} );
+		return filled ? out : null;
+	}
+
+	function sendInputs() {
+		clearTimeout( inputTimer );
+		if ( ! ctx.inputs || ! lastForm ) {
+			return;
+		}
+		var fields = snapshot( lastForm );
+		var json = fields ? JSON.stringify( fields ) : '';
+		if ( ! json || json === lastSent ) {
+			return;
+		}
+		lastSent = json;
+		var body = JSON.stringify( { v: visitor, s: session, pid: ctx.productId || 0, p: location.pathname, src: state.src, f: fields } );
+		var blob = new Blob( [ body ], { type: 'text/plain' } );
+		if ( ! ( navigator.sendBeacon && navigator.sendBeacon( ctx.inputs, blob ) ) && window.fetch ) {
+			fetch( ctx.inputs, { method: 'POST', body: body, keepalive: true, credentials: 'same-origin', headers: { 'Content-Type': 'text/plain' } } ).catch( function () {} );
+		}
+	}
+
+	function noteInput( event ) {
+		var field = event.target;
+		var form = field && field.closest ? field.closest( formSelector ) : null;
+		if ( ! ctx.inputs || ! form || INPUT_FIELDS.indexOf( field.name ) < 0 ) {
+			return;
+		}
+		lastForm = form;
+		clearTimeout( inputTimer );
+		// Pendant la frappe : envoi 2 s après la dernière touche ; au départ du champ : tout de suite.
+		inputTimer = setTimeout( sendInputs, 'input' === event.type ? 2000 : 0 );
+	}
+	if ( ctx.inputs ) {
+		document.addEventListener( 'input', noteInput );
+		document.addEventListener( 'change', noteInput );
+		document.addEventListener( 'focusout', noteInput );
+		window.addEventListener( 'pagehide', sendInputs );
+		document.addEventListener( 'visibilitychange', function () {
+			if ( 'hidden' === document.visibilityState ) {
+				sendInputs();
+			}
+		} );
+	}
+
+	// Phrase d'accord sous chaque champ téléphone des formulaires de commande.
+	if ( ctx.inputs && ctx.notice ) {
+		var addNotice = function () {
+			Array.prototype.forEach.call( document.querySelectorAll( '.famma-express__form [name="billing_phone"], form.checkout [name="billing_phone"]' ), function ( input ) {
+				var holder = input.closest( 'p, .form-row, .famma-express__field' ) || input.parentNode;
+				if ( ! holder || holder.querySelector( '.famma-inputs-notice' ) ) {
+					return;
+				}
+				var note = document.createElement( 'small' );
+				note.className = 'famma-inputs-notice';
+				note.textContent = String( ctx.notice );
+				note.style.display = 'block';
+				note.style.marginBlockStart = '4px';
+				note.style.fontSize = '12px';
+				note.style.opacity = '0.75';
+				holder.appendChild( note );
+			} );
+		};
+		addNotice();
+		// Le checkout WooCommerce redessine ses champs après certaines mises à jour.
+		if ( window.jQuery ) {
+			window.jQuery( document.body ).on( 'updated_checkout', addNotice );
+		}
+	}
 
 	// ── Fiche produit : galerie, vidéo, variations (une fois chacun par page) ──
 	var seenMedia = {};

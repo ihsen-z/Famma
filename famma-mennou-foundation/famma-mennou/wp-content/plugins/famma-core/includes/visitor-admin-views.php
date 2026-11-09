@@ -239,6 +239,7 @@ final class Visitor_Admin_Views {
 				)
 			)
 		);
+		Visitor_Inputs_Views::session_panel( $session_id );
 		echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Heure', 'famma-core' ) . '</th><th>' . esc_html__( 'Événement', 'famma-core' ) . '</th><th>' . esc_html__( 'Page', 'famma-core' ) . '</th><th>' . esc_html__( 'Détail', 'famma-core' ) . '</th></tr></thead><tbody>';
 		foreach ( $rows as $row ) {
 			$detail = '';

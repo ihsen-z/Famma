@@ -16,8 +16,10 @@
  * blanche des événements, lot et corps plafonnés, assainissement champ par
  * champ, robots écartés, et limite de débit par empreinte d'IP.
  *
- * Jamais de valeur saisie dans un formulaire : seul le NOM du champ touché
- * remonte, pour mesurer où le formulaire est abandonné.
+ * Le journal ne garde que le NOM du champ touché, pour mesurer où le
+ * formulaire est abandonné. Les valeurs saisies, elles, partent vers une
+ * autre route et une autre table (`Visitor_Inputs_Collector`), avec leur
+ * propre interrupteur et leur propre durée de conservation.
  *
  * @package famma-core
  */
@@ -160,6 +162,13 @@ final class Visitor_Collector {
 			'productId' => ( function_exists( 'is_product' ) && is_product() ) ? (int) get_queried_object_id() : 0,
 			'days'      => Visitor_Store::instance()->retention_days(),
 		);
+		/**
+		 * Contexte du script : `Visitor_Inputs_Collector` y ajoute l'adresse
+		 * d'envoi des saisies et la phrase d'accord.
+		 *
+		 * @param array<string, mixed> $context Contexte.
+		 */
+		$context = (array) apply_filters( 'famma_visitor_journal_context', $context );
 		wp_add_inline_script( 'famma-visitor-journal', 'window.fammaJournal=' . wp_json_encode( $context ) . ';', 'before' );
 	}
 
