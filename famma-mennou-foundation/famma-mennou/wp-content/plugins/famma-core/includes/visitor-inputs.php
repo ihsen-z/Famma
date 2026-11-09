@@ -49,11 +49,6 @@ final class Visitor_Inputs {
 	public const RETENTION_OPTION = 'famma_visitor_inputs_days';
 
 	/**
-	 * Option : phrase affichée sous le champ téléphone.
-	 */
-	public const NOTICE_OPTION = 'famma_visitor_inputs_notice';
-
-	/**
 	 * Événement cron de purge.
 	 */
 	private const PURGE_HOOK = 'famma_visitor_inputs_purge';
@@ -128,13 +123,12 @@ final class Visitor_Inputs {
 	}
 
 	/**
-	 * Phrase affichée sous le champ téléphone ; vide = aucune phrase.
+	 * Gouvernorats tunisiens connus de WooCommerce : code → nom.
 	 *
-	 * @return string
+	 * @return array<string, string>
 	 */
-	public function notice(): string {
-		$default = __( 'En saisissant votre numéro, vous acceptez qu\'on vous rappelle pour finaliser votre commande. / بكتابة رقمك، توافق إننا نكلموك باش نكملو طلبيتك.', 'famma-core' );
-		return (string) get_option( self::NOTICE_OPTION, $default );
+	public static function states(): array {
+		return function_exists( 'WC' ) ? (array) WC()->countries->get_states( 'TN' ) : array();
 	}
 
 	/**

@@ -164,7 +164,7 @@ final class Visitor_Collector {
 		);
 		/**
 		 * Contexte du script : `Visitor_Inputs_Collector` y ajoute l'adresse
-		 * d'envoi des saisies et la phrase d'accord.
+		 * d'envoi des saisies.
 		 *
 		 * @param array<string, mixed> $context Contexte.
 		 */
@@ -190,48 +190,6 @@ final class Visitor_Collector {
 	}
 
 	/**
-	 * Indique si l'empreinte d'IP a dépassé sa limite de lots.
-	 *
-	 * @param string $ip_hash Empreinte d'IP.
-	 * @return bool
-	 */
-	private function rate_limited( string $ip_hash ): bool {
-		if ( '' === $ip_hash ) {
-			return false;
-		}
-		$key   = 'famma_vj_' . $ip_hash;
-		$count = (int) get_transient( $key );
-		if ( $count >= self::RATE_LIMIT ) {
-			return true;
-		}
-		set_transient( $key, $count + 1, 10 * MINUTE_IN_SECONDS );
-		return false;
-	}
-
-	/**
-	 * Texte court assaini.
-	 *
-	 * @param mixed $value Valeur reçue.
-	 * @param int   $max   Longueur maximale.
-	 * @return string
-	 */
-	private function text( $value, int $max ): string {
-		return is_scalar( $value ) ? mb_substr( sanitize_text_field( (string) $value ), 0, $max ) : '';
-	}
-
-	/**
-	 * Chemin d'URL sans requête ni fragment : un paramètre peut porter une
-	 * donnée personnelle (clé de commande, e-mail), le chemin seul suffit.
-	 *
-	 * @param mixed $value Valeur reçue.
-	 * @return string
-	 */
-	private function path( $value ): string {
-		$path = is_string( $value ) ? (string) wp_parse_url( $value, PHP_URL_PATH ) : '';
-		return mb_substr( '/' . ltrim( sanitize_text_field( $path ), '/' ), 0, 255 );
-	}
-
-	/**
 	 * Reçoit un lot d'événements.
 	 *
 	 * Répond toujours 204, même quand le lot est écarté : le script n'a rien à
@@ -250,10 +208,10 @@ final class Visitor_Collector {
 		if ( ! is_array( $data ) || ! isset( $data['v'], $data['s'], $data['e'] ) || ! is_array( $data['e'] ) ) {
 			return $done;
 		}
-		$visitor = strtolower( $this->text( $data['v'], 36 ) );
-		$session = strtolower( $this->text( $data['s'], 36 ) );
+		$visitor = strtolower( Visitor_Context::text( $data['v'], 36 ) );
+		$session = strtolower( Visitor_Context::text( $data['s'], 36 ) );
 		$ip_hash = Visitor_Context::ip_hash();
-		if ( ! Visitor_Context::is_uuid( $visitor ) || ! Visitor_Context::is_uuid( $session ) || $this->rate_limited( $ip_hash ) ) {
+		if ( ! Visitor_Context::is_uuid( $visitor ) || ! Visitor_Context::is_uuid( $session ) || Visitor_Context::rate_limited( 'famma_vj_', self::RATE_LIMIT ) ) {
 			return $done;
 		}
 
@@ -261,10 +219,10 @@ final class Visitor_Collector {
 		$common = array(
 			'visitor_id' => $visitor,
 			'session_id' => $session,
-			'source'     => strtolower( $this->text( $src['source'] ?? '', 64 ) ),
-			'medium'     => strtolower( $this->text( $src['medium'] ?? '', 64 ) ),
-			'campaign'   => $this->text( $src['campaign'] ?? '', 100 ),
-			'content'    => $this->text( $src['content'] ?? '', 100 ),
+			'source'     => strtolower( Visitor_Context::text( $src['source'] ?? '', 64 ) ),
+			'medium'     => strtolower( Visitor_Context::text( $src['medium'] ?? '', 64 ) ),
+			'campaign'   => Visitor_Context::text( $src['campaign'] ?? '', 100 ),
+			'content'    => Visitor_Context::text( $src['content'] ?? '', 100 ),
 			'device'     => Visitor_Context::device(),
 			'ip_hash'    => $ip_hash,
 		);
@@ -281,9 +239,9 @@ final class Visitor_Collector {
 				'created_at' => gmdate( 'Y-m-d H:i:s', $now - $age ),
 				'event'      => (string) $event['n'],
 				'page_type'  => in_array( $type, self::PAGE_TYPES, true ) ? $type : 'other',
-				'path'       => $this->path( $event['p'] ?? '' ),
+				'path'       => Visitor_Context::path( $event['p'] ?? '' ),
 				'product_id' => absint( $event['pid'] ?? 0 ),
-				'label'      => $this->text( $event['l'] ?? '', 100 ),
+				'label'      => Visitor_Context::text( $event['l'] ?? '', 100 ),
 				'num'        => min( 86400, absint( $event['x'] ?? 0 ) ),
 			);
 		}

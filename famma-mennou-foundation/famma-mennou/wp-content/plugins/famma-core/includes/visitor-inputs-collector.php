@@ -71,7 +71,7 @@ final class Visitor_Inputs_Collector {
 	}
 
 	/**
-	 * Ajoute au contexte du script l'adresse d'envoi et la phrase d'accord.
+	 * Ajoute au contexte du script l'adresse d'envoi des saisies.
 	 *
 	 * Ne dépend que des réglages, jamais du visiteur : reste juste en cache.
 	 *
@@ -79,10 +79,8 @@ final class Visitor_Inputs_Collector {
 	 * @return array<string, mixed>
 	 */
 	public function context( array $context ): array {
-		$store = Visitor_Inputs::instance();
-		if ( $store->enabled() ) {
+		if ( Visitor_Inputs::instance()->enabled() ) {
 			$context['inputs'] = esc_url_raw( rest_url( 'famma/v1/inputs' ) );
-			$context['notice'] = $store->notice();
 		}
 		return $context;
 	}
@@ -105,17 +103,6 @@ final class Visitor_Inputs_Collector {
 	}
 
 	/**
-	 * Texte court assaini.
-	 *
-	 * @param mixed $value Valeur reçue.
-	 * @param int   $max   Longueur maximale.
-	 * @return string
-	 */
-	private function text( $value, int $max ): string {
-		return is_scalar( $value ) ? mb_substr( trim( sanitize_text_field( (string) $value ) ), 0, $max ) : '';
-	}
-
-	/**
 	 * Assainit une saisie selon sa colonne.
 	 *
 	 * @param string $column Colonne cible.
@@ -128,33 +115,13 @@ final class Visitor_Inputs_Collector {
 				return min( 99, absint( is_scalar( $value ) ? $value : 0 ) );
 			case 'phone':
 				// Chiffres (latins, arabes, persans), espaces, « + », « . », « - » seulement.
-				return mb_substr( (string) preg_replace( '/[^\d\x{0660}-\x{0669}\x{06F0}-\x{06F9}+ .\-]/u', '', $this->text( $value, 40 ) ), 0, 20 );
+				return mb_substr( (string) preg_replace( '/[^\d\x{0660}-\x{0669}\x{06F0}-\x{06F9}+ .\-]/u', '', Visitor_Context::text( $value, 40 ) ), 0, 20 );
 			case 'state':
-				$code   = strtoupper( $this->text( $value, 16 ) );
-				$states = function_exists( 'WC' ) ? (array) WC()->countries->get_states( 'TN' ) : array();
-				return isset( $states[ $code ] ) ? $code : '';
+				$code = strtoupper( Visitor_Context::text( $value, 16 ) );
+				return isset( Visitor_Inputs::states()[ $code ] ) ? $code : '';
 			default:
-				return $this->text( $value, Visitor_Inputs::FIELDS[ $column ] );
+				return Visitor_Context::text( $value, Visitor_Inputs::FIELDS[ $column ] );
 		}
-	}
-
-	/**
-	 * Indique si l'empreinte d'IP a dépassé sa limite.
-	 *
-	 * @param string $ip_hash Empreinte d'IP.
-	 * @return bool
-	 */
-	private function rate_limited( string $ip_hash ): bool {
-		if ( '' === $ip_hash ) {
-			return false;
-		}
-		$key   = 'famma_vi_' . $ip_hash;
-		$count = (int) get_transient( $key );
-		if ( $count >= self::RATE_LIMIT ) {
-			return true;
-		}
-		set_transient( $key, $count + 1, 10 * MINUTE_IN_SECONDS );
-		return false;
 	}
 
 	/**
@@ -177,9 +144,9 @@ final class Visitor_Inputs_Collector {
 		if ( ! is_array( $data ) || ! isset( $data['v'], $data['s'], $data['f'] ) || ! is_array( $data['f'] ) ) {
 			return $done;
 		}
-		$visitor = strtolower( $this->text( $data['v'], 36 ) );
-		$session = strtolower( $this->text( $data['s'], 36 ) );
-		if ( ! Visitor_Context::is_uuid( $visitor ) || ! Visitor_Context::is_uuid( $session ) || $this->rate_limited( Visitor_Context::ip_hash() ) ) {
+		$visitor = strtolower( Visitor_Context::text( $data['v'], 36 ) );
+		$session = strtolower( Visitor_Context::text( $data['s'], 36 ) );
+		if ( ! Visitor_Context::is_uuid( $visitor ) || ! Visitor_Context::is_uuid( $session ) || Visitor_Context::rate_limited( 'famma_vi_', self::RATE_LIMIT ) ) {
 			return $done;
 		}
 		$fields = array();
@@ -192,18 +159,17 @@ final class Visitor_Inputs_Collector {
 		if ( array() === array_filter( array_diff_key( $fields, array( 'quantity' => 0 ) ) ) ) {
 			return $done;
 		}
-		$src  = isset( $data['src'] ) && is_array( $data['src'] ) ? $data['src'] : array();
-		$path = is_string( $data['p'] ?? null ) ? (string) wp_parse_url( $data['p'], PHP_URL_PATH ) : '';
+		$src = isset( $data['src'] ) && is_array( $data['src'] ) ? $data['src'] : array();
 		$store->save(
 			array(
 				'visitor_id' => $visitor,
 				'session_id' => $session,
 				'product_id' => absint( $data['pid'] ?? 0 ),
-				'path'       => mb_substr( '/' . ltrim( sanitize_text_field( $path ), '/' ), 0, 255 ),
-				'source'     => strtolower( $this->text( $src['source'] ?? '', 64 ) ),
-				'medium'     => strtolower( $this->text( $src['medium'] ?? '', 64 ) ),
-				'campaign'   => $this->text( $src['campaign'] ?? '', 100 ),
-				'content'    => $this->text( $src['content'] ?? '', 100 ),
+				'path'       => Visitor_Context::path( $data['p'] ?? '' ),
+				'source'     => strtolower( Visitor_Context::text( $src['source'] ?? '', 64 ) ),
+				'medium'     => strtolower( Visitor_Context::text( $src['medium'] ?? '', 64 ) ),
+				'campaign'   => Visitor_Context::text( $src['campaign'] ?? '', 100 ),
+				'content'    => Visitor_Context::text( $src['content'] ?? '', 100 ),
 				'device'     => Visitor_Context::device(),
 			),
 			$fields

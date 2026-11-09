@@ -100,7 +100,7 @@ final class Visitor_Inputs_Views {
 			return;
 		}
 		$labels = self::status_labels();
-		$states = function_exists( 'WC' ) ? (array) WC()->countries->get_states( 'TN' ) : array();
+		$states = Visitor_Inputs::states();
 		echo '<table class="widefat striped"><thead><tr>';
 		foreach ( array( __( 'Dernière saisie', 'famma-core' ), __( 'Nom', 'famma-core' ), __( 'Téléphone', 'famma-core' ), __( 'Gouvernorat / adresse', 'famma-core' ), __( 'Produit', 'famma-core' ), __( 'Source', 'famma-core' ), __( 'Statut', 'famma-core' ), __( 'Actions', 'famma-core' ) ) as $head ) {
 			echo '<th>' . esc_html( $head ) . '</th>';
@@ -226,8 +226,7 @@ final class Visitor_Inputs_Views {
 		wp_nonce_field( Visitor_Inputs_Admin::ACTION_SETTINGS );
 		echo '<input type="hidden" name="action" value="' . esc_attr( Visitor_Inputs_Admin::ACTION_SETTINGS ) . '">';
 		echo '<table class="form-table"><tr><th scope="row">' . esc_html__( 'Capture des saisies', 'famma-core' ) . '</th><td><label><input type="checkbox" name="enabled" value="1"' . checked( $store->enabled(), true, false ) . '> ' . esc_html__( 'Enregistrer ce que les visiteurs tapent dans le formulaire de commande', 'famma-core' ) . '</label></td></tr>';
-		echo '<tr><th scope="row"><label for="famma-inputs-days">' . esc_html__( 'Conservation (jours)', 'famma-core' ) . '</label></th><td><input type="number" id="famma-inputs-days" name="days" min="7" max="180" value="' . esc_attr( (string) $store->retention_days() ) . '"></td></tr>';
-		echo '<tr><th scope="row"><label for="famma-inputs-notice">' . esc_html__( 'Phrase sous le téléphone', 'famma-core' ) . '</label></th><td><textarea id="famma-inputs-notice" name="notice" rows="3" class="large-text">' . esc_textarea( $store->notice() ) . '</textarea><p class="description">' . esc_html__( 'Affichée sous le champ téléphone du formulaire express et du checkout. Laisser vide pour ne rien afficher.', 'famma-core' ) . '</p></td></tr></table>';
+		echo '<tr><th scope="row"><label for="famma-inputs-days">' . esc_html__( 'Conservation (jours)', 'famma-core' ) . '</label></th><td><input type="number" id="famma-inputs-days" name="days" min="7" max="180" value="' . esc_attr( (string) $store->retention_days() ) . '"></td></tr></table>';
 		submit_button( __( 'Enregistrer les réglages', 'famma-core' ) );
 		echo '</form>';
 	}
@@ -246,7 +245,7 @@ final class Visitor_Inputs_Views {
 		if ( null === $row ) {
 			return;
 		}
-		$states = function_exists( 'WC' ) ? (array) WC()->countries->get_states( 'TN' ) : array();
+		$states = Visitor_Inputs::states();
 		$parts  = array(
 			__( 'Nom', 'famma-core' )         => $row['first_name'],
 			__( 'Téléphone', 'famma-core' )   => $row['phone'],

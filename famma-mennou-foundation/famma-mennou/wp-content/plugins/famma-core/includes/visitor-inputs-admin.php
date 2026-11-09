@@ -139,7 +139,7 @@ final class Visitor_Inputs_Admin {
 		$this->guard();
 		$status = isset( $_POST['status'] ) ? sanitize_key( wp_unslash( $_POST['status'] ) ) : 'open';
 		$rows   = Visitor_Inputs::instance()->rows( $status, 5000 );
-		$states = function_exists( 'WC' ) ? (array) WC()->countries->get_states( 'TN' ) : array();
+		$states = Visitor_Inputs::states();
 		nocache_headers();
 		header( 'Content-Type: text/csv; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename=famma-saisies-' . gmdate( 'Y-m-d' ) . '.csv' );
@@ -161,7 +161,7 @@ final class Visitor_Inputs_Admin {
 	}
 
 	/**
-	 * Enregistre les réglages : capture, conservation, phrase d'accord.
+	 * Enregistre les réglages : capture et durée de conservation.
 	 *
 	 * @return void
 	 */
@@ -170,10 +170,8 @@ final class Visitor_Inputs_Admin {
 		$this->guard();
 		$enabled = isset( $_POST['enabled'] ) ? '1' : '0';
 		$days    = isset( $_POST['days'] ) ? absint( wp_unslash( $_POST['days'] ) ) : 30;
-		$notice  = isset( $_POST['notice'] ) ? sanitize_textarea_field( wp_unslash( $_POST['notice'] ) ) : '';
 		update_option( Visitor_Inputs::ENABLED_OPTION, $enabled, false );
 		update_option( Visitor_Inputs::RETENTION_OPTION, max( 7, min( 180, $days ) ), false );
-		update_option( Visitor_Inputs::NOTICE_OPTION, mb_substr( $notice, 0, 300 ), false );
 		wp_safe_redirect( self::url( array( 'saved' => 1 ) ) );
 		exit;
 	}

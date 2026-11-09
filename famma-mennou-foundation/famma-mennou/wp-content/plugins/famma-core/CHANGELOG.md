@@ -20,10 +20,15 @@ gardé aussi, une ligne par session, pour les rappeler ou les recibler.
 - FAMMA → Saisies à relancer : téléphone cliquable et lien WhatsApp, statut
   (à relancer, appelé, commandé, clos), lien vers le parcours de la session,
   export CSV « liste de clients » pour une audience Meta, réglages
-  (interrupteur, durée, phrase affichée sous le champ téléphone).
+  (interrupteur, durée de conservation).
 - Chronologie d'une session : encadré « Saisies de cette session ».
 - Outils → Effacer les données personnelles : efface aussi ces saisies.
-- Rien ne change dans ce qui part vers Meta (pixel, CAPI).
+- Rien ne change côté client (aucun texte ajouté au formulaire) ni dans ce
+  qui part vers Meta (pixel, CAPI).
+- Refactoring : nettoyage du texte, chemin d'URL et limite de débit mis en
+  commun dans `Visitor_Context` ; liste des gouvernorats lue à un seul
+  endroit (`Visitor_Inputs::states()`) ; envoi navigateur factorisé
+  (`send()`) dans `visitor-journal.js`.
 
 ## 0.3.5 — 2026-11-09 (en production depuis le 09/11)
 

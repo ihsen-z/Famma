@@ -120,6 +120,18 @@
 		}
 	}
 
+	/**
+	 * Envoi en arrière-plan : sendBeacon, sinon fetch keepalive.
+	 * text/plain : requête « simple », jamais de pré-vol CORS.
+	 */
+	function send( url, payload ) {
+		var body = JSON.stringify( payload );
+		var blob = new Blob( [ body ], { type: 'text/plain' } );
+		if ( ! ( navigator.sendBeacon && navigator.sendBeacon( url, blob ) ) && window.fetch ) {
+			fetch( url, { method: 'POST', body: body, keepalive: true, credentials: 'same-origin', headers: { 'Content-Type': 'text/plain' } } ).catch( function () {} );
+		}
+	}
+
 	function flush() {
 		if ( ! queue.length ) {
 			return;
@@ -130,12 +142,7 @@
 			delete e.at;
 			return e;
 		} );
-		var body = JSON.stringify( { v: visitor, s: session, src: state.src, e: events } );
-		// text/plain : requête « simple », jamais de pré-vol CORS.
-		var blob = new Blob( [ body ], { type: 'text/plain' } );
-		if ( ! ( navigator.sendBeacon && navigator.sendBeacon( ctx.endpoint, blob ) ) && window.fetch ) {
-			fetch( ctx.endpoint, { method: 'POST', body: body, keepalive: true, credentials: 'same-origin', headers: { 'Content-Type': 'text/plain' } } ).catch( function () {} );
-		}
+		send( ctx.endpoint, { v: visitor, s: session, src: state.src, e: events } );
 	}
 
 	// ── Page vue, puis temps actif et profondeur de défilement à la sortie ──
@@ -338,11 +345,7 @@
 			return;
 		}
 		lastSent = json;
-		var body = JSON.stringify( { v: visitor, s: session, pid: ctx.productId || 0, p: location.pathname, src: state.src, f: fields } );
-		var blob = new Blob( [ body ], { type: 'text/plain' } );
-		if ( ! ( navigator.sendBeacon && navigator.sendBeacon( ctx.inputs, blob ) ) && window.fetch ) {
-			fetch( ctx.inputs, { method: 'POST', body: body, keepalive: true, credentials: 'same-origin', headers: { 'Content-Type': 'text/plain' } } ).catch( function () {} );
-		}
+		send( ctx.inputs, { v: visitor, s: session, pid: ctx.productId || 0, p: location.pathname, src: state.src, f: fields } );
 	}
 
 	function noteInput( event ) {
@@ -366,31 +369,6 @@
 				sendInputs();
 			}
 		} );
-	}
-
-	// Phrase d'accord sous chaque champ téléphone des formulaires de commande.
-	if ( ctx.inputs && ctx.notice ) {
-		var addNotice = function () {
-			Array.prototype.forEach.call( document.querySelectorAll( '.famma-express__form [name="billing_phone"], form.checkout [name="billing_phone"]' ), function ( input ) {
-				var holder = input.closest( 'p, .form-row, .famma-express__field' ) || input.parentNode;
-				if ( ! holder || holder.querySelector( '.famma-inputs-notice' ) ) {
-					return;
-				}
-				var note = document.createElement( 'small' );
-				note.className = 'famma-inputs-notice';
-				note.textContent = String( ctx.notice );
-				note.style.display = 'block';
-				note.style.marginBlockStart = '4px';
-				note.style.fontSize = '12px';
-				note.style.opacity = '0.75';
-				holder.appendChild( note );
-			} );
-		};
-		addNotice();
-		// Le checkout WooCommerce redessine ses champs après certaines mises à jour.
-		if ( window.jQuery ) {
-			window.jQuery( document.body ).on( 'updated_checkout', addNotice );
-		}
 	}
 
 	// ── Fiche produit : galerie, vidéo, variations (une fois chacun par page) ──
