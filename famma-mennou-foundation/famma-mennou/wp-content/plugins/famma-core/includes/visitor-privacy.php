@@ -182,7 +182,9 @@ final class Visitor_Privacy {
 	 */
 	public function erase( $email, $page = 1 ): array {
 		$orders  = $this->orders( (string) $email, (int) $page );
-		$removed = Visitor_Store::instance()->delete_visitors( $this->visitor_ids( $orders ) ) > 0;
+		$ids     = $this->visitor_ids( $orders );
+		$removed = Visitor_Store::instance()->delete_visitors( $ids ) > 0;
+		$removed = Visitor_Inputs::instance()->delete_visitors( $ids ) > 0 || $removed;
 		foreach ( $orders as $order ) {
 			if ( '' !== (string) $order->get_meta( Visitor_Commerce::META_VISITOR ) ) {
 				$order->delete_meta_data( Visitor_Commerce::META_VISITOR );

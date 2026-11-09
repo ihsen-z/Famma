@@ -1,6 +1,36 @@
 # Changelog — FAMMA Core
 
-## 0.3.5 — 2026-11-09 (préparée, non déployée)
+## 0.3.6 — 2026-11-09 (préparée, non déployée)
+
+### Saisies à relancer
+
+Le journal visiteurs ne gardait que le nom des champs touchés. Ce que les
+visiteurs tapent dans le formulaire express et dans le checkout (nom,
+téléphone, gouvernorat, adresse, ville, taille, quantité) est maintenant
+gardé aussi, une ligne par session, pour les rappeler ou les recibler.
+
+- Table dédiée `wp_famma_visitor_inputs`, conservation 30 jours par défaut
+  (réglable de 7 à 180), purge quotidienne.
+- Route publique `famma/v1/inputs` : même protection que `famma/v1/collect`
+  (corps plafonné, UUID, robots et équipe écartés, limite de débit, liste
+  blanche des champs, gouvernorat vérifié contre la liste de WooCommerce).
+- Une ligne passe toute seule à « Commandé » quand une commande arrive avec
+  la même session, le même visiteur ou le même téléphone (commande du site,
+  ou commande saisie à la main après un rappel).
+- FAMMA → Saisies à relancer : téléphone cliquable et lien WhatsApp, statut
+  (à relancer, appelé, commandé, clos), lien vers le parcours de la session,
+  export CSV « liste de clients » pour une audience Meta, réglages
+  (interrupteur, durée de conservation).
+- Chronologie d'une session : encadré « Saisies de cette session ».
+- Outils → Effacer les données personnelles : efface aussi ces saisies.
+- Rien ne change côté client (aucun texte ajouté au formulaire) ni dans ce
+  qui part vers Meta (pixel, CAPI).
+- Refactoring : nettoyage du texte, chemin d'URL et limite de débit mis en
+  commun dans `Visitor_Context` ; liste des gouvernorats lue à un seul
+  endroit (`Visitor_Inputs::states()`) ; envoi navigateur factorisé
+  (`send()`) dans `visitor-journal.js`.
+
+## 0.3.5 — 2026-11-09 (en production depuis le 09/11)
 
 ### Canal de commande (Messenger, WhatsApp, Instagram, téléphone…)
 

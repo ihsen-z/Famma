@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.3.5
+ * Version:           0.3.6
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.3.5' );
+define( 'FAMMA_CORE_VERSION', '0.3.6' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -100,6 +100,10 @@ require_once __DIR__ . '/includes/visitor-order-box.php';
 require_once __DIR__ . '/includes/visitor-privacy.php';
 require_once __DIR__ . '/includes/visitor-performance.php';
 require_once __DIR__ . '/includes/visitor-performance-views.php';
+require_once __DIR__ . '/includes/visitor-inputs.php';
+require_once __DIR__ . '/includes/visitor-inputs-collector.php';
+require_once __DIR__ . '/includes/visitor-inputs-admin.php';
+require_once __DIR__ . '/includes/visitor-inputs-views.php';
 
 /**
  * Reads configuration from env-fed constants and WordPress options.
@@ -3456,6 +3460,8 @@ function boot(): void {
 	Visitor_Store::instance();
 	Visitor_Collector::instance();
 	Visitor_Commerce::instance();
+	Visitor_Inputs::instance();
+	Visitor_Inputs_Collector::instance();
 	// Le formulaire public passe par admin-post.php : chargé partout.
 	Newsletter::instance();
 
@@ -3481,6 +3487,7 @@ function boot(): void {
 		Order_Channel_Admin::instance();
 		Order_Channel_List::instance();
 		Visitor_Privacy::instance();
+		Visitor_Inputs_Admin::instance();
 	}
 }
 

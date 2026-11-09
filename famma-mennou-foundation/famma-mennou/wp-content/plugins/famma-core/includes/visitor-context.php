@@ -41,6 +41,51 @@ final class Visitor_Context {
 	}
 
 	/**
+	 * Texte court assaini, reçu d'un corps JSON.
+	 *
+	 * @param mixed $value Valeur reçue.
+	 * @param int   $max   Longueur maximale.
+	 * @return string
+	 */
+	public static function text( $value, int $max ): string {
+		return is_scalar( $value ) ? mb_substr( sanitize_text_field( (string) $value ), 0, $max ) : '';
+	}
+
+	/**
+	 * Chemin d'URL sans requête ni fragment : un paramètre peut porter une
+	 * donnée personnelle (clé de commande, e-mail), le chemin seul suffit.
+	 *
+	 * @param mixed $value Valeur reçue.
+	 * @return string
+	 */
+	public static function path( $value ): string {
+		$path = is_string( $value ) ? (string) wp_parse_url( $value, PHP_URL_PATH ) : '';
+		return mb_substr( '/' . ltrim( sanitize_text_field( $path ), '/' ), 0, 255 );
+	}
+
+	/**
+	 * Compte un envoi pour l'empreinte d'IP et indique si la limite est
+	 * dépassée sur dix minutes.
+	 *
+	 * @param string $prefix Préfixe du compteur (une route = un compteur).
+	 * @param int    $limit  Envois acceptés sur dix minutes.
+	 * @return bool
+	 */
+	public static function rate_limited( string $prefix, int $limit ): bool {
+		$ip_hash = self::ip_hash();
+		if ( '' === $ip_hash ) {
+			return false;
+		}
+		$key   = $prefix . $ip_hash;
+		$count = (int) get_transient( $key );
+		if ( $count >= $limit ) {
+			return true;
+		}
+		set_transient( $key, $count + 1, 10 * MINUTE_IN_SECONDS );
+		return false;
+	}
+
+	/**
 	 * Identifiant lu dans un cookie, ou chaîne vide s'il est absent ou invalide.
 	 *
 	 * @param string $name Nom du cookie.
