@@ -115,7 +115,7 @@ final class Order_Channel_List {
 	private function requested(): string {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only list filter, no state change.
 		$value = isset( $_GET[ self::QUERY_VAR ] ) ? sanitize_key( wp_unslash( $_GET[ self::QUERY_VAR ] ) ) : '';
-		return Order_Channel::SITE === $value || isset( Order_Channel::channels()[ $value ] ) ? $value : '';
+		return in_array( $value, array( Order_Channel::SITE, Order_Channel::RECOVERED ), true ) || isset( Order_Channel::channels()[ $value ] ) ? $value : '';
 	}
 
 	/**
@@ -126,7 +126,10 @@ final class Order_Channel_List {
 	public function render_filter(): void {
 		$current = $this->requested();
 		echo '<select name="' . esc_attr( self::QUERY_VAR ) . '"><option value="">' . esc_html__( 'Tous les canaux', 'famma-core' ) . '</option>';
-		$options = array( Order_Channel::SITE => Order_Channel::label( Order_Channel::SITE ) ) + Order_Channel::channels();
+		$options = array(
+			Order_Channel::SITE      => Order_Channel::label( Order_Channel::SITE ),
+			Order_Channel::RECOVERED => Order_Channel::label( Order_Channel::RECOVERED ),
+		) + Order_Channel::channels();
 		foreach ( $options as $slug => $label ) {
 			echo '<option value="' . esc_attr( $slug ) . '"' . selected( $current, $slug, false ) . '>' . esc_html( $label ) . '</option>';
 		}

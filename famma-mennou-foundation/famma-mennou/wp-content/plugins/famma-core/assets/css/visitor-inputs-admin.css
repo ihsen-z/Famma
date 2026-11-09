@@ -1,0 +1,46 @@
+/* FAMMA → Saisies à relancer. Propriétés logiques : la page reste juste en arabe (RTL). */
+.famma-inputs__lead { max-inline-size: 70em; color: #50575e; }
+.famma-inputs__cards { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 16px 4px; }
+.famma-inputs__card { display: flex; flex-direction: column; min-inline-size: 110px; padding-block: 10px; padding-inline: 14px; border: 1px solid #dcdcde; border-inline-start-width: 4px; border-radius: 6px; background: #fff; color: #1d2327; text-decoration: none; }
+.famma-inputs__card:hover, .famma-inputs__card:focus { border-color: #2271b1; color: #1d2327; }
+.famma-inputs__card.is-current { background: #f0f6fc; border-color: #2271b1; box-shadow: 0 0 0 1px #2271b1; }
+.famma-inputs__count { font-size: 22px; font-weight: 600; line-height: 1.2; }
+.famma-inputs__label { font-size: 12px; color: #50575e; }
+.famma-inputs__card--open { border-inline-start-color: #d63638; }
+.famma-inputs__card--called { border-inline-start-color: #dba617; }
+.famma-inputs__card--unreachable { border-inline-start-color: #8c8f94; }
+.famma-inputs__card--converted { border-inline-start-color: #00a32a; }
+.famma-inputs__card--refused { border-inline-start-color: #3c434a; }
+.famma-inputs__card--closed { border-inline-start-color: #c3c4c7; }
+.famma-inputs__card--all { border-inline-start-color: #2271b1; }
+.famma-inputs__rate { margin-block: 4px 12px; color: #50575e; }
+.famma-inputs__toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-block: 12px; }
+.famma-inputs__filters, .famma-inputs__exports { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.famma-inputs__filters input[type="search"] { min-inline-size: 240px; }
+.famma-inputs__scroll { overflow-x: auto; }
+.famma-inputs__table { min-inline-size: 980px; }
+.famma-inputs__table td { vertical-align: top; }
+.famma-inputs__row td:first-child { border-inline-start: 3px solid transparent; }
+.famma-inputs__row--open td:first-child { border-inline-start-color: #d63638; }
+.famma-inputs__row--called td:first-child { border-inline-start-color: #dba617; }
+.famma-inputs__row--converted td:first-child { border-inline-start-color: #00a32a; }
+.famma-inputs__note { inline-size: 100%; min-inline-size: 160px; min-block-size: 48px; resize: vertical; }
+.famma-inputs__saved { display: block; font-size: 12px; color: #00a32a; min-block-size: 1em; }
+.famma-inputs__saved.is-error { color: #d63638; }
+.famma-inputs__wa { display: inline-block; margin-inline-start: 6px; padding-inline: 6px; border-radius: 3px; background: #25d366; color: #fff; font-size: 12px; text-decoration: none; }
+.famma-inputs__wa:hover, .famma-inputs__wa:focus { background: #1ebe57; color: #fff; }
+.famma-inputs__order-link { display: block; margin-block-start: 4px; }
+.famma-inputs__actions { white-space: nowrap; }
+.famma-inputs__actions form, .famma-inputs__actions .button { display: inline-block; margin-block-end: 4px; margin-inline-end: 4px; }
+.famma-inputs.has-js .famma-inputs__nojs { display: none; }
+.famma-inputs__empty { padding: 24px; background: #fff; border: 1px dashed #c3c4c7; text-align: center; }
+.famma-inputs__settings { margin-block-start: 24px; }
+.famma-inputs__settings summary { cursor: pointer; font-weight: 600; }
+@media (max-width: 782px) {
+	.famma-inputs__table { min-inline-size: 0; }
+	.famma-inputs__table thead { display: none; }
+	.famma-inputs__table tr { display: block; border-block-end: 1px solid #dcdcde; }
+	.famma-inputs__table td { display: block; padding-block: 4px; }
+	.famma-inputs__actions { white-space: normal; }
+	.famma-inputs__actions .button, .famma-inputs__actions button { min-block-size: 40px; }
+}

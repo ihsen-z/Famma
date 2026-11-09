@@ -44,6 +44,12 @@ final class Order_Channel {
 	/** Canal réservé des commandes passées sur le site. */
 	public const SITE = 'site';
 
+	/**
+	 * Canal réservé : commande créée par le bouton « Créer la commande » des
+	 * saisies à relancer. Posé par ce seul bouton, jamais modifiable ensuite.
+	 */
+	public const RECOVERED = 'panier_recupere';
+
 	/** Nonce de l'encadré. */
 	private const NONCE = 'famma_order_channel_nonce';
 
@@ -99,7 +105,7 @@ final class Order_Channel {
 		$out = array();
 		foreach ( $saved as $slug => $label ) {
 			$slug = sanitize_key( (string) $slug );
-			if ( '' !== $slug && self::SITE !== $slug && is_scalar( $label ) ) {
+			if ( '' !== $slug && ! in_array( $slug, array( self::SITE, self::RECOVERED ), true ) && is_scalar( $label ) ) {
 				$out[ $slug ] = sanitize_text_field( (string) $label );
 			}
 		}
@@ -132,6 +138,9 @@ final class Order_Channel {
 		if ( self::SITE === $slug ) {
 			return __( 'Site', 'famma-core' );
 		}
+		if ( self::RECOVERED === $slug ) {
+			return __( 'Panier récupéré', 'famma-core' );
+		}
 		if ( '' === $slug ) {
 			return __( 'À préciser', 'famma-core' );
 		}
@@ -163,6 +172,10 @@ final class Order_Channel {
 		}
 		if ( self::SITE === self::of( $order ) ) {
 			echo '<p>' . esc_html__( 'Site — commande passée sur la boutique, canal noté automatiquement.', 'famma-core' ) . '</p>';
+			return;
+		}
+		if ( self::RECOVERED === self::of( $order ) ) {
+			echo '<p>' . esc_html__( 'Panier récupéré — commande créée depuis « Saisies à relancer ».', 'famma-core' ) . '</p>';
 			return;
 		}
 		$current = self::of( $order );
@@ -198,7 +211,7 @@ final class Order_Channel {
 			return;
 		}
 		$order = $subject instanceof \WC_Order ? $subject : wc_get_order( $order_id );
-		if ( ! $order instanceof \WC_Order || self::SITE === self::of( $order ) ) {
+		if ( ! $order instanceof \WC_Order || in_array( self::of( $order ), array( self::SITE, self::RECOVERED ), true ) ) {
 			return;
 		}
 
