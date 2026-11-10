@@ -1,6 +1,6 @@
 # Changelog — FAMMA Core
 
-## 0.3.8 — 2026-11-10 (préparée, non déployée)
+## 0.3.8 — 2026-11-10 (en production depuis le 10/11)
 
 ### Remarque des commandes
 
