@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.3.7
+ * Version:           0.3.8
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.3.7' );
+define( 'FAMMA_CORE_VERSION', '0.3.8' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -46,6 +46,7 @@ require_once __DIR__ . '/includes/order-source.php';
 require_once __DIR__ . '/includes/order-channel.php';
 require_once __DIR__ . '/includes/order-channel-admin.php';
 require_once __DIR__ . '/includes/order-channel-list.php';
+require_once __DIR__ . '/includes/order-note.php';
 require_once __DIR__ . '/includes/product-sizes.php';
 require_once __DIR__ . '/includes/product-sizes-admin.php';
 require_once __DIR__ . '/includes/express-order.php';
@@ -105,6 +106,11 @@ require_once __DIR__ . '/includes/visitor-inputs.php';
 require_once __DIR__ . '/includes/visitor-inputs-collector.php';
 require_once __DIR__ . '/includes/visitor-inputs-admin.php';
 require_once __DIR__ . '/includes/visitor-inputs-views.php';
+require_once __DIR__ . '/includes/visitor-inputs-rows.php';
+require_once __DIR__ . '/includes/visitor-inputs-row-view.php';
+require_once __DIR__ . '/includes/visitor-inputs-export.php';
+require_once __DIR__ . '/includes/visitor-inputs-order.php';
+require_once __DIR__ . '/includes/xlsx-writer.php';
 
 /**
  * Reads configuration from env-fed constants and WordPress options.
@@ -3489,6 +3495,9 @@ function boot(): void {
 		Order_Channel_List::instance();
 		Visitor_Privacy::instance();
 		Visitor_Inputs_Admin::instance();
+		Visitor_Inputs_Export::instance();
+		Visitor_Inputs_Order::instance();
+		Order_Note::instance();
 	}
 }
 

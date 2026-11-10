@@ -14,7 +14,11 @@
  *
  * Une ligne passe à « commandé » dès qu'une commande arrive avec la même
  * session, le même visiteur ou le même téléphone (commande du site, ou
- * commande saisie à la main après un rappel).
+ * commande saisie à la main après un rappel), ou quand l'équipe crée la
+ * commande depuis la ligne (`Visitor_Inputs_Order`).
+ *
+ * Lecture filtrée et gestion par l'équipe (liste, export, statut, remarque) :
+ * `Visitor_Inputs_Rows`.
  *
  * @package famma-core
  */
@@ -31,7 +35,7 @@ final class Visitor_Inputs {
 	/**
 	 * Version du schéma ; la changer relance `dbDelta()`.
 	 */
-	private const SCHEMA = '1';
+	private const SCHEMA = '2';
 
 	/**
 	 * Option mémorisant la version du schéma installée.
@@ -56,7 +60,18 @@ final class Visitor_Inputs {
 	/**
 	 * Statuts possibles d'une ligne.
 	 */
-	public const STATUSES = array( 'open', 'called', 'converted', 'closed' );
+	public const STATUSES = array( 'open', 'called', 'unreachable', 'converted', 'refused', 'closed' );
+
+	/**
+	 * Statuts encore « vivants » : une commande du même client les fait
+	 * passer à « commandé ». « Pas intéressé » et « clos » restent tels quels.
+	 */
+	public const OPEN_STATUSES = array( 'open', 'called', 'unreachable' );
+
+	/**
+	 * Longueur maximale de la remarque d'une ligne.
+	 */
+	public const NOTE_MAX = 500;
 
 	/**
 	 * Colonnes de saisie et leur longueur maximale.
@@ -168,6 +183,7 @@ final class Visitor_Inputs {
 			device varchar(10) NOT NULL DEFAULT '',
 			status varchar(16) NOT NULL DEFAULT 'open',
 			order_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			note varchar(500) NOT NULL DEFAULT '',
 			PRIMARY KEY  (id),
 			UNIQUE KEY session_id (session_id),
 			KEY visitor_id (visitor_id),
@@ -258,46 +274,10 @@ final class Visitor_Inputs {
 		$session_id = '' !== $session_id ? $session_id : '-';
 		$visitor_id = '' !== $visitor_id ? $visitor_id : '-';
 		$phone_norm = '' !== $phone_norm ? $phone_norm : '-';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table write.
-		$done = $wpdb->query( $wpdb->prepare( "UPDATE %i SET status = 'converted', order_id = %d, updated_at = %s WHERE status IN ('open','called') AND ( session_id = %s OR visitor_id = %s OR phone_norm = %s )", $this->table(), $order_id, gmdate( 'Y-m-d H:i:s' ), $session_id, $visitor_id, $phone_norm ) );
+		$marks      = implode( ',', array_fill( 0, count( self::OPEN_STATUSES ), '%s' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- custom table; $marks only holds %s placeholders, values passed by spread.
+		$done = $wpdb->query( $wpdb->prepare( "UPDATE %i SET status = 'converted', order_id = %d, updated_at = %s WHERE status IN ($marks) AND ( session_id = %s OR visitor_id = %s OR phone_norm = %s )", $this->table(), $order_id, gmdate( 'Y-m-d H:i:s' ), ...array_merge( self::OPEN_STATUSES, array( $session_id, $visitor_id, $phone_norm ) ) ) );
 		return is_int( $done ) ? $done : 0;
-	}
-
-	/**
-	 * Lignes d'un statut, les plus récentes d'abord.
-	 *
-	 * @param string $status Statut (ou « all »).
-	 * @param int    $limit  Lignes au plus.
-	 * @param int    $offset Décalage.
-	 * @return array<int, array<string, string>>
-	 */
-	public function rows( string $status, int $limit = 50, int $offset = 0 ): array {
-		global $wpdb;
-		if ( in_array( $status, self::STATUSES, true ) ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- admin listing on a custom table.
-			$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE status = %s ORDER BY updated_at DESC LIMIT %d OFFSET %d', $this->table(), $status, $limit, $offset ), ARRAY_A );
-		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- admin listing on a custom table.
-			$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY updated_at DESC LIMIT %d OFFSET %d', $this->table(), $limit, $offset ), ARRAY_A );
-		}
-		return is_array( $rows ) ? $rows : array();
-	}
-
-	/**
-	 * Nombre de lignes par statut.
-	 *
-	 * @return array<string, int>
-	 */
-	public function counts(): array {
-		global $wpdb;
-		$out = array_fill_keys( self::STATUSES, 0 );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- admin counters on a custom table.
-		foreach ( (array) $wpdb->get_results( $wpdb->prepare( 'SELECT status, COUNT(*) AS n FROM %i GROUP BY status', $this->table() ), ARRAY_A ) as $row ) {
-			if ( isset( $out[ $row['status'] ] ) ) {
-				$out[ $row['status'] ] = (int) $row['n'];
-			}
-		}
-		return $out;
 	}
 
 	/**
@@ -311,26 +291,6 @@ final class Visitor_Inputs {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table, keyed lookup.
 		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE session_id = %s', $this->table(), $session_id ), ARRAY_A );
 		return is_array( $row ) ? $row : null;
-	}
-
-	/**
-	 * Change le statut d'une ligne, ou la supprime (« delete »).
-	 *
-	 * @param int    $id     Ligne.
-	 * @param string $status Nouveau statut, ou « delete ».
-	 * @return bool
-	 */
-	public function set_status( int $id, string $status ): bool {
-		global $wpdb;
-		if ( 'delete' === $status ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table write.
-			return false !== $wpdb->delete( $this->table(), array( 'id' => $id ), array( '%d' ) );
-		}
-		if ( ! in_array( $status, self::STATUSES, true ) ) {
-			return false;
-		}
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table write.
-		return false !== $wpdb->update( $this->table(), array( 'status' => $status ), array( 'id' => $id ), array( '%s' ), array( '%d' ) );
 	}
 
 	/**

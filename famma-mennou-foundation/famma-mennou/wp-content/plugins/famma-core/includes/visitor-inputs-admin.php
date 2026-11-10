@@ -1,11 +1,12 @@
 <?php
 /**
- * Saisies des visiteurs — page d'administration et actions.
+ * Saisies des visiteurs — menu, actions et réponses AJAX de la page.
  *
- * FAMMA → Saisies à relancer : liste des formulaires remplis sans commande,
- * avec téléphone cliquable et lien WhatsApp, statut (à relancer, appelé,
- * commandé, clos), lien vers le parcours de la session, export CSV pour une
- * audience personnalisée Meta (liste de clients), et réglages.
+ * FAMMA → Saisies à relancer : liste des formulaires remplis sans commande.
+ * Le statut et la remarque se modifient sur place (AJAX) ; sans JavaScript,
+ * les boutons de statut restent des formulaires classiques. L'export vit dans
+ * `Visitor_Inputs_Export`, la création de commande dans
+ * `Visitor_Inputs_Order`, le rendu dans `Visitor_Inputs_Views`.
  *
  * Chaque action écrit : nonce, puis `manage_woocommerce`, puis entrées
  * assainies (règle 4).
@@ -18,7 +19,7 @@ namespace Famma\Core;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Menu, actions de statut, export CSV, réglages.
+ * Menu, statut, remarque, actualisation, réglages, scripts de la page.
  */
 final class Visitor_Inputs_Admin {
 
@@ -28,19 +29,31 @@ final class Visitor_Inputs_Admin {
 	public const SLUG = 'famma-visitor-inputs';
 
 	/**
-	 * Action admin-post : changer le statut d'une ligne.
+	 * Action admin-post : changer le statut d'une ligne (sans JavaScript).
 	 */
 	public const ACTION_STATUS = 'famma_inputs_status';
-
-	/**
-	 * Action admin-post : export CSV.
-	 */
-	public const ACTION_EXPORT = 'famma_inputs_export';
 
 	/**
 	 * Action admin-post : enregistrer les réglages.
 	 */
 	public const ACTION_SETTINGS = 'famma_inputs_settings';
+
+	/**
+	 * Action AJAX : statut ou remarque d'une ligne.
+	 */
+	public const AJAX_UPDATE = 'famma_inputs_update';
+
+	/**
+	 * Action AJAX : nouvelles saisies depuis l'ouverture de la page.
+	 */
+	public const AJAX_POLL = 'famma_inputs_poll';
+
+	/**
+	 * Crochet de la page, connu après `admin_menu`.
+	 *
+	 * @var string
+	 */
+	private string $hook = '';
 
 	/**
 	 * Instance partagée.
@@ -58,9 +71,11 @@ final class Visitor_Inputs_Admin {
 		if ( null === self::$i ) {
 			self::$i = new self();
 			add_action( 'admin_menu', array( self::$i, 'register_menu' ), 21 );
+			add_action( 'admin_enqueue_scripts', array( self::$i, 'assets' ) );
 			add_action( 'admin_post_' . self::ACTION_STATUS, array( self::$i, 'change_status' ) );
-			add_action( 'admin_post_' . self::ACTION_EXPORT, array( self::$i, 'export' ) );
 			add_action( 'admin_post_' . self::ACTION_SETTINGS, array( self::$i, 'save_settings' ) );
+			add_action( 'wp_ajax_' . self::AJAX_UPDATE, array( self::$i, 'ajax_update' ) );
+			add_action( 'wp_ajax_' . self::AJAX_POLL, array( self::$i, 'ajax_poll' ) );
 		}
 		return self::$i;
 	}
@@ -71,15 +86,50 @@ final class Visitor_Inputs_Admin {
 	 * @return void
 	 */
 	public function register_menu(): void {
-		$open  = Visitor_Inputs::instance()->counts()['open'];
-		$badge = $open > 0 ? ' <span class="awaiting-mod">' . (int) $open . '</span>' : '';
-		add_submenu_page(
+		$open       = Visitor_Inputs_Rows::open_count();
+		$badge      = $open > 0 ? ' <span class="awaiting-mod">' . (int) $open . '</span>' : '';
+		$this->hook = (string) add_submenu_page(
 			'famma-dashboard',
 			__( 'FAMMA — saisies à relancer', 'famma-core' ),
 			esc_html__( 'Saisies à relancer', 'famma-core' ) . $badge,
 			'manage_woocommerce',
 			self::SLUG,
 			array( Visitor_Inputs_Views::class, 'render' )
+		);
+	}
+
+	/**
+	 * Styles et script de la page, sur elle seule.
+	 *
+	 * @param string $hook Page d'administration courante.
+	 * @return void
+	 */
+	public function assets( string $hook ): void {
+		if ( '' === $this->hook || $hook !== $this->hook ) {
+			return;
+		}
+		wp_enqueue_style( 'famma-inputs-admin', plugins_url( 'assets/css/visitor-inputs-admin.css', FAMMA_CORE_FILE ), array(), FAMMA_CORE_VERSION );
+		wp_enqueue_script( 'famma-inputs-admin', plugins_url( 'assets/js/visitor-inputs-admin.js', FAMMA_CORE_FILE ), array(), FAMMA_CORE_VERSION, true );
+		wp_localize_script(
+			'famma-inputs-admin',
+			'fammaInputs',
+			array(
+				'url'    => admin_url( 'admin-ajax.php' ),
+				'update' => self::AJAX_UPDATE,
+				'poll'   => self::AJAX_POLL,
+				'nonce'  => wp_create_nonce( self::AJAX_UPDATE ),
+				'since'  => gmdate( 'Y-m-d H:i:s' ),
+				// Mêmes filtres que la page : les compteurs renvoyés restent cohérents.
+				'scope'  => array_diff_key( Visitor_Inputs_Rows::filters( $_GET ), array( 'status' => 0 ) ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view selectors.
+				'i18n'   => array(
+					'saved'   => __( 'Enregistré', 'famma-core' ),
+					'error'   => __( 'Échec, réessayez.', 'famma-core' ),
+					'confirm' => __( 'Supprimer définitivement cette saisie ?', 'famma-core' ),
+					'order'   => __( 'Créer la commande WooCommerce avec ces données ? Faites-le seulement après avoir joint le client.', 'famma-core' ),
+					/* translators: %d: number of new entries. */
+					'fresh'   => __( '%d nouvelle(s) saisie(s) — actualiser', 'famma-core' ),
+				),
+			)
 		);
 	}
 
@@ -114,50 +164,64 @@ final class Visitor_Inputs_Admin {
 		$this->guard();
 		$id     = isset( $_POST['id'] ) ? absint( wp_unslash( $_POST['id'] ) ) : 0;
 		$status = isset( $_POST['to'] ) ? sanitize_key( wp_unslash( $_POST['to'] ) ) : '';
-		$back   = isset( $_POST['back'] ) ? sanitize_key( wp_unslash( $_POST['back'] ) ) : 'open';
-		$ok     = $id > 0 && Visitor_Inputs::instance()->set_status( $id, $status );
-		wp_safe_redirect(
-			self::url(
-				array(
-					'status' => $back,
-					'done'   => $ok ? 1 : 0,
-				)
-			)
-		);
+		$back   = Visitor_Inputs_Rows::filters( isset( $_POST['back'] ) && is_array( $_POST['back'] ) ? $_POST['back'] : array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- filters() unslashes and sanitizes each key.
+		$ok     = $id > 0 && Visitor_Inputs_Rows::set_status( $id, $status );
+		wp_safe_redirect( self::url( array_filter( $back ) + array( 'done' => $ok ? 1 : 0 ) ) );
 		exit;
 	}
 
 	/**
-	 * Export CSV pour une audience Meta « liste de clients » : téléphone au
-	 * format international, prénom, gouvernorat, pays. Seules les lignes avec
-	 * un numéro tunisien valide sortent.
+	 * AJAX : change le statut ou la remarque d'une ligne.
 	 *
 	 * @return void
 	 */
-	public function export(): void {
-		check_admin_referer( self::ACTION_EXPORT );
-		$this->guard();
-		$status = isset( $_POST['status'] ) ? sanitize_key( wp_unslash( $_POST['status'] ) ) : 'open';
-		$rows   = Visitor_Inputs::instance()->rows( $status, 5000 );
-		$states = Visitor_Inputs::states();
-		nocache_headers();
-		header( 'Content-Type: text/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename=famma-saisies-' . gmdate( 'Y-m-d' ) . '.csv' );
-		$out = fopen( 'php://output', 'w' );
-		if ( false === $out ) {
-			exit;
+	public function ajax_update(): void {
+		check_ajax_referer( self::AJAX_UPDATE, 'nonce' );
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( null, 403 );
 		}
-		fputcsv( $out, array( 'phone', 'fn', 'st', 'country' ) );
-		foreach ( $rows as $row ) {
-			if ( '' === $row['phone_norm'] ) {
-				continue;
+		$id    = isset( $_POST['id'] ) ? absint( wp_unslash( $_POST['id'] ) ) : 0;
+		$field = isset( $_POST['field'] ) ? sanitize_key( wp_unslash( $_POST['field'] ) ) : '';
+		if ( $id <= 0 || null === Visitor_Inputs_Rows::get( $id ) ) {
+			wp_send_json_error( null, 404 );
+		}
+		if ( 'note' === $field ) {
+			$note = Visitor_Inputs_Rows::set_note( $id, isset( $_POST['value'] ) ? (string) wp_unslash( $_POST['value'] ) : '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized in set_note().
+			if ( null === $note ) {
+				wp_send_json_error();
 			}
-			// Préfixe « = - + @ » neutralisé : le fichier peut être ouvert dans un tableur.
-			$name = preg_replace( '/^[=\-+@]+/', '', (string) strtok( $row['first_name'], ' ' ) );
-			fputcsv( $out, array( '+216' . $row['phone_norm'], $name, $states[ $row['state'] ] ?? '', 'TN' ) );
+			wp_send_json_success( array( 'value' => $note ) );
 		}
-		fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- php://output stream, not a file.
-		exit;
+		$status = isset( $_POST['value'] ) ? sanitize_key( wp_unslash( $_POST['value'] ) ) : '';
+		if ( 'status' !== $field || ! Visitor_Inputs_Rows::set_status( $id, $status ) ) {
+			wp_send_json_error();
+		}
+		wp_send_json_success(
+			array(
+				'value'  => $status,
+				'counts' => Visitor_Inputs_Rows::counts( Visitor_Inputs_Rows::filters( $_POST ) ),
+			)
+		);
+	}
+
+	/**
+	 * AJAX : nombre de saisies arrivées ou complétées depuis une date.
+	 *
+	 * @return void
+	 */
+	public function ajax_poll(): void {
+		check_ajax_referer( self::AJAX_UPDATE, 'nonce' );
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( null, 403 );
+		}
+		$since = isset( $_POST['since'] ) ? sanitize_text_field( wp_unslash( $_POST['since'] ) ) : '';
+		if ( 1 !== preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $since ) ) {
+			wp_send_json_error();
+		}
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- small admin counter on a custom table.
+		$fresh = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE status = %s AND created_at > %s', Visitor_Inputs::instance()->table(), 'open', $since ) );
+		wp_send_json_success( array( 'fresh' => $fresh ) );
 	}
 
 	/**

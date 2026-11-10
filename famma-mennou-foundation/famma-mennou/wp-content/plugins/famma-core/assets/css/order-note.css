@@ -1,0 +1,9 @@
+/* Remarque des commandes — WooCommerce → Commandes. Propriétés logiques (RTL). */
+.column-famma_note { inline-size: 16%; }
+.famma-note__text { white-space: pre-line; overflow-wrap: anywhere; }
+.famma-note__edit { font-size: 12px; }
+.famma-note.is-editing .famma-note__text,
+.famma-note.is-editing .famma-note__edit { display: none; }
+.famma-note__form textarea { display: block; inline-size: 100%; margin-block-end: 4px; }
+.famma-note__form .button { margin-inline-end: 4px; }
+.famma-note__status { display: block; margin-block-start: 2px; font-size: 12px; color: #646970; }

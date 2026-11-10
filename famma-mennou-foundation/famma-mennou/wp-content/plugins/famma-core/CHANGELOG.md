@@ -1,6 +1,55 @@
 # Changelog — FAMMA Core
 
-## 0.3.7 — 2026-11-09 (préparée, non déployée)
+## 0.3.8 — 2026-11-10 (en production depuis le 10/11)
+
+### Remarque des commandes
+
+WooCommerce → Commandes : colonne « Remarque » (avant les actions),
+modifiable sur place sans ouvrir la commande (Ctrl+Entrée enregistre, Échap
+annule), et encadré « Remarque » dans la fiche commande. Note interne de
+l'équipe (méta `_famma_order_note`), distincte de la note du client ; rien
+n'est envoyé à Meta.
+
+### Saisies à relancer : page de travail
+
+- Compteurs cliquables par statut et taux de récupération ; recherche (nom,
+  téléphone, adresse, ville, campagne, remarque), filtres produit et période.
+- Statut et remarque modifiables sur place (AJAX, sans recharger) ; alerte
+  « nouvelles saisies » toutes les 60 s ; affichage mobile en fiches.
+- Deux statuts en plus : « Injoignable » (encore vivant : une commande du
+  même client le fait passer à « Commandé ») et « Pas intéressé » (reste tel
+  quel). « Commandé » ne se pose plus à la main.
+- Colonne `note` ajoutée à `wp_famma_visitor_inputs` (schéma 2, `dbDelta`).
+
+### Export Excel complet
+
+Le bouton « Exporter en Excel » produit un vrai fichier .xlsx avec les 24
+champs de chaque saisie, pour les filtres en vigueur (en-tête figé, filtres
+automatiques, textes jamais lus comme formules). Générateur sans dépendance
+(`Xlsx_Writer`, ZipArchive ou PclZip de WordPress). L'ancien CSV reste
+disponible sous « Audience Meta (CSV) » : c'est le seul format accepté par le
+Gestionnaire de publicités.
+
+### « Créer la commande » depuis une saisie
+
+Un clic crée la commande WooCommerce avec chaque donnée dans son champ :
+prénom, téléphone, gouvernorat, adresse et ville (facturation et
+livraison), paiement à la livraison, produit, quantité et taille, ligne de
+livraison de la zone (0 DT au client), coût interne de livraison, campagne
+d'origine, visite reliée et remarque. Statut « En attente de confirmation »,
+comme une commande du site (même e-mail « Nouvelle commande ») ; sans
+produit, la commande reste « Attente paiement » pour qu'on l'ajoute.
+
+- Canal réservé « Panier récupéré », posé par ce seul bouton et non
+  modifiable ensuite ; une commande finie par le client lui-même sur le site
+  reste « Site ».
+- `created_via = admin` : aucun OrderPlaced vers Meta, ni IP, ni navigateur,
+  ni cookie Meta de l'administrateur sur la commande. Seule une vraie
+  livraison enverra le Purchase.
+- Verrou contre le double clic ; une saisie déjà reliée renvoie vers sa
+  commande.
+
+## 0.3.7 — 2026-11-09 (en production depuis le 09/11)
 
 ### Type de chaque session (humain ou robot probable)
 
