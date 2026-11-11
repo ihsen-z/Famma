@@ -15,14 +15,17 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Réordonne le résumé produit.
  *
- * Ordre voulu : titre · note · prix · économie · réassurance · accroche ·
- * commande express · ajout au panier · WhatsApp.
+ * Ordre voulu : note · économie · réassurance · accroche · commande express ·
+ * ajout au panier · WhatsApp.
  *
- * Le prix passe juste sous le titre (priorité 7), avant l'accroche : venu
- * d'une publicité, le visiteur cherche d'abord « combien ? ». Placée entre les
- * deux, l'accroche repoussait le prix à 973 px, soit 1,4 écran sur mobile
- * (audit du 23/09, FP-03). La note suit le titre en 6, elle n'apparaît
- * qu'avec de vrais avis.
+ * Le titre et le prix ont quitté le résumé : ils sont posés en haut de la
+ * photo, sur une seule ligne (demande du propriétaire, 11/11/2026), voir
+ * `famma_child_product_media_overlay()`. Venu d'une publicité, le visiteur lit
+ * « quoi ? » et « combien ? » dès la photo, sans faire défiler. La note
+ * (priorité 6) n'apparaît qu'avec de vrais avis.
+ *
+ * L'accroche (description courte) n'affiche qu'une ligne, suivie de « Lire la
+ * suite » : voir `famma_child_product_excerpt()`.
  *
  * La réassurance (8) reste **avant** le bouton d'achat : le client lit comment
  * il paie, qui le livre et en combien de temps au moment où il hésite.
@@ -40,8 +43,9 @@ function famma_child_product_reorder_summary(): void {
 	remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_rating', 10 );
 	add_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_rating', 6 );
 
+	// Titre et prix : rendus sur la photo par famma_child_product_media_overlay().
+	remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_title', 5 );
 	remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_price', 10 );
-	add_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_price', 7 );
 
 	remove_action( 'woocommerce_single_product_summary', 'famma_child_price_savings', 11 );
 	add_action( 'woocommerce_single_product_summary', 'famma_child_price_savings', 7 );
@@ -49,7 +53,13 @@ function famma_child_product_reorder_summary(): void {
 	remove_action( 'woocommerce_single_product_summary', 'famma_child_product_reassurance', 35 );
 	add_action( 'woocommerce_single_product_summary', 'famma_child_product_reassurance', 8 );
 
-	// L'accroche reste à sa priorité d'origine (20) : après la réassurance, avant le formulaire.
+	// L'accroche garde sa priorité d'origine (20), réduite à une ligne avec « Lire la suite ».
+	remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_excerpt', 20 );
+	add_action( 'woocommerce_single_product_summary', 'famma_child_product_excerpt', 20 );
+
+	// Les badges rejoignent le titre sur la photo, sous la bande (famma_child_product_media_overlay()).
+	remove_action( 'woocommerce_before_single_product_summary', 'woocommerce_show_product_sale_flash', 10 );
+	remove_action( 'woocommerce_before_single_product_summary', 'famma_child_product_new_badge', 11 );
 }
 add_action( 'wp', 'famma_child_product_reorder_summary' );
 
@@ -208,6 +218,170 @@ function famma_child_gallery_column_close(): void {
 	echo '</div>';
 }
 add_action( 'woocommerce_before_single_product_summary', 'famma_child_gallery_column_close', 99 );
+
+/**
+ * Ouvre la scène de la photo : la galerie et ce qui est posé dessus.
+ *
+ * La scène est une grille d'une cellule : la bande du titre et la galerie y
+ * occupent la même case, la bande en haut. Rien n'est positionné en absolu,
+ * donc rien ne dépend d'une hauteur devinée. Sur ordinateur, c'est la scène
+ * qui suit le défilement (et non plus la galerie seule) : la bande reste
+ * collée à sa photo.
+ *
+ * @return void
+ */
+function famma_child_media_stage_open(): void {
+	echo '<div class="famma-media-stage">';
+}
+add_action( 'woocommerce_before_single_product_summary', 'famma_child_media_stage_open', 15 );
+
+/**
+ * Ferme la scène de la photo.
+ *
+ * @return void
+ */
+function famma_child_media_stage_close(): void {
+	echo '</div>';
+}
+add_action( 'woocommerce_before_single_product_summary', 'famma_child_media_stage_close', 25 );
+
+/**
+ * Titre et prix sur la photo, sur une seule ligne, puis les badges.
+ *
+ * Demande du propriétaire (11/11/2026) : le nom et le prix en haut de la
+ * photo, sur une ligne, le prix dans une autre couleur, le bleu de la charte.
+ * Le nom passe en gris ardoise et le prix en bleu nuit gras : la couleur seule
+ * les distingue. Un nom trop long est coupé par des points de suspension à
+ * l'écran ; le titre H1 reste entier pour les lecteurs d'écran et Google.
+ *
+ * Le H1 reprend celui de WooCommerce (`single-product/title.php`, mêmes
+ * classes, même filtre `the_title`) avec `dir="auto"` en plus : sur le site
+ * arabe, les noms restent en français, et un nom latin trop long dans une
+ * bande de droite à gauche était coupé par son début (« …dorsale Confort »).
+ * Le prix vient de la fonction de WooCommerce et garde ses filtres
+ * (promotion barrée, texte pour lecteurs d'écran). Le H1 reste unique.
+ *
+ * Les badges (promotion, « Nouveau ») suivent, sous la bande, toujours sur la
+ * photo.
+ *
+ * @return void
+ */
+function famma_child_product_media_overlay(): void {
+	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return;
+	}
+	?>
+	<div class="famma-media-overlay">
+		<div class="famma-media-heading">
+			<?php
+			the_title( '<h1 class="product_title entry-title" dir="auto">', '</h1>' );
+			woocommerce_template_single_price();
+			?>
+		</div>
+		<?php
+		woocommerce_show_product_sale_flash();
+		famma_child_product_new_badge();
+		?>
+	</div>
+	<?php
+}
+add_action( 'woocommerce_before_single_product_summary', 'famma_child_product_media_overlay', 16 );
+
+/**
+ * Ouvre un bloc « Lire la suite ».
+ *
+ * Le bloc est replié dès le HTML (aucun saut de mise en page au chargement) ;
+ * `assets/js/product-more.js` le déplie au clic et masque le bouton quand le
+ * texte tient déjà dans la hauteur prévue.
+ *
+ * @param string $id    Suffixe de l'identifiant du contenu (unique dans la page).
+ * @param int    $lines Nombre de lignes visibles replié : 1 ou 3.
+ * @return void
+ */
+function famma_child_read_more_start( string $id, int $lines ): void {
+	printf(
+		'<div class="famma-more famma-more--%1$d" data-famma-more="%1$d"><div class="famma-more__body" id="famma-more-%2$s">',
+		absint( $lines ),
+		esc_attr( $id )
+	);
+}
+
+/**
+ * Ferme un bloc « Lire la suite » et pose son bouton.
+ *
+ * Libellés existants du thème (« Lire la suite » / « Réduire », déjà traduits
+ * en derja dans `famma-child-ar.po`).
+ *
+ * @param string $id Suffixe de l'identifiant du contenu, comme à l'ouverture.
+ * @return void
+ */
+function famma_child_read_more_end( string $id ): void {
+	printf(
+		'</div><button type="button" class="famma-more__toggle" aria-expanded="false" aria-controls="famma-more-%1$s" data-label-less="%2$s">%3$s</button></div>',
+		esc_attr( $id ),
+		esc_attr__( 'Réduire', 'famma-child' ),
+		esc_html__( 'Lire la suite', 'famma-child' )
+	);
+}
+
+/**
+ * Accroche du résumé réduite à une ligne, avec « Lire la suite ».
+ *
+ * Même contenu que `woocommerce_template_single_excerpt()`, appelée telle
+ * quelle : seul l'emballage change. Un produit sans description courte
+ * n'affiche rien, pas même le bouton.
+ *
+ * @return void
+ */
+function famma_child_product_excerpt(): void {
+	global $post;
+
+	if ( ! $post instanceof WP_Post || '' === trim( (string) $post->post_excerpt ) ) {
+		return;
+	}
+
+	famma_child_read_more_start( 'excerpt', 1 );
+	woocommerce_template_single_excerpt();
+	famma_child_read_more_end( 'excerpt' );
+}
+
+/**
+ * Description longue : trois lignes, puis « Lire la suite ».
+ *
+ * Le rappel d'origine de l'onglet est gardé et appelé dans le bloc : les
+ * autres extensions qui le remplacent continuent de fonctionner.
+ *
+ * @param array $tabs Onglets de la fiche.
+ * @return array
+ */
+function famma_child_product_description_more_tab( $tabs ) {
+	if ( ! is_array( $tabs ) || empty( $tabs['description']['callback'] ) || ! is_callable( $tabs['description']['callback'] ) ) {
+		return $tabs;
+	}
+
+	$tabs['description']['famma_more_callback'] = $tabs['description']['callback'];
+	$tabs['description']['callback']            = 'famma_child_product_description_more';
+
+	return $tabs;
+}
+add_filter( 'woocommerce_product_tabs', 'famma_child_product_description_more_tab', 99 );
+
+/**
+ * Rend la description longue dans un bloc « Lire la suite » de trois lignes.
+ *
+ * @param string $key Clé de l'onglet.
+ * @param array  $tab Onglet, avec le rappel d'origine.
+ * @return void
+ */
+function famma_child_product_description_more( $key, $tab ): void {
+	if ( empty( $tab['famma_more_callback'] ) || ! is_callable( $tab['famma_more_callback'] ) ) {
+		return;
+	}
+
+	famma_child_read_more_start( 'description', 3 );
+	call_user_func( $tab['famma_more_callback'], $key, $tab );
+	famma_child_read_more_end( 'description' );
+}
 
 /**
  * Encadre le champ de quantité pour reproduire le sélecteur MOINS / PLUS.
