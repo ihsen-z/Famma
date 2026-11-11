@@ -29,7 +29,7 @@ deviennent des commandes de 33 % à 60 %.
 - Seuls les noms officiels sont reconnus (noms courants refusés par le
   propriétaire le 11/11). Écartés : « La Médina » (nom commun) et
   « Azzouhour » (Tunis et Kasserine).
-- 574 noms transmis en script en ligne (`JSON_HEX_TAG`), 3,6 Ko compressés.
+- 572 noms transmis en script en ligne (`JSON_HEX_TAG`), 3,6 Ko compressés.
 
 ### Téléphone en premier
 
