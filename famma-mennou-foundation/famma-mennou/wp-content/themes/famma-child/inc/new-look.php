@@ -17,6 +17,8 @@
  * - motion      : apparitions des cartes, vol vers le panier, cœur qui pétille ;
  * - alt_photo   : seconde photo au survol, chargée au premier survol seulement ;
  * - transitions : transition de vue entre pages de la boutique (CSS seul) ;
+ * - tools       : puces rayons et budget collées sous l'en-tête, sur mobile
+ *                 (inc/new-look-tools.php) ;
  * - dock        : barre « Aujourd'hui 0 DT · À la réception », remplie côté
  *                 navigateur — jamais rendue avec un panier dans le HTML en cache.
  *
@@ -74,6 +76,8 @@ function famma_child_new_look_parts(): array {
 
 	if ( is_front_page() ) {
 		$parts[] = 'journey';
+	} else {
+		$parts[] = 'tools';
 	}
 
 	return array_values( array_filter( $parts, 'famma_child_new_look' ) );
@@ -129,7 +133,7 @@ function famma_child_enqueue_new_look(): void {
 		);
 	}
 
-	if ( array_intersect( array( 'motion', 'alt_photo', 'dock' ), $parts ) && file_exists( $dir . '/assets/js/new-look.js' ) ) {
+	if ( array_intersect( array( 'motion', 'alt_photo', 'dock', 'tools' ), $parts ) && file_exists( $dir . '/assets/js/new-look.js' ) ) {
 		wp_enqueue_script(
 			'famma-new-look',
 			$uri . '/assets/js/new-look.js',

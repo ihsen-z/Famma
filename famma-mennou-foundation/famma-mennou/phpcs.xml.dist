@@ -137,6 +137,13 @@
 				<element value="famma_child_new_look_dock_markup"/>
 				<element value="famma_child_new_look_dock"/>
 				<element value="famma_child_new_look_dock_fragment"/>
+				<element value="famma_child_pick_price_steps"/>
+				<element value="famma_child_price_steps"/>
+				<element value="famma_child_flush_price_steps"/>
+				<element value="famma_child_tools_active_category"/>
+				<element value="famma_child_tools_budget_url"/>
+				<element value="famma_child_tools_category_chips"/>
+				<element value="famma_child_new_look_tools"/>
 				<element value="famma_child_defer_image"/>
 				<element value="famma_child_remove_parent_callback"/>
 				<element value="famma_child_swap_scrollbar_script"/>

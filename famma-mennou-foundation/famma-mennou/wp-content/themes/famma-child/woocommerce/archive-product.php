@@ -94,6 +94,11 @@ do_action( 'woocommerce_before_main_content' );
 		<?php famma_child_shop_toolbar(); ?>
 	</div>
 
+	<?php
+	/** Sous le titre, avant la grille : rangée de puces du nouveau look (inc/new-look-tools.php). */
+	do_action( 'famma_child_after_shop_head' );
+	?>
+
 	<div class="famma-shop__layout">
 
 		<?php famma_child_shop_sidebar(); ?>

@@ -464,3 +464,116 @@ body.famma-nl-motion .famma-nav__ink {
 body.famma-nl-motion .famma-hero2__deck.has-tilt {
 	transition: transform var(--dur-slide) var(--ease-out);
 }
+
+/* --- Boutique : puces rayons et budget (brique tools) ---
+   Sous 1000 px seulement : au-delà, la colonne de filtres dépliée propose
+   déjà les mêmes choix. Collée sous l'en-tête, la rangée défile de côté ;
+   chaque puce est un lien (inc/new-look-tools.php). Cible tactile 48 px. */
+.famma-tools {
+	position: sticky;
+	/* Sous 1000 px, l'en-tête mesure 77 px et non --header-h (70 px) : ses
+	   cibles de 48 px, sa marge haute et basse, son filet. */
+	inset-block-start: calc(var(--sp-12) + 2 * var(--chrome-header-pad) + 1px);
+	z-index: calc(var(--z-header) - 1);
+	margin-block: calc(var(--sp-4) * -1) var(--sp-4);
+	margin-inline: calc(var(--gutter) * -1);
+	padding-block: var(--sp-2);
+	border-block-end: 1px solid var(--famma-line);
+	background: var(--famma-white);
+}
+
+.famma-tools__scroll {
+	display: flex;
+	gap: var(--sp-2);
+	padding-inline: var(--gutter);
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+	scrollbar-width: none;
+	-webkit-mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+	mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+}
+
+.famma-tools__scroll::-webkit-scrollbar {
+	display: none;
+}
+
+.famma-tools__list {
+	display: flex;
+	flex: none;
+	gap: var(--sp-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-tools__list--budget {
+	padding-inline-start: var(--sp-2);
+	border-inline-start: 1px solid var(--famma-line-field);
+}
+
+.famma-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--sp-2);
+	min-block-size: var(--sp-12);
+	padding-block: 0;
+	padding-inline: var(--sp-4) var(--sp-3);
+	border: 1px solid var(--famma-line-field);
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-white);
+	color: var(--famma-blue);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-medium);
+	white-space: nowrap;
+	text-decoration: none;
+	transition: background-color var(--dur-base), border-color var(--dur-base), color var(--dur-base);
+}
+
+.famma-chip--budget {
+	padding-inline: var(--sp-4);
+}
+
+.famma-chip__count {
+	min-inline-size: 24px;
+	padding-inline: 6px;
+	border-radius: 11px;
+	background: var(--famma-surface-icon);
+	font-size: 12px;
+	font-weight: var(--fw-semibold);
+	line-height: 22px;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-chip[aria-current] {
+	border-color: transparent;
+	background: var(--famma-blue);
+	color: var(--famma-white);
+}
+
+.famma-chip[aria-current] .famma-chip__count {
+	background: rgba(255, 255, 255, 0.16);
+}
+
+.famma-chip--budget[aria-current] {
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+}
+
+.famma-chip__off {
+	font-size: 1.15em;
+	line-height: 1;
+}
+
+@media (hover: hover) {
+	.famma-chip:not([aria-current]):hover {
+		border-color: var(--famma-blue);
+		color: var(--famma-blue);
+	}
+}
+
+@media (min-width: 1000px) {
+	.famma-tools {
+		display: none;
+	}
+}

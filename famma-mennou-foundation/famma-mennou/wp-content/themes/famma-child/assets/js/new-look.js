@@ -8,7 +8,7 @@
  * mêmes événements, après coup, pour animer.
  *
  * Chaque brique ne démarre que si le serveur a posé sa classe sur <body>
- * (famma-nl-motion, famma-nl-alt-photo, famma-nl-dock). Une erreur dans une
+ * (famma-nl-motion, famma-nl-alt-photo, famma-nl-dock, famma-nl-tools…). Une erreur dans une
  * brique ne casse pas les autres : chacune est isolée dans un try/catch.
  */
 ( function () {
@@ -479,5 +479,30 @@
 		deck.addEventListener( 'pointerleave', function () {
 			queue( null );
 		} );
+	} );
+
+	/* Puces rayons et budget : la puce active est ramenée au centre de la
+	   rangée au chargement. Chaque puce est un lien : après le clic, la
+	   nouvelle page repart avec la rangée au début, et le rayon choisi
+	   pourrait être hors de l'écran. Décalage physique (scrollLeft), juste
+	   aussi en arabe. Avec un budget choisi, c'est lui qu'on montre : il
+	   est en fin de rangée. Aucune animation : rien à couper. */
+	guard( 'puces', function () {
+		if ( ! has( 'tools' ) ) {
+			return;
+		}
+
+		var row = document.querySelector( '.famma-tools__scroll' );
+		var all = row ? row.querySelectorAll( '[aria-current]' ) : [];
+		var on = all[ all.length - 1 ];
+
+		if ( ! on || row.scrollWidth <= row.clientWidth ) {
+			return;
+		}
+
+		var r = row.getBoundingClientRect();
+		var c = on.getBoundingClientRect();
+
+		row.scrollLeft += ( c.left + c.width / 2 ) - ( r.left + r.width / 2 );
 	} );
 } )();

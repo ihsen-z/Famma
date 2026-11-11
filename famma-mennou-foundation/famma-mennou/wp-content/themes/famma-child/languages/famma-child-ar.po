@@ -643,3 +643,28 @@ msgstr[2] "زوز منتجات"
 msgstr[3] "%d منتجات"
 msgstr[4] "%d منتج"
 msgstr[5] "%d منتج"
+
+#: inc/new-look-tools.php
+msgid "Rayons et budget"
+msgstr "الأقسام والميزانية"
+
+#: inc/new-look-tools.php
+msgid "Rayons"
+msgstr "الأقسام"
+
+#: inc/new-look-tools.php
+msgid "Budget"
+msgstr "الميزانية"
+
+#: inc/new-look-tools.php
+msgid "Toutes"
+msgstr "الكل"
+
+#. translators: %s: prix plafond, par exemple « 29 DT ».
+#: inc/new-look-tools.php
+msgid "Jusqu’à %s"
+msgstr "حتى %s"
+
+#: inc/new-look-tools.php
+msgid "(retirer ce budget)"
+msgstr "(نحّي الميزانية هاذي)"

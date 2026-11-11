@@ -25,6 +25,11 @@
 		view-transition-name: famma-header;
 	}
 
+	/* Les puces de la boutique restent en place, comme l'en-tête. */
+	.famma-tools {
+		view-transition-name: famma-tools;
+	}
+
 	::view-transition-old(root) {
 		animation: famma-vt-out 160ms ease-in both;
 	}
