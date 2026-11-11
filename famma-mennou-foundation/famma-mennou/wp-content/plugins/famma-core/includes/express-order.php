@@ -421,6 +421,8 @@ final class Express_Order {
 				'stateError'    => __( 'Choisissez votre gouvernorat. / إختار الولاية متاعك.', 'famma-core' ),
 				'noMatch'       => __( 'No governorate found', 'famma-core' ),
 				'stateHint'     => __( 'Type to search…', 'famma-core' ),
+				/* translators: %s: governorate name, e.g. "Nabeul". */
+				'stateFound'    => __( 'Gouvernorat ajouté : %s. Vous pouvez le changer.', 'famma-core' ),
 				'confirmLabel'  => __( 'Confirmer ma commande / أكد طلبيتك', 'famma-core' ),
 				'retryLabel'    => __( 'Vérifier ma commande en cours / ثبت طلبيتك', 'famma-core' ),
 				'amountChanged' => __( 'Le total a été mis à jour. Vérifiez-le puis validez votre commande. تبدل المجموع، راجعو وأكّد.', 'famma-core' ),
@@ -462,6 +464,48 @@ final class Express_Order {
 				),
 			)
 		);
+
+		/*
+		 * Noms de lieux pour proposer le gouvernorat d'après la ville tapée :
+		 * des données, pas des chaînes à traduire, donc un script en ligne
+		 * plutôt que `wp_localize_script()`. `JSON_HEX_TAG` : aucun nom ne peut
+		 * fermer la balise <script>.
+		 */
+		wp_add_inline_script(
+			'famma-express',
+			'var fammaExpressPlaces = ' . wp_json_encode( self::places_for_script(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP ) . ';',
+			'before'
+		);
+	}
+
+	/**
+	 * Noms de lieux par gouvernorat, limités aux gouvernorats de la liste.
+	 *
+	 * Le filtre `famma_governorate_places` peut ajouter des noms : chacun est
+	 * nettoyé (texte brut, 60 caractères au plus) avant d'aller au navigateur.
+	 *
+	 * @return array<string, array<int, string>>
+	 */
+	private static function places_for_script(): array {
+		$states = WC()->countries->get_states( 'TN' );
+		$states = is_array( $states ) ? $states : array();
+		$out    = array();
+		foreach ( Governorate_Places::places() as $code => $names ) {
+			if ( ! isset( $states[ $code ] ) || ! is_array( $names ) ) {
+				continue;
+			}
+			$clean = array();
+			foreach ( $names as $name ) {
+				$name = is_string( $name ) ? sanitize_text_field( $name ) : '';
+				if ( '' !== $name && mb_strlen( $name ) <= 60 ) {
+					$clean[] = $name;
+				}
+			}
+			if ( $clean ) {
+				$out[ (string) $code ] = array_values( array_unique( $clean ) );
+			}
+		}
+		return $out;
 	}
 
 	/**
@@ -604,7 +648,7 @@ final class Express_Order {
 			 * Le site arabe affiche la derja par le fichier `famma-core-ar.po`.
 			 */
 			?>
-			<span class="famma-express__hint" id="<?php echo esc_attr( $hint ); ?>"><?php esc_html_e( 'Choisissez le gouvernorat. La ville ou la cité est facultative, elle aide le livreur.', 'famma-core' ); ?></span>
+			<span class="famma-express__hint" id="<?php echo esc_attr( $hint ); ?>" aria-live="polite"><?php esc_html_e( 'Choisissez le gouvernorat. La ville ou la cité est facultative, elle aide le livreur.', 'famma-core' ); ?></span>
 		</div>
 		<?php
 	}

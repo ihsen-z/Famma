@@ -190,3 +190,7 @@ msgstr "إختار الولاية. المدينة ولا الحومة موش ل�
 
 msgid "Choisissez votre gouvernorat. / إختار الولاية متاعك."
 msgstr "إختار الولاية متاعك."
+
+#. translators: %s: governorate name, e.g. "Nabeul".
+msgid "Gouvernorat ajouté : %s. Vous pouvez le changer."
+msgstr "زدنا الولاية: %s. تنجم تبدّلها."

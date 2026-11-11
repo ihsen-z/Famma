@@ -102,16 +102,23 @@ Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide s
 
 ### Tâche 4 : La ville tapée remplit le gouvernorat
 
-**Description :** les délégations de la nomenclature officielle de l'INS, en français et en arabe, sont reconnues dans le texte de l'adresse. « Hammamet » choisit Nabeul dans la liste, avec un flash orange et « Gouvernorat ajouté : Nabeul. Vous pouvez le changer. » (FR + derja). Un gouvernorat choisi à la main n'est jamais remplacé. Les données vivent dans un fichier dédié, avec la source citée en tête, filtrable par `famma_governorate_places`. Les noms courants hors liste officielle sont proposés au propriétaire au point de contrôle 2, avant d'être ajoutés. La table de la maquette n'est pas reprise.
+**Description :** les délégations de la liste officielle du Ministère de l'Intérieur (l'INS n'en publie pas), en français et en arabe, sont reconnues dans le texte de l'adresse. « Hammamet » choisit Nabeul dans la liste, avec un flash orange et « Gouvernorat ajouté : Nabeul. Vous pouvez le changer. » (FR + derja). Un gouvernorat choisi à la main n'est jamais remplacé. Les données vivent dans un fichier dédié, avec la source citée en tête, filtrable par `famma_governorate_places`. Les noms courants hors liste officielle sont proposés au propriétaire au point de contrôle 2, avant d'être ajoutés. La table de la maquette n'est pas reprise.
 
 **Critères d'acceptation :**
-- [ ] « Hammamet » → Nabeul, « Msaken » → Sousse, « جربة » → Médenine, avec le message ; un choix manuel antérieur reste en place.
-- [ ] Chaque entrée du fichier vient de la nomenclature officielle (source et date citées) ou d'une liste validée par le propriétaire.
-- [ ] La fiche produit ne s'alourdit pas de plus de 15 Ko compressés.
+- [x] « Hammamet » → Nabeul, « Msaken » → Sousse, « جربة » → Médenine, avec le message ; un choix manuel antérieur reste en place.
+- [x] Chaque entrée du fichier vient de la liste officielle (source et date citées) ou d'une liste validée par le propriétaire.
+- [x] La fiche produit ne s'alourdit pas de plus de 15 Ko compressés (3,6 Ko : 574 noms, 9,2 Ko non compressés).
 
 **Vérification :**
-- [ ] Tests Node sur un échantillon de délégations de chaque gouvernorat
-- [ ] Contrôle croisé de la liste avec la source officielle
+- [x] Tests Node : chacun des 574 noms, tapé seul, donne son gouvernorat ou rien (97/97), plus orthographes, arabe, cas ambigus
+- [x] Contrôle croisé de la liste avec la source officielle (264 paires FR/AR relues, nom arabe de chaque gouvernorat contrôlé)
+
+> Fait le 11/11 :
+> - Source : Ministère de l'Intérieur, données ouvertes « Délégations par gouvernorats de la République » (25/06/2013), 24 gouvernorats, 264 délégations. L'INS ne publie pas de liste des délégations. Les délégations créées depuis 2013 manquent ; elles s'ajoutent par le filtre `famma_governorate_places`.
+> - Formes tirées des seuls noms officiels : sans « Nord/Sud/Ville… », premier mot propre à un seul gouvernorat (« Jerba »), localités des délégations composées (Sayada, Lamta, Bouhjar, Thrayat, Boumhel), article facultatif à partir de 5 lettres (« Marsa »).
+> - Écartés : « La Médina / المدينة » (nom commun), « Azzouhour / الزهور » (Tunis et Kasserine), tout texte où deux gouvernorats arrivent au même rang (« rue de Tunis, Sfax »).
+> - Coquille de la source gardée : « Zazis » pour Zarzis (جرجيس), à corriger par le filtre si le propriétaire le valide.
+> - Message « Gouvernorat ajouté : %s. Vous pouvez le changer. », derja « زدنا الولاية: %s. تنجم تبدّلها. » à relire au point de contrôle 2.
 
 **Dépendances :** tâche 3.
 

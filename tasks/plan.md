@@ -27,7 +27,7 @@ Objectif : passer de 33 % à au moins 60 % des formulaires commencés qui devien
    - une ville connue tapée dans le texte remplit le gouvernorat, avec un flash orange et « Gouvernorat ajouté : Sousse. Vous pouvez le changer. » ; un gouvernorat choisi à la main n'est jamais remplacé ;
    - téléphone : « +216 » affiché fixe hors de la valeur, numéro groupé « XX XXX XXX » à la frappe, +216 ou 00216 collé retiré, `inputmode="numeric"`, `autocomplete="tel-national"`, même règle `^[2-579]\d{7}$` ;
    - texte en 16 px (pas de zoom sur iPhone), cibles de 48 px, propriétés CSS logiques pour l'arabe ;
-   - la table villes → gouvernorats de la maquette n'est PAS reprise : seule la nomenclature INS (tâche 4) fait foi ; les phrases en derja de la maquette sont à relire par le propriétaire.
+   - la table villes → gouvernorats de la maquette n'est PAS reprise : seule la liste officielle des délégations (Ministère de l'Intérieur, l'INS n'en publie pas ; tâche 4) fait foi ; les phrases en derja de la maquette sont à relire par le propriétaire.
 
    - **ville facultative** (réponse du 11/11) : seul le gouvernorat est exigé ; l'appel de confirmation complète l'adresse si elle manque.
 
@@ -70,7 +70,7 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 
 ### Phase 2 : corriger le formulaire
 - [x] T3 : Adresse de livraison : liste des gouvernorats et ville facultative, dans un même cadre
-- [ ] T4 : La ville tapée remplit le gouvernorat (nomenclature INS)
+- [x] T4 : La ville tapée remplit le gouvernorat (liste du Ministère de l'Intérieur)
 - [ ] T5 : Téléphone en premier et saisie adaptée au navigateur de Facebook
 - [ ] T6 : Phrase rassurante sous le téléphone, modifiable dans l'admin
 
@@ -94,7 +94,7 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 | Une erreur dans le menu empêche toute commande | Élevé | Le `<select>` natif reste dans la page ; tests Node sur chaque cas ; repli sur le select si le menu échoue |
 | Le cache LiteSpeed sert un ancien HTML avec le nouveau script | Moyen | Script compatible avec les deux gabarits ; purge après la mise en ligne |
 | OPcache garde l'ancien PHP après l'envoi | Moyen | Créer `~/.lsphp_restart.txt`, vérifier la version servie |
-| Liste des délégations erronée ou inventée | Moyen | Nomenclature officielle de l'INS uniquement, source citée ; les noms courants sont validés par le propriétaire |
+| Liste des délégations erronée ou inventée | Moyen | Liste officielle du Ministère de l'Intérieur uniquement, source citée ; les noms courants sont validés par le propriétaire |
 | La correction arrive en pleine campagne et brouille le verdict du 15/11 | Faible | Lecture des chiffres par date, avant et après la mise en ligne |
 | Une double commande en cas de réseau lent | Élevé | Parcours d'envoi et registre inchangés ; tests d'intégration express rejoués |
 | Un zip avec des entrées de dossier casse les droits en production | Élevé | Zip sans entrées de dossier, comme pour les lots précédents |

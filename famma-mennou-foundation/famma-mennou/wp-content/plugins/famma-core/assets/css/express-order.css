@@ -187,6 +187,25 @@
 	box-shadow: none;
 }
 
+/* Gouvernorat proposé d'après la ville tapée : la liste s'allume puis revient à sa teinte. */
+.famma-express__address .famma-express__address-box select.famma-express__flash {
+	animation: famma-express-flash 1.5s ease-out;
+}
+
+@keyframes famma-express-flash {
+	from {
+		background: rgba(255, 122, 0, 0.28);
+	}
+}
+
+/* Sans animation : une teinte fixe le temps de la proposition. */
+@media (prefers-reduced-motion: reduce) {
+	.famma-express__address .famma-express__address-box select.famma-express__flash {
+		animation: none;
+		background: rgba(255, 122, 0, 0.1);
+	}
+}
+
 .famma-express__hint {
 	color: var(--famma-text-2, #56617A);
 	font-size: var(--fs-caption, 0.875rem);

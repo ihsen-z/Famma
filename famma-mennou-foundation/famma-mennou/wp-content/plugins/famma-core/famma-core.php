@@ -49,6 +49,7 @@ require_once __DIR__ . '/includes/order-channel-list.php';
 require_once __DIR__ . '/includes/order-note.php';
 require_once __DIR__ . '/includes/product-sizes.php';
 require_once __DIR__ . '/includes/product-sizes-admin.php';
+require_once __DIR__ . '/includes/governorate-places.php';
 require_once __DIR__ . '/includes/express-order.php';
 require_once __DIR__ . '/includes/express-checkout.php';
 require_once __DIR__ . '/includes/express-idempotency.php';

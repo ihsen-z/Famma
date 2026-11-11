@@ -20,6 +20,34 @@ const formSource = fs.readFileSync(path.join(plugin, 'includes/express-order.php
 const countryField = formSource.match(/<input\s+type="hidden"\s+name="billing_country"\s+value="([^"]+)"\s*\/>/);
 assert.ok(countryField, 'billing_country hidden field present in the PHP form');
 
+// Ville → gouvernorat (lot 23, T4) : la vraie liste du formulaire et les vrais lieux.
+const corePhp = fs.readFileSync(path.join(plugin, 'famma-core.php'), 'utf8');
+const pairsIn = (text, from, to) => {
+  const start = text.indexOf(from);
+  const body = text.slice(start, text.indexOf(to, start));
+  return [...body.matchAll(/'(TN-\d{2})' => '([^']+)',/g)].map(m => [m[1], m[2]]);
+};
+const governorateLabels = pairsIn(corePhp, 'public function governorates(', 'return $states;');
+const governorateArabic = Object.fromEntries(pairsIn(formSource, 'function governorate_arabic_names', ');'));
+assert.equal(governorateLabels.length, 24, '24 gouvernorats lus dans Tunisia::governorates()');
+assert.equal(Object.keys(governorateArabic).length, 24, '24 noms arabes lus dans governorate_arabic_names()');
+
+/**
+ * Lieux réels : `Governorate_Places::places()` exécuté par PHP (FAMMA_PHP =
+ * chemin de php.exe, sinon `php`). Sans PHP, le test échoue : pas de copie
+ * des données dans ce fichier.
+ */
+function realPlaces() {
+  const php = process.env.FAMMA_PHP || 'php';
+  const ext = path.join(path.dirname(php), 'ext');
+  const args = fs.existsSync(path.join(ext, 'php_mbstring.dll')) ? ['-n', '-d', 'extension_dir=' + ext, '-d', 'extension=mbstring'] : [];
+  const code = 'define("ABSPATH", "x"); function apply_filters($h, $v) { return $v; } require $argv[1];'
+    + ' echo json_encode(Famma\\Core\\Governorate_Places::places(), JSON_UNESCAPED_UNICODE);';
+  const out = require('node:child_process').execFileSync(php, [...args, '-r', code, '--', path.join(plugin, 'includes/governorate-places.php')], { encoding: 'utf8' });
+  return JSON.parse(out);
+}
+const placesData = realPlaces();
+
 let sequence = 0;
 
 /** Élément DOM minimal : attributs, classes, écouteurs, enfants. */
@@ -94,7 +122,9 @@ function setup(responses = [], options = {}) {
   const address = element('input', options.address || '');
   // `name` comme dans le vrai DOM : le script reconnaît le gouvernorat par son nom à l'événement `change`.
   state.name = 'billing_state'; address.name = 'billing_address_1';
-  if (options.address !== undefined) inputs.billing_address_1 = address;
+  if (options.address !== undefined || options.places) inputs.billing_address_1 = address;
+  // Indication sous l'adresse, remplacée par « Gouvernorat ajouté : … » quand la ville est reconnue.
+  const hint = element('span'); hint.textContent = 'Choisissez le gouvernorat.';
   // Champs cachés de <wc-order-attribution-inputs> (WooCommerce), quand l'élément est dans le formulaire.
   Object.entries(options.extraInputs || {}).forEach(([k, v]) => { inputs[k] = element('input', v); });
   const map = { '.famma-express__submit': button, '.famma-express__notices': notices, '.famma-express__info': info,
@@ -120,6 +150,17 @@ function setup(responses = [], options = {}) {
     return [];
   };
   form.reportValidity = () => true;
+  if (options.places) {
+    // Gabarit 0.3.9 : liste native avec ses 24 options (intitulé + nom arabe en data-alt).
+    state.options = governorateLabels.map(([value, text]) => ({ value, text, getAttribute: k => (k === 'data-alt' ? governorateArabic[value] : null) }));
+    state.options.unshift({ value: '', text: 'Gouvernorat', getAttribute: () => null });
+    Object.defineProperty(state, 'selectedIndex', { get() { return state.options.findIndex(o => o.value === state.value); } });
+    state.setAttribute('aria-describedby', 'famma-express-address-hint');
+    // Le `change` envoyé par le script remonte au formulaire, comme dans le vrai DOM.
+    state.dispatchEvent = e => { state.dispatched = (state.dispatched || 0) + 1; state.fire(e.type); form.fire(e.type, { target: state }); return true; };
+    map['select[name="billing_state"]:not([data-famma-combo])'] = state;
+    map['input[name="billing_address_1"]'] = address;
+  }
 
   const calls = [], events = [], created = [], blocks = [];
   const body = element('body');
@@ -127,14 +168,18 @@ function setup(responses = [], options = {}) {
   const document = {
     body: options.noBody ? null : body, documentElement, activeElement: null,
     querySelector(s) { return s === '.famma-express__form' ? form : s === 'form.cart input.qty' ? cartQty : null; },
-    getElementById(k) { return k === 'famma-express-billing-phone-error' ? phoneError : null; },
+    getElementById(k) { return k === 'famma-express-billing-phone-error' ? phoneError : (k === 'famma-express-address-hint' ? hint : null); },
     createElement(tag) { const e = element(tag); created.push(e); return e; },
     // Envois refusés signalés au journal des visites (lot 23, `famma:express-error`).
     // Array.from : tableau de l'hôte, comparable par deepStrictEqual (le bac à sable a son propre Array).
     dispatchEvent(e) { if (e.type === 'famma:express-error') blocks.push(Array.from(e.detail.fields)); return true; },
   };
+  const timers = [];
   const window = {
     location: { href: '' },
+    // Minuteries manuelles : `runTimers()` joue celles en attente (pause de frappe, fin du flash).
+    setTimeout(cb) { timers.push(cb); return timers.length; },
+    clearTimeout(id) { if (id) timers[id - 1] = null; },
     sessionStorage: {
       getItem(k) { if (options.storageBlocked) throw Error('blocked'); return storage.has(k) ? storage.get(k) : null; },
       setItem(k, v) { if (options.storageBlocked) throw Error('blocked'); storage.set(k, String(v)); },
@@ -146,6 +191,7 @@ function setup(responses = [], options = {}) {
   // Bibliothèque Meta chargée : fbevents.js pose callMethod sur la file fbq.
   if (options.pixel !== false && options.fbqLoaded) window.fbq.callMethod = () => {};
   if (options.wcAttribution) window.wc_order_attribution = options.wcAttribution;
+  if (options.places && !options.noPlacesData) window.fammaExpressPlaces = placesData;
   class MockFormData {
     constructor(target) {
       this.values = [];
@@ -163,7 +209,7 @@ function setup(responses = [], options = {}) {
     nameError: 'Nom manquant', sizeError: 'Taille manquante', confirmLabel: 'Confirmer', retryLabel: 'Vérifier ma commande en cours', amountChanged: 'Le total a été mis à jour.',
     changed: 'Commande changée', networkError: 'Connexion impossible', otherItems: 'Seul cet article est commandé ici',
     modalTitle: 'Nouveau total', modalClose: 'Fermer', finalLabel: 'Valider ma commande – %s', pending: 'En cours',
-    recovery: 'Résultat inconnu', storageError: 'Stockage indisponible',
+    recovery: 'Résultat inconnu', storageError: 'Stockage indisponible', stateFound: 'Gouvernorat ajouté : %s. Vous pouvez le changer.',
     recapLabels: { product: 'Article', quantity: 'Quantité', amount: 'Montant', subtotal: 'Sous-total', discount: 'Remises', shipping: 'Livraison', fees: 'Frais', tax: 'Taxes', total: 'Total' },
     price: { decimals: 3, decimal: ',', thousand: ' ', format: '%2$s %1$s', symbol: 'DT' },
   };
@@ -193,7 +239,11 @@ function setup(responses = [], options = {}) {
       text: find('famma-express-modal__confirm-text'), content: find('famma-express-modal__content') };
   };
   return { sizeGroup, sizeError, sizeRadios, cartButton, terms, recap, qty, phone, phoneError, name, state, address, total, button, submitText, notices, info, minus, plus, cartQty, form,
-    window, calls, events, blocks, storage, submit, modal, documentElement,
+    window, calls, events, blocks, storage, submit, modal, documentElement, hint,
+    // Frappe dans « Ville, cité, rue… » : `input` à chaque touche, `change` en fin de saisie.
+    type(text) { address.value = text; address.fire('input'); },
+    leave() { address.fire('change'); },
+    runTimers() { timers.splice(0).forEach(cb => cb && cb()); },
     urls: () => calls.map(c => c.url),
     record: () => JSON.parse(storage.get('famma_express_intent_123')) };
 }
@@ -926,6 +976,136 @@ async function test(name, run) {
     s.submit(); await flush();
     assert.equal(field(s.calls.find(c => c.url === '/express'), 'billing_state'), 'TN-21');
     assert.equal(s.window.location.href, accepted.redirect);
+  });
+
+  // ── Lot 23, tâche 4 : la ville tapée propose le gouvernorat (liste officielle des délégations) ──
+  const found = name => `Gouvernorat ajouté : ${name}. Vous pouvez le changer.`;
+  const guess = (text, extra = {}) => {
+    const s = setup([], { places: true, state: '', ...extra });
+    s.address.value = text; s.leave();
+    return s;
+  };
+
+  await test('Ville : « Hammamet » remplit Nabeul après la pause de frappe, avec le message et le flash', async () => {
+    const s = setup([], { places: true, state: '' });
+    s.type('Hammamet');
+    assert.equal(s.state.value, '', 'rien pendant la frappe');
+    s.runTimers();
+    assert.equal(s.state.value, 'TN-21');
+    assert.equal(s.hint.textContent, found('Nabeul'));
+    assert.ok(s.state.classList.contains('famma-express__flash'), 'la liste s’allume');
+    assert.equal(s.state.dispatched, 1, 'un seul change, comme un choix dans la liste');
+    s.runTimers();
+    assert.ok(!s.state.classList.contains('famma-express__flash'), 'puis s’éteint');
+  });
+
+  await test('Ville : « Msaken » en fin de saisie (collage, remplissage du navigateur) → Sousse sans attendre', async () => {
+    const s = guess('Msaken');
+    assert.equal(s.state.value, 'TN-51');
+    assert.equal(s.hint.textContent, found('Sousse'));
+  });
+
+  await test('Ville : en arabe « جربة » → Médenine, aussi avec ه pour ة et sans tatwil', async () => {
+    const s = guess('جربة');
+    assert.equal(s.state.value, 'TN-82');
+    assert.equal(s.hint.textContent, found('Médenine'));
+    assert.equal(guess('جربه حومة السوق').state.value, 'TN-82');
+    assert.equal(guess('قابس').state.value, 'TN-81', 'قابـس dans la source');
+    assert.equal(guess('صفاقس').state.value, 'TN-61', 'nom arabe de la liste (data-alt)');
+  });
+
+  await test('Ville : majuscules, accents, apostrophes, articles et noms composés', async () => {
+    [
+      ['HAMMAMET', 'TN-21'], ['M’saken', 'TN-51'], ["M'nihla", 'TN-12'], ['Le Kef', 'TN-33'], ['El Kef', 'TN-33'],
+      ['kef', 'TN-33'], ['beja', 'TN-31'], ['Mourouj 3', 'TN-13'], ['Ksar Helal', 'TN-52'], ['Sahloul, Hammam Sousse', 'TN-51'],
+      ['Douz', 'TN-73'], ['Bizerte', 'TN-23'], ['Sayada', 'TN-52'], ['cité Ennour, Sfax', 'TN-61'],
+    ].forEach(([text, code]) => assert.equal(guess(text).state.value, code, text));
+  });
+
+  await test('Ville : chacun des noms officiels, tapé seul, donne son gouvernorat ou rien, jamais un autre', async () => {
+    const s = setup([], { places: true, state: '' });
+    const misses = [];
+    Object.entries(placesData).forEach(([code, names]) => {
+      let fr = 0, ar = 0;
+      names.forEach(name => {
+        s.state.value = ''; s.state.fire('change');
+        s.address.value = name; s.leave();
+        if (s.state.value && s.state.value !== code) misses.push(`${name} → ${s.state.value} (attendu ${code})`);
+        if (s.state.value === code) { if (/[؀-ۿ]/.test(name)) ar++; else fr++; }
+      });
+      assert.ok(fr > 0 && ar > 0, `${code} : au moins un nom reconnu en français et en arabe`);
+    });
+    assert.deepEqual(misses, []);
+  });
+
+  await test('Ville : prudence, deux gouvernorats au même rang ou nom commun → aucun remplissage', async () => {
+    ['Rue de Tunis, Sfax', 'Azzouhour', 'Médina', 'المدينة', 'Ksar Said', 'Sidi', 'Hammam', 'Sahloul 3', ''].forEach(text => {
+      const s = guess(text);
+      assert.equal(s.state.value, '', text);
+      assert.equal(s.state.dispatched, undefined, text);
+      assert.equal(s.hint.textContent, 'Choisissez le gouvernorat.', text);
+    });
+  });
+
+  await test('Ville : un gouvernorat choisi à la main n’est jamais remplacé', async () => {
+    const s = setup([], { places: true, state: '' });
+    s.state.value = 'TN-11'; s.state.fire('change');
+    s.type('Hammamet'); s.runTimers(); s.leave();
+    assert.equal(s.state.value, 'TN-11');
+    assert.equal(s.hint.textContent, 'Choisissez le gouvernorat.');
+  });
+
+  await test('Ville : gouvernorat déjà rempli au chargement (retour, remplissage du navigateur) → gardé', async () => {
+    const s = guess('Hammamet', { state: 'TN-51' });
+    assert.equal(s.state.value, 'TN-51');
+    assert.equal(s.state.dispatched, undefined);
+  });
+
+  await test('Ville : la proposition suit la frappe ; changée à la main elle reste ; remise à vide elle reprend', async () => {
+    const s = setup([], { places: true, state: '' });
+    s.type('Hammamet'); s.runTimers();
+    s.type('Sfax'); s.runTimers();
+    assert.equal(s.state.value, 'TN-61', 'la ville corrigée corrige la proposition');
+    s.type('Sfax, rue sans nom'); s.runTimers();
+    assert.equal(s.state.value, 'TN-61', 'un texte qui ne reconnaît plus rien garde la proposition');
+    s.state.value = 'TN-11'; s.state.fire('change');
+    assert.equal(s.hint.textContent, 'Choisissez le gouvernorat.', 'choix à la main : l’indication revient');
+    s.type('Bizerte'); s.runTimers();
+    assert.equal(s.state.value, 'TN-11');
+    s.state.value = ''; s.state.fire('change');
+    s.type('Bizerte'); s.runTimers();
+    assert.equal(s.state.value, 'TN-23', 'remis sur « Gouvernorat » : la proposition reprend');
+  });
+
+  await test('Ville : la proposition efface l’erreur du gouvernorat, la commande part avec TN-21 et la ville', async () => {
+    const s = setup([token, quote(), accepted], { places: true, state: '' });
+    s.submit(); await flush();
+    assert.equal(s.state.getAttribute('aria-invalid'), 'true');
+    s.type('Hammamet'); s.runTimers();
+    assert.equal(s.state.getAttribute('aria-invalid'), 'false');
+    assert.ok(!s.state.classList.contains('famma-express__invalid'));
+    s.submit(); await flush();
+    const sent = s.calls.find(c => c.url === '/express');
+    assert.equal(field(sent, 'billing_state'), 'TN-21');
+    assert.equal(field(sent, 'billing_address_1'), 'Hammamet');
+    assert.equal(s.window.location.href, accepted.redirect);
+    assert.deepEqual(s.blocks, [['state']]);
+  });
+
+  await test('Ville : sans données de lieux (page en cache), seuls les intitulés de la liste ; liste désactivée → rien', async () => {
+    assert.equal(guess('Sousse', { noPlacesData: true }).state.value, 'TN-51');
+    assert.equal(guess('Hammamet', { noPlacesData: true }).state.value, '');
+    const s = setup([], { places: true, state: '' });
+    s.state.disabled = true;
+    s.address.value = 'Hammamet'; s.leave();
+    assert.equal(s.state.value, '', 'pendant un envoi en cours, rien ne bouge');
+  });
+
+  await test('Gabarit : indication annoncée (aria-live), lieux en script en ligne protégé, message traduisible', async () => {
+    assert.ok(/class="famma-express__hint"[^\n]*aria-live="polite"/.test(formSource), 'aria-live sur l’indication');
+    assert.ok(/'var fammaExpressPlaces = ' \. wp_json_encode\( self::places_for_script\(\), [^)]*JSON_HEX_TAG/.test(formSource), 'JSON_HEX_TAG');
+    assert.ok(/wp_add_inline_script\(\s*'famma-express',[\s\S]*?'before'\s*\)/.test(formSource), 'avant le script');
+    assert.ok(/'stateFound'\s*=> __\( 'Gouvernorat ajouté : %s\. Vous pouvez le changer\.', 'famma-core' \)/.test(formSource));
   });
 
   console.log(`RESULT ${passed}/${passed + failed} scénarios front réussis${failed ? `, ${failed} ÉCHEC(S)` : ''}. Aucun réseau WooCommerce ni Meta utilisé.`);
