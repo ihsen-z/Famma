@@ -1,6 +1,6 @@
 # Changelog — FAMMA Core
 
-## 0.3.9 — 2026-11-11 (préparée, pas encore en production)
+## 0.3.9 — 2026-11-11 (en production depuis le 11/11/2026)
 
 Formulaire de commande express repensé pour le navigateur intégré de
 Facebook (lot 23). Objectif : faire passer les formulaires commencés qui

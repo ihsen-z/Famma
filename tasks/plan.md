@@ -83,8 +83,8 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 - [x] T8 : Version 0.3.9, traductions, contrôles du projet et paquet de mise en ligne (intégration Docker verte le 11/11 ; `test-capi-fbc-integration` échoue aussi en 0.3.8, hors lot)
 
 ### Point de contrôle 3 : prêt à mettre en ligne
-- [x] Tous les contrôles du § 11 de ClaudeMemo sont verts : `php -l`, phpcs WordPress, `WP_DEBUG` sans notice, parcours COD complet jusqu'à « Livrée », Purchase envoyé une seule fois (site Local en ligne de commande, 11/11 ; vrai navigateur et Docker restent à faire)
-- [ ] Feu vert explicite du propriétaire, puis mise en ligne : SHA vérifiés, `~/.lsphp_restart.txt`, purge LiteSpeed
+- [x] Tous les contrôles du § 11 de ClaudeMemo sont verts : `php -l`, phpcs WordPress, `WP_DEBUG` sans notice, parcours COD complet jusqu'à « Livrée », Purchase envoyé une seule fois (site Local en ligne de commande et intégration Docker, 11/11 ; fiche réelle contrôlée en production, sans envoi)
+- [x] Feu vert explicite du propriétaire, puis mise en ligne : SHA vérifiés, `~/.lsphp_restart.txt`, purge LiteSpeed *(fait le 11/11 vers 17:50-18:00, 19/19 fichiers conformes ; détail dans `tasks/todo.md`)*
 - [ ] Mesure à J+7 : formulaire commencé → commande ≥ 60 %, blocages `state` proches de 0, visite → commande ≥ 2,5 %
 
 ## Risques et parades

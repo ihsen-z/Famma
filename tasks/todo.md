@@ -26,7 +26,7 @@ Contrôles communs à chaque tâche (ClaudeMemo § 3 et § 11) :
 - [x] `node scripts/test-famma-express-v2.js` : 80/80, dont 11 nouveaux cas « Journal »
 - [x] `node scripts/test-visitor-journal.js` (nouveau) : 4/4
 - [x] `php scripts/test-visitor-collector-isolated.php` (nouveau) : 20/20, un code inconnu est rejeté et un lot sans code valable n'écrit rien
-- [ ] Contrôle manuel en local : la chronologie d'une visite affiche le blocage (au point de contrôle 1)
+- [x] Contrôle manuel en local : la chronologie d'une visite affiche le blocage *(point de contrôle 1, site Local, 11/11)*
 
 **Dépendances :** aucune.
 
@@ -51,8 +51,8 @@ Fait : bloc « Formulaire express : de commencé à commandé » dans l'onglet S
 
 **Vérification :**
 - [x] `php scripts/test-visitor-form-funnel-isolated.php` (nouveau) : 18/18 sur des événements fictifs marqués « test »
-- [ ] Requête SQL lancée sur la base MySQL locale : non faite, le site Local était arrêté (point de contrôle 1)
-- [ ] Contrôle manuel dans l'admin locale avec `WP_DEBUG` actif, `debug.log` propre (point de contrôle 1)
+- [x] Requête SQL lancée sur la base MySQL locale *(point de contrôle 1, 11/11 : 7 et 30 jours sans erreur SQL)*
+- [x] Contrôle manuel dans l'admin locale avec `WP_DEBUG` actif, `debug.log` propre *(rendu en ligne de commande sur le site Local le 11/11, `debug.log` inchangé ; écran réel vu en production après la mise en ligne)*
 
 **Dépendances :** tâche 1.
 
@@ -94,7 +94,7 @@ Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide s
 **Vérification :**
 - [x] `node scripts/test-famma-express-v2.js` : 85/85, dont 5 nouveaux cas « Adresse » et « Gabarit »
 - [x] Aperçu statique avec la vraie feuille de style à 390 px, FR et arabe (cadre, erreur, liste à droite en arabe)
-- [ ] Contrôle sur la vraie fiche produit en local (point de contrôle 2)
+- [x] Contrôle sur la vraie fiche produit *(fait en production le 11/11 après la mise en ligne, sans envoi : téléphone, nom, adresse ; « +216 » ; « Hammamet » donne Nabeul avec le message)*
 
 **Dépendances :** tâche 1.
 
@@ -307,6 +307,17 @@ Rien ne part en production sans le feu vert explicite du propriétaire.
 **Taille :** M.
 
 ### Point de contrôle 3 : prêt à mettre en ligne
-- [ ] Tous les critères des tâches 1 à 8 remplis
-- [ ] Feu vert du propriétaire, puis mise en ligne : SHA vérifiés en production avant et après, `~/.lsphp_restart.txt`, purge LiteSpeed, une commande test depuis l'appli Facebook du propriétaire, annulée ensuite
+- [ ] Tous les critères des tâches 1 à 8 remplis *(restent le clavier réel dans l'appli Facebook et l'écran d'admin en arabe : essais du propriétaire sur son téléphone)*
+- [x] Feu vert du propriétaire (« Vas-y, on met en ligne », 11/11), puis mise en ligne : SHA vérifiés en production avant et après, `~/.lsphp_restart.txt`, purge LiteSpeed
+- [ ] Commande test depuis l'appli Facebook du propriétaire, annulée ensuite *(sa décision : elle envoie un OrderPlaced à Meta)*
+
+> **Mise en ligne faite le 11/11/2026, vers 17:50-18:00**, dans la session DirectAdmin ouverte par le propriétaire :
+> - avant l'envoi : les 15 fichiers remplacés étaient ceux de la 0.3.8 (`famma-core.php` `3b7d2bee…`, les 14 autres aux empreintes du zip de retour arrière) ;
+> - `famma-formulaire-express-2026-11-11.zip` (`be29c897…`) envoyé dans `wp-content/`, empreinte vérifiée sur le serveur, extrait en « Merge and overwrite » ;
+> - après extraction : 19/19 fichiers aux empreintes du paquet (`famma-core.php` `51c2cd38…`), dossiers toujours en 755 ;
+> - `~/.lsphp_restart.txt` réécrit (« lot23 0.3.9 »), zip rangé dans `/backups`, LiteSpeed purgé ;
+> - Extensions : FAMMA Core 0.3.9 ; fiche, accueil et boutique en 200 avec `ver=0.3.9`, pixel présent ; assets servis aux empreintes du paquet ;
+> - FAMMA → Pages (champ de la phrase), FAMMA → Visiteurs (bloc « de commencé à commandé »), Mesure : « tout va bien ».
+>
+> Référence de départ (Synthèse, 7 jours, lue juste après la mise en ligne) : V-Line 45,5 % (20 commandes / 44 commencés), Confort 24,4 % (10 / 41), tous produits 35,9 % (33 / 92) ; 0 envoi refusé noté (la mesure `form_error` démarre avec la 0.3.9).
 - [ ] À J+7 : formulaire commencé → commande ≥ 60 %, blocages `state` proches de 0, visite → commande ≥ 2,5 %
