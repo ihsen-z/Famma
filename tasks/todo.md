@@ -242,13 +242,18 @@ Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide s
 Rien ne part en production sans le feu vert explicite du propriétaire.
 
 **Critères d'acceptation :**
-- [ ] `php -l` et phpcs WordPress propres ; `WP_DEBUG` actif et `debug.log` sans notice, warning ni deprecated.
-- [ ] Parcours COD complet en local : commande express, puis confirmée, expédiée, livrée ; « livrée » marque la commande payée et envoie le Purchase une seule fois.
-- [ ] Le paquet contient exactement les fichiers modifiés, avec leurs SHA, et un retour arrière vers 0.3.8.
+- [ ] `php -l` et phpcs WordPress propres ; `WP_DEBUG` actif et `debug.log` sans notice, warning ni deprecated. *(`php -l` 16 fichiers et phpcs 11 fichiers du plugin : propres ; `debug.log` : site local arrêté le 11/11, à faire)*
+- [ ] Parcours COD complet en local : commande express, puis confirmée, expédiée, livrée ; « livrée » marque la commande payée et envoie le Purchase une seule fois. *(site local arrêté, à faire)*
+- [x] Le paquet contient exactement les fichiers modifiés, avec leurs SHA, et un retour arrière vers 0.3.8.
 
 **Vérification :**
-- [ ] Tous les tests Node, PHP et d'intégration
-- [ ] Liste des fichiers du zip comparée à `git diff --name-only origin/main`
+- [ ] Tous les tests Node, PHP et d'intégration *(Node et PHP isolés verts : 106, 7, 20, 18, 21, 12, 13, CAPI 54 ; intégration Docker non lancée)*
+- [x] Liste des fichiers du zip comparée à `git diff --name-only 3e34084` (= origin/main = prod 0.3.8) : identique, contrôlée par `build.py`
+
+> Fait le 11/11 :
+> - Version 0.3.9, CHANGELOG, `.mo` recompilés (23a5881). Les `.mo` de la 0.3.8 correspondaient exactement à leurs `.po` : seules les chaînes du lot changent.
+> - Paquet `deploy-lot23-formulaire/` (ignoré par git) : zip de 19 fichiers (SHA 9e1c003b…), retour arrière de 15 fichiers tirés de 3e34084 (SHA 02551c3e…), `CONTROLE.txt`, `famma-core.php.diff.txt`, `build.py`, `MARCHE-A-SUIVRE.md` (purge LiteSpeed obligatoire ; commande d'essai = décision du propriétaire, car elle envoie un OrderPlaced).
+> - Aucune modification de base : `form_error` tient dans `event varchar(32)`.
 
 **Dépendances :** tâches 1 à 7.
 
