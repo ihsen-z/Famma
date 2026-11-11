@@ -71,6 +71,13 @@ Fait : bloc « Formulaire express : de commencé à commandé » dans l'onglet S
 
 ## Phase 2 : corriger le formulaire
 
+> **Mise à jour du 11/11 : champ ville** (décision 5 de `tasks/plan.md`, maquette fiche produit v3). Les tâches 3 à 5 seront réécrites après deux réponses du propriétaire : forme du gouvernorat (menu à recherche ou liste simple) et ville obligatoire ou non. Ce qui change déjà :
+> - T3 : le gouvernorat et le texte « Ville, cité, rue… » partagent un cadre et un libellé « Adresse de livraison » ; le texte part dans `billing_address_1`.
+> - T4 : la reconnaissance des villes (nomenclature INS) se fait dans le texte de l'adresse ; elle remplit le gouvernorat (flash + message « Gouvernorat ajouté : … Vous pouvez le changer. ») sans jamais remplacer un choix manuel.
+> - T5 : téléphone avec « +216 » fixe, groupage « XX XXX XXX », `inputmode="numeric"`, `autocomplete="tel-national"` ; texte en 16 px, cibles de 48 px.
+> - Messages d'erreur en FR + derja : « Choisissez le gouvernorat et écrivez la ville ou la cité. », « Choisissez votre gouvernorat. », « Écrivez la ville ou la cité. » (derja à relire par le propriétaire).
+> - `form_error` reçoit un code de plus, `address`, pour le nouveau champ.
+
 ### Tâche 3 : Le gouvernorat tapé est reconnu à l'envoi et ne bloque plus
 
 **Description :** au moment de l'envoi (bouton ou touche « Aller » du clavier) et à la sortie du champ, le texte tapé est reconnu :

@@ -22,6 +22,14 @@ Objectif : passer de 33 % à au moins 60 % des formulaires commencés qui devien
 2. **Ordre des champs** : téléphone en premier, puis nom, puis gouvernorat. Même si le client s'arrête, son numéro arrive dans « Saisies à relancer ».
 3. **Phrase rassurante** sous le téléphone, en FR et en derja, modifiable dans FAMMA → Pages → Fiche produit. Si elle est vide, rien n'est affiché.
 4. **Mise en ligne** dès que la correction est prête et testée, avec le feu vert explicite du propriétaire. Le verdict du 15/11 lira les chiffres avant et après, jour par jour.
+5. **Champ ville** (11/11, réponse « Avec champ ville » donnée à la session de la maquette animée, fiche produit v3 : https://claude.ai/artifact/58m2ku79Bz8NEiidPZaVyd) :
+   - un seul libellé « Adresse de livraison » / « عنوان التوصيل » ; dans un même cadre, la liste des gouvernorats (option vide « Gouvernorat » / « الولاية ») et un texte « Ville, cité, rue… » / « المدينة، الحومة، النهج… » ;
+   - une ville connue tapée dans le texte remplit le gouvernorat, avec un flash orange et « Gouvernorat ajouté : Sousse. Vous pouvez le changer. » ; un gouvernorat choisi à la main n'est jamais remplacé ;
+   - téléphone : « +216 » affiché fixe hors de la valeur, numéro groupé « XX XXX XXX » à la frappe, +216 ou 00216 collé retiré, `inputmode="numeric"`, `autocomplete="tel-national"`, même règle `^[2-579]\d{7}$` ;
+   - texte en 16 px (pas de zoom sur iPhone), cibles de 48 px, propriétés CSS logiques pour l'arabe ;
+   - la table villes → gouvernorats de la maquette n'est PAS reprise : seule la nomenclature INS (tâche 4) fait foi ; les phrases en derja de la maquette sont à relire par le propriétaire.
+
+   Choix technique : le texte part dans `billing_address_1` (champ « Adresse » standard de WooCommerce, déjà non obligatoire pour la commande express). Il laisse `billing_city` propre pour la CAPI (`ct`) : la tâche 4 pourra y mettre le nom officiel de la délégation reconnue.
 
 ## Décisions d'architecture
 
@@ -91,6 +99,9 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 | Le test réel dans l'appli Facebook n'est possible qu'en production | Moyen | Émulation locale, puis une commande test sur le téléphone du propriétaire après la mise en ligne, annulée ensuite |
 
 ## Questions ouvertes
+
+- **Forme du gouvernorat** (décision 1 contre décision 5) : le menu à recherche gardé le 11/11, ou la liste simple de la maquette, remplie par le champ ville ?
+- **Ville obligatoire ?** La maquette refuse une ville de moins de 3 caractères ; l'objectif du lot est qu'aucun champ ne bloque sans raison.
 
 - **Texte de la phrase rassurante** : Claude propose une version FR et derja, le propriétaire la valide ou la réécrit dans l'admin.
 - **Noms courants des villes** hors nomenclature officielle (Djerba, El Mourouj, Ennasr…) : liste proposée au point de contrôle 2, à valider.
