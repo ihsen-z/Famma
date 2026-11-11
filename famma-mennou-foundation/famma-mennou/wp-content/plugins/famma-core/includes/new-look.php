@@ -137,6 +137,10 @@ final class New_Look {
 				'label' => __( 'Boutique : bloc « Comment commander »', 'famma-core' ),
 				'help'  => __( 'En bas de la boutique et des rayons, trois étapes sur une bande marine : commander, l’appel de confirmation, le paiement au livreur. Les textes se modifient plus bas, dans « Boutique — bloc Comment commander ».', 'famma-core' ),
 			),
+			'ledger'      => array(
+				'label' => __( 'Fiche produit : bande « Livraison 0 DT · Avant réception 0 DT »', 'famma-core' ),
+				'help'  => __( 'Sous le prix, un petit tableau : prix du produit, livraison 0 DT, 0 DT avant de recevoir, montant à payer au livreur. Les zéros ne s’affichent que s’ils sont vrais (livraison gratuite et paiement à la livraison activés dans WooCommerce). Textes dans « Fiche produit ».', 'famma-core' ),
+			),
 			'journey'     => array(
 				'label' => __( 'Accueil : bloc « Vous payez à la livraison » en parcours animé', 'famma-core' ),
 				'help'  => __( 'Le bloc déjà présent dans la page d’accueil devient une bande marine : une route relie les étapes, qui se cochent au défilement. Ses textes se modifient toujours dans l’éditeur de la page d’accueil.', 'famma-core' ),

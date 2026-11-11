@@ -21,6 +21,8 @@
  *                 (inc/new-look-tools.php) ;
  * - how         : bloc « Comment commander » en bas de la boutique
  *                 (inc/new-look-how.php) ;
+ * - ledger      : fiche produit, bande « Livraison 0 DT · Avant réception
+ *                 0 DT » sous le prix (inc/new-look-ledger.php) ;
  * - dock        : barre « Aujourd'hui 0 DT · À la réception », remplie côté
  *                 navigateur — jamais rendue avec un panier dans le HTML en cache.
  *
@@ -70,6 +72,11 @@ function famma_child_new_look_page(): bool {
  * @return array<int, string>
  */
 function famma_child_new_look_parts(): array {
+	if ( function_exists( 'is_product' ) && is_product() ) {
+		// La fiche ne reçoit que la bande « 0 DT » : ni apparitions, ni script.
+		return array_values( array_filter( array( 'ledger' ), 'famma_child_new_look' ) );
+	}
+
 	if ( ! famma_child_new_look_page() ) {
 		return array();
 	}
@@ -118,7 +125,16 @@ function famma_child_enqueue_new_look(): void {
 	$dir = get_stylesheet_directory();
 	$uri = get_stylesheet_directory_uri();
 
-	if ( file_exists( $dir . '/assets/css/new-look.css' ) ) {
+	if ( in_array( 'ledger', $parts, true ) && file_exists( $dir . '/assets/css/new-look-ledger.css' ) ) {
+		wp_enqueue_style(
+			'famma-new-look-ledger',
+			$uri . '/assets/css/new-look-ledger.css',
+			array( 'famma-tokens' ),
+			(string) filemtime( $dir . '/assets/css/new-look-ledger.css' )
+		);
+	}
+
+	if ( array_diff( $parts, array( 'ledger' ) ) && file_exists( $dir . '/assets/css/new-look.css' ) ) {
 		wp_enqueue_style(
 			'famma-new-look',
 			$uri . '/assets/css/new-look.css',

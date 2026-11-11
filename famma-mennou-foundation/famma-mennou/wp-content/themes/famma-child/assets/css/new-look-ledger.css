@@ -1,0 +1,93 @@
+/* ============================================================
+   FAMMA — nouveau look : bande « Livraison 0 DT · Avant réception
+   0 DT » sous le prix de la fiche (brique ledger,
+   inc/new-look-ledger.php).
+
+   Chargée seule sur la fiche produit : la feuille new-look.css des
+   pages de cartes n'y est pas servie. Le zéro pulse une seule fois
+   au chargement, jamais si le visiteur demande moins de mouvement.
+   Propriétés logiques : la bande se lit de droite à gauche en arabe.
+   ============================================================ */
+
+.famma-ledger {
+	margin-block: var(--sp-3) var(--sp-4);
+	margin-inline: 0;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius-sm);
+	background: var(--famma-white);
+	font-size: var(--fs-small);
+}
+
+.famma-ledger__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-3);
+	padding-block: 10px;
+	padding-inline: 14px;
+	border-block-end: 1px solid var(--famma-line);
+}
+
+.famma-ledger__row:last-child {
+	border-block-end: 0;
+	background: var(--famma-surface-band);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-ledger dt,
+.famma-ledger dd {
+	margin: 0;
+}
+
+.famma-ledger dt {
+	color: var(--famma-text-2);
+}
+
+.famma-ledger__row:last-child dt {
+	color: var(--famma-blue);
+}
+
+.famma-ledger dd {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--famma-blue);
+	font-weight: var(--fw-semibold);
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-ledger__row.is-zero dd {
+	color: var(--famma-success-700);
+	font-weight: var(--fw-bold);
+}
+
+.famma-ledger__check {
+	inline-size: 15px;
+	block-size: 15px;
+	flex: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.famma-ledger__row.is-zero dd {
+		animation: famma-ledger-zero 520ms cubic-bezier(0.23, 1, 0.32, 1) 450ms 1 both;
+	}
+
+	.famma-ledger__row.is-zero + .famma-ledger__row.is-zero dd {
+		animation-delay: 600ms;
+	}
+}
+
+@keyframes famma-ledger-zero {
+	0% {
+		transform: scale(1);
+	}
+
+	45% {
+		transform: scale(1.12);
+	}
+
+	100% {
+		transform: scale(1);
+	}
+}

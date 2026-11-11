@@ -197,6 +197,38 @@ final class Product_Content {
 				'default_fr' => 'Posez vos questions sur WhatsApp avant de commander.',
 				'default_ar' => 'أسأل على الواتساب قبل ما تطلب.',
 			),
+			array(
+				'key'        => 'ledger_price',
+				'type'       => 'text',
+				'label'      => __( 'Bande « 0 DT » — ligne du prix', 'famma-core' ),
+				'help'       => __( 'Nouveau look, brique « Fiche produit : bande 0 DT ». Le montant est le prix du produit. Vide : la ligne disparaît.', 'famma-core' ),
+				'default_fr' => 'Prix du produit',
+				'default_ar' => 'سوم المنتج',
+			),
+			array(
+				'key'        => 'ledger_delivery',
+				'type'       => 'text',
+				'label'      => __( 'Bande « 0 DT » — ligne de la livraison', 'famma-core' ),
+				'help'       => __( 'Le « 0 DT » n’est affiché que si la livraison configurée dans WooCommerce pour la Tunisie est réellement gratuite. Vide : la ligne disparaît.', 'famma-core' ),
+				'default_fr' => 'Livraison offerte, partout en Tunisie',
+				'default_ar' => 'التوصيل فابور، في تونس الكل',
+			),
+			array(
+				'key'        => 'ledger_before',
+				'type'       => 'text',
+				'label'      => __( 'Bande « 0 DT » — ligne avant réception', 'famma-core' ),
+				'help'       => __( 'Affichée seulement si le paiement à la livraison est activé dans WooCommerce. Vide : la ligne disparaît.', 'famma-core' ),
+				'default_fr' => 'À payer avant de recevoir',
+				'default_ar' => 'تخلّص قبل ما يوصلك',
+			),
+			array(
+				'key'        => 'ledger_total',
+				'type'       => 'text',
+				'label'      => __( 'Bande « 0 DT » — ligne au livreur', 'famma-core' ),
+				'help'       => __( 'Le montant est le prix du produit plus la livraison. Vide : la ligne disparaît.', 'famma-core' ),
+				'default_fr' => 'À payer au livreur, à la réception',
+				'default_ar' => 'تخلّص لليفرور كي يوصلك',
+			),
 		);
 	}
 
