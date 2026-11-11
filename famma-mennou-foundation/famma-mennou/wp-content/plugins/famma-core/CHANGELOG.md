@@ -1,5 +1,67 @@
 # Changelog — FAMMA Core
 
+## 0.3.9 — 2026-11-11 (préparée, pas encore en production)
+
+Formulaire de commande express repensé pour le navigateur intégré de
+Facebook (lot 23). Objectif : faire passer les formulaires commencés qui
+deviennent des commandes de 33 % à 60 %.
+
+### Adresse de livraison
+
+- Le gouvernorat devient une liste simple (liste native du téléphone) : plus
+  de menu à recherche dont le texte tapé « non choisi » bloquait l'envoi.
+- À côté, dans le même cadre, un champ facultatif « Ville, cité, rue… »
+  envoyé dans `billing_address_1`.
+- L'ancien menu à recherche reste dans le script tant que le cache peut
+  servir l'ancien gabarit.
+
+### La ville tapée propose le gouvernorat
+
+- Nouvelle classe `Governorate_Places` : les 264 délégations officielles, en
+  français et en arabe (Ministère de l'Intérieur, données ouvertes
+  « Délégations par gouvernorats de la République », 25/06/2013 ; l'INS ne
+  publie pas de liste des délégations). Source citée en tête du fichier,
+  filtre `famma_governorate_places`.
+- « Hammamet » choisit Nabeul, « جربة » Médenine. La liste s'allume
+  brièvement et l'aide annonce « Gouvernorat ajouté : … Vous pouvez le
+  changer. ». Un gouvernorat choisi à la main n'est jamais remplacé ; rien
+  n'est rempli quand deux gouvernorats sont possibles.
+- Seuls les noms officiels sont reconnus (noms courants refusés par le
+  propriétaire le 11/11). Écartés : « La Médina » (nom commun) et
+  « Azzouhour » (Tunis et Kasserine).
+- 574 noms transmis en script en ligne (`JSON_HEX_TAG`), 3,6 Ko compressés.
+
+### Téléphone en premier
+
+- Ordre : téléphone, nom, adresse, taille, bouton.
+- « +216 » affiché fixe devant le champ ; le numéro se groupe
+  « XX XXX XXX » à la frappe ; +216, 00216, espaces et chiffres arabes collés
+  restent acceptés (même règle que le serveur).
+- Saisie mobile : `tel-national`, `inputmode="numeric"`, `enterkeyhint`
+  (« Suivant » passe au champ à taper suivant, « Envoyer » sur la ville),
+  majuscules aux mots sur le nom ; le champ caché par le clavier remonte
+  dans la zone visible.
+- Message serveur du téléphone en français + derja sur le site français.
+
+### Phrase sous le téléphone
+
+Nouveau texte « Formulaire — phrase sous le téléphone » dans FAMMA → Pages →
+Fiche produit (français et derja). Vidé, il disparaît. Proposition par
+défaut, à valider : « Nous vous appelons sur ce numéro pour confirmer la
+commande avant l'envoi. »
+
+### Mesure
+
+- Journal : événement `form_error` à chaque envoi refusé, avec des codes de
+  cause seulement (téléphone, nom, gouvernorat, taille, navigateur,
+  stockage, réseau, serveur, panier changé), jamais une valeur tapée.
+- FAMMA → Visiteurs, Synthèse : bloc « Formulaire express : de commencé à
+  commandé », par produit, avec les causes de refus (mis en cache 5 min).
+- La commande express emporte l'identifiant de visite dans deux champs
+  cachés : le serveur s'en sert seulement si ses cookies manquent, et
+  seulement pour un UUID v4 reçu pendant un checkout au jeton vérifié.
+  Le Pixel et CAPI ne changent pas.
+
 ## 0.3.8 — 2026-11-10 (en production depuis le 10/11)
 
 ### Remarque des commandes
