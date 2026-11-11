@@ -271,6 +271,26 @@ function famma_child_enqueue_product(): void {
 			true
 		);
 	}
+
+	/*
+	 * « Lire la suite » de l'accroche et de la description. Les blocs sont
+	 * repliés par la feuille dès le HTML ; le script ouvre et referme, et
+	 * masque le bouton quand le texte tient déjà.
+	 */
+	$more = get_stylesheet_directory() . '/assets/js/product-more.js';
+
+	if ( file_exists( $more ) ) {
+		wp_enqueue_script(
+			'famma-product-more',
+			get_stylesheet_directory_uri() . '/assets/js/product-more.js',
+			array(),
+			(string) filemtime( $more ),
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
+		);
+	}
 }
 add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_product', 22 );
 
