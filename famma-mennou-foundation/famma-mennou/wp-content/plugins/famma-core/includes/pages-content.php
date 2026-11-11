@@ -59,11 +59,16 @@ final class Pages_Content {
 	public const OPTION_RETURNS = 'famma_page_returns';
 
 	/**
+	 * Option abritant les textes de la boutique (schéma : `Shop_Content`).
+	 */
+	public const OPTION_SHOP = 'famma_page_shop';
+
+	/**
 	 * Pages gérées par cet écran, dans leur ordre d'affichage.
 	 *
 	 * @var array<int, string>
 	 */
-	private const PAGES = array( 'home', 'about', 'contact', 'delivery', 'returns', 'product' );
+	private const PAGES = array( 'home', 'shop', 'about', 'contact', 'delivery', 'returns', 'product' );
 
 	/**
 	 * Groupe de réglages, au sens de la Settings API.
@@ -366,6 +371,7 @@ final class Pages_Content {
 			'home'     => Home_Content::schema(),
 			'delivery' => Delivery_Content::schema(),
 			'returns'  => Returns_Content::schema(),
+			'shop'     => Shop_Content::schema(),
 			default    => self::contact_schema(),
 		};
 	}
@@ -383,6 +389,7 @@ final class Pages_Content {
 			'home'     => self::OPTION_HOME,
 			'delivery' => self::OPTION_DELIVERY,
 			'returns'  => self::OPTION_RETURNS,
+			'shop'     => self::OPTION_SHOP,
 			default    => self::OPTION_CONTACT,
 		};
 	}
@@ -400,6 +407,7 @@ final class Pages_Content {
 			'home'     => __( 'Page d’accueil — newsletter et « Ils nous font confiance »', 'famma-core' ),
 			'delivery' => __( 'Page Livraison', 'famma-core' ),
 			'returns'  => __( 'Page Retours', 'famma-core' ),
+			'shop'     => __( 'Boutique — bloc « Comment commander » (nouveau look)', 'famma-core' ),
 			default    => __( 'Page Contact', 'famma-core' ),
 		};
 	}

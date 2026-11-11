@@ -1,0 +1,628 @@
+/* ============================================================
+   FAMMA — nouveau look animé (maquettes du 04-06/11/2026)
+
+   Surcouche chargée seulement si FAMMA → Pages → Nouveau look animé
+   est actif, et seulement sur l'accueil, la boutique et les
+   catégories. Tout est rangé sous `body.famma-nl-*` : sans ces
+   classes, cette feuille ne s'applique à rien.
+
+   Règles tenues :
+   - aucun soulèvement de carte au survol (retiré exprès : il faisait
+     sauter la grille, voir product-card.css) ;
+   - jetons de tokens.css uniquement, propriétés logiques pour le RTL ;
+   - aucune animation si le visiteur demande moins de mouvement.
+   ============================================================ */
+
+body.famma-nl {
+	--nl-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+	--nl-dock-h: 64px;
+}
+
+@supports (animation-timing-function: linear(0, 1)) {
+	body.famma-nl {
+		--nl-spring: linear(0, 0.06 3%, 0.22 7%, 0.55 14%, 0.86 22%, 1.04 30%, 1.09 36%, 1.07 44%, 1.01 58%, 0.99 72%, 1);
+	}
+}
+
+/* --- Photo de la carte : léger zoom au survol, jamais de saut de grille --- */
+
+body.famma-nl-motion ul.products.famma-cards li.product .woocommerce-loop-image-link {
+	display: block;
+	overflow: hidden;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+	body.famma-nl-motion ul.products.famma-cards li.product a img {
+		transition: transform 700ms var(--ease-out-strong);
+	}
+
+	body.famma-nl-motion ul.products.famma-cards li.product:hover .woocommerce-loop-image-link img {
+		transform: scale(1.04);
+	}
+}
+
+/* --- Seconde photo au survol --- */
+
+body.famma-nl-alt-photo ul.products.famma-cards li.product .famma-alt {
+	position: absolute;
+	inset-block-start: 0;
+	inset-inline: 0;
+	z-index: 1;
+	display: none;
+	aspect-ratio: var(--card-media-ratio);
+	overflow: hidden;
+	background: var(--famma-surface-media);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity var(--dur-slide) var(--ease-out);
+}
+
+body.famma-nl-alt-photo ul.products.famma-cards li.product .famma-alt img {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+	object-fit: cover;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	body.famma-nl-alt-photo ul.products.famma-cards li.product .famma-alt.is-ready {
+		display: block;
+	}
+
+	body.famma-nl-alt-photo ul.products.famma-cards li.product:hover .famma-alt.is-ready {
+		opacity: 1;
+	}
+}
+
+/* Badge et cœur restent au-dessus de la seconde photo. */
+body.famma-nl-alt-photo ul.products.famma-cards li.product .onsale {
+	z-index: 2;
+}
+
+/* En affichage liste, la photo n'est plus en haut de carte : pas de survol. */
+body.famma-nl-alt-photo .famma-shop.is-list .famma-alt {
+	display: none !important;
+}
+
+/* --- Effets ponctuels : étincelles et vol vers le panier --- */
+
+.famma-nl-spark {
+	position: fixed;
+	inset-block-start: 0;
+	inset-inline-start: 0;
+	z-index: 1000;
+	inline-size: 3px;
+	block-size: 11px;
+	margin: -5px 0 0 -1px;
+	border-radius: 3px;
+	background: var(--famma-orange);
+	pointer-events: none;
+}
+
+.famma-nl-fly {
+	position: fixed;
+	inset-block-start: 0;
+	inset-inline-start: 0;
+	z-index: 1000;
+	pointer-events: none;
+}
+
+.famma-nl-fly img {
+	display: block;
+	inline-size: 72px;
+	block-size: 72px;
+	margin: -36px 0 0 -36px;
+	border-radius: var(--famma-radius);
+	object-fit: cover;
+	box-shadow: var(--elev-2);
+}
+
+/* --- Barre du panier : « Aujourd'hui 0 DT », le total au livreur --- */
+
+.famma-dock {
+	position: fixed;
+	inset-inline: calc(10px + env(safe-area-inset-left, 0px)) calc(10px + env(safe-area-inset-right, 0px));
+	inset-block-end: calc(10px + env(safe-area-inset-bottom, 0px));
+	z-index: 300;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-3);
+	max-inline-size: 560px;
+	min-block-size: var(--nl-dock-h);
+	margin-inline: auto;
+	padding-block: 7px;
+	padding-inline: 14px 7px;
+	border: 1px solid var(--famma-overlay-line);
+	border-radius: 14px;
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	box-shadow: var(--elev-3);
+	font-family: var(--famma-font);
+}
+
+.famma-dock[hidden] {
+	display: none;
+}
+
+.famma-dock__sums {
+	display: grid;
+	gap: 1px;
+	min-inline-size: 0;
+	font-size: var(--fs-card-meta);
+	line-height: 1.3;
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-dock__row {
+	display: flex;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.famma-dock__label {
+	color: var(--famma-on-dark);
+}
+
+.famma-dock__zero,
+.famma-dock__total {
+	font-weight: var(--fw-bold);
+}
+
+/* Vert clair sur marine : 9,6:1. Le zéro est le chiffre qu'on veut voir retenu. */
+.famma-dock__zero {
+	color: var(--famma-success-on-dark);
+}
+
+.famma-dock__go {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	gap: var(--sp-2);
+	min-block-size: 48px;
+	padding-inline: 14px;
+	border-radius: 9px;
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+	text-decoration: none;
+	white-space: nowrap;
+	transition: background-color var(--dur-base) var(--ease-out);
+}
+
+.famma-dock__go:hover,
+.famma-dock__go:focus-visible {
+	background: var(--famma-orange-600);
+	color: var(--famma-on-orange);
+}
+
+.famma-dock__go:focus-visible {
+	outline: 3px solid var(--famma-white);
+	outline-offset: 2px;
+}
+
+.famma-dock__count {
+	display: inline-grid;
+	place-items: center;
+	min-block-size: 22px;
+	padding-inline: 7px;
+	border-radius: 11px;
+	background: var(--famma-veil-on-orange);
+	font-size: var(--fs-caption);
+}
+
+@media (max-width: 420px) {
+	.famma-dock__count {
+		display: none;
+	}
+}
+
+/* La barre ne cache jamais le bas de page. */
+body.famma-dock-on {
+	padding-block-end: calc(var(--nl-dock-h) + 24px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Le bouton WhatsApp flottant (famma-core) remonte au-dessus de la barre. */
+body.famma-nl-dock .famma-wa {
+	transition: inset-block-end var(--dur-slide) var(--ease-out);
+}
+
+body.famma-dock-on .famma-wa {
+	inset-block-end: calc(var(--nl-dock-h) + 22px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Arabe : la police arabe est plus haute, on garde l'interligne de base. */
+:root[dir="rtl"] .famma-dock {
+	font-family: var(--famma-font-ar);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body.famma-nl ul.products.famma-cards li.product a img,
+	body.famma-nl .famma-alt {
+		transition: none !important;
+	}
+}
+
+
+/* --- Accueil : « Parcours du colis » (brique journey) ---
+   Habille le bloc « Vous payez à la livraison » déjà présent dans le contenu
+   de la page d'accueil (.famma-how, liste .famma-steps) : ses textes restent
+   modifiables dans l'éditeur, et traduits par TranslatePress sur /ar/.
+   L'état écrit ici est l'état final (route pleine, étapes cochées) : c'est
+   ce que voient les navigateurs sans `animation-timeline` et les visiteurs
+   qui demandent moins de mouvement.
+   Le même dessin sert au bloc « Comment commander » de la boutique
+   (.famma-how--journey, brique how, inc/new-look-how.php). */
+
+body.famma-nl-journey .famma-how,
+
+.famma-how--journey {
+	--node: 44px;
+	margin-block: var(--sp-12) 0;
+	padding: clamp(32px, 6vw, 56px) clamp(20px, 5vw, 48px);
+	border-radius: var(--famma-radius-lg);
+	background: var(--famma-blue);
+	color: var(--famma-white);
+}
+
+body.famma-nl-journey .famma-how .famma-section__title,
+
+.famma-how--journey .famma-section__title {
+	color: inherit;
+	text-wrap: balance;
+}
+
+body.famma-nl-journey .famma-how > p,
+
+.famma-how--journey > p {
+	color: var(--famma-on-dark);
+	line-height: 1.65;
+}
+
+body.famma-nl-journey .famma-how .famma-steps,
+
+.famma-how--journey .famma-steps {
+	position: relative;
+	display: grid;
+	gap: var(--sp-8);
+	margin: var(--sp-8) 0 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: famma-step;
+}
+
+/* La route : un tireté et son remplissage orange, d'une pastille à l'autre. */
+body.famma-nl-journey .famma-how .famma-steps::before,
+.famma-how--journey .famma-steps::before,
+body.famma-nl-journey .famma-how .famma-steps::after,
+.famma-how--journey .famma-steps::after {
+	content: "";
+	position: absolute;
+	inset-block: calc(var(--node) / 2);
+	inset-inline-start: calc(var(--node) / 2 - 1.5px);
+	inline-size: 3px;
+	pointer-events: none;
+}
+
+body.famma-nl-journey .famma-how .famma-steps::before,
+
+.famma-how--journey .famma-steps::before {
+	background: repeating-linear-gradient(180deg, var(--famma-on-dark-muted) 0 8px, transparent 8px 16px);
+}
+
+body.famma-nl-journey .famma-how .famma-steps::after,
+
+.famma-how--journey .famma-steps::after {
+	background: var(--famma-orange);
+	transform-origin: 50% 0;
+}
+
+body.famma-nl-journey .famma-how .famma-steps li,
+
+.famma-how--journey .famma-steps li {
+	position: relative;
+	display: flex;
+	align-items: center;
+	min-block-size: var(--node);
+	margin: 0;
+	padding-inline-start: calc(var(--node) + var(--sp-4));
+	font-weight: var(--fw-medium);
+	line-height: 1.45;
+	counter-increment: famma-step;
+}
+
+/* La pastille : numéro de l'étape, puis coche une fois l'étape atteinte. */
+body.famma-nl-journey .famma-how .famma-steps li::before,
+.famma-how--journey .famma-steps li::before {
+	content: counter(famma-step);
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-start: 0;
+	z-index: 1;
+	display: grid;
+	place-items: center;
+	box-sizing: border-box;
+	inline-size: var(--node);
+	block-size: var(--node);
+	margin-block-start: calc(var(--node) / -2);
+	border: 2px solid var(--famma-orange);
+	border-radius: 50%;
+	background: var(--famma-orange);
+	color: transparent;
+	font-weight: var(--fw-semibold);
+}
+
+body.famma-nl-journey .famma-how .famma-steps li::after,
+
+.famma-how--journey .famma-steps li::after {
+	content: "";
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-start: calc(var(--node) / 2 - 6px);
+	z-index: 2;
+	inline-size: 12px;
+	block-size: 7px;
+	margin-block-start: -5px;
+	/* Bordures physiques : une coche ne se retourne pas en arabe. */
+	border-bottom: 2.5px solid var(--famma-on-orange);
+	border-left: 2.5px solid var(--famma-on-orange);
+	transform: rotate(-45deg);
+}
+
+/* L'animation au défilement : CSS seul, aucun script. */
+@supports (animation-timeline: view()) {
+	@media (prefers-reduced-motion: no-preference) {
+		body.famma-nl-journey .famma-how .famma-steps::after,
+		.famma-how--journey .famma-steps::after {
+			animation: famma-nl-road linear both;
+			animation-timeline: view();
+			animation-range: entry 80% cover 55%;
+		}
+
+		body.famma-nl-journey .famma-how .famma-steps li::before,
+
+		.famma-how--journey .famma-steps li::before {
+			animation: famma-nl-node linear both;
+			animation-timeline: view();
+			animation-range: cover 40% cover 50%;
+		}
+
+		body.famma-nl-journey .famma-how .famma-steps li::after,
+
+		.famma-how--journey .famma-steps li::after {
+			animation: famma-nl-check linear both;
+			animation-timeline: view();
+			animation-range: cover 40% cover 50%;
+		}
+	}
+}
+
+@keyframes famma-nl-road {
+	from { transform: scaleY(0); }
+	to { transform: scaleY(1); }
+}
+
+@keyframes famma-nl-node {
+	from {
+		border-color: var(--famma-on-dark-muted);
+		background-color: var(--famma-blue);
+		color: var(--famma-white);
+	}
+	to {
+		border-color: var(--famma-orange);
+		background-color: var(--famma-orange);
+		color: transparent;
+	}
+}
+
+@keyframes famma-nl-check {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+/* --- En-tête : trait orange glissant (bureau) ---
+   Posé par new-look.js seulement avec un pointeur fin et sans demande de
+   moins de mouvement ; `.has-ink` retire alors le soulignement fixe de
+   l'entrée active, que le trait remplace. Sans script, rien ne change. */
+
+body.famma-nl-motion .famma-nav--desktop .famma-nav__list.has-ink {
+	position: relative;
+}
+
+body.famma-nl-motion .famma-nav--desktop .famma-nav__list.has-ink > li > a {
+	border-block-end-color: transparent;
+}
+
+body.famma-nl-motion .famma-nav__ink {
+	position: absolute;
+	inset-block-end: 0;
+	left: 0; /* physique : la position est calculée depuis le bord gauche, en LTR comme en RTL. */
+	inline-size: 1px;
+	block-size: 2px;
+	background: var(--famma-orange);
+	opacity: 0;
+	pointer-events: none;
+	transform-origin: 0 50%;
+	transition:
+		transform var(--dur-slide) var(--nl-spring),
+		opacity var(--dur-base) ease;
+}
+
+/* --- En-tête : ouverture du menu mobile ---
+   Le panneau reste ouvert et fermé par l'attribut `hidden` (navigation.js).
+   `@starting-style` donne l'état de départ à l'ouverture ; les entrées
+   glissent l'une après l'autre. La fermeture reste immédiate. */
+
+@media (prefers-reduced-motion: no-preference) {
+	body.famma-nl-motion .famma-header__panel:not([hidden]) {
+		transition:
+			opacity var(--dur-base) var(--ease-out),
+			transform var(--dur-slide) var(--nl-spring);
+	}
+
+	body.famma-nl-motion .famma-header__panel:not([hidden]) .famma-nav__list > li {
+		transition:
+			opacity var(--dur-base) var(--ease-out),
+			transform var(--dur-slide) var(--nl-spring);
+	}
+
+	body.famma-nl-motion .famma-header__panel:not([hidden]) .famma-nav__list > li:nth-child(2) { transition-delay: 30ms; }
+	body.famma-nl-motion .famma-header__panel:not([hidden]) .famma-nav__list > li:nth-child(3) { transition-delay: 60ms; }
+	body.famma-nl-motion .famma-header__panel:not([hidden]) .famma-nav__list > li:nth-child(4) { transition-delay: 90ms; }
+	body.famma-nl-motion .famma-header__panel:not([hidden]) .famma-nav__list > li:nth-child(n + 5) { transition-delay: 120ms; }
+
+	@starting-style {
+		body.famma-nl-motion .famma-header__panel:not([hidden]) {
+			opacity: 0;
+			transform: translateY(-8px);
+		}
+
+		body.famma-nl-motion .famma-header__panel:not([hidden]) .famma-nav__list > li {
+			opacity: 0;
+			transform: translateY(-6px);
+		}
+	}
+}
+
+/* --- Héros « pile » : inclinaison au pointeur (new-look.js) --- */
+
+body.famma-nl-motion .famma-hero2__deck.has-tilt {
+	transition: transform var(--dur-slide) var(--ease-out);
+}
+
+/* --- Boutique : puces rayons et budget (brique tools) ---
+   Sous 1000 px seulement : au-delà, la colonne de filtres dépliée propose
+   déjà les mêmes choix. Collée sous l'en-tête, la rangée défile de côté ;
+   chaque puce est un lien (inc/new-look-tools.php). Cible tactile 48 px. */
+.famma-tools {
+	position: sticky;
+	/* Sous 1000 px, l'en-tête mesure 77 px et non --header-h (70 px) : ses
+	   cibles de 48 px, sa marge haute et basse, son filet. */
+	inset-block-start: calc(var(--sp-12) + 2 * var(--chrome-header-pad) + 1px);
+	z-index: calc(var(--z-header) - 1);
+	margin-block: calc(var(--sp-4) * -1) var(--sp-4);
+	margin-inline: calc(var(--gutter) * -1);
+	padding-block: var(--sp-2);
+	border-block-end: 1px solid var(--famma-line);
+	background: var(--famma-white);
+}
+
+.famma-tools__scroll {
+	display: flex;
+	gap: var(--sp-2);
+	padding-inline: var(--gutter);
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+	scrollbar-width: none;
+	-webkit-mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+	mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+}
+
+.famma-tools__scroll::-webkit-scrollbar {
+	display: none;
+}
+
+.famma-tools__list {
+	display: flex;
+	flex: none;
+	gap: var(--sp-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-tools__list--budget {
+	padding-inline-start: var(--sp-2);
+	border-inline-start: 1px solid var(--famma-line-field);
+}
+
+.famma-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--sp-2);
+	min-block-size: var(--sp-12);
+	padding-block: 0;
+	padding-inline: var(--sp-4) var(--sp-3);
+	border: 1px solid var(--famma-line-field);
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-white);
+	color: var(--famma-blue);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-medium);
+	white-space: nowrap;
+	text-decoration: none;
+	transition: background-color var(--dur-base), border-color var(--dur-base), color var(--dur-base);
+}
+
+.famma-chip--budget {
+	padding-inline: var(--sp-4);
+}
+
+.famma-chip__count {
+	min-inline-size: 24px;
+	padding-inline: 6px;
+	border-radius: 11px;
+	background: var(--famma-surface-icon);
+	font-size: 12px;
+	font-weight: var(--fw-semibold);
+	line-height: 22px;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-chip[aria-current] {
+	border-color: transparent;
+	background: var(--famma-blue);
+	color: var(--famma-white);
+}
+
+.famma-chip[aria-current] .famma-chip__count {
+	background: rgba(255, 255, 255, 0.16);
+}
+
+.famma-chip--budget[aria-current] {
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+}
+
+.famma-chip__off {
+	font-size: 1.15em;
+	line-height: 1;
+}
+
+@media (hover: hover) {
+	.famma-chip:not([aria-current]):hover {
+		border-color: var(--famma-blue);
+		color: var(--famma-blue);
+	}
+}
+
+@media (min-width: 1000px) {
+	.famma-tools {
+		display: none;
+	}
+}
+
+/* --- Boutique : bloc « Comment commander » (brique how) ---
+   Dessin partagé avec la brique journey, plus haut. La boutique ne charge
+   pas home.css : le titre et l'écart avant la bande WhatsApp sont posés ici. */
+.famma-how--journey {
+	margin-block-end: var(--sp-12);
+}
+
+.famma-how--journey .famma-section__title {
+	margin: 0;
+	font-size: clamp(1.25rem, 2.6vw, 1.75rem);
+	font-weight: var(--fw-bold);
+	line-height: var(--lh-tight);
+}
+
+.famma-how--journey .famma-steps li > span {
+	color: var(--famma-on-dark);
+}
+
+.famma-how--journey .famma-steps b {
+	color: var(--famma-white);
+	font-weight: var(--fw-semibold);
+}

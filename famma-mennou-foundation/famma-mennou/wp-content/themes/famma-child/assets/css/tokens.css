@@ -89,6 +89,10 @@
 	   fixe : ils restent justes si le fond marine change un jour. */
 	--famma-overlay-soft: rgba(255, 255, 255, 0.1);  /* pastille sociale */
 	--famma-overlay-line: rgba(255, 255, 255, 0.12); /* filet de la barre basse */
+	/* Nouveau look (06/11/2026) : montant nul posé sur le marine — 9,6:1. */
+	--famma-success-on-dark: #6FDB9C;
+	/* Voile marine posé sur un aplat orange (pastille de compteur). */
+	--famma-veil-on-orange: rgba(11, 31, 58, 0.16);
 
 	/* --- Retour d'information ---
 	   Variante nue = surface (pastille, bordure, remplissage).

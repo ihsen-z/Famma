@@ -59,6 +59,14 @@ function famma_child_home_hero_image( WC_Product $product, int $index, string $s
 			'fetchpriority' => 'low',
 		);
 
+	/*
+	 * Largeur réellement affichée : 25rem au plus (hero-variants.css), moins
+	 * les marges de la page sur un téléphone. Le `sizes` par défaut de
+	 * WooCommerce (« 100vw jusqu'à 600px ») faisait télécharger la 768×768
+	 * (56 Ko) pour une carte de 320px : mesure Lighthouse du 11/11/2026.
+	 */
+	$attr['sizes'] = '(max-width: 432px) calc(100vw - 32px), 400px';
+
 	$html = $product->get_image( $size, $attr );
 
 	if ( 0 !== $index ) {

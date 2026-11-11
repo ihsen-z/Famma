@@ -146,6 +146,25 @@ function famma_child_home_hero_products(): array {
 }
 
 /**
+ * Texte de l'accueil saisi dans FAMMA → Pages, dans la langue de la page.
+ *
+ * Sans famma-core, la chaîne traduite du thème prend le relais : l'accueil
+ * garde ses textes actuels. Avec famma-core, une valeur vidée dans
+ * l'administration renvoie une chaîne vide, et le bloc concerné disparaît.
+ *
+ * @param string $key      Clé du champ (Home_Content::schema()).
+ * @param string $fallback Texte utilisé si famma-core est inactif.
+ * @return string
+ */
+function famma_child_home_text( string $key, string $fallback ): string {
+	if ( ! class_exists( '\Famma\Core\Home_Content' ) ) {
+		return $fallback;
+	}
+
+	return \Famma\Core\Home_Content::text( $key );
+}
+
+/**
  * Le héros : mot-symbole, slogan, avantages, appel à l'action.
  *
  * Le carrousel n'apparaît qu'à partir de deux visuels. Avec un seul produit —
@@ -163,21 +182,32 @@ function famma_child_home_hero(): void {
 	$perks = array(
 		array(
 			'icon'  => 'card',
-			'title' => __( 'Paiement à la livraison', 'famma-child' ),
+			'title' => famma_child_home_text( 'hero_perk_1_title', __( 'Paiement à la livraison', 'famma-child' ) ),
 			// En derja, le titre traduit dit déjà la même chose : pas de doublon.
-			'sub'   => famma_child_is_derja() ? '' : 'خلص كي توصل',
+			'sub'   => famma_child_is_derja() ? '' : famma_child_home_text( 'hero_perk_1_sub', 'خلص كي توصل' ),
 		),
 		array(
 			'icon'  => 'truck',
-			'title' => __( 'Livraison offerte', 'famma-child' ),
-			'sub'   => __( 'partout en Tunisie', 'famma-child' ),
+			'title' => famma_child_home_text( 'hero_perk_2_title', __( 'Livraison offerte', 'famma-child' ) ),
+			'sub'   => famma_child_home_text( 'hero_perk_2_sub', __( 'partout en Tunisie', 'famma-child' ) ),
 		),
 		array(
 			'icon'  => 'user',
-			'title' => __( 'Commande sans compte', 'famma-child' ),
-			'sub'   => __( 'nom, téléphone, adresse', 'famma-child' ),
+			'title' => famma_child_home_text( 'hero_perk_3_title', __( 'Commande sans compte', 'famma-child' ) ),
+			'sub'   => famma_child_home_text( 'hero_perk_3_sub', __( 'nom, téléphone, adresse', 'famma-child' ) ),
 		),
 	);
+	$perks = array_filter(
+		$perks,
+		static function ( array $perk ): bool {
+			return '' !== $perk['title'];
+		}
+	);
+
+	$title  = famma_child_home_text( 'hero_title', __( 'Il y a toujours quelque chose de nouveau.', 'famma-child' ) );
+	$slogan = explode( ' ', famma_child_home_text( 'hero_slogan', 'فمّا ديما حاجة جديدة' ), 2 );
+	$lead   = famma_child_home_text( 'hero_lead', __( 'FAMMA choisit des produits pratiques et utiles, livrés partout en Tunisie et payés à la livraison.', 'famma-child' ) );
+	$cta    = famma_child_home_text( 'hero_cta', __( 'Découvrir la boutique', 'famma-child' ) );
 	?>
 	<section class="famma-hero2 famma-hero2--<?php echo esc_attr( $style ); ?><?php echo $slides > 1 ? ' has-carousel' : ''; ?>">
 		<div class="famma-hero2__text">
@@ -197,17 +227,21 @@ function famma_child_home_hero(): void {
 			 * changer au dessin. C'est le titre que portait l'ancien bloc.
 			 */
 			?>
-			<h1 class="famma-hero2__word">FAMM<span class="famma-hero2__a">A</span><span class="screen-reader-text"> — <?php esc_html_e( 'Il y a toujours quelque chose de nouveau.', 'famma-child' ); ?></span></h1>
+			<h1 class="famma-hero2__word">FAMM<span class="famma-hero2__a">A</span><?php echo '' !== $title ? '<span class="screen-reader-text"> — ' . esc_html( $title ) . '</span>' : ''; ?></h1>
 
+			<?php if ( '' !== $slogan[0] ) : ?>
 			<p class="famma-hero2__slogan" lang="ar" dir="rtl">
 				<span class="famma-hero2__rule" aria-hidden="true"></span>
-				<span><span class="famma-hero2__ar">فمّا</span> ديما حاجة جديدة</span>
+				<span><span class="famma-hero2__ar"><?php echo esc_html( $slogan[0] ); ?></span><?php echo isset( $slogan[1] ) ? ' ' . esc_html( $slogan[1] ) : ''; ?></span>
 				<span class="famma-hero2__rule" aria-hidden="true"></span>
 			</p>
+			<?php endif; ?>
 
+			<?php if ( '' !== $lead ) : ?>
 			<p class="famma-hero2__lead">
-				<?php esc_html_e( 'FAMMA choisit des produits pratiques et utiles, livrés partout en Tunisie et payés à la livraison.', 'famma-child' ); ?>
+				<?php echo esc_html( $lead ); ?>
 			</p>
+			<?php endif; ?>
 
 			<ul class="famma-hero2__perks">
 				<?php foreach ( $perks as $perk ) : ?>
@@ -216,7 +250,7 @@ function famma_child_home_hero(): void {
 						<span>
 							<span class="famma-hero2__perk-title"><?php echo esc_html( $perk['title'] ); ?></span>
 							<?php if ( '' !== $perk['sub'] ) : ?>
-								<span class="famma-hero2__perk-sub"<?php echo 'خلص كي توصل' === $perk['sub'] ? ' lang="ar" dir="rtl"' : ''; ?>>
+								<span class="famma-hero2__perk-sub"<?php echo ! famma_child_is_derja() && preg_match( '/\p{Arabic}/u', $perk['sub'] ) ? ' lang="ar" dir="rtl"' : ''; ?>>
 									<?php echo esc_html( $perk['sub'] ); ?>
 								</span>
 							<?php endif; ?>
@@ -225,11 +259,13 @@ function famma_child_home_hero(): void {
 				<?php endforeach; ?>
 			</ul>
 
+			<?php if ( '' !== $cta ) : ?>
 			<a class="famma-hero2__cta" href="<?php echo esc_url( (string) $shop_url ); ?>">
-				<span><?php esc_html_e( 'Découvrir la boutique', 'famma-child' ); ?></span>
+				<span><?php echo esc_html( $cta ); ?></span>
 				<span class="famma-hero2__cta-sep" aria-hidden="true"></span>
 				<svg class="famma-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
 			</a>
+			<?php endif; ?>
 		</div>
 
 		<?php if ( $slides > 0 && 'classic' !== $style ) : ?>
@@ -439,34 +475,51 @@ function famma_child_home_new_products(): void {
  * @return void
  */
 function famma_child_home_why(): void {
+	$heading = famma_child_home_text( 'why_title', __( 'Pourquoi choisir FAMMA ?', 'famma-child' ) );
+
+	if ( '' === $heading ) {
+		return;
+	}
+
 	$items = array(
 		array(
 			'icon'  => 'card',
-			'title' => __( 'Vous payez à la réception', 'famma-child' ),
-			'text'  => __( 'La commande n\'est réglée qu\'une fois livrée, en espèces, au livreur.', 'famma-child' ),
+			'title' => famma_child_home_text( 'why_1_title', __( 'Vous payez à la réception', 'famma-child' ) ),
+			'text'  => famma_child_home_text( 'why_1_text', __( 'La commande n\'est réglée qu\'une fois livrée, en espèces, au livreur.', 'famma-child' ) ),
 		),
 		array(
 			'icon'  => 'truck',
-			'title' => __( 'Livraison offerte', 'famma-child' ),
-			'text'  => __( 'Partout en Tunisie, dans les 24 gouvernorats, sans frais ajoutés.', 'famma-child' ),
+			'title' => famma_child_home_text( 'why_2_title', __( 'Livraison offerte', 'famma-child' ) ),
+			'text'  => famma_child_home_text( 'why_2_text', __( 'Partout en Tunisie, dans les 24 gouvernorats, sans frais ajoutés.', 'famma-child' ) ),
 		),
 		array(
 			'icon'  => 'user',
-			'title' => __( 'Commande sans compte', 'famma-child' ),
-			'text'  => __( 'Nom, téléphone, adresse. Aucun mot de passe à créer.', 'famma-child' ),
+			'title' => famma_child_home_text( 'why_3_title', __( 'Commande sans compte', 'famma-child' ) ),
+			'text'  => famma_child_home_text( 'why_3_text', __( 'Nom, téléphone, adresse. Aucun mot de passe à créer.', 'famma-child' ) ),
 		),
 	);
 
 	if ( '' !== famma_child_whatsapp_number() ) {
 		$items[] = array(
 			'icon'  => 'chat',
-			'title' => __( 'Une équipe joignable', 'famma-child' ),
-			'text'  => __( 'Vos questions trouvent une réponse sur WhatsApp, avant comme après la commande.', 'famma-child' ),
+			'title' => famma_child_home_text( 'why_4_title', __( 'Une équipe joignable', 'famma-child' ) ),
+			'text'  => famma_child_home_text( 'why_4_text', __( 'Vos questions trouvent une réponse sur WhatsApp, avant comme après la commande.', 'famma-child' ) ),
 		);
+	}
+
+	$items = array_filter(
+		$items,
+		static function ( array $item ): bool {
+			return '' !== $item['title'];
+		}
+	);
+
+	if ( ! $items ) {
+		return;
 	}
 	?>
 	<section class="famma-home__section">
-		<?php famma_child_home_title( __( 'Pourquoi choisir FAMMA ?', 'famma-child' ) ); ?>
+		<?php famma_child_home_title( $heading ); ?>
 
 		<ul class="famma-why">
 			<?php foreach ( $items as $item ) : ?>
@@ -474,7 +527,7 @@ function famma_child_home_why(): void {
 					<span class="famma-why__mark"><?php famma_child_the_icon( $item['icon'] ); ?></span>
 					<span class="famma-why__text">
 						<span class="famma-why__title"><?php echo esc_html( $item['title'] ); ?></span>
-						<span class="famma-why__sub"><?php echo esc_html( $item['text'] ); ?></span>
+						<?php echo '' !== $item['text'] ? '<span class="famma-why__sub">' . esc_html( $item['text'] ) . "</span>\n" : "\n"; ?>
 					</span>
 				</li>
 			<?php endforeach; ?>

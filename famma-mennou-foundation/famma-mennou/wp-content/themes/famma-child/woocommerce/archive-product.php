@@ -94,6 +94,11 @@ do_action( 'woocommerce_before_main_content' );
 		<?php famma_child_shop_toolbar(); ?>
 	</div>
 
+	<?php
+	/** Sous le titre, avant la grille : rangée de puces du nouveau look (inc/new-look-tools.php). */
+	do_action( 'famma_child_after_shop_head' );
+	?>
+
 	<div class="famma-shop__layout">
 
 		<?php famma_child_shop_sidebar(); ?>
@@ -145,6 +150,11 @@ do_action( 'woocommerce_before_main_content' );
 
 		</div>
 	</div>
+
+	<?php
+	/** Après la grille : bloc « Comment commander » du nouveau look (inc/new-look-how.php). */
+	do_action( 'famma_child_after_shop_results' );
+	?>
 
 	<?php famma_child_shop_whatsapp_band(); ?>
 
