@@ -1,5 +1,46 @@
 # Changelog — FAMMA Core
 
+## 0.3.12 — 2026-11-12 (préparée, non envoyée)
+
+Offre après achat en un clic. Construite sur la 0.3.11 (non envoyée) :
+les deux partent ensemble ou la 0.3.11 d'abord.
+
+### Ajouts
+
+- **Onglet produit « Offre après achat »** (`includes/offer-admin.php`) :
+  case « Proposer une offre », article proposé (produits simples publiés
+  sans taille), prix spécial, titre et texte facultatifs, et résultats
+  sur 30 jours (vues, acceptations, taux, refus, montant ajouté ; commandes
+  d'essai exclues, cache 10 min).
+- **Bloc sur la page de remerciement** (`includes/offer-thankyou.php`,
+  `assets/css/offer.css`) : photo, prix de la fiche barré, prix spécial,
+  bouton « Ajouter à ma commande » (56 px, FR + derja) et « Non merci ».
+  Formulaire renvoyé à la page elle-même, sans JavaScript ; gardes : clé
+  de commande, nonce, statut « En attente de confirmation », verrou contre
+  le double clic. L'article est ajouté à la **même commande** au prix
+  spécial (ligne marquée `_famma_offer_item`), total recalculé, note
+  ajoutée. Offre fermée dès la confirmation, après acceptation ou refus.
+- **Événement Meta `OfferAccepted`** (classe `Capi`) : même file d'attente,
+  registre, relances et journal qu'OrderPlaced ; valeur = montant ajouté
+  seulement ; commandes d'essai écartées. Interrupteur dans les réglages de
+  mesure, **désactivé par défaut**. Le Purchase de la livraison inclut déjà
+  l'article ajouté.
+
+### Règles partagées
+
+- `includes/offer-settings.php` : lecture des réglages, éligibilité
+  d'une commande, statistiques.
+
+### Vérifié
+
+- `php -l` et `phpcs` (ruleset du projet) propres sur les fichiers touchés.
+- Banc sur le site Local, plugin du worktree chargé : 31/31 (ajout,
+  total 22 → 44 DT, double clic, commande confirmée, refus, article déjà
+  commandé, Meta coupé par défaut, valeur OfferAccepted 22 / Purchase 44,
+  statistiques, nettoyage).
+- Non vérifié : rendu réel de la page de remerciement et clic dans un
+  navigateur (la jonction du site Local pointe sur la copie principale).
+
 ## 0.3.11 — 2026-11-11 (préparée, non envoyée)
 
 Accueil rapproché de la maquette (« lot 1 », mise au propre) et bande

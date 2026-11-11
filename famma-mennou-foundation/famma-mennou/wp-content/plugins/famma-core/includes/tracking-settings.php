@@ -168,6 +168,22 @@ final class Tracking_Settings {
 			self::SLUG,
 			'famma_section_tracking'
 		);
+		register_setting(
+			self::GROUP,
+			'famma_meta_offeraccepted_enabled',
+			array(
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => false,
+			)
+		);
+		add_settings_field(
+			'famma_meta_offeraccepted_enabled',
+			__( 'Meta — offre après achat acceptée (OfferAccepted)', 'famma-core' ),
+			array( $this, 'render_offeraccepted_toggle' ),
+			self::SLUG,
+			'famma_section_tracking'
+		);
 
 		foreach ( $this->fields() as $field ) {
 			register_setting(
@@ -232,6 +248,18 @@ final class Tracking_Settings {
 			<?php esc_html_e( 'Envoyer OrderPlaced après une commande acceptée sur le site.', 'famma-core' ); ?>
 		</label>
 		<p class="description"><?php esc_html_e( 'Désactivé par défaut. En l’activant, les identifiants client déjà collectés pour Meta sont transmis dès la commande, avant livraison. OrderPlaced mesure une demande enregistrée ; Purchase reste réservé à la livraison encaissée. Le test synthétique fonctionne même lorsque cette option est désactivée.', 'famma-core' ); ?></p>
+		<?php
+	}
+
+	/** Explain and display the post-purchase offer server event switch. */
+	public function render_offeraccepted_toggle(): void {
+		?>
+		<input type="hidden" name="famma_meta_offeraccepted_enabled" value="0" />
+		<label>
+			<input type="checkbox" name="famma_meta_offeraccepted_enabled" value="1" <?php checked( (bool) get_option( 'famma_meta_offeraccepted_enabled', false ) ); ?> />
+			<?php esc_html_e( 'Envoyer OfferAccepted quand une cliente accepte l’offre après achat.', 'famma-core' ); ?>
+		</label>
+		<p class="description"><?php esc_html_e( 'Désactivé par défaut. La valeur envoyée est le seul montant ajouté par l’offre. Le Purchase de la livraison inclut déjà l’article ajouté : cet événement sert à mesurer l’offre, pas à compter une vente.', 'famma-core' ); ?></p>
 		<?php
 	}
 

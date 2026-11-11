@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.3.11
+ * Version:           0.3.12
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.3.11' );
+define( 'FAMMA_CORE_VERSION', '0.3.12' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -49,6 +49,9 @@ require_once __DIR__ . '/includes/order-channel.php';
 require_once __DIR__ . '/includes/order-channel-admin.php';
 require_once __DIR__ . '/includes/order-channel-list.php';
 require_once __DIR__ . '/includes/order-note.php';
+require_once __DIR__ . '/includes/offer-settings.php';
+require_once __DIR__ . '/includes/offer-admin.php';
+require_once __DIR__ . '/includes/offer-thankyou.php';
 require_once __DIR__ . '/includes/product-sizes.php';
 require_once __DIR__ . '/includes/product-sizes-admin.php';
 require_once __DIR__ . '/includes/governorate-places.php';
@@ -2400,6 +2403,7 @@ final class Capi {
 		add_filter( 'woocommerce_payment_successful_result', array( $this, 'order_placed_after_checkout' ), 999, 2 );
 		add_filter( 'woocommerce_checkout_no_payment_needed_redirect', array( $this, 'order_placed_without_payment' ), 999, 2 );
 		add_action( 'famma_capi_orderplaced_send', array( $this, 'send_queued_order_placed' ) );
+		add_action( 'famma_capi_offeraccepted_send', array( $this, 'send_queued_offer_accepted' ) );
 		add_action( Capi_Retry::HOOK, array( $this, 'send_retry' ), 10, 2 );
 	}
 
@@ -2549,6 +2553,79 @@ final class Capi {
 	}
 
 	/**
+	 * Met en file l'événement OfferAccepted (offre après achat acceptée).
+	 *
+	 * Envoi différé, comme OrderPlaced : le clic de la cliente ne doit pas
+	 * attendre la réponse de Meta.
+	 *
+	 * @param int $order_id Commande concernée.
+	 * @return bool Vrai si une tâche est en file.
+	 */
+	public function queue_offer_accepted( int $order_id ): bool {
+		$hook = 'famma_capi_offeraccepted_send';
+		$args = array( 'order_id' => $order_id );
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			if ( as_enqueue_async_action( $hook, $args, 'famma-capi', true ) > 0 ) {
+				return true;
+			}
+			if ( function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( $hook, $args, 'famma-capi' ) ) {
+				return true;
+			}
+		}
+		if ( ! function_exists( 'wp_schedule_single_event' ) ) {
+			return false;
+		}
+		if ( wp_next_scheduled( $hook, $args ) ) {
+			return true;
+		}
+		return false !== wp_schedule_single_event( time() + 1, $hook, $args );
+	}
+
+	/**
+	 * Exécute la tâche OfferAccepted mise en file.
+	 *
+	 * @param int $order_id Commande concernée.
+	 * @return void
+	 */
+	public function send_queued_offer_accepted( int $order_id ): void {
+		$order = wc_get_order( $order_id );
+		if ( ! $order instanceof \WC_Order ) {
+			$this->outcome( $this->log_base_for( $order_id, 'OfferAccepted' ), 'ineligible', 'order_missing' );
+			return;
+		}
+		$this->send_offer_accepted( $order );
+	}
+
+	/**
+	 * Envoie OfferAccepted : la valeur est le seul montant ajouté par l'offre.
+	 *
+	 * Mêmes exclusions qu'OrderPlaced (commande du site, statut valide), plus
+	 * les commandes d'essai ; interrupteur propre dans les réglages de mesure.
+	 *
+	 * @param \WC_Order $order Commande dont l'offre a été acceptée.
+	 * @param bool      $retry Relance bornée d'un envoi incertain.
+	 * @return string Résultat consigné dans le journal famma-capi.
+	 */
+	public function send_offer_accepted( \WC_Order $order, bool $retry = false ): string {
+		$event_id = 'famma_offeraccepted_' . $order->get_id();
+		$base     = $this->log_base( $order, 'OfferAccepted', $event_id );
+		if ( ! get_option( 'famma_meta_offeraccepted_enabled', false ) ) {
+			return $this->outcome( $base, 'disabled', 'option' );
+		}
+		if ( ! $order->get_meta( Offer_Settings::ORDER_ACCEPTED ) ) {
+			return $this->outcome( $base, 'ineligible', 'offer_not_accepted' );
+		}
+		if ( $order->get_meta( '_famma_test_order' ) ) {
+			return $this->outcome( $base, 'ineligible', 'test_order' );
+		}
+		$reason = $this->order_placed_ineligibility( $order );
+		if ( '' !== $reason ) {
+			return $this->outcome( $base, 'ineligible', $reason );
+		}
+		return $this->send_order_event( $order, 'OfferAccepted', $event_id, $retry );
+	}
+
+	/**
 	 * Motif journalisé quand le Purchase est écarté, ou vide s'il peut partir.
 	 *
 	 * La règle vient du circuit de commande (`Order_Statuses::purchase_ineligibility()`),
@@ -2629,7 +2706,7 @@ final class Capi {
 			$this->outcome( $this->log_base_for( $order_id, $event_name ), 'ineligible', 'order_missing' );
 			return;
 		}
-		if ( in_array( $event_name, array( 'OrderPlaced', 'Purchase' ), true ) ) {
+		if ( in_array( $event_name, array( 'OrderPlaced', 'Purchase', 'OfferAccepted' ), true ) ) {
 			$this->resend( $order, $event_name );
 			return;
 		}
@@ -2647,6 +2724,9 @@ final class Capi {
 		if ( 'OrderPlaced' === $event_name ) {
 			return $this->send_order_placed( $order, true );
 		}
+		if ( 'OfferAccepted' === $event_name ) {
+			return $this->send_offer_accepted( $order, true );
+		}
 		$event_id = 'famma_purchase_' . $order->get_id();
 		$reason   = $this->purchase_block_reason( $order );
 		if ( '' !== $reason ) {
@@ -2662,6 +2742,14 @@ final class Capi {
 	 * @return array{sent: string, time: string, attempts: string, id: string}
 	 */
 	private function meta_keys( string $event_name ): array {
+		if ( 'OfferAccepted' === $event_name ) {
+			return array(
+				'sent'     => '_famma_offeraccepted_sent',
+				'time'     => '_famma_offeraccepted_event_time',
+				'attempts' => '_famma_offeraccepted_attempts',
+				'id'       => '_famma_offeraccepted_event_id',
+			);
+		}
 		$is_purchase = 'Purchase' === $event_name;
 		return array(
 			'sent'     => $is_purchase ? '_famma_purchase_sent' : '_famma_orderplaced_sent',
@@ -2709,7 +2797,10 @@ final class Capi {
 		$event_time = (int) $order->get_meta( $keys['time'] );
 		if ( $event_time <= 0 ) {
 			$created    = $order->get_date_created();
-			$event_time = 'Purchase' !== $event_name && $created ? $created->getTimestamp() : time();
+			$event_time = 'OrderPlaced' === $event_name && $created ? $created->getTimestamp() : time();
+			if ( 'OfferAccepted' === $event_name && (int) $order->get_meta( Offer_Settings::ORDER_ACCEPTED ) > 0 ) {
+				$event_time = (int) $order->get_meta( Offer_Settings::ORDER_ACCEPTED );
+			}
 		}
 		if ( time() - $event_time > Config::CAPI_MAX_EVENT_AGE ) {
 			return $this->outcome( $base, 'too_old', 'event_time' );
@@ -2827,6 +2918,9 @@ final class Capi {
 		if ( 'OrderPlaced' === $event_name ) {
 			$custom['famma_stage'] = 'order_placed';
 		}
+		if ( 'OfferAccepted' === $event_name ) {
+			$custom = $this->offer_custom_data( $order, $custom );
+		}
 		$event = array(
 			'event_name'    => $event_name,
 			'event_time'    => $event_time,
@@ -2839,6 +2933,34 @@ final class Capi {
 			$event['event_source_url'] = wc_get_checkout_url();
 		}
 		return $event;
+	}
+
+	/**
+	 * Bloc `custom_data` d'OfferAccepted : seulement l'article ajouté.
+	 *
+	 * @param \WC_Order            $order  Commande.
+	 * @param array<string, mixed> $custom Bloc de la commande entière.
+	 * @return array<string, mixed>
+	 */
+	private function offer_custom_data( \WC_Order $order, array $custom ): array {
+		$amount                = round( (float) $order->get_meta( Offer_Settings::ORDER_AMOUNT ), 3 );
+		$custom['value']       = $amount;
+		$custom['famma_stage'] = 'offer_accepted';
+		$target                = wc_get_product( (int) $order->get_meta( Offer_Settings::ORDER_TARGET ) );
+		if ( $target instanceof \WC_Product ) {
+			$id                     = Meta_Ids::content_id( $target );
+			$custom['contents']     = array(
+				array(
+					'id'         => $id,
+					'quantity'   => 1,
+					'item_price' => $amount,
+				),
+			);
+			$custom['content_ids']  = array( $id );
+			$custom['num_items']    = 1;
+			$custom['content_name'] = $target->get_name();
+		}
+		return $custom;
 	}
 
 	/**
@@ -3449,6 +3571,7 @@ function boot(): void {
 	Express_Preparation::instance();
 	Express_Checkout::instance();
 	Express_Cart_Isolation::instance();
+	Offer_Thankyou::instance();
 	Order_Emails::instance();
 	Anti_Abuse::instance();
 	Checkout_Lite::instance();
@@ -3504,6 +3627,7 @@ function boot(): void {
 		Visitor_Inputs_Export::instance();
 		Visitor_Inputs_Order::instance();
 		Order_Note::instance();
+		Offer_Admin::instance();
 	}
 }
 
