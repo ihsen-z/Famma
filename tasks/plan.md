@@ -18,8 +18,8 @@ Objectif : passer de 33 % à au moins 60 % des formulaires commencés qui devien
 
 ## Décisions du propriétaire (11/11)
 
-1. **Gouvernorat** : garder le menu à recherche, mais il ne doit plus jamais bloquer. Le nom tapé est reconnu à l'envoi, et les villes ou délégations mènent à leur gouvernorat.
-2. **Ordre des champs** : téléphone en premier, puis nom, puis gouvernorat. Même si le client s'arrête, son numéro arrive dans « Saisies à relancer ».
+1. **Gouvernorat** : ~~garder le menu à recherche~~ → remplacé le 11/11, avec le champ ville (décision 5), par la **liste simple** de la maquette. On choisit dans la liste du téléphone, ou la ville tapée la remplit. Plus aucun texte tapé ne peut rester « non choisi » et bloquer l'envoi.
+2. **Ordre des champs** : téléphone en premier, puis nom, puis adresse de livraison (gouvernorat et ville). Même si le client s'arrête, son numéro arrive dans « Saisies à relancer ».
 3. **Phrase rassurante** sous le téléphone, en FR et en derja, modifiable dans FAMMA → Pages → Fiche produit. Si elle est vide, rien n'est affiché.
 4. **Mise en ligne** dès que la correction est prête et testée, avec le feu vert explicite du propriétaire. Le verdict du 15/11 lira les chiffres avant et après, jour par jour.
 5. **Champ ville** (11/11, réponse « Avec champ ville » donnée à la session de la maquette animée, fiche produit v3 : https://claude.ai/artifact/58m2ku79Bz8NEiidPZaVyd) :
@@ -28,6 +28,8 @@ Objectif : passer de 33 % à au moins 60 % des formulaires commencés qui devien
    - téléphone : « +216 » affiché fixe hors de la valeur, numéro groupé « XX XXX XXX » à la frappe, +216 ou 00216 collé retiré, `inputmode="numeric"`, `autocomplete="tel-national"`, même règle `^[2-579]\d{7}$` ;
    - texte en 16 px (pas de zoom sur iPhone), cibles de 48 px, propriétés CSS logiques pour l'arabe ;
    - la table villes → gouvernorats de la maquette n'est PAS reprise : seule la nomenclature INS (tâche 4) fait foi ; les phrases en derja de la maquette sont à relire par le propriétaire.
+
+   - **ville facultative** (réponse du 11/11) : seul le gouvernorat est exigé ; l'appel de confirmation complète l'adresse si elle manque.
 
    Choix technique : le texte part dans `billing_address_1` (champ « Adresse » standard de WooCommerce, déjà non obligatoire pour la commande express). Il laisse `billing_city` propre pour la CAPI (`ct`) : la tâche 4 pourra y mettre le nom officiel de la délégation reconnue.
 
@@ -67,8 +69,8 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 - [ ] En local, un envoi sans gouvernorat apparaît dans le rapport avec le code `state`
 
 ### Phase 2 : corriger le formulaire
-- [ ] T3 : Le gouvernorat tapé est reconnu à l'envoi et ne bloque plus
-- [ ] T4 : Les villes et délégations mènent au bon gouvernorat
+- [ ] T3 : Adresse de livraison : liste des gouvernorats et ville facultative, dans un même cadre
+- [ ] T4 : La ville tapée remplit le gouvernorat (nomenclature INS)
 - [ ] T5 : Téléphone en premier et saisie adaptée au navigateur de Facebook
 - [ ] T6 : Phrase rassurante sous le téléphone, modifiable dans l'admin
 
@@ -100,8 +102,8 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 
 ## Questions ouvertes
 
-- **Forme du gouvernorat** (décision 1 contre décision 5) : le menu à recherche gardé le 11/11, ou la liste simple de la maquette, remplie par le champ ville ?
-- **Ville obligatoire ?** La maquette refuse une ville de moins de 3 caractères ; l'objectif du lot est qu'aucun champ ne bloque sans raison.
+- ~~Forme du gouvernorat~~ : tranché le 11/11, liste simple (décision 1).
+- ~~Ville obligatoire ?~~ : tranché le 11/11, facultative (décision 5).
 
 - **Texte de la phrase rassurante** : Claude propose une version FR et derja, le propriétaire la valide ou la réécrit dans l'admin.
 - **Noms courants des villes** hors nomenclature officielle (Djerba, El Mourouj, Ennasr…) : liste proposée au point de contrôle 2, à valider.

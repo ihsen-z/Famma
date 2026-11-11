@@ -71,46 +71,38 @@ Fait : bloc « Formulaire express : de commencé à commandé » dans l'onglet S
 
 ## Phase 2 : corriger le formulaire
 
-> **Mise à jour du 11/11 : champ ville** (décision 5 de `tasks/plan.md`, maquette fiche produit v3). Les tâches 3 à 5 seront réécrites après deux réponses du propriétaire : forme du gouvernorat (menu à recherche ou liste simple) et ville obligatoire ou non. Ce qui change déjà :
-> - T3 : le gouvernorat et le texte « Ville, cité, rue… » partagent un cadre et un libellé « Adresse de livraison » ; le texte part dans `billing_address_1`.
-> - T4 : la reconnaissance des villes (nomenclature INS) se fait dans le texte de l'adresse ; elle remplit le gouvernorat (flash + message « Gouvernorat ajouté : … Vous pouvez le changer. ») sans jamais remplacer un choix manuel.
-> - T5 : téléphone avec « +216 » fixe, groupage « XX XXX XXX », `inputmode="numeric"`, `autocomplete="tel-national"` ; texte en 16 px, cibles de 48 px.
-> - Messages d'erreur en FR + derja : « Choisissez le gouvernorat et écrivez la ville ou la cité. », « Choisissez votre gouvernorat. », « Écrivez la ville ou la cité. » (derja à relire par le propriétaire).
-> - `form_error` reçoit un code de plus, `address`, pour le nouveau champ.
+> **Mise à jour du 11/11 : champ ville** (décision 5 de `tasks/plan.md`, maquette fiche produit v3). Tâches 3 à 5 réécrites après les réponses du propriétaire : **liste simple** pour le gouvernorat, **ville facultative**. Phrases en derja à relire par le propriétaire au point de contrôle 2.
 
-### Tâche 3 : Le gouvernorat tapé est reconnu à l'envoi et ne bloque plus
+### Tâche 3 : Adresse de livraison : liste des gouvernorats et ville facultative, dans un même cadre
 
-**Description :** au moment de l'envoi (bouton ou touche « Aller » du clavier) et à la sortie du champ, le texte tapé est reconnu :
-- correspondance exacte en français ou en arabe ;
-- variantes sans accents ni espaces en trop, avec « gouvernorat de » ou « ولاية » ;
-- un seul candidat possible.
-
-Si rien ne correspond, la liste s'ouvre avec les gouvernorats proches et un message court en FR et en derja, au lieu d'un refus sec. Le menu à recherche est conservé, comme décidé par le propriétaire.
+**Description :** le menu à recherche cède la place à la liste native des gouvernorats (option vide « Gouvernorat » / « الولاية »). Elle partage un cadre avec un texte facultatif « Ville, cité, rue… » / « المدينة، الحومة، النهج… », envoyé dans `billing_address_1`, sous un seul libellé « Adresse de livraison » / « عنوان التوصيل ». Plus aucun texte tapé ne peut rester « non choisi » et bloquer l'envoi. Message d'erreur précis en FR + derja : « Choisissez votre gouvernorat. »
 
 **Critères d'acceptation :**
-- [ ] « sousse », « Sousse », « سوسة » et « gouvernorat de Sousse », suivis directement de la touche « Aller » ou du bouton, donnent une commande envoyée.
-- [ ] « Sous » suivi du bouton est reconnu (candidat unique) ; « xyz » ouvre la liste avec le message, sans envoi, et crée `form_error` `state`.
-- [ ] Sans script ou avec l'ancien HTML en cache, le `<select>` natif fonctionne toujours.
+- [ ] Gouvernorat choisi, ville vide → commande envoyée ; ville saisie → elle figure dans l'adresse de la commande (`billing_address_1`).
+- [ ] Gouvernorat vide → « Choisissez votre gouvernorat. », aucun appel réseau, `form_error` `state` ; la ville n'est jamais exigée.
+- [ ] Ancien HTML en cache (menu à recherche) avec le nouveau script, et nouveau HTML sans script : la commande passe dans les deux cas (`initCombo` gardé tant que le cache peut servir l'ancien gabarit).
+- [ ] Texte en 16 px, cibles de 48 px, propriétés CSS logiques : correct en FR et en arabe à 390 px.
 
 **Vérification :**
 - [ ] `node scripts/test-famma-express-v2.js`, avec un cas par critère
-- [ ] Contrôle manuel en émulation mobile 390 px
+- [ ] Contrôle manuel en émulation mobile 390 px, FR et arabe
 
 **Dépendances :** tâche 1.
 
 **Fichiers probables :**
-- `P/assets/js/express-order.js` (`initCombo`, `validate`, gestion de l'envoi)
-- `P/includes/express-order.php` (message `stateError` en FR + derja)
+- `P/includes/express-order.php` (`governorate_field()`, `render()`, messages)
+- `P/assets/js/express-order.js` (`validate`, compatibilité ancien gabarit)
+- `P/assets/css/express-order.css`
 - `scripts/test-famma-express-v2.js`
 
-**Taille :** S.
+**Taille :** M.
 
-### Tâche 4 : Les villes et délégations mènent au bon gouvernorat
+### Tâche 4 : La ville tapée remplit le gouvernorat
 
-**Description :** les délégations de la nomenclature officielle de l'INS deviennent des mots-clés de recherche, en français et en arabe. Taper « Hammamet » propose « Nabeul (Hammamet) ». Les données vivent dans un fichier dédié, avec la source citée en tête, filtrable par `famma_governorate_places`. Les noms courants hors liste officielle sont proposés au propriétaire au point de contrôle 2, avant d'être ajoutés.
+**Description :** les délégations de la nomenclature officielle de l'INS, en français et en arabe, sont reconnues dans le texte de l'adresse. « Hammamet » choisit Nabeul dans la liste, avec un flash orange et « Gouvernorat ajouté : Nabeul. Vous pouvez le changer. » (FR + derja). Un gouvernorat choisi à la main n'est jamais remplacé. Les données vivent dans un fichier dédié, avec la source citée en tête, filtrable par `famma_governorate_places`. Les noms courants hors liste officielle sont proposés au propriétaire au point de contrôle 2, avant d'être ajoutés. La table de la maquette n'est pas reprise.
 
 **Critères d'acceptation :**
-- [ ] « Hammamet » → Nabeul, « Msaken » → Sousse, « جربة » → Médenine : chaque recherche montre la ville et son gouvernorat.
+- [ ] « Hammamet » → Nabeul, « Msaken » → Sousse, « جربة » → Médenine, avec le message ; un choix manuel antérieur reste en place.
 - [ ] Chaque entrée du fichier vient de la nomenclature officielle (source et date citées) ou d'une liste validée par le propriétaire.
 - [ ] La fiche produit ne s'alourdit pas de plus de 15 Ko compressés.
 
@@ -131,14 +123,15 @@ Si rien ne correspond, la liste s'ouvre avec les gouvernorats proches et un mess
 ### Tâche 5 : Téléphone en premier et saisie adaptée au navigateur de Facebook
 
 **Description :**
-- Ordre des champs : téléphone, nom, gouvernorat.
-- Attributs de saisie : `autocomplete` correct (`tel`, `name`), `enterkeyhint` (« suivant », puis « envoyer » sur le dernier champ), `autocapitalize="words"` sur le nom.
+- Ordre des champs : téléphone, nom, adresse de livraison (gouvernorat et ville).
+- Téléphone comme la maquette v3 : « +216 » affiché fixe hors de la valeur, numéro groupé « XX XXX XXX » à la frappe, +216 ou 00216 collé retiré, `inputmode="numeric"`, même règle `^[2-579]\d{7}$`.
+- Attributs de saisie : `autocomplete` correct (`tel-national`, `name`, `address-level1`, `address-line1`), `enterkeyhint` (« suivant », puis « envoyer » sur le dernier champ), `autocapitalize="words"` sur le nom.
 - La touche « Suivant » du clavier passe au champ suivant.
 - Le champ actif défile au-dessus du clavier dans le navigateur intégré de Facebook.
 - Les messages d'erreur du téléphone passent en FR + derja.
 
 **Critères d'acceptation :**
-- [ ] L'ordre de tabulation est téléphone → nom → gouvernorat → taille → bouton, et « Saisies à relancer » reçoit le téléphone même si le client s'arrête ensuite.
+- [ ] L'ordre de tabulation est téléphone → nom → gouvernorat → ville → taille → bouton, et « Saisies à relancer » reçoit le téléphone même si le client s'arrête ensuite.
 - [ ] En émulation 390 px avec l'agent utilisateur du navigateur Facebook, le champ actif reste visible quand le clavier est ouvert.
 - [ ] Un numéro collé avec +216, des espaces ou des chiffres arabes est accepté (comportement actuel conservé).
 
