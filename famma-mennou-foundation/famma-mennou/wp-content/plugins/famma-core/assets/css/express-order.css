@@ -175,6 +175,19 @@
 	outline: none;
 }
 
+/* Phrase sous le téléphone (FAMMA → Pages → Fiche produit) : une ligne par langue, alignée au début de la ligne. */
+.famma-express__note {
+	display: block;
+	margin-block-start: var(--sp-1, 4px);
+	color: var(--famma-text-2, #56617A);
+	font-size: var(--fs-caption, 0.875rem);
+	text-align: start;
+}
+
+.famma-express__note-line {
+	display: block;
+}
+
 /* Numéro refusé : visible même sans `:has()` (anciens navigateurs intégrés). */
 .famma-express__phone .famma-express__phone-box input.famma-express__invalid {
 	box-shadow: none;

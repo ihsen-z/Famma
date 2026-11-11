@@ -54,7 +54,8 @@
 	var qtyInput = form.querySelector( '[name="famma_quantity"]' );
 	var totalNode = form.querySelector( '.famma-express__total' );
 	var phoneInput = form.querySelector( '[name="billing_phone"]' );
-	var phoneError = phoneInput ? document.getElementById( phoneInput.getAttribute( 'aria-describedby' ) ) : null;
+	// Premier identifiant de `aria-describedby` : l'erreur (la phrase sous le téléphone suit, 0.3.9).
+	var phoneError = phoneInput ? document.getElementById( String( phoneInput.getAttribute( 'aria-describedby' ) || '' ).split( ' ' )[ 0 ] ) : null;
 
 	/*
 	 * Choix de taille (0.3.0), seulement sur les produits qui en proposent.

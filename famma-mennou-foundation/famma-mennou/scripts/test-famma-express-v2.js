@@ -93,7 +93,9 @@ function setup(responses = [], options = {}) {
   const storage = options.storage || new Map();
   const unit = options.unit || '79';
   const qty = element('input', options.qty || '1', { min: '1', max: options.max || '' });
-  const phone = element('input', options.phone === undefined ? '20 123 456' : options.phone, { 'aria-describedby': 'famma-express-billing-phone-error' });
+  // Phrase sous le téléphone (0.3.9, option phoneNote) : son identifiant suit celui de l'erreur.
+  const phone = element('input', options.phone === undefined ? '20 123 456' : options.phone,
+    { 'aria-describedby': 'famma-express-billing-phone-error' + (options.phoneNote ? ' famma-express-phone-note' : '') });
   const phoneError = element('span');
   const name = element('input', options.name === undefined ? 'Client Fixture' : options.name);
   const state = element('select', options.state === undefined ? 'TN-51' : options.state);
@@ -1197,6 +1199,16 @@ async function test(name, run) {
     s.document.activeElement = null;
     s.window.visualViewport.listeners.forEach(cb => cb());
     assert.equal(s.scrolls.length, 1, 'aucun champ actif : rien');
+  });
+
+  // ── Lot 23, tâche 6 : phrase sous le téléphone, modifiable dans l'admin ──
+  await test('Phrase sous le téléphone : l’erreur du numéro reste affichée (premier identifiant de aria-describedby)', async () => {
+    const s = setup([], { phone: '123', phoneNote: true });
+    s.submit(); await flush();
+    assert.equal(s.calls.length, 0);
+    assert.equal(s.phoneError.textContent, 'Téléphone invalide');
+    assert.equal(s.phoneError.hidden, false);
+    assert.deepEqual(s.blocks, [['phone']]);
   });
 
   console.log(`RESULT ${passed}/${passed + failed} scénarios front réussis${failed ? `, ${failed} ÉCHEC(S)` : ''}. Aucun réseau WooCommerce ni Meta utilisé.`);

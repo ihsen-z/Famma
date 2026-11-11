@@ -91,6 +91,15 @@ final class Product_Content {
 				'default_ar' => 'زيد للسلّة',
 			),
 			array(
+				'key'        => 'reassure_phone',
+				'type'       => 'text',
+				'label'      => __( 'Formulaire — phrase sous le téléphone', 'famma-core' ),
+				'help'       => __( 'Dit au client à quoi sert son numéro. N’y promettez que ce que vous faites vraiment. Vide : rien n’est affiché sous le téléphone.', 'famma-core' ),
+				// Même promesse que « Nos engagements » (page À propos) : commande confirmée par téléphone avant l'expédition.
+				'default_fr' => 'Nous vous appelons sur ce numéro pour confirmer la commande avant l’envoi.',
+				'default_ar' => 'نكلموك على النمرة هذي باش نأكدو الطلبية قبل ما نبعثوها.',
+			),
+			array(
 				'key'        => 'whatsapp_card',
 				'type'       => 'text',
 				'label'      => __( 'Bouton WhatsApp sous le formulaire', 'famma-core' ),

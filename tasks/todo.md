@@ -170,13 +170,20 @@ Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide s
 **Description :** un nouveau texte en FR et en derja dans FAMMA → Pages → Fiche produit (`Product_Content`), affiché sous le téléphone s'il n'est pas vide. Claude propose une version ; le propriétaire la valide ou la réécrit.
 
 **Critères d'acceptation :**
-- [ ] Texte vide : rien n'est affiché sous le téléphone.
-- [ ] Texte saisi : il est affiché échappé, relié au champ par `aria-describedby`, correct en arabe (propriétés CSS logiques).
-- [ ] Le texte se modifie depuis l'admin sans toucher au code.
+- [x] Texte vide : rien n'est affiché sous le téléphone.
+- [x] Texte saisi : il est affiché échappé, relié au champ par `aria-describedby`, correct en arabe (propriétés CSS logiques).
+- [x] Le texte se modifie depuis l'admin sans toucher au code.
 
 **Vérification :**
-- [ ] Contrôle manuel dans l'admin et sur la fiche, en FR et en RTL
-- [ ] phpcs propre
+- [ ] Contrôle manuel dans l'admin et sur la fiche, en FR et en RTL *(aperçu statique 390 px FR et arabe fait le 11/11 ; écran d'admin à voir sur le site local au point de contrôle 2)*
+- [x] phpcs propre
+
+> Fait le 11/11 :
+> - Champ `reassure_phone` dans FAMMA → Pages → Fiche produit (schéma de `Product_Content`, écran et assainissement de `Pages_Content`).
+> - Proposition par défaut, à valider par le propriétaire : « Nous vous appelons sur ce numéro pour confirmer la commande avant l’envoi. » / « نكلموك على النمرة هذي باش نأكدو الطلبية قبل ما نبعثوها. ». Même promesse que « Nos engagements » de la page À propos (commande confirmée par téléphone avant l'expédition).
+> - Affichage : sous l'erreur du téléphone ; derja en seconde ligne sur le site français. À 390 px : 4 lignes sur le site français, 2 sur le site arabe.
+> - `aria-describedby` = erreur puis phrase ; le script ne lit plus que le premier identifiant pour trouver l'erreur.
+> - Tests : `scripts/test-express-phone-note-isolated.php` 12/12, front 105/105.
 
 **Dépendances :** tâche 5.
 

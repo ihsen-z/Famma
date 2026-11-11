@@ -561,10 +561,20 @@ final class Express_Order {
 	 * `inputmode="numeric"` : pavé de chiffres seuls. `tel-national` : le
 	 * navigateur propose le numéro enregistré sans l'indicatif.
 	 *
+	 * Sous le champ, la phrase « à quoi sert ce numéro » saisie dans FAMMA →
+	 * Pages → Fiche produit (`reassure_phone`) : vidée, elle disparaît. Sur le
+	 * site français, sa version derja suit sur sa propre ligne, comme les
+	 * lignes sous le prix. L'erreur reste le premier identifiant de
+	 * `aria-describedby` : le script la retrouve par lui.
+	 *
 	 * @return void
 	 */
 	private function phone_field(): void {
-		$error = 'famma-express-billing-phone-error';
+		$error     = 'famma-express-billing-phone-error';
+		$note_id   = 'famma-express-phone-note';
+		$note      = Product_Content::text( 'reassure_phone' );
+		$derja     = is_rtl() ? '' : Product_Content::derja( 'reassure_phone' );
+		$described = '' !== $note ? $error . ' ' . $note_id : $error;
 		?>
 		<p class="famma-express__field famma-express__field--wide famma-express__phone">
 			<label for="famma-express-billing-phone">
@@ -582,11 +592,19 @@ final class Express_Order {
 					enterkeyhint="next"
 					placeholder="XX XXX XXX"
 					maxlength="20"
-					aria-describedby="<?php echo esc_attr( $error ); ?>"
+					aria-describedby="<?php echo esc_attr( $described ); ?>"
 					required
 				/>
 			</span>
 			<span class="famma-express__error" id="<?php echo esc_attr( $error ); ?>" hidden></span>
+			<?php if ( '' !== $note ) : ?>
+				<span class="famma-express__note" id="<?php echo esc_attr( $note_id ); ?>">
+					<span class="famma-express__note-line"><?php echo esc_html( $note ); ?></span>
+					<?php if ( '' !== $derja && $derja !== $note ) : ?>
+						<span class="famma-express__note-line" lang="ar" dir="rtl"><?php echo esc_html( $derja ); ?></span>
+					<?php endif; ?>
+				</span>
+			<?php endif; ?>
 		</p>
 		<?php
 	}
