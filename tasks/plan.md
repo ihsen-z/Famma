@@ -69,7 +69,7 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 - [ ] En local, un envoi sans gouvernorat apparaît dans le rapport avec le code `state`
 
 ### Phase 2 : corriger le formulaire
-- [ ] T3 : Adresse de livraison : liste des gouvernorats et ville facultative, dans un même cadre
+- [x] T3 : Adresse de livraison : liste des gouvernorats et ville facultative, dans un même cadre
 - [ ] T4 : La ville tapée remplit le gouvernorat (nomenclature INS)
 - [ ] T5 : Téléphone en premier et saisie adaptée au navigateur de Facebook
 - [ ] T6 : Phrase rassurante sous le téléphone, modifiable dans l'admin

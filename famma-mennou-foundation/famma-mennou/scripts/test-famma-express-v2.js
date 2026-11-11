@@ -90,6 +90,11 @@ function setup(responses = [], options = {}) {
   const cartQty = element('input', '1');
   const inputs = { billing_first_name: name, billing_phone: phone, billing_state: state, famma_quantity: qty,
     famma_hp_site: trap, payment_method: payment, billing_country: country, famma_product_id: id };
+  // Adresse de livraison (0.3.9) : texte facultatif « Ville, cité, rue… » à côté de la liste des gouvernorats.
+  const address = element('input', options.address || '');
+  // `name` comme dans le vrai DOM : le script reconnaît le gouvernorat par son nom à l'événement `change`.
+  state.name = 'billing_state'; address.name = 'billing_address_1';
+  if (options.address !== undefined) inputs.billing_address_1 = address;
   // Champs cachés de <wc-order-attribution-inputs> (WooCommerce), quand l'élément est dans le formulaire.
   Object.entries(options.extraInputs || {}).forEach(([k, v]) => { inputs[k] = element('input', v); });
   const map = { '.famma-express__submit': button, '.famma-express__notices': notices, '.famma-express__info': info,
@@ -187,7 +192,7 @@ function setup(responses = [], options = {}) {
     return overlay && { overlay, confirm: find('famma-express-modal__confirm'), close: find('famma-express-modal__close'),
       text: find('famma-express-modal__confirm-text'), content: find('famma-express-modal__content') };
   };
-  return { sizeGroup, sizeError, sizeRadios, cartButton, terms, recap, qty, phone, phoneError, name, state, total, button, submitText, notices, info, minus, plus, cartQty, form,
+  return { sizeGroup, sizeError, sizeRadios, cartButton, terms, recap, qty, phone, phoneError, name, state, address, total, button, submitText, notices, info, minus, plus, cartQty, form,
     window, calls, events, blocks, storage, submit, modal, documentElement,
     urls: () => calls.map(c => c.url),
     record: () => JSON.parse(storage.get('famma_express_intent_123')) };
@@ -868,6 +873,58 @@ async function test(name, run) {
     assert.deepEqual(s.blocks, []);
     s.state.value = 'Tunis';
     s.submit(); await flush();
+    assert.equal(s.window.location.href, accepted.redirect);
+  });
+
+  // ── Lot 23, tâche 3 : adresse de livraison (liste des gouvernorats + ville facultative) ──
+  await test('Gabarit : liste native des gouvernorats (sans menu à recherche) et ville facultative dans le même cadre', async () => {
+    const box = formSource.match(/<div class="famma-express__address-box">([\s\S]*?)<\/div>/);
+    assert.ok(box, 'cadre famma-express__address-box présent');
+    // Une ligne entière : les attributs contiennent du PHP (`?>`), un `[^>]*` s'arrêterait trop tôt.
+    const select = box[1].match(/<select[^\n]*name="billing_state"[^\n]*/);
+    const input = box[1].match(/<input[\s\S]*?name="billing_address_1"[\s\S]*?\/>/);
+    assert.ok(select && input, 'gouvernorat et ville dans le cadre');
+    assert.ok(box[1].indexOf(select[0]) < box[1].indexOf(input[0]), 'la liste vient avant la ville');
+    assert.ok(!/data-famma-combo/.test(select[0]), 'plus de menu à recherche sur le nouveau gabarit');
+    assert.ok(/\srequired[\s>]/.test(select[0]) && /autocomplete="address-level1"/.test(select[0]));
+    assert.ok(!/\srequired/.test(input[0]), 'la ville n’est jamais obligatoire');
+    assert.ok(/autocomplete="address-line1"/.test(input[0]) && /maxlength="100"/.test(input[0]));
+  });
+
+  await test('Adresse : gouvernorat choisi, ville vide → commande envoyée', async () => {
+    const s = setup([token, quote(), accepted], { address: '' });
+    s.submit(); await flush();
+    assert.equal(s.window.location.href, accepted.redirect);
+    assert.equal(field(s.calls.find(c => c.url === '/express'), 'billing_address_1'), '');
+    assert.deepEqual(s.blocks, []);
+  });
+
+  await test('Adresse : ville saisie → envoyée dans billing_address_1 avec la commande', async () => {
+    const s = setup([token, quote(), accepted], { address: 'Sahloul 3, rue des Jasmins' });
+    s.submit(); await flush();
+    assert.equal(field(s.calls.find(c => c.url === '/express'), 'billing_address_1'), 'Sahloul 3, rue des Jasmins');
+    assert.equal(s.window.location.href, accepted.redirect);
+  });
+
+  await test('Adresse : gouvernorat vide → message, aucun appel, [state] seul même si la ville est vide', async () => {
+    const s = setup([], { state: '', address: '' });
+    s.submit(); await flush();
+    assert.equal(s.calls.length, 0);
+    assert.equal(s.notices.textContent, 'Gouvernorat');
+    assert.equal(s.state.getAttribute('aria-invalid'), 'true');
+    assert.equal(s.address.getAttribute('aria-invalid'), null, 'la ville n’est jamais marquée');
+    assert.deepEqual(s.blocks, [['state']]);
+  });
+
+  await test('Adresse : choisir un gouvernorat dans la liste efface l’erreur, puis la commande passe', async () => {
+    const s = setup([token, quote(), accepted], { state: '', address: 'Hammamet' });
+    s.submit(); await flush();
+    s.state.value = 'TN-21';
+    s.form.fire('change', { target: s.state });
+    assert.equal(s.state.getAttribute('aria-invalid'), 'false');
+    assert.ok(!s.state.classList.contains('famma-express__invalid'));
+    s.submit(); await flush();
+    assert.equal(field(s.calls.find(c => c.url === '/express'), 'billing_state'), 'TN-21');
     assert.equal(s.window.location.href, accepted.redirect);
   });
 

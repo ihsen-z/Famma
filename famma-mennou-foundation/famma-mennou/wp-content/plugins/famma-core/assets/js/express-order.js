@@ -436,8 +436,9 @@
 	 * Champ visible correspondant à un nom de champ WooCommerce (`data-id`).
 	 *
 	 * Le nom complet est redécoupé en prénom + nom côté serveur : une erreur
-	 * sur le nom pointe le champ unique. Le gouvernorat est saisi dans le
-	 * menu à recherche, pas dans le `<select>` masqué.
+	 * sur le nom pointe le champ unique. Depuis 0.3.9, le gouvernorat est la
+	 * liste native elle-même ; avec l'ancien gabarit encore en cache, il est
+	 * saisi dans le menu à recherche, pas dans le `<select>` masqué.
 	 *
 	 * @param {string} name Nom du champ.
 	 * @return {Element|null}
@@ -865,6 +866,8 @@
 
 	form.addEventListener( 'change', function ( event ) {
 		if ( event.target && 'billing_state' === event.target.name ) {
+			// Liste native (0.3.9) : un vieux navigateur intégré n'émet pas `input` sur un <select>.
+			clearInvalid( event.target );
 			invalidateQuote();
 		}
 		if ( event.target && 'famma_size' === event.target.name ) {
@@ -1599,7 +1602,11 @@
 	renderQuantity();
 
 	/**
-	 * Gouvernorat : menu déroulant à recherche.
+	 * Gouvernorat : menu déroulant à recherche (gabarit d'avant 0.3.9).
+	 *
+	 * Le gabarit 0.3.9 affiche la liste native sans `data-famma-combo` : ce
+	 * menu ne s'applique plus qu'à l'ancien HTML que le cache LiteSpeed peut
+	 * encore servir avec ce script. À retirer une fois ce cache expiré.
 	 *
 	 * Le `<select>` natif reste dans le formulaire et porte la valeur envoyée ;
 	 * sans script, c'est lui qui s'affiche. Le champ de saisie le remplace : on

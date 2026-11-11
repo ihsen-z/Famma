@@ -418,7 +418,7 @@ final class Express_Order {
 				'genericError'  => Express_Checkout::generic_error(),
 				'sending'       => __( 'Envoi en cours… / قاعد نبعث…', 'famma-core' ),
 				'phoneError'    => __( 'Check the number: 8 digits (XX XXX XXX).', 'famma-core' ),
-				'stateError'    => __( 'Pick your governorate from the list.', 'famma-core' ),
+				'stateError'    => __( 'Choisissez votre gouvernorat. / إختار الولاية متاعك.', 'famma-core' ),
 				'noMatch'       => __( 'No governorate found', 'famma-core' ),
 				'stateHint'     => __( 'Type to search…', 'famma-core' ),
 				'confirmLabel'  => __( 'Confirmer ma commande / أكد طلبيتك', 'famma-core' ),
@@ -550,30 +550,62 @@ final class Express_Order {
 	}
 
 	/**
-	 * Liste déroulante des gouvernorats.
+	 * Adresse de livraison : liste des gouvernorats et ville facultative, dans un même cadre.
+	 *
+	 * Décision du propriétaire du 11/11 (maquette fiche produit v3) : la liste
+	 * native remplace le menu à recherche. On choisit dans la liste du
+	 * téléphone ; aucun texte tapé ne peut rester « non choisi » et bloquer
+	 * l'envoi. La ville, la cité ou la rue part dans `billing_address_1`, champ
+	 * standard de WooCommerce, facultatif pour la commande express
+	 * (`Express_Checkout::relax_address_fields()`).
 	 *
 	 * La liste vient de `WC()->countries`, donc du filtre posé par `Tunisia` :
-	 * une seule source pour les 24 gouvernorats, ici comme au checkout.
+	 * une seule source pour les 24 gouvernorats, ici comme au checkout. Le nom
+	 * arabe (`data-alt`) sert à reconnaître une ville tapée en arabe.
+	 *
+	 * Sans `data-famma-combo` : le menu à recherche de `express-order.js` ne
+	 * s'applique plus qu'à l'ancien gabarit, tant que le cache peut le servir.
 	 *
 	 * @return void
 	 */
-	private function governorate_field(): void {
+	private function address_field(): void {
 		$states = WC()->countries->get_states( 'TN' );
 		$states = is_array( $states ) ? $states : array();
 		$arabic = self::governorate_arabic_names();
+		$hint   = 'famma-express-address-hint';
 		?>
-		<p class="famma-express__field">
-			<label for="famma-express-billing-state">
-				<?php esc_html_e( 'Governorate / الولاية', 'famma-core' ); ?>
+		<div class="famma-express__field famma-express__field--wide famma-express__address">
+			<label for="famma-express-billing-address-1">
+				<?php esc_html_e( 'Adresse de livraison / عنوان التوصيل', 'famma-core' ); ?>
 				<abbr class="required" title="<?php esc_attr_e( 'required', 'famma-core' ); ?>">*</abbr>
 			</label>
-			<select id="famma-express-billing-state" name="billing_state" autocomplete="address-level1" data-famma-combo required>
-				<option value=""><?php esc_html_e( 'Choose… / اختار', 'famma-core' ); ?></option>
-				<?php foreach ( $states as $code => $label ) : ?>
-					<option value="<?php echo esc_attr( $code ); ?>" data-alt="<?php echo esc_attr( $arabic[ $code ] ?? '' ); ?>"><?php echo esc_html( $label ); ?></option>
-				<?php endforeach; ?>
-			</select>
-		</p>
+			<div class="famma-express__address-box">
+				<select id="famma-express-billing-state" name="billing_state" autocomplete="address-level1" aria-label="<?php esc_attr_e( 'Gouvernorat', 'famma-core' ); ?>" aria-describedby="<?php echo esc_attr( $hint ); ?>" required>
+					<option value=""><?php esc_html_e( 'Gouvernorat', 'famma-core' ); ?></option>
+					<?php foreach ( $states as $code => $label ) : ?>
+						<option value="<?php echo esc_attr( $code ); ?>" data-alt="<?php echo esc_attr( $arabic[ $code ] ?? '' ); ?>"><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<input
+					type="text"
+					id="famma-express-billing-address-1"
+					name="billing_address_1"
+					autocomplete="address-line1"
+					autocapitalize="words"
+					maxlength="100"
+					placeholder="<?php esc_attr_e( 'Ville, cité, rue…', 'famma-core' ); ?>"
+					aria-describedby="<?php echo esc_attr( $hint ); ?>"
+				/>
+			</div>
+			<?php
+			/*
+			 * Une seule langue par site : mêlés dans une phrase, le français et
+			 * l'arabe s'entrecroisent à la coupure de ligne (3 lignes à 390 px).
+			 * Le site arabe affiche la derja par le fichier `famma-core-ar.po`.
+			 */
+			?>
+			<span class="famma-express__hint" id="<?php echo esc_attr( $hint ); ?>"><?php esc_html_e( 'Choisissez le gouvernorat. La ville ou la cité est facultative, elle aide le livreur.', 'famma-core' ); ?></span>
+		</div>
 		<?php
 	}
 
@@ -741,7 +773,7 @@ final class Express_Order {
 						<?php
 						$this->text_field( 'billing_first_name', __( 'Full name / الاسم واللقب', 'famma-core' ), 'text', 'name', true );
 						$this->text_field( 'billing_phone', __( 'Phone / الهاتف', 'famma-core' ), 'tel', 'tel' );
-						$this->governorate_field();
+						$this->address_field();
 						?>
 					</div>
 				</fieldset>

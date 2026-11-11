@@ -78,14 +78,17 @@ Fait : bloc « Formulaire express : de commencé à commandé » dans l'onglet S
 **Description :** le menu à recherche cède la place à la liste native des gouvernorats (option vide « Gouvernorat » / « الولاية »). Elle partage un cadre avec un texte facultatif « Ville, cité, rue… » / « المدينة، الحومة، النهج… », envoyé dans `billing_address_1`, sous un seul libellé « Adresse de livraison » / « عنوان التوصيل ». Plus aucun texte tapé ne peut rester « non choisi » et bloquer l'envoi. Message d'erreur précis en FR + derja : « Choisissez votre gouvernorat. »
 
 **Critères d'acceptation :**
-- [ ] Gouvernorat choisi, ville vide → commande envoyée ; ville saisie → elle figure dans l'adresse de la commande (`billing_address_1`).
-- [ ] Gouvernorat vide → « Choisissez votre gouvernorat. », aucun appel réseau, `form_error` `state` ; la ville n'est jamais exigée.
-- [ ] Ancien HTML en cache (menu à recherche) avec le nouveau script, et nouveau HTML sans script : la commande passe dans les deux cas (`initCombo` gardé tant que le cache peut servir l'ancien gabarit).
-- [ ] Texte en 16 px, cibles de 48 px, propriétés CSS logiques : correct en FR et en arabe à 390 px.
+- [x] Gouvernorat choisi, ville vide → commande envoyée ; ville saisie → elle figure dans l'adresse de la commande (`billing_address_1`).
+- [x] Gouvernorat vide → « Choisissez votre gouvernorat. », aucun appel réseau, `form_error` `state` ; la ville n'est jamais exigée.
+- [x] Ancien HTML en cache (menu à recherche) avec le nouveau script, et nouveau HTML sans script : la commande passe dans les deux cas (`initCombo` gardé tant que le cache peut servir l'ancien gabarit).
+- [x] Texte en 16 px, cibles de 48 px, propriétés CSS logiques : correct en FR et en arabe à 390 px.
+
+Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide sous le cadre est en une seule langue par site (français, ou derja par `famma-core-ar.po`) : mêlées, les deux écritures s'entrecroisaient sur 3 lignes. Traductions arabes ajoutées au `.po` ; le `.mo` sera recompilé à la tâche 8. À 416 px et plus, le téléphone reste seul sur sa ligne jusqu'à la tâche 5 (ordre des champs).
 
 **Vérification :**
-- [ ] `node scripts/test-famma-express-v2.js`, avec un cas par critère
-- [ ] Contrôle manuel en émulation mobile 390 px, FR et arabe
+- [x] `node scripts/test-famma-express-v2.js` : 85/85, dont 5 nouveaux cas « Adresse » et « Gabarit »
+- [x] Aperçu statique avec la vraie feuille de style à 390 px, FR et arabe (cadre, erreur, liste à droite en arabe)
+- [ ] Contrôle sur la vraie fiche produit en local (point de contrôle 2)
 
 **Dépendances :** tâche 1.
 

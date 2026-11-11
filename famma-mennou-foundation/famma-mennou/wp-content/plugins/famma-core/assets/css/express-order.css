@@ -115,6 +115,85 @@
 }
 
 /*
+ * Adresse de livraison (0.3.9, maquette fiche produit v3) : la liste des
+ * gouvernorats et la ville partagent un cadre. Le cadre porte la bordure et
+ * l'anneau de mise au point ; la liste se place au début de la ligne, donc à
+ * droite en arabe, par le seul sens du document.
+ */
+.famma-express__address-box {
+	display: flex;
+	align-items: stretch;
+	min-block-size: 48px;
+	border: 1px solid var(--famma-line, #E7EAF0);
+	border-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-surface-field, #FBFCFD);
+}
+
+.famma-express__address-box:focus-within {
+	border-color: var(--famma-orange, #FF7A00);
+	box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.2);
+}
+
+.famma-express__address-box:has(.famma-express__invalid) {
+	border-color: var(--famma-danger, #D64545);
+}
+
+/* Deux classes + l'élément : plus fort que `.famma-express__field select` (pleine largeur, bordure). */
+.famma-express__address .famma-express__address-box select {
+	flex: none;
+	inline-size: auto;
+	min-inline-size: 0;
+	max-inline-size: 52%;
+	min-block-size: 46px;
+	padding-inline: var(--sp-3, 12px) var(--sp-2, 8px);
+	border: 0;
+	border-inline-end: 1px solid var(--famma-line, #E7EAF0);
+	border-radius: 0;
+	border-start-start-radius: var(--famma-radius-sm, 8px);
+	border-end-start-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-surface-2, #F3F5F8);
+	font-weight: var(--fw-semibold, 600);
+	text-overflow: ellipsis;
+}
+
+/* Option vide « Gouvernorat » : liste `required` sans valeur, donc `:invalid`, sans script. */
+.famma-express__address .famma-express__address-box select:invalid {
+	color: var(--famma-text-2, #56617A);
+	font-weight: var(--fw-regular, 400);
+}
+
+.famma-express__address .famma-express__address-box input[type="text"] {
+	flex: 1;
+	min-inline-size: 0;
+	min-block-size: 46px;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+}
+
+/* L'anneau du cadre montre la mise au point ; la liste se teinte pour dire laquelle des deux parties est active. */
+.famma-express__address .famma-express__address-box select:focus-visible,
+.famma-express__address .famma-express__address-box input[type="text"]:focus-visible {
+	outline: none;
+}
+
+.famma-express__address .famma-express__address-box select:focus-visible {
+	background: rgba(255, 122, 0, 0.1);
+}
+
+/* Gouvernorat manquant : visible même sans `:has()` (anciens navigateurs intégrés). */
+.famma-express__address .famma-express__address-box select.famma-express__invalid {
+	background: var(--famma-danger-soft, #FDF7F7);
+	box-shadow: none;
+}
+
+.famma-express__hint {
+	color: var(--famma-text-2, #56617A);
+	font-size: var(--fs-caption, 0.875rem);
+	text-align: start;
+}
+
+/*
  * Gouvernorat : menu à recherche. Le <select> natif reste dans le formulaire
  * (valeur envoyée) mais n'est plus affiché ; il n'est pas en `display: none`
  * pour que sa valeur reste lisible par le formulaire.
