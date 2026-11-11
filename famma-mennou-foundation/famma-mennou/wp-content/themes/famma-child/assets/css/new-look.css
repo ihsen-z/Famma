@@ -458,3 +458,9 @@ body.famma-nl-motion .famma-nav__ink {
 		}
 	}
 }
+
+/* --- Héros « pile » : inclinaison au pointeur (new-look.js) --- */
+
+body.famma-nl-motion .famma-hero2__deck.has-tilt {
+	transition: transform var(--dur-slide) var(--ease-out);
+}

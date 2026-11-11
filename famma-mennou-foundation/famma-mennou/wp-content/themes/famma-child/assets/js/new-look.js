@@ -417,4 +417,67 @@
 			document.fonts.ready.then( place );
 		}
 	} );
+	/* Héros « pile » : la pile s'incline légèrement vers le pointeur fin.
+	   Seulement sur le conteneur de la pile (.famma-hero2__deck), jamais sur
+	   les cartes, dont hero.js gère seul la position et le glisser. Remise à
+	   plat dès qu'un geste commence ou que le pointeur sort. */
+	guard( 'héros', function () {
+		if ( ! has( 'motion' ) || reduced || ! fine ) {
+			return;
+		}
+
+		var deck = document.querySelector( '.famma-hero2__media--stack .famma-hero2__deck' );
+
+		if ( ! deck ) {
+			return;
+		}
+
+		var frame = 0;
+		var pending = null;
+		var held = false;
+
+		deck.classList.add( 'has-tilt' );
+
+		function paint() {
+			frame = 0;
+
+			if ( ! pending || held ) {
+				deck.style.transform = '';
+				return;
+			}
+
+			deck.style.transform = 'perspective(900px) rotateX(' + ( pending.y * -5 ).toFixed( 2 ) + 'deg) rotateY(' + ( pending.x * 6 ).toFixed( 2 ) + 'deg)';
+		}
+
+		function queue( value ) {
+			pending = value;
+
+			if ( ! frame ) {
+				frame = window.requestAnimationFrame( paint );
+			}
+		}
+
+		deck.addEventListener( 'pointermove', function ( event ) {
+			if ( 'mouse' !== event.pointerType ) {
+				return;
+			}
+
+			var r = deck.getBoundingClientRect();
+
+			queue( {
+				x: ( event.clientX - r.left ) / r.width - 0.5,
+				y: ( event.clientY - r.top ) / r.height - 0.5
+			} );
+		} );
+		deck.addEventListener( 'pointerdown', function () {
+			held = true;
+			queue( null );
+		} );
+		window.addEventListener( 'pointerup', function () {
+			held = false;
+		} );
+		deck.addEventListener( 'pointerleave', function () {
+			queue( null );
+		} );
+	} );
 } )();
