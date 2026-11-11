@@ -84,6 +84,7 @@ function famma_child_new_look_parts(): array {
 	$parts = array( 'motion', 'alt_photo', 'transitions', 'dock' );
 
 	if ( is_front_page() ) {
+		$parts[] = 'home_polish';
 		$parts[] = 'journey';
 	} else {
 		$parts[] = 'tools';
@@ -109,6 +110,46 @@ function famma_child_new_look_on_orange(): void {
 	wp_add_inline_style( 'famma-tokens', ':root{--famma-on-orange:var(--famma-blue)}' );
 }
 add_action( 'wp_enqueue_scripts', 'famma_child_new_look_on_orange', 21 );
+
+/**
+ * Police, bandeau qui défile et pied de page de la maquette, partout.
+ *
+ * La feuille est posée dans la page, derrière `famma-layout` : aucune
+ * requête de plus, rien de bloquant ajouté sur la fiche ni la commande.
+ *
+ * @return void
+ */
+function famma_child_new_look_site_polish(): void {
+	if ( ! famma_child_new_look( 'site_polish' ) || ! wp_style_is( 'famma-layout', 'enqueued' ) ) {
+		return;
+	}
+
+	$path = get_stylesheet_directory() . '/assets/css/new-look-site.css';
+
+	if ( ! is_readable( $path ) ) {
+		return;
+	}
+
+	$css = (string) file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- fichier local du thème.
+
+	// Commentaires et blancs retirés : seules les règles partent dans la page.
+	$css = (string) preg_replace( '#/\*.*?\*/#s', '', $css );
+	$css = trim( (string) preg_replace( '/\s+/', ' ', $css ) );
+
+	if ( '' !== $css ) {
+		wp_add_inline_style( 'famma-layout', $css );
+	}
+}
+add_action( 'wp_enqueue_scripts', 'famma_child_new_look_site_polish', 22 );
+
+/**
+ * Le bandeau du haut défile-t-il sur cette page ?
+ *
+ * @return bool
+ */
+function famma_child_topbar_marquee(): bool {
+	return famma_child_new_look( 'site_polish' );
+}
 
 /**
  * Charge la feuille et le script de la couche animée.
@@ -185,6 +226,10 @@ function famma_child_new_look_body_class( array $classes ): array {
 
 	if ( famma_child_new_look( 'navy' ) ) {
 		$classes[] = 'famma-nl-navy';
+	}
+
+	if ( famma_child_new_look( 'site_polish' ) ) {
+		$classes[] = 'famma-nl-site-polish';
 	}
 
 	return $classes;

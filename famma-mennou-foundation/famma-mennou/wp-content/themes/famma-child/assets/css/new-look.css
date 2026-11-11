@@ -626,3 +626,450 @@ body.famma-nl-motion .famma-hero2__deck.has-tilt {
 	color: var(--famma-white);
 	font-weight: var(--fw-semibold);
 }
+
+/* ============================================================
+   Accueil : mise en page de la maquette (brique home_polish)
+
+   Le placement et le dessin des blocs de l'accueil, repris de la
+   maquette du 04/11 : ordre du héros sur téléphone, rayons en grille,
+   nouveautés sur deux colonnes, titres, FAQ, carte WhatsApp, cartes
+   « Pourquoi », infolettre claire. Aucun texte n'est ajouté ni retiré :
+   seuls l'ordre, la grille et le dessin changent.
+   ============================================================ */
+
+/* --- Héros, téléphone : la pile sous le nom, le bouton juste après --- */
+@media (max-width: 999px) {
+	body.famma-nl-home-polish .famma-hero2:not(.famma-hero2--classic) .famma-hero2__cta {
+		order: 2;
+		align-self: stretch;
+		justify-content: center;
+	}
+
+	body.famma-nl-home-polish .famma-hero2:not(.famma-hero2--classic) .famma-hero2__lead {
+		order: 3;
+	}
+
+	body.famma-nl-home-polish .famma-hero2:not(.famma-hero2--classic) .famma-hero2__perks {
+		order: 4;
+	}
+}
+
+/* --- Titres de section : traits plus courts, titre sur une ligne --- */
+body.famma-nl-home-polish .famma-sectitle {
+	gap: clamp(10px, 2vw, 18px);
+}
+
+body.famma-nl-home-polish .famma-sectitle__rule {
+	inline-size: clamp(1.375rem, 4vw, 2.75rem);
+}
+
+body.famma-nl-home-polish .famma-sectitle__text,
+body.famma-nl-home-polish .famma-faq > .famma-section__title {
+	font-size: clamp(1.3125rem, 2.4vw, 1.625rem);
+	font-weight: var(--fw-semibold);
+	line-height: 1.3;
+}
+
+/* --- Rayons : grille de 3 × 2 sur téléphone, une rangée de 6 au-delà --- */
+body.famma-nl-home-polish .famma-cats__track {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--sp-3);
+	overflow: visible;
+}
+
+body.famma-nl-home-polish .famma-cats__item {
+	inline-size: auto;
+	min-inline-size: 0;
+}
+
+body.famma-nl-home-polish .famma-cats__nav {
+	display: none;
+}
+
+body.famma-nl-home-polish .famma-cats__card {
+	justify-content: flex-start;
+	gap: 10px;
+	min-block-size: 7.375rem;
+	padding: var(--sp-4) 6px;
+}
+
+body.famma-nl-home-polish .famma-cats__media,
+body.famma-nl-home-polish .famma-cats__mark {
+	inline-size: 3.25rem;
+	block-size: 3.25rem;
+}
+
+body.famma-nl-home-polish .famma-cats__name {
+	font-size: 0.78125rem;
+	line-height: 1.35;
+}
+
+@media (min-width: 800px) {
+	body.famma-nl-home-polish .famma-cats__track {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+		gap: var(--sp-4);
+	}
+
+	body.famma-nl-home-polish .famma-cats__card {
+		padding: 20px 10px;
+	}
+
+	body.famma-nl-home-polish .famma-cats__name {
+		font-size: var(--fs-small);
+	}
+}
+
+/* --- Nouveautés : texte de la carte à sa hauteur naturelle ---
+
+   La grille de carte de la boutique réserve deux lignes au nom, deux au
+   résumé, une à la note et deux au prix : sans avis ni nom long, ces
+   réserves laissaient un grand vide. Ici le nom tient jusqu'à trois
+   lignes, la note vide ne prend rien, et le prix rejoint le bouton en
+   bas de carte : prix et boutons restent alignés sur une rangée. */
+body.famma-nl-home-polish .famma-home__grid ul.products.famma-cards li.product .product-details {
+	grid-template-rows: auto auto auto 1fr auto;
+}
+
+body.famma-nl-home-polish .famma-home__grid ul.products.famma-cards li.product .woocommerce-loop-product__title {
+	block-size: auto;
+	max-block-size: calc(3 * var(--card-lh-title) * var(--fs-card-name));
+}
+
+body.famma-nl-home-polish .famma-home__grid ul.products.famma-cards li.product .woocommerce-loop-product__title a {
+	-webkit-line-clamp: 3;
+	line-clamp: 3;
+}
+
+body.famma-nl-home-polish .famma-home__grid ul.products.famma-cards li.product .famma-card__benefit {
+	block-size: auto;
+	max-block-size: calc(3 * var(--card-lh-benefit) * var(--fs-card-meta));
+}
+
+body.famma-nl-home-polish .famma-home__grid.woocommerce ul.products.famma-cards li.product .price {
+	align-self: end;
+}
+
+/* Téléphone : deux colonnes, la première carte en large (photo à côté). */
+@media (max-width: 639px) {
+	body.famma-nl-home-polish .famma-home__grid ul.products {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--sp-3);
+	}
+
+	body.famma-nl-home-polish .famma-home__grid ul.products.famma-cards li.product .product-details {
+		gap: var(--sp-2);
+		padding: var(--sp-3);
+	}
+
+	body.famma-nl-home-polish .famma-home__grid ul.products.famma-cards li.product:not(:first-child) .famma-card__benefit {
+		display: none;
+	}
+
+	body.famma-nl-home-polish .famma-home__grid ul.products.famma-cards li.product a.button:not(.kb-button) {
+		padding-inline: var(--sp-2);
+	}
+
+	body.famma-nl-home-polish .famma-home__grid ul.products.famma-cards li.product:first-child {
+		grid-column: 1 / -1;
+		flex-direction: row;
+	}
+
+	body.famma-nl-home-polish .famma-home__grid ul.products.famma-cards li.product:first-child .woocommerce-loop-image-link {
+		display: block;
+		flex: 0 0 44%;
+		min-inline-size: 0;
+	}
+
+	body.famma-nl-home-polish .famma-home__grid ul.products.famma-cards li.product:first-child a img {
+		block-size: 100%;
+		min-block-size: 13.75rem;
+		aspect-ratio: auto;
+	}
+
+	/* Le cœur reste sur la photo, dans son coin. */
+	body.famma-nl-home-polish .famma-home__grid ul.products.famma-cards li.product:first-child .famma-fav {
+		inset-inline-end: calc(56% + var(--sp-2));
+	}
+}
+
+/* --- Questions fréquentes : titre centré, chevrons, ouverture douce --- */
+body.famma-nl-home-polish .famma-faq > .famma-section__title {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: clamp(10px, 2vw, 18px);
+	margin-block-end: var(--sp-6);
+	text-align: center;
+	text-wrap: balance;
+}
+
+body.famma-nl-home-polish .famma-faq > .famma-section__title::before,
+body.famma-nl-home-polish .famma-faq > .famma-section__title::after {
+	content: "";
+	flex: none;
+	inline-size: clamp(1.375rem, 4vw, 2.75rem);
+	block-size: 3px;
+	border-radius: 2px;
+	background: var(--famma-orange);
+}
+
+body.famma-nl-home-polish .famma-faq .wp-block-details {
+	margin-block: 0 10px;
+	padding: 0;
+	overflow: hidden;
+	interpolate-size: allow-keywords;
+}
+
+body.famma-nl-home-polish .famma-faq summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-3);
+	min-block-size: 3.5rem;
+	padding: var(--sp-3) 18px;
+	list-style: none;
+}
+
+body.famma-nl-home-polish .famma-faq summary::-webkit-details-marker {
+	display: none;
+}
+
+/* Chevron vers le bas, demi-tour à l'ouverture. Bordures physiques
+   (droite, bas) voulues : c'est une flèche verticale, la même en arabe. */
+body.famma-nl-home-polish .famma-faq summary::after {
+	content: "";
+	flex: none;
+	inline-size: 9px;
+	block-size: 9px;
+	margin-inline-end: var(--sp-1);
+	border-right: 2px solid var(--famma-accent-text);
+	border-bottom: 2px solid var(--famma-accent-text);
+	transform: translateY(-2px) rotate(45deg);
+}
+
+body.famma-nl-home-polish .famma-faq details[open] > summary::after {
+	transform: translateY(2px) rotate(-135deg);
+}
+
+body.famma-nl-home-polish .famma-faq .wp-block-details > p {
+	margin: 0;
+	padding: 0 18px var(--sp-4);
+	color: var(--famma-text-2);
+	font-size: 0.9375rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	body.famma-nl-home-polish .famma-faq summary::after {
+		transition: transform var(--dur-slide) var(--nl-spring);
+	}
+
+	body.famma-nl-home-polish .famma-faq .wp-block-details::details-content {
+		block-size: 0;
+		overflow: clip;
+		transition: block-size var(--dur-slide) var(--ease-drawer), content-visibility var(--dur-slide) allow-discrete;
+	}
+
+	body.famma-nl-home-polish .famma-faq .wp-block-details[open]::details-content {
+		block-size: auto;
+	}
+}
+
+/* --- « Une question ? » : la carte WhatsApp verte de la maquette --- */
+/* Mise en page en bloc, pas en grille : WordPress centre les enfants d'un
+   groupe « contraint » par des marges automatiques imposées, qu'une grille
+   honorerait (enfants rétrécis et centrés). En bloc, ils prennent la largeur. */
+body.famma-nl-home-polish .famma-home__editorial .famma-contact {
+	display: block;
+	inline-size: auto;
+	max-inline-size: var(--wp--style--global--content-size, 46rem);
+	margin-inline: auto;
+	margin-block: 0 var(--sp-8);
+	padding: 22px;
+	border: 1px solid var(--famma-success-line);
+	border-radius: var(--famma-radius);
+	background: var(--famma-whatsapp-bg);
+	text-align: start;
+}
+
+body.famma-nl-home-polish .famma-home__editorial .famma-contact .famma-seal {
+	display: none;
+}
+
+body.famma-nl-home-polish .famma-home__editorial .famma-contact .famma-section__title {
+	margin-block: 0 var(--sp-3);
+	font-size: 1.125rem;
+	font-weight: var(--fw-semibold);
+}
+
+body.famma-nl-home-polish .famma-home__editorial .famma-contact p {
+	margin-block: 0 var(--sp-4);
+	color: var(--famma-text-1);
+}
+
+body.famma-nl-home-polish .famma-home__editorial .famma-contact .famma-wa-cta {
+	display: flex;
+	border-radius: 9px;
+}
+
+/* Bureau : la carte se range à côté des questions, sous le titre commun. */
+@media (min-width: 900px) {
+	body.famma-nl-home-polish .famma-home__editorial {
+		display: grid;
+		grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+		grid-auto-flow: row dense;
+		column-gap: 18px;
+		align-items: start;
+	}
+
+	body.famma-nl-home-polish .famma-home__editorial > * {
+		grid-column: 1 / -1;
+	}
+
+	body.famma-nl-home-polish .famma-home__editorial > .famma-faq {
+		display: contents;
+	}
+
+	body.famma-nl-home-polish .famma-home__editorial > .famma-faq > * {
+		grid-column: 1 / -1;
+	}
+
+	body.famma-nl-home-polish .famma-home__editorial > .famma-faq > .famma-section__title {
+		margin-block-start: var(--sp-8);
+	}
+
+	/* Largeur imposée : les marges automatiques du groupe « contraint »
+	   rétréciraient sinon chaque question à la taille de son texte. */
+	body.famma-nl-home-polish .famma-home__editorial > .famma-faq > .wp-block-details {
+		grid-column: 1;
+		inline-size: 100%;
+		max-inline-size: none;
+	}
+
+	body.famma-nl-home-polish .famma-home__editorial > .famma-contact {
+		grid-column: 2;
+		grid-row-end: span 3;
+		align-self: start;
+		max-inline-size: none;
+		margin: 0;
+	}
+}
+
+/* --- « Pourquoi FAMMA » : icône au-dessus, carte qui se soulève --- */
+body.famma-nl-home-polish .famma-why {
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 15.625rem), 1fr));
+	gap: 14px;
+}
+
+body.famma-nl-home-polish .famma-why__item {
+	flex-direction: column;
+	gap: 10px;
+	padding: 20px;
+	background: var(--famma-white);
+}
+
+body.famma-nl-home-polish .famma-why__mark {
+	inline-size: var(--sp-12);
+	block-size: var(--sp-12);
+	border-radius: var(--famma-radius-pill);
+	color: var(--famma-accent-text);
+}
+
+body.famma-nl-home-polish .famma-why__title {
+	font-size: var(--fs-body);
+	line-height: 1.35;
+}
+
+body.famma-nl-home-polish .famma-why__sub {
+	font-size: var(--fs-small);
+	line-height: 1.55;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+	body.famma-nl-home-polish .famma-why__item {
+		transition: transform var(--dur-slide) var(--ease-out-strong), box-shadow var(--dur-slide) var(--ease-out-strong);
+	}
+
+	body.famma-nl-home-polish .famma-why__item:hover {
+		transform: translateY(-4px);
+		box-shadow: var(--elev-1);
+	}
+}
+
+/* --- Infolettre : bande claire, bouton marine --- */
+body.famma-nl-home-polish .famma-newsletter {
+	border: 1px solid var(--famma-line);
+	background: var(--famma-surface-band);
+	color: var(--famma-blue);
+}
+
+body.famma-nl-home-polish .famma-newsletter__title {
+	color: var(--famma-blue);
+	font-size: clamp(1.25rem, 3.4vw, 2rem);
+}
+
+@media (max-width: 639px) {
+	body.famma-nl-home-polish .famma-newsletter__icon {
+		inline-size: 44px;
+		block-size: 44px;
+	}
+}
+
+body.famma-nl-home-polish .famma-newsletter__sub {
+	color: var(--famma-text-2);
+	font-size: var(--fs-body);
+}
+
+body.famma-nl-home-polish .famma-newsletter__row {
+	flex-wrap: wrap;
+	gap: var(--sp-2);
+	overflow: visible;
+	background: none;
+}
+
+/* Titre à côté de l'icône, comme la maquette ; la phrase d'invitation
+   passe dessous, pleine largeur. */
+body.famma-nl-home-polish .famma-newsletter__intro {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: center;
+	column-gap: var(--sp-4);
+	row-gap: var(--sp-2);
+}
+
+body.famma-nl-home-polish .famma-newsletter__text {
+	display: contents;
+}
+
+/* Le titre est en arabe (dir="rtl") : sa case se cale au début de la
+   ligne de la page, contre l'icône, au lieu de s'aligner à droite. */
+body.famma-nl-home-polish .famma-newsletter__title {
+	justify-self: start;
+}
+
+body.famma-nl-home-polish .famma-newsletter__sub {
+	grid-column: 1 / -1;
+}
+
+body.famma-nl-home-polish .famma-newsletter__input {
+	flex: 1 1 9rem;
+	padding-inline: 14px;
+	border: 1px solid var(--famma-line-field);
+	border-radius: 9px;
+}
+
+body.famma-nl-home-polish .famma-newsletter__button {
+	border-radius: 9px;
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	font-size: 0.96875rem;
+}
+
+body.famma-nl-home-polish .famma-newsletter__button:hover,
+body.famma-nl-home-polish .famma-newsletter__button:focus-visible {
+	background: var(--famma-blue-600);
+}
+
+body.famma-nl-home-polish .famma-newsletter__note {
+	color: var(--famma-text-2);
+}

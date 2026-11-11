@@ -117,6 +117,10 @@ final class New_Look {
 				'label' => __( 'Texte marine sur les boutons orange', 'famma-core' ),
 				'help'  => __( 'Contraste 6,3:1 au lieu de 2,6:1 pour le blanc actuel : les boutons deviennent lisibles au soleil et conformes à l’accessibilité.', 'famma-core' ),
 			),
+			'site_polish' => array(
+				'label' => __( 'Partout : police Poppins, bandeau qui défile, pied de page de la maquette', 'famma-core' ),
+				'help'  => __( 'Tout le texte passe dans la police de la charte (Poppins, déjà téléchargée par chaque page sans servir). Sur téléphone, les promesses du bandeau du haut défilent au lieu d’en montrer une seule. Le pied de page se range en colonnes, avec l’encadré « Paiement à la livraison » sous le logo. Aucun texte ne change.', 'famma-core' ),
+			),
 			'motion'      => array(
 				'label' => __( 'Apparitions et vol vers le panier', 'famma-core' ),
 				'help'  => __( 'Les cartes apparaissent en douceur, la photo vole vers le panier à l’ajout, le cœur des favoris pétille. Désactivé d’office si le visiteur a demandé moins d’animations.', 'famma-core' ),
@@ -140,6 +144,10 @@ final class New_Look {
 			'ledger'      => array(
 				'label' => __( 'Fiche produit : bande « Livraison 0 DT · Avant réception 0 DT »', 'famma-core' ),
 				'help'  => __( 'Sous le prix, un petit tableau : prix du produit, livraison 0 DT, 0 DT avant de recevoir, montant à payer au livreur. Les zéros ne s’affichent que s’ils sont vrais (livraison gratuite et paiement à la livraison activés dans WooCommerce). Textes dans « Fiche produit ».', 'famma-core' ),
+			),
+			'home_polish' => array(
+				'label' => __( 'Accueil : mise en page de la maquette', 'famma-core' ),
+				'help'  => __( 'Sur la page d’accueil : bouton « Commander » juste sous le nom sur téléphone, rayons en grille, nouveautés sur deux colonnes, questions fréquentes avec chevrons, carte WhatsApp verte, cartes « Pourquoi FAMMA » et infolettre claire. Seuls l’ordre et le dessin changent : les textes restent ceux de l’éditeur.', 'famma-core' ),
 			),
 			'journey'     => array(
 				'label' => __( 'Accueil : bloc « Vous payez à la livraison » en parcours animé', 'famma-core' ),

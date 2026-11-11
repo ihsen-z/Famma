@@ -1,0 +1,176 @@
+/* ============================================================
+   FAMMA — nouveau look, brique `site_polish` (toutes les pages)
+
+   Trois retouches de la maquette du 04/11, visibles partout :
+   - la police de la charte (Poppins) pour tout le texte ;
+   - le bandeau des promesses qui défile sur téléphone ;
+   - le pied de page en colonnes, avec l'encadré du paiement à la
+     livraison sous le logo.
+
+   Le contenu de cette feuille est posé DANS la page
+   (wp_add_inline_style, inc/new-look.php) : aucune requête de plus,
+   et rien de bloquant ajouté sur la fiche ni sur la commande.
+   Tout est rangé sous `body.famma-nl-site-polish`.
+   ============================================================ */
+
+/* --- Police de la charte ---
+
+   Constaté le 11/11 sur le rendu en ligne : le thème parent impose sa
+   pile système (`--global-body-font-family`) à tout le texte, titres
+   compris. Poppins était préchargée sur chaque page sans servir.
+   La variable est redéfinie sur le corps : tout ce qui la lit en
+   hérite, et le texte arabe garde sa famille (`:lang(ar)`, fonts.css). */
+body.famma-nl-site-polish {
+	--global-body-font-family: var(--famma-font);
+	--global-heading-font-family: var(--famma-font);
+
+	font-family: var(--famma-font);
+}
+
+body.famma-nl-site-polish button,
+body.famma-nl-site-polish input,
+body.famma-nl-site-polish select,
+body.famma-nl-site-polish textarea {
+	font-family: inherit;
+}
+
+/* Poppins est plus large que la pile système : sans cela « À propos »
+   passait sur deux lignes dans le menu du bureau. */
+body.famma-nl-site-polish .famma-nav--desktop .famma-nav__list a {
+	white-space: nowrap;
+}
+
+/* Entre 1000 et 1279px, menu, recherche et icônes ne tenaient pas sur une
+   ligne (constaté le 11/11 : la page débordait de 150px à 1024px, avant
+   même ce lot). Le champ de recherche cède la place et le menu se resserre. */
+@media (min-width: 1000px) and (max-width: 1279px) {
+	body.famma-nl-site-polish .famma-header__inner {
+		--chrome-nav-gap: 14px;
+	}
+
+	body.famma-nl-site-polish .famma-search--desktop {
+		flex: 1 1 0;
+		inline-size: auto;
+		min-inline-size: 2.75rem;
+	}
+}
+
+/* --- Bandeau des promesses : défilement sur téléphone ---
+
+   Le gabarit pose une seconde série de promesses (`--dup`, masquée aux
+   lecteurs d'écran) : la piste glisse de la moitié de sa largeur et
+   boucle sans couture. Au-dessus de 1000px, la rangée tient à l'arrêt. */
+/* Sans mouvement réduit seulement : sinon la barre garde son dessin
+   d'origine (une promesse sous 700px, la rangée au-delà). */
+@media (max-width: 999px) and (prefers-reduced-motion: no-preference) {
+	body.famma-nl-site-polish .famma-topbar__inner {
+		flex-wrap: nowrap;
+	}
+
+	body.famma-nl-site-polish .famma-topbar__view {
+		flex: 1;
+		min-inline-size: 0;
+		overflow: hidden;
+		-webkit-mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+		mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+	}
+
+	body.famma-nl-site-polish .famma-topbar__view .famma-topbar__promises {
+		flex-wrap: nowrap;
+		inline-size: max-content;
+		gap: 0;
+		animation: famma-nl-marquee 26s linear infinite;
+	}
+
+	[dir="rtl"] body.famma-nl-site-polish .famma-topbar__view .famma-topbar__promises {
+		animation-name: famma-nl-marquee-rtl;
+	}
+
+	body.famma-nl-site-polish .famma-topbar__view:hover .famma-topbar__promises {
+		animation-play-state: paused;
+	}
+
+	body.famma-nl-site-polish .famma-topbar__view .famma-topbar__promise {
+		display: inline-flex;
+		padding-inline-end: var(--sp-8);
+		white-space: nowrap;
+	}
+}
+
+/* Sans défilement (bureau, ou mouvement réduit) : la copie disparaît. */
+@media (min-width: 1000px), (prefers-reduced-motion: reduce) {
+	body.famma-nl-site-polish .famma-topbar__promise--dup {
+		display: none;
+	}
+}
+
+@keyframes famma-nl-marquee {
+	to {
+		transform: translateX(-50%);
+	}
+}
+
+@keyframes famma-nl-marquee-rtl {
+	to {
+		transform: translateX(50%);
+	}
+}
+
+/* --- Pied de page : colonnes de la maquette ---
+
+   Téléphone : logo, puis l'encadré « Paiement à la livraison », puis
+   Navigation et Informations côte à côte, puis Aide. Bureau : quatre
+   colonnes, l'encadré sous le logo. */
+body.famma-nl-site-polish .famma-footer__grid {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-areas:
+		"brand brand"
+		"cod cod"
+		"nav info"
+		"help help";
+	gap: var(--sp-8) var(--sp-6);
+}
+
+body.famma-nl-site-polish .famma-footer__col--brand {
+	grid-area: brand;
+	min-inline-size: 0;
+}
+
+body.famma-nl-site-polish nav.famma-footer__col:nth-of-type(1) {
+	grid-area: nav;
+}
+
+body.famma-nl-site-polish nav.famma-footer__col:nth-of-type(2) {
+	grid-area: info;
+}
+
+body.famma-nl-site-polish div.famma-footer__col:not(.famma-footer__col--brand):not(.famma-footer__col--cod) {
+	grid-area: help;
+}
+
+body.famma-nl-site-polish .famma-footer__col--cod {
+	grid-area: cod;
+	align-items: flex-start;
+	align-self: start;
+	gap: var(--sp-1);
+	max-inline-size: 20rem;
+	padding: 14px;
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	border-radius: var(--famma-radius);
+	text-align: start;
+}
+
+body.famma-nl-site-polish .famma-footer__col--cod .famma-footer__cod-text {
+	font-size: var(--fs-chrome-body);
+}
+
+@media (min-width: 900px) {
+	body.famma-nl-site-polish .famma-footer__grid {
+		grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.2fr);
+		grid-template-rows: auto 1fr;
+		grid-template-areas:
+			"brand nav info help"
+			"cod nav info help";
+		align-items: start;
+	}
+}

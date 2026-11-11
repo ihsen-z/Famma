@@ -131,6 +131,7 @@
 				<element value="famma_child_new_look_page"/>
 				<element value="famma_child_new_look_parts"/>
 				<element value="famma_child_new_look_on_orange"/>
+				<element value="famma_child_new_look_site_polish"/>
 				<element value="famma_child_enqueue_new_look"/>
 				<element value="famma_child_new_look_body_class"/>
 				<element value="famma_child_loop_alt_photo"/>
@@ -290,6 +291,8 @@
 				<element value="famma_child_theme_json"/>
 				<element value="famma_child_topbar"/>
 				<element value="famma_child_topbar_promises"/>
+				<element value="famma_child_topbar_promise"/>
+				<element value="famma_child_topbar_marquee"/>
 				<element value="famma_child_whatsapp_number"/>
 				<element value="famma_child_is_derja"/>
 				<element value="famma_child_delivery_delay"/>

@@ -163,51 +163,89 @@ function famma_child_topbar_promises(): array {
 /**
  * Affiche la barre supérieure marine : promesses + bascule de langue.
  *
+ * Avec le bandeau qui défile (nouveau look), la liste est posée dans une
+ * fenêtre et suivie d'une seconde série masquée aux lecteurs d'écran : la
+ * piste glisse de la moitié de sa largeur et boucle sans couture.
+ *
  * @return void
  */
 function famma_child_topbar(): void {
 	$promises = famma_child_topbar_promises();
+	$marquee  = function_exists( 'famma_child_topbar_marquee' ) && famma_child_topbar_marquee();
 	?>
 	<div class="famma-topbar">
 		<div class="famma-container famma-topbar__inner">
+			<?php if ( $marquee ) : ?>
+				<div class="famma-topbar__view">
+			<?php endif; ?>
 			<ul class="famma-topbar__promises">
 				<?php
-				foreach ( $promises as $promise ) :
-					$accent = ! empty( $promise['accent'] ) ? ' famma-topbar__promise--accent' : '';
-					?>
-					<li class="famma-topbar__promise<?php echo esc_attr( $accent ); ?>">
-						<?php
-						/*
-						 * Une icône téléversée remplace le tracé du thème.
-						 * `alt` reste vide : le libellé juste à côté dit déjà
-						 * la même chose, et le répéter ferait entendre la
-						 * promesse deux fois à un lecteur d'écran.
-						 */
-						$icon_url = (string) ( $promise['icon_url'] ?? '' );
+				foreach ( $promises as $promise ) {
+					famma_child_topbar_promise( $promise, false );
+				}
 
-						if ( '' !== $icon_url ) :
-							?>
-							<img
-								class="famma-topbar__icon"
-								src="<?php echo esc_url( $icon_url ); ?>"
-								alt=""
-								width="20"
-								height="20"
-								loading="lazy"
-								decoding="async"
-							/>
-							<?php
-						else :
-							famma_child_the_icon( $promise['icon'] );
-						endif;
-						?>
-						<span><?php echo esc_html( $promise['label'] ); ?></span>
-					</li>
-				<?php endforeach; ?>
+				if ( $marquee ) {
+					foreach ( $promises as $promise ) {
+						famma_child_topbar_promise( $promise, true );
+					}
+				}
+				?>
 			</ul>
+			<?php if ( $marquee ) : ?>
+				</div>
+			<?php endif; ?>
 			<?php famma_child_language_switcher(); ?>
 		</div>
 	</div>
+	<?php
+}
+
+/**
+ * Affiche une promesse de la barre supérieure.
+ *
+ * @param array<string, mixed> $promise Promesse (`label`, `icon`, `icon_url`, `accent`).
+ * @param bool                 $dup     Copie du bandeau qui défile, muette.
+ * @return void
+ */
+function famma_child_topbar_promise( array $promise, bool $dup ): void {
+	$class = 'famma-topbar__promise';
+
+	if ( ! empty( $promise['accent'] ) ) {
+		$class .= ' famma-topbar__promise--accent';
+	}
+
+	if ( $dup ) {
+		$class .= ' famma-topbar__promise--dup';
+	}
+	?>
+	<li class="<?php echo esc_attr( $class ); ?>"<?php echo $dup ? ' aria-hidden="true"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- attribut littéral. ?>>
+		<?php
+		/*
+		 * Une icône téléversée remplace le tracé du thème.
+		 * `alt` reste vide : le libellé juste à côté dit déjà
+		 * la même chose, et le répéter ferait entendre la
+		 * promesse deux fois à un lecteur d'écran.
+		 */
+		$icon_url = (string) ( $promise['icon_url'] ?? '' );
+
+		if ( '' !== $icon_url ) :
+			?>
+			<img
+				class="famma-topbar__icon"
+				src="<?php echo esc_url( $icon_url ); ?>"
+				alt=""
+				width="20"
+				height="20"
+				loading="lazy"
+				decoding="async"
+			/>
+			<?php
+		else :
+			famma_child_the_icon( (string) ( $promise['icon'] ?? '' ) );
+		endif;
+		?>
+		<span><?php echo esc_html( (string) ( $promise['label'] ?? '' ) ); ?></span>
+	</li>
 	<?php
 }
 
