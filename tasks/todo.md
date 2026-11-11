@@ -135,20 +135,25 @@ Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide s
 
 **Description :**
 - Ordre des champs : téléphone, nom, adresse de livraison (gouvernorat et ville).
-- Téléphone comme la maquette v3 : « +216 » affiché fixe hors de la valeur, numéro groupé « XX XXX XXX » à la frappe, +216 ou 00216 collé retiré, `inputmode="numeric"`, même règle `^[2-579]\d{7}$`.
+- Téléphone comme la maquette v3 : « +216 » affiché fixe hors de la valeur, numéro groupé « XX XXX XXX » à la frappe, +216 ou 00216 collé retiré, `inputmode="numeric"`, même règle que le serveur (`Tunisia::normalize_phone()`, `^[2-9]\d{7}$`).
 - Attributs de saisie : `autocomplete` correct (`tel-national`, `name`, `address-level1`, `address-line1`), `enterkeyhint` (« suivant », puis « envoyer » sur le dernier champ), `autocapitalize="words"` sur le nom.
 - La touche « Suivant » du clavier passe au champ suivant.
 - Le champ actif défile au-dessus du clavier dans le navigateur intégré de Facebook.
 - Les messages d'erreur du téléphone passent en FR + derja.
 
 **Critères d'acceptation :**
-- [ ] L'ordre de tabulation est téléphone → nom → gouvernorat → ville → taille → bouton, et « Saisies à relancer » reçoit le téléphone même si le client s'arrête ensuite.
-- [ ] En émulation 390 px avec l'agent utilisateur du navigateur Facebook, le champ actif reste visible quand le clavier est ouvert.
-- [ ] Un numéro collé avec +216, des espaces ou des chiffres arabes est accepté (comportement actuel conservé).
+- [x] L'ordre de tabulation est téléphone → nom → gouvernorat → ville → taille → bouton, et « Saisies à relancer » reçoit le téléphone même si le client s'arrête ensuite.
+- [ ] En émulation 390 px avec l'agent utilisateur du navigateur Facebook, le champ actif reste visible quand le clavier est ouvert. *(code et test unitaire faits ; le clavier ne s'émule pas dans un navigateur de bureau : à voir sur un vrai téléphone au point de contrôle 2)*
+- [x] Un numéro collé avec +216, des espaces ou des chiffres arabes est accepté (comportement actuel conservé).
 
 **Vérification :**
-- [ ] `node scripts/test-famma-express-v2.js` vert, ordre des champs testé
-- [ ] Contrôle manuel en émulation mobile
+- [x] `node scripts/test-famma-express-v2.js` vert (104/104), ordre des champs testé ; `node scripts/test-visitor-journal.js` 5/5
+- [ ] Contrôle manuel en émulation mobile *(aperçu statique 390 px FR et arabe fait le 11/11 ; clavier réel au point de contrôle 2)*
+
+> Fait le 11/11 :
+> - Gabarit : `Express_Order::phone_field()` (cadre `dir="ltr"`, « +216 » en `aria-hidden`, `tel-national`, `inputmode="numeric"`, `enterkeyhint="next"`), nom avec `autocapitalize="words"` et `enterkeyhint="next"`, ville avec `enterkeyhint="send"`. Tous les champs en pleine largeur.
+> - Script : `formatPhone()` groupe « XX XXX XXX » (curseur conservé, espace effacée = chiffre d'avant effacé, +216/00216 collé retiré, plus de 8 chiffres laissés tels quels) ; touche « Suivant » vers le champ à taper suivant, la liste des gouvernorats est sautée (la mettre au point ferme le clavier sans l'ouvrir) ; `keepFieldVisible()` remonte au tiers de la zone visible un champ caché par le clavier (`visualViewport`).
+> - Messages : celui du formulaire était déjà FR + derja ; celui du serveur sur le site français passe de l'arabe classique à la derja du site arabe (`famma-core-fr_FR.po`, .mo à recompiler en T8).
 
 **Dépendances :** tâche 3 (mêmes fichiers).
 

@@ -146,6 +146,8 @@ function setup(responses = [], options = {}) {
   form.querySelector = s => map[s] || null;
   form.querySelectorAll = s => {
     if (s === 'input, select, textarea, button') return [...Object.values(inputs), minus, plus, button];
+    // Champs à taper, dans l'ordre du gabarit 0.3.9 (touche « Suivant » du clavier).
+    if (s === 'input[type="text"], input[type="tel"]') return [phone, name, ...(inputs.billing_address_1 ? [address] : [])];
     if (s === '[data-famma-express-step]') return [minus, plus];
     return [];
   };
@@ -174,8 +176,12 @@ function setup(responses = [], options = {}) {
     // Array.from : tableau de l'hôte, comparable par deepStrictEqual (le bac à sable a son propre Array).
     dispatchEvent(e) { if (e.type === 'famma:express-error') blocks.push(Array.from(e.detail.fields)); return true; },
   };
-  const timers = [];
+  const timers = [], scrolls = [];
   const window = {
+    innerHeight: 800,
+    scrollBy(x, y) { scrolls.push(y); },
+    // Zone visible quand le clavier est ouvert (option viewport) : `resize` relancé par `resizeViewport()`.
+    ...(options.viewport ? { visualViewport: { ...options.viewport, listeners: [], addEventListener(t, cb) { this.listeners.push(cb); } } } : {}),
     location: { href: '' },
     // Minuteries manuelles : `runTimers()` joue celles en attente (pause de frappe, fin du flash).
     setTimeout(cb) { timers.push(cb); return timers.length; },
@@ -239,7 +245,7 @@ function setup(responses = [], options = {}) {
       text: find('famma-express-modal__confirm-text'), content: find('famma-express-modal__content') };
   };
   return { sizeGroup, sizeError, sizeRadios, cartButton, terms, recap, qty, phone, phoneError, name, state, address, total, button, submitText, notices, info, minus, plus, cartQty, form,
-    window, calls, events, blocks, storage, submit, modal, documentElement, hint,
+    window, calls, events, blocks, storage, submit, modal, documentElement, hint, document, scrolls,
     // Frappe dans « Ville, cité, rue… » : `input` à chaque touche, `change` en fin de saisie.
     type(text) { address.value = text; address.fire('input'); },
     leave() { address.fire('change'); },
@@ -1106,6 +1112,91 @@ async function test(name, run) {
     assert.ok(/'var fammaExpressPlaces = ' \. wp_json_encode\( self::places_for_script\(\), [^)]*JSON_HEX_TAG/.test(formSource), 'JSON_HEX_TAG');
     assert.ok(/wp_add_inline_script\(\s*'famma-express',[\s\S]*?'before'\s*\)/.test(formSource), 'avant le script');
     assert.ok(/'stateFound'\s*=> __\( 'Gouvernorat ajouté : %s\. Vous pouvez le changer\.', 'famma-core' \)/.test(formSource));
+  });
+
+  // ── Lot 23, tâche 5 : téléphone en premier, saisie adaptée au navigateur de Facebook ──
+  const typed = (s, value, extra = {}) => { s.phone.value = value; s.phone.fire('input', extra); return s.phone.value; };
+
+  await test('Gabarit : ordre téléphone → nom → gouvernorat → ville → taille → bouton, attributs de saisie', async () => {
+    const body = formSource.slice(formSource.indexOf('public function render()'));
+    const order = ['$this->phone_field()', "'billing_first_name'", '$this->address_field()', 'Product_Sizes::render_field', 'famma-express__submit'].map(k => body.indexOf(k));
+    assert.ok(order.every(i => i > 0), 'tous présents dans render()');
+    assert.deepEqual([...order].sort((a, b) => a - b), order, 'dans cet ordre');
+    const phoneField = formSource.slice(formSource.indexOf('private function phone_field()'), formSource.indexOf('private function quantity_field('));
+    assert.ok(/<span class="famma-express__phone-box" dir="ltr">\s*<span class="famma-express__prefix" aria-hidden="true">\+216<\/span>/.test(phoneField), '+216 fixe, hors de la valeur');
+    ['type="tel"', 'name="billing_phone"', 'autocomplete="tel-national"', 'inputmode="numeric"', 'enterkeyhint="next"', 'placeholder="XX XXX XXX"', 'required']
+      .forEach(a => assert.ok(phoneField.includes(a), a));
+    assert.ok(/'autocapitalize' => 'words',\s*'enterkeyhint'\s*=> 'next',/.test(body), 'nom : majuscules aux mots, touche Suivant');
+    assert.ok(/name="billing_address_1"[\s\S]*?enterkeyhint="send"/.test(formSource), 'ville : dernier champ tapé, la touche envoie');
+  });
+
+  await test('Téléphone : groupé « XX XXX XXX » pendant la frappe', async () => {
+    const s = setup([], { phone: '' });
+    assert.equal(typed(s, '2'), '2');
+    assert.equal(typed(s, '201'), '20 1');
+    assert.equal(typed(s, '20 1234'), '20 123 4');
+    assert.equal(typed(s, '20 123 456'), '20 123 456');
+  });
+
+  await test('Téléphone : +216, 00216, espaces ou chiffres arabes collés → 8 chiffres groupés ; 9 chiffres laissés tels quels', async () => {
+    [['+216 20 123 456', '20 123 456'], ['00216 20123456', '20 123 456'], ['٢٠١٢٣٤٥٦', '20 123 456'], ['20-123-456', '20 123 456'], ['21612345', '21 612 345']]
+      .forEach(([paste, shown]) => assert.equal(typed(setup([], { phone: '' }), paste), shown, paste));
+    const s = setup([], { phone: '' });
+    assert.equal(typed(s, '201234567'), '201234567');
+    s.phone.fire('blur');
+    assert.equal(s.phone.getAttribute('aria-invalid'), 'true', 'signalé à la sortie du champ');
+  });
+
+  await test('Téléphone : le curseur reste après le même chiffre ; effacer une espace efface le chiffre d’avant', async () => {
+    const s = setup([], { phone: '' });
+    s.phone.setSelectionRange = (a, b) => { s.phone.sel = [a, b]; };
+    s.document.activeElement = s.phone;
+    typed(s, '20 123 45');
+    s.phone.selectionStart = 5; // « 20 19|23 45 » : un 9 inséré après « 20 1 »
+    assert.equal(typed(s, '20 1923 45'), '20 192 345');
+    assert.deepEqual(s.phone.sel, [5, 5]);
+    typed(s, '20 123 456');
+    s.phone.selectionStart = 2; // « 20|123 456 » : l'espace vient d'être effacée
+    assert.equal(typed(s, '20123 456', { inputType: 'deleteContentBackward' }), '21 234 56');
+    assert.deepEqual(s.phone.sel, [1, 1]);
+  });
+
+  await test('Téléphone groupé : la commande part, le serveur reçoit le numéro tel qu’affiché', async () => {
+    const s = setup([token, quote(), accepted], { phone: '' });
+    typed(s, '+216 98 765 432');
+    s.submit(); await flush();
+    assert.equal(field(s.calls.find(c => c.url === '/express'), 'billing_phone'), '98 765 432');
+    assert.equal(s.window.location.href, accepted.redirect);
+  });
+
+  await test('Touche « Suivant » : téléphone → nom → ville (la liste est sautée) ; « Envoyer » et l’ancien gabarit gardent l’envoi', async () => {
+    const s = setup([], { places: true, state: '' });
+    s.phone.setAttribute('enterkeyhint', 'next'); s.name.setAttribute('enterkeyhint', 'next'); s.address.setAttribute('enterkeyhint', 'send');
+    const enter = (target, extra = {}) => { let stopped = false; s.form.fire('keydown', { target, key: 'Enter', preventDefault() { stopped = true; }, ...extra }); return stopped; };
+    assert.ok(enter(s.phone) && s.name.focused, 'téléphone → nom');
+    assert.ok(enter(s.name) && s.address.focused, 'nom → ville');
+    assert.ok(!enter(s.address), 'ville : la touche envoie le formulaire');
+    s.name.focused = false;
+    assert.ok(!enter(s.phone, { isComposing: true }) && !s.name.focused, 'saisie en cours (IME) : rien');
+    s.phone.removeAttribute('enterkeyhint');
+    assert.ok(!enter(s.phone), 'ancien gabarit sans enterkeyhint : comportement du navigateur');
+  });
+
+  await test('Clavier ouvert : un champ caché remonte au tiers de la zone visible, un champ visible ne bouge pas', async () => {
+    const s = setup([], { viewport: { offsetTop: 0, height: 390 } });
+    s.form.contains = () => true;
+    s.document.activeElement = s.phone;
+    s.phone.getBoundingClientRect = () => ({ top: 700, bottom: 748 });
+    s.form.fire('focusin', { target: s.phone });
+    assert.deepEqual(s.scrolls, [], 'rien avant que le clavier ait fini de s’ouvrir');
+    s.runTimers();
+    assert.deepEqual(s.scrolls, [700 - 390 / 3]);
+    s.phone.getBoundingClientRect = () => ({ top: 120, bottom: 168 });
+    s.window.visualViewport.listeners.forEach(cb => cb());
+    assert.equal(s.scrolls.length, 1, 'déjà visible : aucun défilement');
+    s.document.activeElement = null;
+    s.window.visualViewport.listeners.forEach(cb => cb());
+    assert.equal(s.scrolls.length, 1, 'aucun champ actif : rien');
   });
 
   console.log(`RESULT ${passed}/${passed + failed} scénarios front réussis${failed ? `, ${failed} ÉCHEC(S)` : ''}. Aucun réseau WooCommerce ni Meta utilisé.`);

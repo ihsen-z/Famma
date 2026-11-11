@@ -120,7 +120,8 @@
  * l'anneau de mise au point ; la liste se place au début de la ligne, donc à
  * droite en arabe, par le seul sens du document.
  */
-.famma-express__address-box {
+.famma-express__address-box,
+.famma-express__phone-box {
 	display: flex;
 	align-items: stretch;
 	min-block-size: 48px;
@@ -129,13 +130,55 @@
 	background: var(--famma-surface-field, #FBFCFD);
 }
 
-.famma-express__address-box:focus-within {
+.famma-express__address-box:focus-within,
+.famma-express__phone-box:focus-within {
 	border-color: var(--famma-orange, #FF7A00);
 	box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.2);
 }
 
-.famma-express__address-box:has(.famma-express__invalid) {
+.famma-express__address-box:has(.famma-express__invalid),
+.famma-express__phone-box:has(.famma-express__invalid) {
 	border-color: var(--famma-danger, #D64545);
+}
+
+/*
+ * Téléphone (0.3.9, maquette fiche produit v3) : « +216 » fixe devant le
+ * numéro, hors de la valeur. Le cadre est en `dir="ltr"` : l'indicatif reste
+ * à gauche du numéro, même sur le site arabe.
+ */
+.famma-express__phone-box .famma-express__prefix {
+	display: flex;
+	align-items: center;
+	padding-inline: var(--sp-3, 12px);
+	border-inline-end: 1px solid var(--famma-line, #E7EAF0);
+	border-start-start-radius: var(--famma-radius-sm, 8px);
+	border-end-start-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-surface-2, #F3F5F8);
+	color: var(--famma-text-2, #56617A);
+	font-weight: var(--fw-semibold, 600);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Deux classes + l'élément : plus fort que `.famma-express__field input` (pleine largeur, bordure). */
+.famma-express__phone .famma-express__phone-box input {
+	flex: 1;
+	min-inline-size: 0;
+	min-block-size: 46px;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	letter-spacing: 0.02em;
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-express__phone .famma-express__phone-box input:focus-visible {
+	outline: none;
+}
+
+/* Numéro refusé : visible même sans `:has()` (anciens navigateurs intégrés). */
+.famma-express__phone .famma-express__phone-box input.famma-express__invalid {
+	box-shadow: none;
+	background: var(--famma-danger-soft, #FDF7F7);
 }
 
 /* Deux classes + l'élément : plus fort que `.famma-express__field select` (pleine largeur, bordure). */

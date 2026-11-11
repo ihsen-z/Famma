@@ -517,11 +517,11 @@ final class Express_Order {
 	 * @param string $autocomplete Valeur d'`autocomplete`.
 	 * @param bool   $wide         Champ sur toute la largeur de la grille.
 	 * @param bool   $required     Champ obligatoire.
+	 * @param array  $attrs        Attributs de saisie en plus (`enterkeyhint`, `autocapitalize`…).
 	 * @return void
 	 */
-	private function text_field( string $name, string $label, string $type = 'text', string $autocomplete = '', bool $wide = false, bool $required = true ): void {
-		$id    = 'famma-express-' . str_replace( '_', '-', $name );
-		$error = $id . '-error';
+	private function text_field( string $name, string $label, string $type = 'text', string $autocomplete = '', bool $wide = false, bool $required = true, array $attrs = array() ): void {
+		$id = 'famma-express-' . str_replace( '_', '-', $name );
 		?>
 		<p class="famma-express__field<?php echo $wide ? ' famma-express__field--wide' : ''; ?>">
 			<label for="<?php echo esc_attr( $id ); ?>">
@@ -539,22 +539,54 @@ final class Express_Order {
 				<?php if ( '' !== $autocomplete ) : ?>
 					autocomplete="<?php echo esc_attr( $autocomplete ); ?>"
 				<?php endif; ?>
-				<?php if ( 'tel' === $type ) : ?>
-					<?php
-					/*
-					 * `inputmode` sort le pavé numérique sur mobile. Le contrôle
-					 * en direct du script n'est qu'un confort : la règle qui fait
-					 * foi reste `Tunisia::validate_phone()`, côté serveur.
-					 */
-					?>
-					inputmode="tel" placeholder="XX XXX XXX" maxlength="20"
-					aria-describedby="<?php echo esc_attr( $error ); ?>"
-				<?php endif; ?>
+				<?php foreach ( $attrs as $attr => $value ) : ?>
+					<?php echo esc_attr( (string) $attr ); ?>="<?php echo esc_attr( (string) $value ); ?>"
+				<?php endforeach; ?>
 				<?php echo $required ? 'required' : ''; ?>
 			/>
-			<?php if ( 'tel' === $type ) : ?>
-				<span class="famma-express__error" id="<?php echo esc_attr( $error ); ?>" hidden></span>
-			<?php endif; ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Téléphone, premier champ du formulaire (maquette fiche produit v3).
+	 *
+	 * « +216 » est affiché à côté du champ, hors de la valeur : le client ne
+	 * tape que ses 8 chiffres, groupés « XX XXX XXX » par le script. Un numéro
+	 * collé avec +216, 00216, des espaces ou des chiffres arabes reste
+	 * accepté : la règle qui fait foi est `Tunisia::normalize_phone()`, côté
+	 * serveur. Le cadre est en `dir="ltr"` : un numéro se lit de gauche à
+	 * droite, même sur le site arabe.
+	 *
+	 * `inputmode="numeric"` : pavé de chiffres seuls. `tel-national` : le
+	 * navigateur propose le numéro enregistré sans l'indicatif.
+	 *
+	 * @return void
+	 */
+	private function phone_field(): void {
+		$error = 'famma-express-billing-phone-error';
+		?>
+		<p class="famma-express__field famma-express__field--wide famma-express__phone">
+			<label for="famma-express-billing-phone">
+				<?php esc_html_e( 'Phone / الهاتف', 'famma-core' ); ?>
+				<abbr class="required" title="<?php esc_attr_e( 'required', 'famma-core' ); ?>">*</abbr>
+			</label>
+			<span class="famma-express__phone-box" dir="ltr">
+				<span class="famma-express__prefix" aria-hidden="true">+216</span>
+				<input
+					type="tel"
+					id="famma-express-billing-phone"
+					name="billing_phone"
+					autocomplete="tel-national"
+					inputmode="numeric"
+					enterkeyhint="next"
+					placeholder="XX XXX XXX"
+					maxlength="20"
+					aria-describedby="<?php echo esc_attr( $error ); ?>"
+					required
+				/>
+			</span>
+			<span class="famma-express__error" id="<?php echo esc_attr( $error ); ?>" hidden></span>
 		</p>
 		<?php
 	}
@@ -636,6 +668,7 @@ final class Express_Order {
 					name="billing_address_1"
 					autocomplete="address-line1"
 					autocapitalize="words"
+					enterkeyhint="send"
 					maxlength="100"
 					placeholder="<?php esc_attr_e( 'Ville, cité, rue…', 'famma-core' ); ?>"
 					aria-describedby="<?php echo esc_attr( $hint ); ?>"
@@ -815,8 +848,20 @@ final class Express_Order {
 					<legend class="famma-express__legend"><?php esc_html_e( 'Your details / معلوماتك', 'famma-core' ); ?></legend>
 					<div class="famma-express__grid">
 						<?php
-						$this->text_field( 'billing_first_name', __( 'Full name / الاسم واللقب', 'famma-core' ), 'text', 'name', true );
-						$this->text_field( 'billing_phone', __( 'Phone / الهاتف', 'famma-core' ), 'tel', 'tel' );
+						// Téléphone d'abord : c'est lui qui permet de rappeler un client qui s'arrête en route.
+						$this->phone_field();
+						$this->text_field(
+							'billing_first_name',
+							__( 'Full name / الاسم واللقب', 'famma-core' ),
+							'text',
+							'name',
+							true,
+							true,
+							array(
+								'autocapitalize' => 'words',
+								'enterkeyhint'   => 'next',
+							)
+						);
 						$this->address_field();
 						?>
 					</div>

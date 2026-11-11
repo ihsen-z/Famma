@@ -16,7 +16,7 @@ const vm = require('vm');
 
 const source = fs.readFileSync(path.join(__dirname, '../wp-content/plugins/famma-core/assets/js/visitor-journal.js'), 'utf8');
 
-function setup() {
+function setup(options = {}) {
   const listeners = {};
   const beacons = [];
   const on = (type, fn) => { (listeners[type] = listeners[type] || []).push(fn); };
@@ -29,7 +29,7 @@ function setup() {
     documentElement: { scrollHeight: 1000 },
   };
   const window = {
-    fammaJournal: { endpoint: '/wp-json/famma/v1/collect', pageType: 'product', productId: 123, days: 180 },
+    fammaJournal: { endpoint: '/wp-json/famma/v1/collect', pageType: 'product', productId: 123, days: 180, ...(options.inputs ? { inputs: options.inputs } : {}) },
     JSON, addEventListener: on, innerHeight: 800, scrollY: 0,
     crypto: { randomUUID: () => '00000000-0000-4000-8000-' + String(++sequence).padStart(12, '0') },
   };
@@ -85,6 +85,20 @@ test('Aucun code valable, ou détail absent → aucun form_error', () => {
   s.fire('famma:express-error', { detail: null });
   s.fire('famma:express-error', {});
   assert.equal(s.errors().length, 0);
+});
+
+test('Saisies à relancer : le téléphone tapé en premier part même si le client s’arrête là (lot 23, T5)', () => {
+  const s = setup({ inputs: '/wp-json/famma/v1/inputs' });
+  // Formulaire 0.3.9 : téléphone d'abord, les autres champs encore vides.
+  const fields = { billing_phone: '20 123 456', billing_first_name: '', billing_state: '', billing_address_1: '' };
+  const form = { querySelectorAll: sel => { const m = /\[name="([^"]+)"\]/.exec(sel); return m && m[1] in fields ? [els[m[1]]] : []; } };
+  const els = Object.fromEntries(Object.entries(fields).map(([name, value]) => [name, { name, value, type: 'text', closest: () => form }]));
+  s.fire('focusout', { target: els.billing_phone });
+  s.fire('pagehide', {});
+  const sent = s.beacons.filter(b => b.url === '/wp-json/famma/v1/inputs');
+  assert.equal(sent.length, 1, 'un envoi des saisies au départ de la page');
+  assert.equal(sent[0].body.f.billing_phone, '20 123 456');
+  assert.equal(sent[0].body.f.billing_first_name, '');
 });
 
 console.log(`RESULT ${passed}/${passed + failed} scénarios du journal réussis${failed ? `, ${failed} ÉCHEC(S)` : ''}.`);

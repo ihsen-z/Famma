@@ -335,14 +335,7 @@
 	 * @return {string}
 	 */
 	function normalizePhone( value ) {
-		var digitsOnly = String( value || '' )
-			.replace( /[٠-٩]/g, function ( c ) {
-				return String( c.charCodeAt( 0 ) - 0x0660 );
-			} )
-			.replace( /[۰-۹]/g, function ( c ) {
-				return String( c.charCodeAt( 0 ) - 0x06F0 );
-			} )
-			.replace( /\D/g, '' );
+		var digitsOnly = latinDigits( value ).replace( /\D/g, '' );
 
 		if ( 13 === digitsOnly.length && 0 === digitsOnly.indexOf( '00216' ) ) {
 			digitsOnly = digitsOnly.slice( 5 );
@@ -387,13 +380,154 @@
 		return ok;
 	}
 
+	/** Chiffres arabes-indiens et persans en chiffres latins. */
+	function latinDigits( value ) {
+		return String( value || '' )
+			.replace( /[٠-٩]/g, function ( c ) {
+				return String( c.charCodeAt( 0 ) - 0x0660 );
+			} )
+			.replace( /[۰-۹]/g, function ( c ) {
+				return String( c.charCodeAt( 0 ) - 0x06F0 );
+			} );
+	}
+
+	/** « 20123456 » → « 20 123 456 » (aussi en cours de frappe : « 20 1 »). */
+	function groupPhone( digits ) {
+		return digits.slice( 0, 2 ) + ( digits.length > 2 ? ' ' + digits.slice( 2, 5 ) : '' ) + ( digits.length > 5 ? ' ' + digits.slice( 5, 8 ) : '' );
+	}
+
+	var lastPhoneDigits = '';
+
+	/**
+	 * Groupe le numéro « XX XXX XXX » pendant la frappe (0.3.9).
+	 *
+	 * Le curseur reste après le même nombre de chiffres. Un +216 ou 00216
+	 * collé est retiré : l'indicatif est affiché à côté du champ. Effacer une
+	 * espace efface le chiffre d'avant, sinon le groupage la remettrait. Plus
+	 * de 8 chiffres sans indicatif : la saisie reste telle quelle, le contrôle
+	 * du numéro la signale.
+	 *
+	 * @param {Event} event Événement `input`.
+	 */
+	function formatPhone( event ) {
+		var raw = String( phoneInput.value || '' );
+		var digits = latinDigits( raw ).replace( /\D/g, '' );
+		var caret = 'number' === typeof phoneInput.selectionStart ? phoneInput.selectionStart : raw.length;
+		var before = latinDigits( raw.slice( 0, caret ) ).replace( /\D/g, '' ).length;
+		var formatted;
+		var position;
+
+		if ( 13 === digits.length && 0 === digits.indexOf( '00216' ) ) {
+			digits = digits.slice( 5 );
+			before = digits.length;
+		} else if ( 11 === digits.length && 0 === digits.indexOf( '216' ) ) {
+			digits = digits.slice( 3 );
+			before = digits.length;
+		} else if ( event && 'deleteContentBackward' === event.inputType && digits === lastPhoneDigits && before > 0 ) {
+			digits = digits.slice( 0, before - 1 ) + digits.slice( before );
+			before -= 1;
+		}
+
+		lastPhoneDigits = digits;
+		if ( digits.length > 8 ) {
+			return;
+		}
+
+		formatted = groupPhone( digits );
+		if ( formatted === raw ) {
+			return;
+		}
+		phoneInput.value = formatted;
+
+		position = 0;
+		while ( position < formatted.length && before > 0 ) {
+			if ( /\d/.test( formatted.charAt( position ) ) ) {
+				before--;
+			}
+			position++;
+		}
+		if ( document.activeElement === phoneInput && phoneInput.setSelectionRange ) {
+			try {
+				phoneInput.setSelectionRange( position, position );
+			} catch ( error ) {
+				// Type de champ sans sélection (ancien navigateur) : le curseur part en fin de champ.
+			}
+		}
+	}
+
 	if ( phoneInput ) {
 		phoneInput.addEventListener( 'blur', function () {
 			checkPhone( true, false );
 		} );
-		phoneInput.addEventListener( 'input', function () {
+		phoneInput.addEventListener( 'input', function ( event ) {
+			formatPhone( event );
 			checkPhone( false, false );
 		} );
+	}
+
+	/*
+	 * Touche « Suivant » du clavier (`enterkeyhint="next"`) : passe au champ
+	 * à taper suivant au lieu d'envoyer le formulaire. La liste des
+	 * gouvernorats est sautée : la mettre au point ne l'ouvre pas sur mobile et
+	 * fermerait le clavier ; la ville tapée juste après la remplit, et la
+	 * tabulation la dessert toujours dans l'ordre.
+	 */
+	function nextTypingField( field ) {
+		var fields = Array.prototype.filter.call( form.querySelectorAll( 'input[type="text"], input[type="tel"]' ), function ( item ) {
+			return ! item.disabled && ! item.readOnly && 0 !== String( item.name || '' ).indexOf( 'famma_hp' );
+		} );
+		var position = fields.indexOf( field );
+
+		return position >= 0 && position + 1 < fields.length ? fields[ position + 1 ] : null;
+	}
+
+	form.addEventListener( 'keydown', function ( event ) {
+		var field = event.target;
+		var next;
+
+		if ( ( 'Enter' !== event.key && 13 !== event.keyCode ) || event.isComposing ) {
+			return;
+		}
+		if ( ! field || ! field.getAttribute || 'next' !== field.getAttribute( 'enterkeyhint' ) ) {
+			return;
+		}
+		next = nextTypingField( field );
+		if ( next ) {
+			event.preventDefault();
+			next.focus();
+		}
+	} );
+
+	/*
+	 * Navigateur intégré de Facebook, surtout sur iPhone : le clavier recouvre
+	 * la page sans la redimensionner et le champ actif peut rester dessous. Une
+	 * fois le clavier ouvert, un champ caché remonte au tiers de la zone
+	 * visible (`visualViewport`, à défaut la fenêtre). Un champ déjà visible
+	 * ne bouge pas.
+	 */
+	function keepFieldVisible() {
+		var field = document.activeElement;
+		var view = window.visualViewport;
+		var top = view ? view.offsetTop : 0;
+		var height = view ? view.height : window.innerHeight;
+		var rect;
+
+		if ( ! field || ! field.getBoundingClientRect || ! form.contains || ! form.contains( field ) || ! height ) {
+			return;
+		}
+		rect = field.getBoundingClientRect();
+		if ( rect.top >= top + 8 && rect.bottom <= top + height - 8 ) {
+			return;
+		}
+		window.scrollBy( 0, rect.top - top - height / 3 );
+	}
+
+	form.addEventListener( 'focusin', function () {
+		// Le temps que le clavier finisse de s'ouvrir.
+		window.setTimeout( keepFieldVisible, 350 );
+	} );
+	if ( window.visualViewport && window.visualViewport.addEventListener ) {
+		window.visualViewport.addEventListener( 'resize', keepFieldVisible );
 	}
 
 	/*

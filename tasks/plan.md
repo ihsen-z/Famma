@@ -71,7 +71,7 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 ### Phase 2 : corriger le formulaire
 - [x] T3 : Adresse de livraison : liste des gouvernorats et ville facultative, dans un même cadre
 - [x] T4 : La ville tapée remplit le gouvernorat (liste du Ministère de l'Intérieur)
-- [ ] T5 : Téléphone en premier et saisie adaptée au navigateur de Facebook
+- [x] T5 : Téléphone en premier et saisie adaptée au navigateur de Facebook (clavier réel à revoir au point de contrôle 2)
 - [ ] T6 : Phrase rassurante sous le téléphone, modifiable dans l'admin
 
 ### Point de contrôle 2
