@@ -218,7 +218,7 @@ Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide s
 - [x] Aucun changement dans les événements Pixel ou CAPI (aucun fichier de suivi touché).
 
 **Vérification :**
-- [ ] `FAMMA_EXPRESS_INTEGRATION=1` : `scripts/test-express-integration.php` dans la base d'intégration *(non lancé : il exige le clone Docker `famma_integration` ; remplacé pour l'instant par `scripts/test-visitor-commerce-isolated.php`, 13/13, sur la vraie classe)*
+- [x] `FAMMA_EXPRESS_INTEGRATION=1` : `scripts/test-express-integration.php` dans la base d'intégration *(11/11, clone Docker `famma-integration-20261010` avec la 0.3.9 du worktree, WooCommerce 11.1.2 : séquentiel 76/76, concurrence et interruptions vertes ; voir la tâche 8)*
 - [x] `node scripts/test-famma-express-v2.js` (106/106) et `node scripts/test-visitor-journal.js` (7/7)
 
 > Fait le 11/11 :
@@ -253,7 +253,7 @@ Rien ne part en production sans le feu vert explicite du propriétaire.
 - [x] Le paquet contient exactement les fichiers modifiés, avec leurs SHA, et un retour arrière vers 0.3.8.
 
 **Vérification :**
-- [ ] Tous les tests Node, PHP et d'intégration *(Node et PHP isolés verts : 106, 7, 20, 18, 21, 12, 13, CAPI 54 ; site Local 20/20, 24/24, 20/20 ; intégration Docker non lancée, Docker Desktop arrêté)*
+- [x] Tous les tests Node, PHP et d'intégration du lot *(Node et PHP isolés verts : 106, 7, 20, 18, 21, 12, 13, CAPI 54 ; site Local 20/20, 24/24, 20/20 ; Docker : express, WooCommerce, tailles, CAPI, valeur Meta verts ; `test-capi-fbc-integration` échoue aussi en 0.3.8, hors lot, voir la note)*
 - [x] Liste des fichiers du zip comparée à `git diff --name-only 3e34084` (= origin/main = prod 0.3.8) : identique, contrôlée par `build.py`
 
 > Fait le 11/11 :
@@ -278,7 +278,23 @@ Rien ne part en production sans le feu vert explicite du propriétaire.
 > - **Correction** : le CHANGELOG annonçait 574 noms. Le vrai compte est 572, car les deux noms génériques « La Médina » / « المدينة » sont retirés.
 > - **Pas encore fait** :
 >   - l'affichage dans un vrai navigateur, car le site Local sert encore le plugin de la copie principale par la jonction ;
->   - le test d'intégration Docker, car Docker Desktop est arrêté.
+>   - ~~le test d'intégration Docker~~ : fait le 11/11, voir ci-dessous.
+>
+> Intégration Docker du 11/11 (clone `famma-integration-20261010`, lancé depuis le worktree : famma-core 0.3.9 montée en lecture seule, WordPress 7.1.3, WooCommerce 11.1.2, jetons factices, HTTP intercepté) :
+> - **express** :
+>   - séquentiel 76/76, dont « livrée » payée et un seul Purchase à la vraie valeur, même rejoué ;
+>   - concurrence : deux processus envoient la même commande, verify 12/12 ;
+>   - interruption après liaison et après acceptation : reprises 2/2 chacune. Le code 77 du processus interrompu est voulu (`exit( 77 )`).
+> - **Autres suites** :
+>   - `test-woocommerce-integration` (checkout classique) : vert ;
+>   - `test-sizes-integration` : 19 contrôles OK ;
+>   - `test-capi-integration` : vert ;
+>   - `test-meta-value-integration` : vert.
+> - **`test-capi-fbc-integration` échoue sur `purchase-product-multi`, et il échoue pareil sur le code de la prod 0.3.8 (3e34084) :**
+>   - le test attend le SKU du second produit dans `content_ids` ;
+>   - le code envoie son ID (`["467","475"]`) ;
+>   - le lot 23 ne touche ni ce test ni le code CAPI. À traiter à part.
+> - Nettoyage : aucune commande ni aucun produit marqués ne restent ; base du clone arrêtée sans `-v`, volumes gardés.
 
 **Dépendances :** tâches 1 à 7.
 

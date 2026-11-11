@@ -79,8 +79,8 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 - [ ] Revue du propriétaire : ordre des champs, texte de la phrase (noms courants : refusés le 11/11)
 
 ### Phase 3 : fiabiliser la mesure et livrer
-- [x] T7 : Chaque commande express est rattachée à sa visite, même sans cookie (test d’intégration Docker à lancer)
-- [x] T8 : Version 0.3.9, traductions, contrôles du projet et paquet de mise en ligne (test d’intégration Docker à lancer)
+- [x] T7 : Chaque commande express est rattachée à sa visite, même sans cookie (intégration Docker verte le 11/11)
+- [x] T8 : Version 0.3.9, traductions, contrôles du projet et paquet de mise en ligne (intégration Docker verte le 11/11 ; `test-capi-fbc-integration` échoue aussi en 0.3.8, hors lot)
 
 ### Point de contrôle 3 : prêt à mettre en ligne
 - [x] Tous les contrôles du § 11 de ClaudeMemo sont verts : `php -l`, phpcs WordPress, `WP_DEBUG` sans notice, parcours COD complet jusqu'à « Livrée », Purchase envoyé une seule fois (site Local en ligne de commande, 11/11 ; vrai navigateur et Docker restent à faire)
