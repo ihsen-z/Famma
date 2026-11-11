@@ -70,7 +70,13 @@ function famma_child_new_look_parts(): array {
 		return array();
 	}
 
-	return array_values( array_filter( array( 'motion', 'alt_photo', 'transitions', 'dock' ), 'famma_child_new_look' ) );
+	$parts = array( 'motion', 'alt_photo', 'transitions', 'dock' );
+
+	if ( is_front_page() ) {
+		$parts[] = 'journey';
+	}
+
+	return array_values( array_filter( $parts, 'famma_child_new_look' ) );
 }
 
 /**
@@ -283,3 +289,4 @@ function famma_child_new_look_dock_fragment( array $fragments ): array {
 	return $fragments;
 }
 add_filter( 'woocommerce_add_to_cart_fragments', 'famma_child_new_look_dock_fragment' );
+

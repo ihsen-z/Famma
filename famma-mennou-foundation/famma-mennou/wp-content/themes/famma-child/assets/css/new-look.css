@@ -243,3 +243,154 @@ body.famma-dock-on .famma-wa {
 		transition: none !important;
 	}
 }
+
+
+/* --- Accueil : « Parcours du colis » (brique journey) ---
+   Habille le bloc « Vous payez à la livraison » déjà présent dans le contenu
+   de la page d'accueil (.famma-how, liste .famma-steps) : ses textes restent
+   modifiables dans l'éditeur, et traduits par TranslatePress sur /ar/.
+   L'état écrit ici est l'état final (route pleine, étapes cochées) : c'est
+   ce que voient les navigateurs sans `animation-timeline` et les visiteurs
+   qui demandent moins de mouvement. */
+
+body.famma-nl-journey .famma-how {
+	--node: 44px;
+	margin-block: var(--sp-12) 0;
+	padding: clamp(32px, 6vw, 56px) clamp(20px, 5vw, 48px);
+	border-radius: var(--famma-radius-lg);
+	background: var(--famma-blue);
+	color: var(--famma-white);
+}
+
+body.famma-nl-journey .famma-how .famma-section__title {
+	color: inherit;
+	text-wrap: balance;
+}
+
+body.famma-nl-journey .famma-how > p {
+	color: var(--famma-on-dark);
+	line-height: 1.65;
+}
+
+body.famma-nl-journey .famma-how .famma-steps {
+	position: relative;
+	display: grid;
+	gap: var(--sp-8);
+	margin: var(--sp-8) 0 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: famma-step;
+}
+
+/* La route : un tireté et son remplissage orange, d'une pastille à l'autre. */
+body.famma-nl-journey .famma-how .famma-steps::before,
+body.famma-nl-journey .famma-how .famma-steps::after {
+	content: "";
+	position: absolute;
+	inset-block: calc(var(--node) / 2);
+	inset-inline-start: calc(var(--node) / 2 - 1.5px);
+	inline-size: 3px;
+	pointer-events: none;
+}
+
+body.famma-nl-journey .famma-how .famma-steps::before {
+	background: repeating-linear-gradient(180deg, var(--famma-on-dark-muted) 0 8px, transparent 8px 16px);
+}
+
+body.famma-nl-journey .famma-how .famma-steps::after {
+	background: var(--famma-orange);
+	transform-origin: 50% 0;
+}
+
+body.famma-nl-journey .famma-how .famma-steps li {
+	position: relative;
+	display: flex;
+	align-items: center;
+	min-block-size: var(--node);
+	margin: 0;
+	padding-inline-start: calc(var(--node) + var(--sp-4));
+	font-weight: var(--fw-medium);
+	line-height: 1.45;
+	counter-increment: famma-step;
+}
+
+/* La pastille : numéro de l'étape, puis coche une fois l'étape atteinte. */
+body.famma-nl-journey .famma-how .famma-steps li::before {
+	content: counter(famma-step);
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-start: 0;
+	z-index: 1;
+	display: grid;
+	place-items: center;
+	box-sizing: border-box;
+	inline-size: var(--node);
+	block-size: var(--node);
+	margin-block-start: calc(var(--node) / -2);
+	border: 2px solid var(--famma-orange);
+	border-radius: 50%;
+	background: var(--famma-orange);
+	color: transparent;
+	font-weight: var(--fw-semibold);
+}
+
+body.famma-nl-journey .famma-how .famma-steps li::after {
+	content: "";
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-start: calc(var(--node) / 2 - 6px);
+	z-index: 2;
+	inline-size: 12px;
+	block-size: 7px;
+	margin-block-start: -5px;
+	/* Bordures physiques : une coche ne se retourne pas en arabe. */
+	border-bottom: 2.5px solid var(--famma-on-orange);
+	border-left: 2.5px solid var(--famma-on-orange);
+	transform: rotate(-45deg);
+}
+
+/* L'animation au défilement : CSS seul, aucun script. */
+@supports (animation-timeline: view()) {
+	@media (prefers-reduced-motion: no-preference) {
+		body.famma-nl-journey .famma-how .famma-steps::after {
+			animation: famma-nl-road linear both;
+			animation-timeline: view();
+			animation-range: entry 80% cover 55%;
+		}
+
+		body.famma-nl-journey .famma-how .famma-steps li::before {
+			animation: famma-nl-node linear both;
+			animation-timeline: view();
+			animation-range: cover 40% cover 50%;
+		}
+
+		body.famma-nl-journey .famma-how .famma-steps li::after {
+			animation: famma-nl-check linear both;
+			animation-timeline: view();
+			animation-range: cover 40% cover 50%;
+		}
+	}
+}
+
+@keyframes famma-nl-road {
+	from { transform: scaleY(0); }
+	to { transform: scaleY(1); }
+}
+
+@keyframes famma-nl-node {
+	from {
+		border-color: var(--famma-on-dark-muted);
+		background-color: var(--famma-blue);
+		color: var(--famma-white);
+	}
+	to {
+		border-color: var(--famma-orange);
+		background-color: var(--famma-orange);
+		color: transparent;
+	}
+}
+
+@keyframes famma-nl-check {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}

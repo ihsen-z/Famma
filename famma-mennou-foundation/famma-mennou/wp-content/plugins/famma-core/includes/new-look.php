@@ -129,6 +129,10 @@ final class New_Look {
 				'label' => __( 'Transitions entre les pages', 'famma-core' ),
 				'help'  => __( 'Fondu entre les pages de la boutique (filtres, tri, catégories), l’en-tête reste en place. Ignoré par les navigateurs qui ne le gèrent pas.', 'famma-core' ),
 			),
+			'journey'     => array(
+				'label' => __( 'Accueil : bloc « Vous payez à la livraison » en parcours animé', 'famma-core' ),
+				'help'  => __( 'Le bloc déjà présent dans la page d’accueil devient une bande marine : une route relie les étapes, qui se cochent au défilement. Ses textes se modifient toujours dans l’éditeur de la page d’accueil.', 'famma-core' ),
+			),
 			'dock'        => array(
 				'label' => __( 'Barre du panier « Aujourd’hui 0 DT »', 'famma-core' ),
 				'help'  => __( 'Dans la boutique, une barre en bas d’écran rappelle qu’on ne paie rien aujourd’hui et donne le total à payer au livreur. Elle n’apparaît que si le panier contient un article.', 'famma-core' ),
