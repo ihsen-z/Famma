@@ -1211,6 +1211,20 @@ async function test(name, run) {
     assert.deepEqual(s.blocks, [['phone']]);
   });
 
+  // ── Lot 23, tâche 7 : la commande emporte la session du journal (secours des cookies) ──
+  await test('Session du journal : champs cachés dans le gabarit, envoyés avec la commande, pas avec le devis', async () => {
+    assert.ok(/<input type="hidden" name="<\?php echo esc_attr\( Visitor_Commerce::FIELD_VISITOR \); \?>" value="" \/>/.test(formSource), 'visiteur, vide dans la page en cache');
+    assert.ok(/<input type="hidden" name="<\?php echo esc_attr\( Visitor_Commerce::FIELD_SESSION \); \?>" value="" \/>/.test(formSource), 'session, vide dans la page en cache');
+    const ids = { famma_vj_visitor: '33333333-3333-4333-a333-333333333333', famma_vj_session: '44444444-4444-4444-b444-444444444444' };
+    const s = setup([token, quote(), accepted], { extraInputs: ids });
+    s.submit(); await flush();
+    const sent = s.calls.find(c => c.url === '/express');
+    assert.equal(field(sent, 'famma_vj_visitor'), ids.famma_vj_visitor);
+    assert.equal(field(sent, 'famma_vj_session'), ids.famma_vj_session);
+    assert.equal(field(s.calls.find(c => c.url === '/prepare'), 'famma_vj_session'), undefined, 'le devis ne les reçoit pas');
+    assert.equal(s.window.location.href, accepted.redirect);
+  });
+
   console.log(`RESULT ${passed}/${passed + failed} scénarios front réussis${failed ? `, ${failed} ÉCHEC(S)` : ''}. Aucun réseau WooCommerce ni Meta utilisé.`);
   if (failed) process.exitCode = 1;
 })().catch(e => { console.error(e); process.exitCode = 1; });

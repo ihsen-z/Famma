@@ -277,9 +277,28 @@
 
 	// `change` en secours de `focusin` : Safari iOS ne donne pas le focus à un
 	// bouton radio touché (choix de taille), le champ serait sinon ignoré.
+	/*
+	 * Formulaire express (0.3.9) : les identifiants partent aussi avec la
+	 * commande, dans deux champs cachés. Le serveur ne s'en sert que si ses
+	 * cookies manquent (navigateur intégré de Facebook) : voir
+	 * Visitor_Commerce::ids(). Rempli au chargement, puis à chaque champ
+	 * touché si le formulaire est arrivé après ce script.
+	 */
+	function stampForm( form ) {
+		var visitorField = form.querySelector ? form.querySelector( 'input[name="famma_vj_visitor"]' ) : null;
+		var sessionField = form.querySelector ? form.querySelector( 'input[name="famma_vj_session"]' ) : null;
+		if ( visitorField && sessionField ) {
+			visitorField.value = visitor;
+			sessionField.value = session;
+		}
+	}
+
 	function noteField( event ) {
 		var field = event.target;
 		var form = field && field.closest ? field.closest( formSelector ) : null;
+		if ( form ) {
+			stampForm( form );
+		}
 		// Champ piège anti-robots (famma_hp_*) : un humain ne l'atteint jamais.
 		if ( ! form || ! field.name || 'hidden' === field.type || 0 === field.name.indexOf( 'famma_hp' ) ) {
 			return;
@@ -295,6 +314,9 @@
 	}
 	document.addEventListener( 'focusin', noteField );
 	document.addEventListener( 'change', noteField );
+	if ( document.querySelectorAll ) {
+		Array.prototype.forEach.call( document.querySelectorAll( formSelector ), stampForm );
+	}
 
 	document.addEventListener( 'submit', function ( event ) {
 		if ( event.target && event.target.matches && event.target.matches( formSelector ) ) {

@@ -207,13 +207,19 @@ Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide s
 **Description :** 8 des 40 commandes du site depuis le 17/10 n'ont pas de session de visite, probablement à cause des cookies du navigateur de Facebook. Le formulaire transmet l'identifiant de session du journal dans un champ caché. Le serveur ne l'utilise que si le cookie manque, et après en avoir contrôlé le format.
 
 **Critères d'acceptation :**
-- [ ] Une commande passée sans cookie de journal, mais avec le champ, reçoit `_famma_visitor_session`.
-- [ ] Un identifiant mal formé est ignoré ; le cookie, quand il existe, reste prioritaire.
-- [ ] Aucun changement dans les événements Pixel ou CAPI.
+- [x] Une commande passée sans cookie de journal, mais avec le champ, reçoit `_famma_visitor_session`.
+- [x] Un identifiant mal formé est ignoré ; le cookie, quand il existe, reste prioritaire.
+- [x] Aucun changement dans les événements Pixel ou CAPI (aucun fichier de suivi touché).
 
 **Vérification :**
-- [ ] `FAMMA_EXPRESS_INTEGRATION=1` : `scripts/test-express-integration.php` dans la base d'intégration
-- [ ] `node scripts/test-famma-express-v2.js`
+- [ ] `FAMMA_EXPRESS_INTEGRATION=1` : `scripts/test-express-integration.php` dans la base d'intégration *(non lancé : il exige le clone Docker `famma_integration` ; remplacé pour l'instant par `scripts/test-visitor-commerce-isolated.php`, 13/13, sur la vraie classe)*
+- [x] `node scripts/test-famma-express-v2.js` (106/106) et `node scripts/test-visitor-journal.js` (7/7)
+
+> Fait le 11/11 :
+> - Gabarit : champs cachés `famma_vj_visitor` / `famma_vj_session` (constantes `Visitor_Commerce::FIELD_*`), vides dans la page en cache.
+> - `visitor-journal.js` : `stampForm()` les remplit au chargement et au premier champ touché, avec les mêmes identifiants que ses envois.
+> - `Visitor_Commerce::ids()` : cookie d'abord ; un cookie absent est remplacé par le champ, lu seulement après `woocommerce_checkout_process` (jeton vérifié par WooCommerce) et gardé seulement s'il a la forme d'un UUID v4. `order_placed` entre donc aussi dans la session : l'entonnoir de la tâche 2 compte ces commandes.
+> - Les champs partent avec l'envoi final (figés dans le registre anti-double commande), pas avec le devis.
 
 **Dépendances :** tâche 1.
 

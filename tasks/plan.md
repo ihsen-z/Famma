@@ -79,7 +79,7 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 - [ ] Revue du propriétaire : ordre des champs, texte de la phrase (noms courants : refusés le 11/11)
 
 ### Phase 3 : fiabiliser la mesure et livrer
-- [ ] T7 : Chaque commande express est rattachée à sa visite, même sans cookie
+- [x] T7 : Chaque commande express est rattachée à sa visite, même sans cookie (test d’intégration Docker à lancer)
 - [ ] T8 : Version 0.3.9, traductions, contrôles du projet et paquet de mise en ligne
 
 ### Point de contrôle 3 : prêt à mettre en ligne

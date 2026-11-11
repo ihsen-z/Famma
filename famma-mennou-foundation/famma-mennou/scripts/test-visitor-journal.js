@@ -27,6 +27,8 @@ function setup(options = {}) {
     cookie: '', referrer: '', visibilityState: 'visible',
     addEventListener: on,
     documentElement: { scrollHeight: 1000 },
+    // Formulaires déjà dans la page au chargement du script (option forms).
+    querySelectorAll: () => options.forms || [],
   };
   const window = {
     fammaJournal: { endpoint: '/wp-json/famma/v1/collect', pageType: 'product', productId: 123, days: 180, ...(options.inputs ? { inputs: options.inputs } : {}) },
@@ -99,6 +101,34 @@ test('Saisies à relancer : le téléphone tapé en premier part même si le cli
   assert.equal(sent.length, 1, 'un envoi des saisies au départ de la page');
   assert.equal(sent[0].body.f.billing_phone, '20 123 456');
   assert.equal(sent[0].body.f.billing_first_name, '');
+});
+
+/** Formulaire express avec ses deux champs cachés (gabarit 0.3.9). */
+function expressForm() {
+  const hidden = { famma_vj_visitor: { value: '' }, famma_vj_session: { value: '' } };
+  const form = { hidden, querySelector: sel => { const m = /name="([^"]+)"/.exec(sel); return m ? hidden[m[1]] || null : null; } };
+  const field = { name: 'billing_phone', type: 'tel', value: '', closest: () => form };
+  return { form, field, hidden };
+}
+
+test('Champs cachés du formulaire express : remplis au chargement avec les identifiants des envois (lot 23, T7)', () => {
+  const f = expressForm();
+  const s = setup({ forms: [f.form] });
+  s.fire('famma:express-error', { detail: { fields: ['phone'] } });
+  const sent = s.beacons[0].body;
+  assert.ok(/^[0-9a-f-]{36}$/.test(f.hidden.famma_vj_session.value));
+  assert.equal(f.hidden.famma_vj_visitor.value, sent.v, 'même visiteur que le journal');
+  assert.equal(f.hidden.famma_vj_session.value, sent.s, 'même session que le journal');
+});
+
+test('Champs cachés : un formulaire arrivé après le script est rempli au premier champ touché', () => {
+  const f = expressForm();
+  const s = setup();
+  assert.equal(f.hidden.famma_vj_session.value, '');
+  s.fire('focusin', { target: f.field });
+  assert.equal(s.beacons.length, 0);
+  s.fire('famma:express-error', { detail: { fields: ['phone'] } });
+  assert.equal(f.hidden.famma_vj_session.value, s.beacons[0].body.s);
 });
 
 console.log(`RESULT ${passed}/${passed + failed} scénarios du journal réussis${failed ? `, ${failed} ÉCHEC(S)` : ''}.`);

@@ -912,6 +912,15 @@ final class Express_Order {
 				?>
 				<input type="hidden" name="payment_method" value="cod" />
 				<input type="hidden" name="billing_country" value="TN" />
+				<?php
+				/*
+				 * Identifiants du journal des visites, vides dans la page (servie
+				 * par le cache) et remplis par `visitor-journal.js`. Le serveur ne
+				 * s'en sert que si ses cookies manquent : voir `Visitor_Commerce::ids()`.
+				 */
+				?>
+				<input type="hidden" name="<?php echo esc_attr( Visitor_Commerce::FIELD_VISITOR ); ?>" value="" />
+				<input type="hidden" name="<?php echo esc_attr( Visitor_Commerce::FIELD_SESSION ); ?>" value="" />
 				<input type="hidden" name="famma_product_id" value="<?php echo esc_attr( (string) $product->get_id() ); ?>" />
 				<?php
 				/*
