@@ -64,8 +64,14 @@ Fait : bloc « Formulaire express : de commencé à commandé » dans l'onglet S
 **Taille :** M.
 
 ### Point de contrôle 1 : après les tâches 1 et 2
-- [ ] Tous les tests verts, phpcs propre
-- [ ] En local, un envoi sans gouvernorat apparaît dans le rapport avec le code `state`
+- [x] Tous les tests verts, phpcs propre
+- [x] En local, un envoi sans gouvernorat apparaît dans le rapport avec le code `state`
+
+> Fait le 11/11 sur le site Local « famma » (0.3.9 du worktree chargée en ligne de commande, jonction du plugin intacte), 20/20 :
+> - requête de l'entonnoir sur 7 et 30 jours sans erreur SQL ;
+> - une session d'essai marquée (commencée, envoyée, refusée `state`, puis `phone,name`) s'affiche « Envoi refusé · Gouvernorat » et « Téléphone · Nom » dans la chronologie, sans code brut ;
+> - le bloc « de commencé à commandé » de la Synthèse la compte bloquée, avec 2 refus et la cause Gouvernorat ;
+> - les événements d'essai sont supprimés ; `debug.log` inchangé (178 lignes).
 
 ---
 
@@ -107,10 +113,10 @@ Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide s
 **Critères d'acceptation :**
 - [x] « Hammamet » → Nabeul, « Msaken » → Sousse, « جربة » → Médenine, avec le message ; un choix manuel antérieur reste en place.
 - [x] Chaque entrée du fichier vient de la liste officielle (source et date citées) ou d'une liste validée par le propriétaire.
-- [x] La fiche produit ne s'alourdit pas de plus de 15 Ko compressés (3,6 Ko : 574 noms, 9,2 Ko non compressés).
+- [x] La fiche produit ne s'alourdit pas de plus de 15 Ko compressés (3,6 Ko : 572 noms, 9,2 Ko non compressés).
 
 **Vérification :**
-- [x] Tests Node : chacun des 574 noms, tapé seul, donne son gouvernorat ou rien (97/97), plus orthographes, arabe, cas ambigus
+- [x] Tests Node : chacun des 572 noms, tapé seul, donne son gouvernorat ou rien (97/97), plus orthographes, arabe, cas ambigus
 - [x] Contrôle croisé de la liste avec la source officielle (264 paires FR/AR relues, nom arabe de chaque gouvernorat contrôlé)
 
 > Fait le 11/11 :
@@ -242,18 +248,37 @@ Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide s
 Rien ne part en production sans le feu vert explicite du propriétaire.
 
 **Critères d'acceptation :**
-- [ ] `php -l` et phpcs WordPress propres ; `WP_DEBUG` actif et `debug.log` sans notice, warning ni deprecated. *(`php -l` 16 fichiers et phpcs 11 fichiers du plugin : propres ; `debug.log` : site local arrêté le 11/11, à faire)*
-- [ ] Parcours COD complet en local : commande express, puis confirmée, expédiée, livrée ; « livrée » marque la commande payée et envoie le Purchase une seule fois. *(site local arrêté, à faire)*
+- [x] `php -l` et phpcs WordPress propres ; `WP_DEBUG` actif et `debug.log` sans notice, warning ni deprecated. *(`php -l` 16 fichiers et phpcs 11 fichiers du plugin : propres ; `debug.log` du site Local : 178 lignes avant et après les quatre passages du 11/11, aucune ligne ajoutée)*
+- [x] Parcours COD complet en local : commande express, puis confirmée, expédiée, livrée ; « livrée » marque la commande payée et envoie le Purchase une seule fois. *(11/11, 24/24, voir la note ci-dessous)*
 - [x] Le paquet contient exactement les fichiers modifiés, avec leurs SHA, et un retour arrière vers 0.3.8.
 
 **Vérification :**
-- [ ] Tous les tests Node, PHP et d'intégration *(Node et PHP isolés verts : 106, 7, 20, 18, 21, 12, 13, CAPI 54 ; intégration Docker non lancée)*
+- [ ] Tous les tests Node, PHP et d'intégration *(Node et PHP isolés verts : 106, 7, 20, 18, 21, 12, 13, CAPI 54 ; site Local 20/20, 24/24, 20/20 ; intégration Docker non lancée, Docker Desktop arrêté)*
 - [x] Liste des fichiers du zip comparée à `git diff --name-only 3e34084` (= origin/main = prod 0.3.8) : identique, contrôlée par `build.py`
 
 > Fait le 11/11 :
 > - Version 0.3.9, CHANGELOG, `.mo` recompilés (23a5881). Les `.mo` de la 0.3.8 correspondaient exactement à leurs `.po` : seules les chaînes du lot changent.
 > - Paquet `deploy-lot23-formulaire/` (ignoré par git) : zip de 19 fichiers (SHA 9e1c003b…), retour arrière de 15 fichiers tirés de 3e34084 (SHA 02551c3e…), `CONTROLE.txt`, `famma-core.php.diff.txt`, `build.py`, `MARCHE-A-SUIVRE.md` (purge LiteSpeed obligatoire ; commande d'essai = décision du propriétaire, car elle envoie un OrderPlaced).
 > - Aucune modification de base : `form_error` tient dans `event varchar(32)`.
+>
+> Contrôles locaux du 11/11 (site Local « famma », WooCommerce 11.0.1, 0.3.9 du worktree chargée en ligne de commande ; requêtes HTTP sortantes et e-mails bloqués par le banc, jetons Meta vides) :
+> - **Parcours COD, 24/24**, par les vrais points d'entrée `famma_express_prepare` puis `famma_express_checkout`, sur le produit d'essai local « Test 1 » :
+>   - commande créée « en attente de confirmation », COD, non payée ;
+>   - Nabeul et « Hammamet » enregistrés, téléphone tapé « 20 123 456 » gardé en 8 chiffres, livraison 0 TND ;
+>   - sans cookie, la commande reçoit la session des champs cachés (tâche 7), et `order_placed` entre dans cette session ;
+>   - confirmée puis expédiée : toujours non payée, aucun Purchase ;
+>   - livrée : payée (date de paiement, `_famma_cod_paid`), `famma_capi_purchase` déclenché une fois (arrêté à `not_configured` en local) ;
+>   - un second passage sur « livrée » n'encaisse pas deux fois ;
+>   - commande, session, registre express, journal et compteurs anti-abus d'essai supprimés.
+> - **Rendus PHP, 20/20** :
+>   - formulaire de la fiche : téléphone, nom, adresse dans cet ordre ; « +216 » ; phrase par défaut ; champs cachés ; 24 gouvernorats ; touches Suivant / Envoyer ;
+>   - 572 noms de lieux en JSON valide (9,2 Ko, 3,6 Ko compressés) ;
+>   - écran FAMMA → Pages avec le champ de la phrase ;
+>   - aucune notice PHP.
+> - **Correction** : le CHANGELOG annonçait 574 noms. Le vrai compte est 572, car les deux noms génériques « La Médina » / « المدينة » sont retirés.
+> - **Pas encore fait** :
+>   - l'affichage dans un vrai navigateur, car le site Local sert encore le plugin de la copie principale par la jonction ;
+>   - le test d'intégration Docker, car Docker Desktop est arrêté.
 
 **Dépendances :** tâches 1 à 7.
 

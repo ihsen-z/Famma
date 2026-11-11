@@ -65,8 +65,8 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 - [x] T2 : Entonnoir du formulaire et blocages par champ dans le tableau de bord visiteurs
 
 ### Point de contrôle 1
-- [ ] Tests Node et PHP verts, phpcs propre
-- [ ] En local, un envoi sans gouvernorat apparaît dans le rapport avec le code `state`
+- [x] Tests Node et PHP verts, phpcs propre
+- [x] En local, un envoi sans gouvernorat apparaît dans le rapport avec le code `state` (site Local, 11/11, 20/20)
 
 ### Phase 2 : corriger le formulaire
 - [x] T3 : Adresse de livraison : liste des gouvernorats et ville facultative, dans un même cadre
@@ -80,10 +80,10 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 
 ### Phase 3 : fiabiliser la mesure et livrer
 - [x] T7 : Chaque commande express est rattachée à sa visite, même sans cookie (test d’intégration Docker à lancer)
-- [ ] T8 : Version 0.3.9, traductions, contrôles du projet et paquet de mise en ligne
+- [x] T8 : Version 0.3.9, traductions, contrôles du projet et paquet de mise en ligne (test d’intégration Docker à lancer)
 
 ### Point de contrôle 3 : prêt à mettre en ligne
-- [ ] Tous les contrôles du § 11 de ClaudeMemo sont verts : `php -l`, phpcs WordPress, `WP_DEBUG` sans notice, parcours COD complet jusqu'à « Livrée », Purchase envoyé une seule fois
+- [x] Tous les contrôles du § 11 de ClaudeMemo sont verts : `php -l`, phpcs WordPress, `WP_DEBUG` sans notice, parcours COD complet jusqu'à « Livrée », Purchase envoyé une seule fois (site Local en ligne de commande, 11/11 ; vrai navigateur et Docker restent à faire)
 - [ ] Feu vert explicite du propriétaire, puis mise en ligne : SHA vérifiés, `~/.lsphp_restart.txt`, purge LiteSpeed
 - [ ] Mesure à J+7 : formulaire commencé → commande ≥ 60 %, blocages `state` proches de 0, visite → commande ≥ 2,5 %
 
