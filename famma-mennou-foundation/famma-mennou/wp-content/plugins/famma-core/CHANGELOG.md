@@ -1,6 +1,41 @@
 # Changelog — FAMMA Core
 
-## 0.3.10 — 2026-11-11 (préparée, non envoyée)
+## 0.3.11 — 2026-11-11 (préparée, non envoyée)
+
+Accueil rapproché de la maquette (« lot 1 », mise au propre) et bande
+« 0 DT » de la fiche. Trois nouvelles cases dans FAMMA → Pages → « Nouveau
+look animé », livrées **décochées** : tant qu'elles le restent, les
+visiteurs reçoivent le même rendu qu'en 0.3.10. Rien ne change dans le
+pixel, CAPI, GA4, le formulaire express, le panier ni le tunnel.
+
+### Briques (plugin)
+
+- `site_polish` — « Partout : police Poppins, bandeau qui défile, pied de
+  page de la maquette ».
+- `home_polish` — « Accueil : mise en page de la maquette ».
+- `ledger` — « Fiche produit : bande Livraison 0 DT · Avant réception
+  0 DT » (zéros affichés seulement s'ils sont vrais dans WooCommerce).
+
+### Thème famma-child 0.2.1
+
+- `assets/css/new-look-site.css`, posée dans la page derrière
+  `famma-layout` (2 Ko compressés, aucune requête de plus) : Poppins pour
+  tout le texte (la pile système du thème parent l'emportait), bandeau des
+  promesses qui défile sous 1000 px (copie muette `aria-hidden`, arrêté si
+  le visiteur demande moins d'animations), pied de page en colonnes,
+  en-tête resserré entre 1000 et 1279 px (la page débordait de 150 px à
+  1024 px, déjà en 0.3.10).
+- `assets/css/new-look.css`, partie accueil : bouton sous le nom sur
+  téléphone, rayons en grille, nouveautés sur deux colonnes, titres et FAQ
+  de la maquette, carte WhatsApp verte, cartes « Pourquoi », infolettre
+  claire. Aucun texte ajouté ni retiré.
+- `famma_child_topbar()` : chaque promesse passe par
+  `famma_child_topbar_promise()` ; la fenêtre et la copie ne sont posées
+  que si la brique est cochée.
+- `assets/css/new-look-ledger.css` : bande « 0 DT » sous le prix de la
+  fiche.
+
+## 0.3.10 — 2026-11-11 (en production depuis le 11/11/2026)
 
 Nouveau look animé (maquettes du 04-06/11), livré **éteint** : interrupteur
 FAMMA → Pages → « Nouveau look animé » sur *Désactivé* par défaut. Tant qu'il
