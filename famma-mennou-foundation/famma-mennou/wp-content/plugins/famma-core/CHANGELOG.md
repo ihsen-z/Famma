@@ -1,5 +1,49 @@
 # Changelog — FAMMA Core
 
+## 0.3.10 — 2026-11-11 (préparée, non envoyée)
+
+Nouveau look animé (maquettes du 04-06/11), livré **éteint** : interrupteur
+FAMMA → Pages → « Nouveau look animé » sur *Désactivé* par défaut. Tant qu'il
+reste désactivé, les visiteurs reçoivent le même HTML qu'en 0.3.9, à deux
+exceptions près, voulues : l'image du héros de l'accueil est choisie à la
+bonne taille, et le thème passe en 0.2.0. Rien ne change dans le pixel,
+CAPI, GA4, le formulaire express, le panier ni le tunnel.
+
+### Interrupteur (plugin)
+
+- Option `famma_new_look` : mode *Désactivé* / *Administrateurs seulement* /
+  *Tout le monde*, et une case par brique. En mode administrateurs, les
+  pages des connectés ne sont jamais mises en cache ; tout changement de
+  réglage purge le cache de page.
+- Briques : texte marine sur orange, apparitions et vol vers le panier,
+  seconde photo au survol, transitions entre pages, puces rayons et budget
+  (boutique, mobile), bloc « Comment commander » (boutique), parcours
+  « Vous payez à la livraison » (accueil), barre du panier « Aujourd'hui
+  0 DT ».
+
+### Textes modifiables (plugin)
+
+- Accueil : héros (titre, slogan, phrase, 3 avantages, bouton) et
+  « Pourquoi FAMMA » (titre, 4 cartes), en FR et AR. Défaut = texte affiché
+  jusqu'ici. Champ vidé = élément masqué.
+- Nouvelle section « Boutique » (`Shop_Content`, option `famma_page_shop`) :
+  bloc « Comment commander », titre et 3 étapes, en FR et AR.
+
+### Thème famma-child 0.2.0
+
+- Couche `inc/new-look*.php`, `assets/css/new-look*.css`,
+  `assets/js/new-look.js` (5,4 Ko de JS et 4,9 Ko de CSS compressés, chargés
+  seulement sur l'accueil, la boutique et les rayons, et seulement si une
+  brique est active). Le script est différé et n'appelle ni `fbq` ni `gtag`.
+- Puces : vrais liens GET (mêmes paramètres que la colonne « Filtres »), pages
+  filtrées toujours en `noindex`. Budgets tirés des vrais prix publiés, gardés
+  dans l'option `famma_shop_price_steps` (effacée à chaque enregistrement de
+  produit).
+- Héros : attribut `sizes` corrigé (600 px au lieu de 768 px sur les
+  téléphones de densité 1,75 : −18 Ko).
+- Deux points d'accroche ajoutés au gabarit de la boutique :
+  `famma_child_after_shop_head`, `famma_child_after_shop_results`.
+
 ## 0.3.9 — 2026-11-11 (en production depuis le 11/11/2026)
 
 Formulaire de commande express repensé pour le navigateur intégré de

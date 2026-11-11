@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-const FAMMA_CHILD_VERSION = '0.1.0';
+const FAMMA_CHILD_VERSION = '0.2.0';
 
 /**
  * Briques du gabarit partagé.
