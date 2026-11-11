@@ -258,7 +258,7 @@ Rien ne part en production sans le feu vert explicite du propriétaire.
 
 > Fait le 11/11 :
 > - Version 0.3.9, CHANGELOG, `.mo` recompilés (23a5881). Les `.mo` de la 0.3.8 correspondaient exactement à leurs `.po` : seules les chaînes du lot changent.
-> - Paquet `deploy-lot23-formulaire/` (ignoré par git) : zip de 19 fichiers (SHA 9e1c003b…), retour arrière de 15 fichiers tirés de 3e34084 (SHA 02551c3e…), `CONTROLE.txt`, `famma-core.php.diff.txt`, `build.py`, `MARCHE-A-SUIVRE.md` (purge LiteSpeed obligatoire ; commande d'essai = décision du propriétaire, car elle envoie un OrderPlaced).
+> - Paquet `deploy-lot23-formulaire/` (ignoré par git) : zip de 19 fichiers (SHA 7b5ed650…, reconstruit le 11/11 depuis 6d1bd0d après la correction du CHANGELOG), retour arrière de 15 fichiers tirés de 3e34084 (SHA 02551c3e…), `CONTROLE.txt`, `famma-core.php.diff.txt`, `build.py`, `MARCHE-A-SUIVRE.md` (purge LiteSpeed obligatoire ; commande d'essai = décision du propriétaire, car elle envoie un OrderPlaced).
 > - Aucune modification de base : `form_error` tient dans `event varchar(32)`.
 >
 > Contrôles locaux du 11/11 (site Local « famma », WooCommerce 11.0.1, 0.3.9 du worktree chargée en ligne de commande ; requêtes HTTP sortantes et e-mails bloqués par le banc, jetons Meta vides) :
