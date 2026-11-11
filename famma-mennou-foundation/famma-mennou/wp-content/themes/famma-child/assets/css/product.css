@@ -115,7 +115,9 @@
 		min-inline-size: 0;
 	}
 
-	.famma-product div.product div.images.woocommerce-product-gallery {
+	/* La scène (galerie + bande du titre) suit le défilement d'un bloc : la
+	   bande reste sur sa photo. */
+	.famma-product div.product .famma-media-stage {
 		position: sticky;
 		inset-block-start: calc(var(--famma-header-h, 72px) + var(--sp-4));
 		align-self: start;
@@ -220,7 +222,106 @@
 	border-color: var(--famma-orange);
 }
 
-/* Badge de promotion posé sur l'image. */
+/*
+ * Scène de la photo : une grille d'une cellule où la galerie et la bande du
+ * titre se superposent, la bande en haut (inc/product.php). Rien n'y est
+ * positionné en absolu.
+ */
+.famma-product div.product .famma-media-stage {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.famma-product div.product .famma-media-stage > * {
+	grid-area: 1 / 1;
+	min-inline-size: 0;
+}
+
+/*
+ * Ce qui est posé sur la photo : la bande titre + prix, puis les badges.
+ * Le doigt la traverse : glisser sur la photo change toujours d'image.
+ */
+.famma-product div.product .famma-media-overlay {
+	position: relative;
+	z-index: 3;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	align-self: start;
+	gap: var(--sp-3);
+	pointer-events: none;
+}
+
+/*
+ * Titre et prix sur UNE ligne (demande du propriétaire, 11/11/2026).
+ * Bande blanche à 92 % : lisible sur toutes les photos, la photo reste
+ * devinée dessous. Le nom en gris ardoise (7,5:1 sur blanc), le prix en bleu
+ * nuit de la charte (16,5:1), plus gras : la couleur les distingue. Un nom
+ * trop long finit par « … » ; le prix n'est jamais coupé.
+ */
+.famma-product div.product .famma-media-heading {
+	display: flex;
+	align-items: baseline;
+	gap: var(--sp-3);
+	align-self: stretch;
+	min-inline-size: 0;
+	padding: var(--sp-2) var(--sp-4);
+	border-start-start-radius: 14px;
+	border-start-end-radius: 14px;
+	background: var(--famma-white);
+	background: color-mix(in srgb, var(--famma-white) 92%, transparent);
+}
+
+.famma-product div.product .famma-media-heading .product_title {
+	flex: 1 1 auto;
+	min-inline-size: 0;
+	margin: 0;
+	overflow: hidden;
+	color: var(--famma-text-2);
+	font-size: clamp(1rem, 1.6vw, 1.25rem);
+	font-weight: var(--fw-semibold);
+	line-height: 1.35;
+	letter-spacing: -0.005em;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.famma-product div.product .famma-media-heading p.price {
+	display: flex;
+	flex: none;
+	align-items: baseline;
+	gap: var(--sp-2);
+	margin: 0;
+	color: var(--famma-blue);
+	font-size: clamp(1.125rem, 2vw, 1.5rem);
+	font-weight: var(--fw-bold);
+	line-height: 1.35;
+	white-space: nowrap;
+}
+
+.famma-product div.product .famma-media-heading p.price del {
+	color: var(--famma-price-old);
+	font-size: 0.72em;
+	font-weight: var(--fw-regular);
+	opacity: 1;
+}
+
+.famma-product div.product .famma-media-heading p.price ins {
+	background: none;
+	text-decoration: none;
+}
+
+/* Badges de la photo : sous la bande, au début de la ligne, dans le flux. */
+.famma-product div.product .famma-media-overlay > .onsale,
+.famma-product div.product .famma-media-overlay > .famma-badge--media {
+	position: static;
+	min-block-size: 0;
+	min-inline-size: 0;
+	margin: 0;
+	margin-inline-start: var(--sp-4);
+}
+
+/* Badge de promotion (aussi celui des cartes de produits liés). */
 .famma-product div.product .onsale {
 	position: absolute;
 	inset-block-start: 16px;
@@ -257,15 +358,6 @@
 	float: none;
 }
 
-.famma-product div.product .summary .product_title {
-	margin: 0;
-	color: var(--famma-blue);
-	font-size: clamp(1.625rem, 3.2vw, 2.125rem);
-	font-weight: var(--fw-bold);
-	line-height: 1.22;
-	letter-spacing: -0.01em;
-}
-
 .famma-product div.product .summary .woocommerce-product-rating {
 	display: flex;
 	align-items: center;
@@ -288,6 +380,11 @@
 	font-size: var(--fs-small);
 }
 
+/*
+ * L'accroche et son bloc « Lire la suite » partagent la même taille et le même
+ * interligne : le pli d'une ligne se mesure en `lh` sur le bloc.
+ */
+.famma-product div.product .summary .famma-more--1 > .famma-more__body,
 .famma-product div.product .summary .woocommerce-product-details__short-description {
 	max-inline-size: 32.5rem;
 	color: #46536B;
@@ -299,47 +396,117 @@
 	margin: 0;
 }
 
-/*
- * Prix en bleu nuit (16,5:1).
- *
- * L'orange de la maquette, `#FF7A00` sur blanc, mesurait 2,46:1 : il échouait
- * même le seuil « grand texte » de 3:1 (WCAG 1.4.3), sur l'information la plus
- * lue de la page (audit du 23/09, FP-06). L'orange reste la couleur des
- * boutons, c'est-à-dire d'une surface, pas d'un texte (DESIGN-SYSTEM).
- */
-.famma-product div.product .summary p.price {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: baseline;
-	gap: 14px;
+/* Kadence lui donne 2 em de marge basse : dans le bloc, l'espace vient du bouton. */
+.famma-product div.product .summary .famma-more__body > .woocommerce-product-details__short-description {
 	margin: 0;
-	color: var(--famma-blue);
-	font-size: clamp(1.5rem, 3vw, 1.875rem);
-	font-weight: var(--fw-bold);
 }
 
 /*
- * Le titre et le prix se lisaient comme une seule phrase : même couleur, même
- * graisse, et un prix plus grand que le titre. Le titre garde la première
- * place ; le prix passe en dessous, plus petit, dans sa propre rangée bordée
- * d'un filet (--famma-line) qui l'isole du titre et de ce qui suit.
+ * « Lire la suite » (accroche : 1 ligne, description : 3 lignes).
+ *
+ * Replié dès le HTML, sans attendre le script : aucun saut de mise en page.
+ * `1lh` vaut l'interligne du bloc ; la ligne en `em` le précède pour les
+ * navigateurs qui ne connaissent pas `lh` (iOS avant 16.4).
+ * `product-more.js` ajoute `is-open` au clic, et `is-fit` quand le texte
+ * tient déjà dans les lignes prévues (le bouton disparaît alors).
  */
-.famma-product div.product .summary p.price {
-	margin-block-start: var(--sp-1);
-	padding-block: var(--sp-3);
-	border-block: 1px solid var(--famma-line);
+.famma-more--1 {
+	--famma-more-lines: 1;
 }
 
-.famma-product div.product .summary p.price del {
-	color: var(--famma-price-old);
-	font-size: 1.1875rem;
-	font-weight: var(--fw-regular);
-	opacity: 1;
+.famma-more--3 {
+	--famma-more-lines: 3;
 }
 
-.famma-product div.product .summary p.price ins {
+.famma-more:not(.is-open):not(.is-fit) > .famma-more__body {
+	max-block-size: calc(var(--famma-more-lines, 3) * 1.65em);
+	max-block-size: calc(var(--famma-more-lines, 3) * 1lh);
+	overflow: hidden;
+}
+
+/* La première ligne visible est bien celle du texte, pas une marge. */
+.famma-more:not(.is-open):not(.is-fit) > .famma-more__body :is(div, ul, ol, p, h2, h3, h4):first-child {
+	margin-block-start: 0;
+}
+
+/* Trois lignes : la dernière s'estompe, signe qu'il y a une suite. */
+.famma-more--3:not(.is-open):not(.is-fit) > .famma-more__body {
+	-webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+	mask-image: linear-gradient(to bottom, #000 55%, transparent);
+}
+
+.famma-more.is-fit > .famma-more__toggle {
+	display: none;
+}
+
+/*
+ * Le bouton se place sous le début du texte : à gauche pour un texte
+ * français, à droite pour un texte en derja. Le bloc prend le sens du texte
+ * qu'il contient (`dir` de son premier élément) : sur le site français,
+ * l'accroche et la description sont souvent en derja, et l'inverse peut
+ * arriver sur le site arabe. Sans `dir`, il garde le sens de la page.
+ */
+.famma-more {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.famma-more > .famma-more__body {
+	align-self: stretch;
+}
+
+.famma-more:has(> .famma-more__body > [dir="rtl"]:first-child, > .famma-more__body > div > [dir="rtl"]:first-child) {
+	direction: rtl;
+}
+
+.famma-more:has(> .famma-more__body > [dir="ltr"]:first-child, > .famma-more__body > div > [dir="ltr"]:first-child) {
+	direction: ltr;
+}
+
+/*
+ * Lien-bouton : 48 px de zone tactile (règle du projet) sans 48 px de vide
+ * à l'écran, grâce aux marges négatives.
+ */
+/*
+ * `.famma-more >` double la spécificité : Kadence peint tout `button` en
+ * bouton plein au survol et au focus (fond bleu nuit constaté au toucher).
+ * Ici c'est un lien de lecture, jamais un bouton plein.
+ */
+.famma-more > .famma-more__toggle,
+.famma-more > .famma-more__toggle:hover,
+.famma-more > .famma-more__toggle:focus,
+.famma-more > .famma-more__toggle:active {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: 48px;
+	margin-block: calc(var(--sp-3) * -1) calc(var(--sp-2) * -1);
+	padding: 0;
+	border: 0;
+	border-radius: 0;
 	background: none;
-	text-decoration: none;
+	box-shadow: none;
+	color: var(--famma-blue);
+	font: inherit;
+	font-size: var(--fs-chrome-nav);
+	font-weight: var(--fw-semibold);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	cursor: pointer;
+}
+
+.famma-more > .famma-more__toggle:hover {
+	color: var(--famma-blue-600);
+}
+
+.famma-more > .famma-more__toggle:focus-visible {
+	outline: 2px solid var(--focus-ring-color, var(--famma-blue));
+	outline-offset: 2px;
+}
+
+/* Ramené à l'écran au repli : sous l'en-tête collant, pas dessous. */
+.famma-more {
+	scroll-margin-block-start: calc(var(--famma-header-h, 72px) + var(--sp-4));
 }
 
 /* --- Achat --- */
@@ -1062,14 +1229,7 @@
 	block-size: 1.0625rem;
 }
 
-/* --- Badge « Nouveau », pose sur la photo comme celui de promotion --- */
-
-.famma-product div.product > .famma-badge--media {
-	position: absolute;
-	inset-block-start: var(--sp-4);
-	inset-inline-start: var(--sp-4);
-	z-index: 2;
-}
+/* --- Badge « Nouveau », posé sur la photo sous la bande du titre (voir « Scène de la photo ») --- */
 
 .famma-product .famma-badge--new {
 	align-self: flex-start;
