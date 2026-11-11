@@ -40,7 +40,7 @@ Objectif : passer de 33 % à au moins 60 % des formulaires commencés qui devien
 - **Aucune valeur saisie dans les événements.** `form_error` ne transporte que des codes de champs, pris dans une liste blanche côté serveur : `phone`, `name`, `state`, `size`, `form`, `storage`, `network`, `server`, `changed`.
 - **Compatibilité avec le cache.** LiteSpeed peut servir un ancien HTML avec le nouveau script, ou l'inverse. Le script doit donc fonctionner avec les deux gabarits, comme le correctif 0848b15 l'a déjà fait.
 - **Tout texte visible passe par l'admin** (règle « tout paramétrable ») ou par `__()` avec le domaine `famma-core`, en FR et en derja, en propriétés CSS logiques pour l'arabe.
-- **Données des délégations** : uniquement la nomenclature officielle (Institut National de la Statistique), source citée en tête du fichier, filtrable par `famma_governorate_places`. Les noms courants hors liste officielle (Djerba, El Mourouj…) sont soumis au propriétaire avant d'être ajoutés. Aucune donnée inventée.
+- **Données des délégations** : uniquement la liste officielle des délégations (Ministère de l'Intérieur ; l'INS n'en publie pas), source citée en tête du fichier, filtrable par `famma_governorate_places`. Noms courants hors liste officielle : refusés par le propriétaire le 11/11, aucun n'est ajouté. Aucune donnée inventée.
 - **Documentation à jour** : Context7 est consulté au début de chaque tâche de code (attributs `autocomplete` et `enterkeyhint` sur MDN, API WooCommerce utilisées). S'il est indisponible, on le dit avant de continuer.
 - **Lecture du code par le graphe d'abord** : graphe de famma-core reconstruit le 11/11 (`graphify update`, 1 245 nœuds) ; à relancer après chaque tâche.
 
@@ -76,7 +76,7 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 
 ### Point de contrôle 2
 - [ ] Parcours complet en local, en émulation mobile 390 px avec l'agent utilisateur du navigateur Facebook
-- [ ] Revue du propriétaire : ordre des champs, texte de la phrase, noms courants des villes
+- [ ] Revue du propriétaire : ordre des champs, texte de la phrase (noms courants : refusés le 11/11)
 
 ### Phase 3 : fiabiliser la mesure et livrer
 - [ ] T7 : Chaque commande express est rattachée à sa visite, même sans cookie
@@ -94,7 +94,7 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 | Une erreur dans le menu empêche toute commande | Élevé | Le `<select>` natif reste dans la page ; tests Node sur chaque cas ; repli sur le select si le menu échoue |
 | Le cache LiteSpeed sert un ancien HTML avec le nouveau script | Moyen | Script compatible avec les deux gabarits ; purge après la mise en ligne |
 | OPcache garde l'ancien PHP après l'envoi | Moyen | Créer `~/.lsphp_restart.txt`, vérifier la version servie |
-| Liste des délégations erronée ou inventée | Moyen | Liste officielle du Ministère de l'Intérieur uniquement, source citée ; les noms courants sont validés par le propriétaire |
+| Liste des délégations erronée ou inventée | Moyen | Liste officielle du Ministère de l'Intérieur uniquement, source citée ; noms courants refusés par le propriétaire (11/11) |
 | La correction arrive en pleine campagne et brouille le verdict du 15/11 | Faible | Lecture des chiffres par date, avant et après la mise en ligne |
 | Une double commande en cas de réseau lent | Élevé | Parcours d'envoi et registre inchangés ; tests d'intégration express rejoués |
 | Un zip avec des entrées de dossier casse les droits en production | Élevé | Zip sans entrées de dossier, comme pour les lots précédents |
@@ -106,5 +106,5 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 - ~~Ville obligatoire ?~~ : tranché le 11/11, facultative (décision 5).
 
 - **Texte de la phrase rassurante** : Claude propose une version FR et derja, le propriétaire la valide ou la réécrit dans l'admin.
-- **Noms courants des villes** hors nomenclature officielle (Djerba, El Mourouj, Ennasr…) : liste proposée au point de contrôle 2, à valider.
+- ~~**Noms courants des villes** hors liste officielle~~ : tranché le 11/11, proposition refusée par le propriétaire ; la liste officielle seule fait foi.
 - **Message d'erreur du gouvernorat** : aujourd'hui en anglais dans le code et traduit par le fichier `.po`. Il passera en FR + derja, comme les autres messages du formulaire.

@@ -118,6 +118,7 @@ Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide s
 > - Formes tirées des seuls noms officiels : sans « Nord/Sud/Ville… », premier mot propre à un seul gouvernorat (« Jerba »), localités des délégations composées (Sayada, Lamta, Bouhjar, Thrayat, Boumhel), article facultatif à partir de 5 lettres (« Marsa »).
 > - Écartés : « La Médina / المدينة » (nom commun), « Azzouhour / الزهور » (Tunis et Kasserine), tout texte où deux gouvernorats arrivent au même rang (« rue de Tunis, Sfax »).
 > - Coquille de la source gardée : « Zazis » pour Zarzis (جرجيس), à corriger par le filtre si le propriétaire le valide.
+> - **Noms courants refusés par le propriétaire (11/11)** : la proposition (Sahloul, Khezama, Chott Meriem, Kantaoui → Sousse ; Skanès → Monastir ; Mrezga → Nabeul ; Ennasr → Ariana ; Lac 1, Lac 2, El Manar → Tunis) n'est pas acceptée. Aucun nom hors liste officielle n'est ajouté ; ne pas la reproposer.
 > - Message « Gouvernorat ajouté : %s. Vous pouvez le changer. », derja « زدنا الولاية: %s. تنجم تبدّلها. » à relire au point de contrôle 2.
 
 **Dépendances :** tâche 3.
@@ -183,7 +184,7 @@ Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide s
 
 ### Point de contrôle 2 : après les tâches 3 à 6
 - [ ] Parcours complet en local, en émulation mobile 390 px avec l'agent utilisateur du navigateur Facebook : téléphone, nom, « Hammamet », taille, commande créée
-- [ ] Revue du propriétaire : ordre des champs, texte de la phrase, noms courants des villes
+- [ ] Revue du propriétaire : ordre des champs, texte de la phrase (noms courants des villes : refusés le 11/11, liste officielle seule)
 
 ---
 
