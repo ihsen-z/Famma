@@ -126,6 +126,7 @@
 				<element value="famma_child_home_hero_stack"/>
 				<element value="famma_child_home_hero_showcase"/>
 				<element value="famma_child_home_hero_thumbs"/>
+				<element value="famma_child_home_text"/>
 				<element value="famma_child_new_look"/>
 				<element value="famma_child_new_look_page"/>
 				<element value="famma_child_new_look_parts"/>
