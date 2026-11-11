@@ -20,6 +20,34 @@ const formSource = fs.readFileSync(path.join(plugin, 'includes/express-order.php
 const countryField = formSource.match(/<input\s+type="hidden"\s+name="billing_country"\s+value="([^"]+)"\s*\/>/);
 assert.ok(countryField, 'billing_country hidden field present in the PHP form');
 
+// Ville → gouvernorat (lot 23, T4) : la vraie liste du formulaire et les vrais lieux.
+const corePhp = fs.readFileSync(path.join(plugin, 'famma-core.php'), 'utf8');
+const pairsIn = (text, from, to) => {
+  const start = text.indexOf(from);
+  const body = text.slice(start, text.indexOf(to, start));
+  return [...body.matchAll(/'(TN-\d{2})' => '([^']+)',/g)].map(m => [m[1], m[2]]);
+};
+const governorateLabels = pairsIn(corePhp, 'public function governorates(', 'return $states;');
+const governorateArabic = Object.fromEntries(pairsIn(formSource, 'function governorate_arabic_names', ');'));
+assert.equal(governorateLabels.length, 24, '24 gouvernorats lus dans Tunisia::governorates()');
+assert.equal(Object.keys(governorateArabic).length, 24, '24 noms arabes lus dans governorate_arabic_names()');
+
+/**
+ * Lieux réels : `Governorate_Places::places()` exécuté par PHP (FAMMA_PHP =
+ * chemin de php.exe, sinon `php`). Sans PHP, le test échoue : pas de copie
+ * des données dans ce fichier.
+ */
+function realPlaces() {
+  const php = process.env.FAMMA_PHP || 'php';
+  const ext = path.join(path.dirname(php), 'ext');
+  const args = fs.existsSync(path.join(ext, 'php_mbstring.dll')) ? ['-n', '-d', 'extension_dir=' + ext, '-d', 'extension=mbstring'] : [];
+  const code = 'define("ABSPATH", "x"); function apply_filters($h, $v) { return $v; } require $argv[1];'
+    + ' echo json_encode(Famma\\Core\\Governorate_Places::places(), JSON_UNESCAPED_UNICODE);';
+  const out = require('node:child_process').execFileSync(php, [...args, '-r', code, '--', path.join(plugin, 'includes/governorate-places.php')], { encoding: 'utf8' });
+  return JSON.parse(out);
+}
+const placesData = realPlaces();
+
 let sequence = 0;
 
 /** Élément DOM minimal : attributs, classes, écouteurs, enfants. */
@@ -65,7 +93,9 @@ function setup(responses = [], options = {}) {
   const storage = options.storage || new Map();
   const unit = options.unit || '79';
   const qty = element('input', options.qty || '1', { min: '1', max: options.max || '' });
-  const phone = element('input', options.phone === undefined ? '20 123 456' : options.phone, { 'aria-describedby': 'famma-express-billing-phone-error' });
+  // Phrase sous le téléphone (0.3.9, option phoneNote) : son identifiant suit celui de l'erreur.
+  const phone = element('input', options.phone === undefined ? '20 123 456' : options.phone,
+    { 'aria-describedby': 'famma-express-billing-phone-error' + (options.phoneNote ? ' famma-express-phone-note' : '') });
   const phoneError = element('span');
   const name = element('input', options.name === undefined ? 'Client Fixture' : options.name);
   const state = element('select', options.state === undefined ? 'TN-51' : options.state);
@@ -90,6 +120,13 @@ function setup(responses = [], options = {}) {
   const cartQty = element('input', '1');
   const inputs = { billing_first_name: name, billing_phone: phone, billing_state: state, famma_quantity: qty,
     famma_hp_site: trap, payment_method: payment, billing_country: country, famma_product_id: id };
+  // Adresse de livraison (0.3.9) : texte facultatif « Ville, cité, rue… » à côté de la liste des gouvernorats.
+  const address = element('input', options.address || '');
+  // `name` comme dans le vrai DOM : le script reconnaît le gouvernorat par son nom à l'événement `change`.
+  state.name = 'billing_state'; address.name = 'billing_address_1';
+  if (options.address !== undefined || options.places) inputs.billing_address_1 = address;
+  // Indication sous l'adresse, remplacée par « Gouvernorat ajouté : … » quand la ville est reconnue.
+  const hint = element('span'); hint.textContent = 'Choisissez le gouvernorat.';
   // Champs cachés de <wc-order-attribution-inputs> (WooCommerce), quand l'élément est dans le formulaire.
   Object.entries(options.extraInputs || {}).forEach(([k, v]) => { inputs[k] = element('input', v); });
   const map = { '.famma-express__submit': button, '.famma-express__notices': notices, '.famma-express__info': info,
@@ -111,22 +148,46 @@ function setup(responses = [], options = {}) {
   form.querySelector = s => map[s] || null;
   form.querySelectorAll = s => {
     if (s === 'input, select, textarea, button') return [...Object.values(inputs), minus, plus, button];
+    // Champs à taper, dans l'ordre du gabarit 0.3.9 (touche « Suivant » du clavier).
+    if (s === 'input[type="text"], input[type="tel"]') return [phone, name, ...(inputs.billing_address_1 ? [address] : [])];
     if (s === '[data-famma-express-step]') return [minus, plus];
     return [];
   };
   form.reportValidity = () => true;
+  if (options.places) {
+    // Gabarit 0.3.9 : liste native avec ses 24 options (intitulé + nom arabe en data-alt).
+    state.options = governorateLabels.map(([value, text]) => ({ value, text, getAttribute: k => (k === 'data-alt' ? governorateArabic[value] : null) }));
+    state.options.unshift({ value: '', text: 'Gouvernorat', getAttribute: () => null });
+    Object.defineProperty(state, 'selectedIndex', { get() { return state.options.findIndex(o => o.value === state.value); } });
+    state.setAttribute('aria-describedby', 'famma-express-address-hint');
+    // Le `change` envoyé par le script remonte au formulaire, comme dans le vrai DOM.
+    state.dispatchEvent = e => { state.dispatched = (state.dispatched || 0) + 1; state.fire(e.type); form.fire(e.type, { target: state }); return true; };
+    map['select[name="billing_state"]:not([data-famma-combo])'] = state;
+    map['input[name="billing_address_1"]'] = address;
+  }
 
-  const calls = [], events = [], created = [];
+  const calls = [], events = [], created = [], blocks = [];
   const body = element('body');
   const documentElement = element('html');
   const document = {
     body: options.noBody ? null : body, documentElement, activeElement: null,
     querySelector(s) { return s === '.famma-express__form' ? form : s === 'form.cart input.qty' ? cartQty : null; },
-    getElementById(k) { return k === 'famma-express-billing-phone-error' ? phoneError : null; },
+    getElementById(k) { return k === 'famma-express-billing-phone-error' ? phoneError : (k === 'famma-express-address-hint' ? hint : null); },
     createElement(tag) { const e = element(tag); created.push(e); return e; },
+    // Envois refusés signalés au journal des visites (lot 23, `famma:express-error`).
+    // Array.from : tableau de l'hôte, comparable par deepStrictEqual (le bac à sable a son propre Array).
+    dispatchEvent(e) { if (e.type === 'famma:express-error') blocks.push(Array.from(e.detail.fields)); return true; },
   };
+  const timers = [], scrolls = [];
   const window = {
+    innerHeight: 800,
+    scrollBy(x, y) { scrolls.push(y); },
+    // Zone visible quand le clavier est ouvert (option viewport) : `resize` relancé par `resizeViewport()`.
+    ...(options.viewport ? { visualViewport: { ...options.viewport, listeners: [], addEventListener(t, cb) { this.listeners.push(cb); } } } : {}),
     location: { href: '' },
+    // Minuteries manuelles : `runTimers()` joue celles en attente (pause de frappe, fin du flash).
+    setTimeout(cb) { timers.push(cb); return timers.length; },
+    clearTimeout(id) { if (id) timers[id - 1] = null; },
     sessionStorage: {
       getItem(k) { if (options.storageBlocked) throw Error('blocked'); return storage.has(k) ? storage.get(k) : null; },
       setItem(k, v) { if (options.storageBlocked) throw Error('blocked'); storage.set(k, String(v)); },
@@ -138,6 +199,7 @@ function setup(responses = [], options = {}) {
   // Bibliothèque Meta chargée : fbevents.js pose callMethod sur la file fbq.
   if (options.pixel !== false && options.fbqLoaded) window.fbq.callMethod = () => {};
   if (options.wcAttribution) window.wc_order_attribution = options.wcAttribution;
+  if (options.places && !options.noPlacesData) window.fammaExpressPlaces = placesData;
   class MockFormData {
     constructor(target) {
       this.values = [];
@@ -155,7 +217,7 @@ function setup(responses = [], options = {}) {
     nameError: 'Nom manquant', sizeError: 'Taille manquante', confirmLabel: 'Confirmer', retryLabel: 'Vérifier ma commande en cours', amountChanged: 'Le total a été mis à jour.',
     changed: 'Commande changée', networkError: 'Connexion impossible', otherItems: 'Seul cet article est commandé ici',
     modalTitle: 'Nouveau total', modalClose: 'Fermer', finalLabel: 'Valider ma commande – %s', pending: 'En cours',
-    recovery: 'Résultat inconnu', storageError: 'Stockage indisponible',
+    recovery: 'Résultat inconnu', storageError: 'Stockage indisponible', stateFound: 'Gouvernorat ajouté : %s. Vous pouvez le changer.',
     recapLabels: { product: 'Article', quantity: 'Quantité', amount: 'Montant', subtotal: 'Sous-total', discount: 'Remises', shipping: 'Livraison', fees: 'Frais', tax: 'Taxes', total: 'Total' },
     price: { decimals: 3, decimal: ',', thousand: ' ', format: '%2$s %1$s', symbol: 'DT' },
   };
@@ -163,6 +225,8 @@ function setup(responses = [], options = {}) {
   const sandbox = {
     document, window, fammaExpress, FormData: MockFormData, Uint8Array, Date, JSON, Math,
     Event: class { constructor(type, init) { this.type = type; Object.assign(this, init); } },
+    // Ancien navigateur intégré sans CustomEvent : option noCustomEvent.
+    ...(options.noCustomEvent ? {} : { CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init && init.detail; } } }),
     fetch(url, init) {
       const call = { url, values: init.body.values, init };
       calls.push(call);
@@ -182,8 +246,12 @@ function setup(responses = [], options = {}) {
     return overlay && { overlay, confirm: find('famma-express-modal__confirm'), close: find('famma-express-modal__close'),
       text: find('famma-express-modal__confirm-text'), content: find('famma-express-modal__content') };
   };
-  return { sizeGroup, sizeError, sizeRadios, cartButton, terms, recap, qty, phone, phoneError, name, state, total, button, submitText, notices, info, minus, plus, cartQty, form,
-    window, calls, events, storage, submit, modal, documentElement,
+  return { sizeGroup, sizeError, sizeRadios, cartButton, terms, recap, qty, phone, phoneError, name, state, address, total, button, submitText, notices, info, minus, plus, cartQty, form,
+    window, calls, events, blocks, storage, submit, modal, documentElement, hint, document, scrolls,
+    // Frappe dans « Ville, cité, rue… » : `input` à chaque touche, `change` en fin de saisie.
+    type(text) { address.value = text; address.fire('input'); },
+    leave() { address.fire('change'); },
+    runTimers() { timers.splice(0).forEach(cb => cb && cb()); },
     urls: () => calls.map(c => c.url),
     record: () => JSON.parse(storage.get('famma_express_intent_123')) };
 }
@@ -768,6 +836,392 @@ async function test(name, run) {
     const s = setup([token, internal, accepted], { fbqLoaded: true });
     s.submit(); await flush();
     assert.equal(s.events.length, 0);
+    assert.equal(s.window.location.href, accepted.redirect);
+  });
+
+  // ── Lot 23 : chaque envoi refusé est signalé au journal (`form_error`) ──
+  const CODES = ['phone', 'name', 'state', 'size', 'form', 'storage', 'network', 'server', 'changed'];
+  const onlyCodes = s => s.blocks.every(list => list.length && list.every(c => CODES.includes(c)));
+
+  await test('Journal : gouvernorat absent → form_error [state], aucun appel', async () => {
+    const s = setup([], { state: '' });
+    s.submit(); await flush();
+    assert.equal(s.calls.length, 0);
+    assert.deepEqual(s.blocks, [['state']]);
+  });
+
+  await test('Journal : téléphone invalide → [phone] ; plusieurs champs → un seul événement, dans l’ordre du contrôle', async () => {
+    const a = setup([], { phone: '123' });
+    a.submit(); await flush();
+    assert.deepEqual(a.blocks, [['phone']]);
+    const b = setup([], { name: '', state: '' });
+    b.submit(); await flush();
+    assert.deepEqual(b.blocks, [['name', 'state']]);
+  });
+
+  await test('Journal : aucune valeur tapée ne part, seulement des codes', async () => {
+    const s = setup([], { phone: '20 12', name: 'Am', state: '' });
+    s.submit(); await flush();
+    assert.ok(onlyCodes(s));
+    const sent = JSON.stringify(s.blocks);
+    assert.ok(!sent.includes('20 12') && !sent.includes('Am'));
+  });
+
+  await test('Journal : contrôle natif du navigateur refusé → [form]', async () => {
+    const s = setup([]);
+    s.form.reportValidity = () => false;
+    s.submit(); await flush();
+    assert.equal(s.calls.length, 0);
+    assert.deepEqual(s.blocks, [['form']]);
+  });
+
+  await test('Journal : stockage bloqué → [storage]', async () => {
+    const s = setup([], { storageBlocked: true });
+    s.submit(); await flush();
+    assert.deepEqual(s.blocks, [['storage']]);
+  });
+
+  await test('Journal : réseau coupé au devis → [network] ; réponse illisible → [network] ; refus sans champ → [server]', async () => {
+    const a = setup([token, new Error('réseau coupé')]);
+    a.submit(); await flush(); await flush();
+    assert.deepEqual(a.blocks, [['network']]);
+    const b = setup([token, 'Fatal error: <b>synthétique</b>']);
+    b.submit(); await flush();
+    assert.deepEqual(b.blocks, [['network']]);
+    const c = setup([token, { result: 'failure', messages: '' }]);
+    c.submit(); await flush();
+    assert.deepEqual(c.blocks, [['server']]);
+  });
+
+  await test('Journal : refus WooCommerce data-id="billing_phone" → un seul [phone], même après la lecture du statut', async () => {
+    const s = setup([token, quote(), wooPhoneError, failedState]);
+    s.submit(); await flush();
+    assert.deepEqual(s.blocks, [['phone']]);
+  });
+
+  await test('Journal : refus WooCommerce au devis, champ inconnu → [server] ; gouvernorat → [state]', async () => {
+    const a = setup([token, { result: 'failure', messages: '<ul><li data-id="billing_postcode">Code postal</li></ul>' }]);
+    a.submit(); await flush();
+    assert.deepEqual(a.blocks, [['server']]);
+    const b = setup([token, { result: 'failure', messages: '<ul><li data-id="billing_state">Gouvernorat invalide</li></ul>' }]);
+    b.submit(); await flush();
+    assert.deepEqual(b.blocks, [['state']]);
+  });
+
+  await test('Journal : panier changé entre devis et commande → [changed]', async () => {
+    const s = setup([token, quote(), { result: 'failure', famma_code: 'cart_changed' }]);
+    s.submit(); await flush();
+    assert.deepEqual(s.blocks, [['changed']]);
+  });
+
+  await test('Journal : commande acceptée ou réponse perdue (résultat inconnu) → aucun form_error', async () => {
+    const a = setup([token, quote(), accepted]);
+    a.submit(); await flush();
+    assert.deepEqual(a.blocks, []);
+    const b = setup([token, quote(), new Error('réponse perdue')]);
+    b.submit(); await flush();
+    assert.equal(b.record().phase, 'unknown');
+    assert.deepEqual(b.blocks, [], 'une commande a peut-être été créée : ce n’est pas un refus');
+  });
+
+  await test('Journal : navigateur sans CustomEvent → le refus s’affiche, la commande suivante passe', async () => {
+    const s = setup([token, quote(), accepted], { noCustomEvent: true, state: '' });
+    s.submit(); await flush();
+    assert.equal(s.notices.textContent, 'Gouvernorat');
+    assert.deepEqual(s.blocks, []);
+    s.state.value = 'Tunis';
+    s.submit(); await flush();
+    assert.equal(s.window.location.href, accepted.redirect);
+  });
+
+  // ── Lot 23, tâche 3 : adresse de livraison (liste des gouvernorats + ville facultative) ──
+  await test('Gabarit : liste native des gouvernorats (sans menu à recherche) et ville facultative dans le même cadre', async () => {
+    const box = formSource.match(/<div class="famma-express__address-box">([\s\S]*?)<\/div>/);
+    assert.ok(box, 'cadre famma-express__address-box présent');
+    // Une ligne entière : les attributs contiennent du PHP (`?>`), un `[^>]*` s'arrêterait trop tôt.
+    const select = box[1].match(/<select[^\n]*name="billing_state"[^\n]*/);
+    const input = box[1].match(/<input[\s\S]*?name="billing_address_1"[\s\S]*?\/>/);
+    assert.ok(select && input, 'gouvernorat et ville dans le cadre');
+    assert.ok(box[1].indexOf(select[0]) < box[1].indexOf(input[0]), 'la liste vient avant la ville');
+    assert.ok(!/data-famma-combo/.test(select[0]), 'plus de menu à recherche sur le nouveau gabarit');
+    assert.ok(/\srequired[\s>]/.test(select[0]) && /autocomplete="address-level1"/.test(select[0]));
+    assert.ok(!/\srequired/.test(input[0]), 'la ville n’est jamais obligatoire');
+    assert.ok(/autocomplete="address-line1"/.test(input[0]) && /maxlength="100"/.test(input[0]));
+  });
+
+  await test('Adresse : gouvernorat choisi, ville vide → commande envoyée', async () => {
+    const s = setup([token, quote(), accepted], { address: '' });
+    s.submit(); await flush();
+    assert.equal(s.window.location.href, accepted.redirect);
+    assert.equal(field(s.calls.find(c => c.url === '/express'), 'billing_address_1'), '');
+    assert.deepEqual(s.blocks, []);
+  });
+
+  await test('Adresse : ville saisie → envoyée dans billing_address_1 avec la commande', async () => {
+    const s = setup([token, quote(), accepted], { address: 'Sahloul 3, rue des Jasmins' });
+    s.submit(); await flush();
+    assert.equal(field(s.calls.find(c => c.url === '/express'), 'billing_address_1'), 'Sahloul 3, rue des Jasmins');
+    assert.equal(s.window.location.href, accepted.redirect);
+  });
+
+  await test('Adresse : gouvernorat vide → message, aucun appel, [state] seul même si la ville est vide', async () => {
+    const s = setup([], { state: '', address: '' });
+    s.submit(); await flush();
+    assert.equal(s.calls.length, 0);
+    assert.equal(s.notices.textContent, 'Gouvernorat');
+    assert.equal(s.state.getAttribute('aria-invalid'), 'true');
+    assert.equal(s.address.getAttribute('aria-invalid'), null, 'la ville n’est jamais marquée');
+    assert.deepEqual(s.blocks, [['state']]);
+  });
+
+  await test('Adresse : choisir un gouvernorat dans la liste efface l’erreur, puis la commande passe', async () => {
+    const s = setup([token, quote(), accepted], { state: '', address: 'Hammamet' });
+    s.submit(); await flush();
+    s.state.value = 'TN-21';
+    s.form.fire('change', { target: s.state });
+    assert.equal(s.state.getAttribute('aria-invalid'), 'false');
+    assert.ok(!s.state.classList.contains('famma-express__invalid'));
+    s.submit(); await flush();
+    assert.equal(field(s.calls.find(c => c.url === '/express'), 'billing_state'), 'TN-21');
+    assert.equal(s.window.location.href, accepted.redirect);
+  });
+
+  // ── Lot 23, tâche 4 : la ville tapée propose le gouvernorat (liste officielle des délégations) ──
+  const found = name => `Gouvernorat ajouté : ${name}. Vous pouvez le changer.`;
+  const guess = (text, extra = {}) => {
+    const s = setup([], { places: true, state: '', ...extra });
+    s.address.value = text; s.leave();
+    return s;
+  };
+
+  await test('Ville : « Hammamet » remplit Nabeul après la pause de frappe, avec le message et le flash', async () => {
+    const s = setup([], { places: true, state: '' });
+    s.type('Hammamet');
+    assert.equal(s.state.value, '', 'rien pendant la frappe');
+    s.runTimers();
+    assert.equal(s.state.value, 'TN-21');
+    assert.equal(s.hint.textContent, found('Nabeul'));
+    assert.ok(s.state.classList.contains('famma-express__flash'), 'la liste s’allume');
+    assert.equal(s.state.dispatched, 1, 'un seul change, comme un choix dans la liste');
+    s.runTimers();
+    assert.ok(!s.state.classList.contains('famma-express__flash'), 'puis s’éteint');
+  });
+
+  await test('Ville : « Msaken » en fin de saisie (collage, remplissage du navigateur) → Sousse sans attendre', async () => {
+    const s = guess('Msaken');
+    assert.equal(s.state.value, 'TN-51');
+    assert.equal(s.hint.textContent, found('Sousse'));
+  });
+
+  await test('Ville : en arabe « جربة » → Médenine, aussi avec ه pour ة et sans tatwil', async () => {
+    const s = guess('جربة');
+    assert.equal(s.state.value, 'TN-82');
+    assert.equal(s.hint.textContent, found('Médenine'));
+    assert.equal(guess('جربه حومة السوق').state.value, 'TN-82');
+    assert.equal(guess('قابس').state.value, 'TN-81', 'قابـس dans la source');
+    assert.equal(guess('صفاقس').state.value, 'TN-61', 'nom arabe de la liste (data-alt)');
+  });
+
+  await test('Ville : majuscules, accents, apostrophes, articles et noms composés', async () => {
+    [
+      ['HAMMAMET', 'TN-21'], ['M’saken', 'TN-51'], ["M'nihla", 'TN-12'], ['Le Kef', 'TN-33'], ['El Kef', 'TN-33'],
+      ['kef', 'TN-33'], ['beja', 'TN-31'], ['Mourouj 3', 'TN-13'], ['Ksar Helal', 'TN-52'], ['Sahloul, Hammam Sousse', 'TN-51'],
+      ['Douz', 'TN-73'], ['Bizerte', 'TN-23'], ['Sayada', 'TN-52'], ['cité Ennour, Sfax', 'TN-61'],
+    ].forEach(([text, code]) => assert.equal(guess(text).state.value, code, text));
+  });
+
+  await test('Ville : chacun des noms officiels, tapé seul, donne son gouvernorat ou rien, jamais un autre', async () => {
+    const s = setup([], { places: true, state: '' });
+    const misses = [];
+    Object.entries(placesData).forEach(([code, names]) => {
+      let fr = 0, ar = 0;
+      names.forEach(name => {
+        s.state.value = ''; s.state.fire('change');
+        s.address.value = name; s.leave();
+        if (s.state.value && s.state.value !== code) misses.push(`${name} → ${s.state.value} (attendu ${code})`);
+        if (s.state.value === code) { if (/[؀-ۿ]/.test(name)) ar++; else fr++; }
+      });
+      assert.ok(fr > 0 && ar > 0, `${code} : au moins un nom reconnu en français et en arabe`);
+    });
+    assert.deepEqual(misses, []);
+  });
+
+  await test('Ville : prudence, deux gouvernorats au même rang ou nom commun → aucun remplissage', async () => {
+    ['Rue de Tunis, Sfax', 'Azzouhour', 'Médina', 'المدينة', 'Ksar Said', 'Sidi', 'Hammam', 'Sahloul 3', ''].forEach(text => {
+      const s = guess(text);
+      assert.equal(s.state.value, '', text);
+      assert.equal(s.state.dispatched, undefined, text);
+      assert.equal(s.hint.textContent, 'Choisissez le gouvernorat.', text);
+    });
+  });
+
+  await test('Ville : un gouvernorat choisi à la main n’est jamais remplacé', async () => {
+    const s = setup([], { places: true, state: '' });
+    s.state.value = 'TN-11'; s.state.fire('change');
+    s.type('Hammamet'); s.runTimers(); s.leave();
+    assert.equal(s.state.value, 'TN-11');
+    assert.equal(s.hint.textContent, 'Choisissez le gouvernorat.');
+  });
+
+  await test('Ville : gouvernorat déjà rempli au chargement (retour, remplissage du navigateur) → gardé', async () => {
+    const s = guess('Hammamet', { state: 'TN-51' });
+    assert.equal(s.state.value, 'TN-51');
+    assert.equal(s.state.dispatched, undefined);
+  });
+
+  await test('Ville : la proposition suit la frappe ; changée à la main elle reste ; remise à vide elle reprend', async () => {
+    const s = setup([], { places: true, state: '' });
+    s.type('Hammamet'); s.runTimers();
+    s.type('Sfax'); s.runTimers();
+    assert.equal(s.state.value, 'TN-61', 'la ville corrigée corrige la proposition');
+    s.type('Sfax, rue sans nom'); s.runTimers();
+    assert.equal(s.state.value, 'TN-61', 'un texte qui ne reconnaît plus rien garde la proposition');
+    s.state.value = 'TN-11'; s.state.fire('change');
+    assert.equal(s.hint.textContent, 'Choisissez le gouvernorat.', 'choix à la main : l’indication revient');
+    s.type('Bizerte'); s.runTimers();
+    assert.equal(s.state.value, 'TN-11');
+    s.state.value = ''; s.state.fire('change');
+    s.type('Bizerte'); s.runTimers();
+    assert.equal(s.state.value, 'TN-23', 'remis sur « Gouvernorat » : la proposition reprend');
+  });
+
+  await test('Ville : la proposition efface l’erreur du gouvernorat, la commande part avec TN-21 et la ville', async () => {
+    const s = setup([token, quote(), accepted], { places: true, state: '' });
+    s.submit(); await flush();
+    assert.equal(s.state.getAttribute('aria-invalid'), 'true');
+    s.type('Hammamet'); s.runTimers();
+    assert.equal(s.state.getAttribute('aria-invalid'), 'false');
+    assert.ok(!s.state.classList.contains('famma-express__invalid'));
+    s.submit(); await flush();
+    const sent = s.calls.find(c => c.url === '/express');
+    assert.equal(field(sent, 'billing_state'), 'TN-21');
+    assert.equal(field(sent, 'billing_address_1'), 'Hammamet');
+    assert.equal(s.window.location.href, accepted.redirect);
+    assert.deepEqual(s.blocks, [['state']]);
+  });
+
+  await test('Ville : sans données de lieux (page en cache), seuls les intitulés de la liste ; liste désactivée → rien', async () => {
+    assert.equal(guess('Sousse', { noPlacesData: true }).state.value, 'TN-51');
+    assert.equal(guess('Hammamet', { noPlacesData: true }).state.value, '');
+    const s = setup([], { places: true, state: '' });
+    s.state.disabled = true;
+    s.address.value = 'Hammamet'; s.leave();
+    assert.equal(s.state.value, '', 'pendant un envoi en cours, rien ne bouge');
+  });
+
+  await test('Gabarit : indication annoncée (aria-live), lieux en script en ligne protégé, message traduisible', async () => {
+    assert.ok(/class="famma-express__hint"[^\n]*aria-live="polite"/.test(formSource), 'aria-live sur l’indication');
+    assert.ok(/'var fammaExpressPlaces = ' \. wp_json_encode\( self::places_for_script\(\), [^)]*JSON_HEX_TAG/.test(formSource), 'JSON_HEX_TAG');
+    assert.ok(/wp_add_inline_script\(\s*'famma-express',[\s\S]*?'before'\s*\)/.test(formSource), 'avant le script');
+    assert.ok(/'stateFound'\s*=> __\( 'Gouvernorat ajouté : %s\. Vous pouvez le changer\.', 'famma-core' \)/.test(formSource));
+  });
+
+  // ── Lot 23, tâche 5 : téléphone en premier, saisie adaptée au navigateur de Facebook ──
+  const typed = (s, value, extra = {}) => { s.phone.value = value; s.phone.fire('input', extra); return s.phone.value; };
+
+  await test('Gabarit : ordre téléphone → nom → gouvernorat → ville → taille → bouton, attributs de saisie', async () => {
+    const body = formSource.slice(formSource.indexOf('public function render()'));
+    const order = ['$this->phone_field()', "'billing_first_name'", '$this->address_field()', 'Product_Sizes::render_field', 'famma-express__submit'].map(k => body.indexOf(k));
+    assert.ok(order.every(i => i > 0), 'tous présents dans render()');
+    assert.deepEqual([...order].sort((a, b) => a - b), order, 'dans cet ordre');
+    const phoneField = formSource.slice(formSource.indexOf('private function phone_field()'), formSource.indexOf('private function quantity_field('));
+    assert.ok(/<span class="famma-express__phone-box" dir="ltr">\s*<span class="famma-express__prefix" aria-hidden="true">\+216<\/span>/.test(phoneField), '+216 fixe, hors de la valeur');
+    ['type="tel"', 'name="billing_phone"', 'autocomplete="tel-national"', 'inputmode="numeric"', 'enterkeyhint="next"', 'placeholder="XX XXX XXX"', 'required']
+      .forEach(a => assert.ok(phoneField.includes(a), a));
+    assert.ok(/'autocapitalize' => 'words',\s*'enterkeyhint'\s*=> 'next',/.test(body), 'nom : majuscules aux mots, touche Suivant');
+    assert.ok(/name="billing_address_1"[\s\S]*?enterkeyhint="send"/.test(formSource), 'ville : dernier champ tapé, la touche envoie');
+  });
+
+  await test('Téléphone : groupé « XX XXX XXX » pendant la frappe', async () => {
+    const s = setup([], { phone: '' });
+    assert.equal(typed(s, '2'), '2');
+    assert.equal(typed(s, '201'), '20 1');
+    assert.equal(typed(s, '20 1234'), '20 123 4');
+    assert.equal(typed(s, '20 123 456'), '20 123 456');
+  });
+
+  await test('Téléphone : +216, 00216, espaces ou chiffres arabes collés → 8 chiffres groupés ; 9 chiffres laissés tels quels', async () => {
+    [['+216 20 123 456', '20 123 456'], ['00216 20123456', '20 123 456'], ['٢٠١٢٣٤٥٦', '20 123 456'], ['20-123-456', '20 123 456'], ['21612345', '21 612 345']]
+      .forEach(([paste, shown]) => assert.equal(typed(setup([], { phone: '' }), paste), shown, paste));
+    const s = setup([], { phone: '' });
+    assert.equal(typed(s, '201234567'), '201234567');
+    s.phone.fire('blur');
+    assert.equal(s.phone.getAttribute('aria-invalid'), 'true', 'signalé à la sortie du champ');
+  });
+
+  await test('Téléphone : le curseur reste après le même chiffre ; effacer une espace efface le chiffre d’avant', async () => {
+    const s = setup([], { phone: '' });
+    s.phone.setSelectionRange = (a, b) => { s.phone.sel = [a, b]; };
+    s.document.activeElement = s.phone;
+    typed(s, '20 123 45');
+    s.phone.selectionStart = 5; // « 20 19|23 45 » : un 9 inséré après « 20 1 »
+    assert.equal(typed(s, '20 1923 45'), '20 192 345');
+    assert.deepEqual(s.phone.sel, [5, 5]);
+    typed(s, '20 123 456');
+    s.phone.selectionStart = 2; // « 20|123 456 » : l'espace vient d'être effacée
+    assert.equal(typed(s, '20123 456', { inputType: 'deleteContentBackward' }), '21 234 56');
+    assert.deepEqual(s.phone.sel, [1, 1]);
+  });
+
+  await test('Téléphone groupé : la commande part, le serveur reçoit le numéro tel qu’affiché', async () => {
+    const s = setup([token, quote(), accepted], { phone: '' });
+    typed(s, '+216 98 765 432');
+    s.submit(); await flush();
+    assert.equal(field(s.calls.find(c => c.url === '/express'), 'billing_phone'), '98 765 432');
+    assert.equal(s.window.location.href, accepted.redirect);
+  });
+
+  await test('Touche « Suivant » : téléphone → nom → ville (la liste est sautée) ; « Envoyer » et l’ancien gabarit gardent l’envoi', async () => {
+    const s = setup([], { places: true, state: '' });
+    s.phone.setAttribute('enterkeyhint', 'next'); s.name.setAttribute('enterkeyhint', 'next'); s.address.setAttribute('enterkeyhint', 'send');
+    const enter = (target, extra = {}) => { let stopped = false; s.form.fire('keydown', { target, key: 'Enter', preventDefault() { stopped = true; }, ...extra }); return stopped; };
+    assert.ok(enter(s.phone) && s.name.focused, 'téléphone → nom');
+    assert.ok(enter(s.name) && s.address.focused, 'nom → ville');
+    assert.ok(!enter(s.address), 'ville : la touche envoie le formulaire');
+    s.name.focused = false;
+    assert.ok(!enter(s.phone, { isComposing: true }) && !s.name.focused, 'saisie en cours (IME) : rien');
+    s.phone.removeAttribute('enterkeyhint');
+    assert.ok(!enter(s.phone), 'ancien gabarit sans enterkeyhint : comportement du navigateur');
+  });
+
+  await test('Clavier ouvert : un champ caché remonte au tiers de la zone visible, un champ visible ne bouge pas', async () => {
+    const s = setup([], { viewport: { offsetTop: 0, height: 390 } });
+    s.form.contains = () => true;
+    s.document.activeElement = s.phone;
+    s.phone.getBoundingClientRect = () => ({ top: 700, bottom: 748 });
+    s.form.fire('focusin', { target: s.phone });
+    assert.deepEqual(s.scrolls, [], 'rien avant que le clavier ait fini de s’ouvrir');
+    s.runTimers();
+    assert.deepEqual(s.scrolls, [700 - 390 / 3]);
+    s.phone.getBoundingClientRect = () => ({ top: 120, bottom: 168 });
+    s.window.visualViewport.listeners.forEach(cb => cb());
+    assert.equal(s.scrolls.length, 1, 'déjà visible : aucun défilement');
+    s.document.activeElement = null;
+    s.window.visualViewport.listeners.forEach(cb => cb());
+    assert.equal(s.scrolls.length, 1, 'aucun champ actif : rien');
+  });
+
+  // ── Lot 23, tâche 6 : phrase sous le téléphone, modifiable dans l'admin ──
+  await test('Phrase sous le téléphone : l’erreur du numéro reste affichée (premier identifiant de aria-describedby)', async () => {
+    const s = setup([], { phone: '123', phoneNote: true });
+    s.submit(); await flush();
+    assert.equal(s.calls.length, 0);
+    assert.equal(s.phoneError.textContent, 'Téléphone invalide');
+    assert.equal(s.phoneError.hidden, false);
+    assert.deepEqual(s.blocks, [['phone']]);
+  });
+
+  // ── Lot 23, tâche 7 : la commande emporte la session du journal (secours des cookies) ──
+  await test('Session du journal : champs cachés dans le gabarit, envoyés avec la commande, pas avec le devis', async () => {
+    assert.ok(/<input type="hidden" name="<\?php echo esc_attr\( Visitor_Commerce::FIELD_VISITOR \); \?>" value="" \/>/.test(formSource), 'visiteur, vide dans la page en cache');
+    assert.ok(/<input type="hidden" name="<\?php echo esc_attr\( Visitor_Commerce::FIELD_SESSION \); \?>" value="" \/>/.test(formSource), 'session, vide dans la page en cache');
+    const ids = { famma_vj_visitor: '33333333-3333-4333-a333-333333333333', famma_vj_session: '44444444-4444-4444-b444-444444444444' };
+    const s = setup([token, quote(), accepted], { extraInputs: ids });
+    s.submit(); await flush();
+    const sent = s.calls.find(c => c.url === '/express');
+    assert.equal(field(sent, 'famma_vj_visitor'), ids.famma_vj_visitor);
+    assert.equal(field(sent, 'famma_vj_session'), ids.famma_vj_session);
+    assert.equal(field(s.calls.find(c => c.url === '/prepare'), 'famma_vj_session'), undefined, 'le devis ne les reçoit pas');
     assert.equal(s.window.location.href, accepted.redirect);
   });
 

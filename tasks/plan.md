@@ -1,0 +1,110 @@
+# Plan de mise en œuvre : formulaire de commande express optimisé pour le navigateur de Facebook
+
+Rédigé le 11/11/2026 sur la branche `claude/formulaire-express-fb`, partie de `origin/main` (3e34084, famma-core 0.3.8 en production).
+Version visée : famma-core 0.3.9.
+
+## Vue d'ensemble
+
+Le formulaire express de la fiche produit n'a que trois champs (nom, téléphone, gouvernorat), plus la taille et la quantité. Pourtant, seules 33 % des personnes qui le commencent arrivent à une commande, contre environ 65 % dans une boutique moyenne.
+
+Le blocage principal est le gouvernorat :
+- c'est un menu où l'on tape le nom ;
+- si le texte tapé n'est pas choisi dans la liste, l'envoi est refusé (« Pick your governorate from the list. ») ;
+- 7 des 12 clics « Commander » sans commande venaient de là (rapport abandons du 09/11).
+
+Second constat : 34 visiteurs ont tapé leur nom, mais seulement 17 leur téléphone.
+
+Objectif : passer de 33 % à au moins 60 % des formulaires commencés qui deviennent des commandes, mesuré sur 7 jours après la mise en ligne.
+
+## Décisions du propriétaire (11/11)
+
+1. **Gouvernorat** : ~~garder le menu à recherche~~ → remplacé le 11/11, avec le champ ville (décision 5), par la **liste simple** de la maquette. On choisit dans la liste du téléphone, ou la ville tapée la remplit. Plus aucun texte tapé ne peut rester « non choisi » et bloquer l'envoi.
+2. **Ordre des champs** : téléphone en premier, puis nom, puis adresse de livraison (gouvernorat et ville). Même si le client s'arrête, son numéro arrive dans « Saisies à relancer ».
+3. **Phrase rassurante** sous le téléphone, en FR et en derja, modifiable dans FAMMA → Pages → Fiche produit. Si elle est vide, rien n'est affiché.
+4. **Mise en ligne** dès que la correction est prête et testée, avec le feu vert explicite du propriétaire. Le verdict du 15/11 lira les chiffres avant et après, jour par jour.
+5. **Champ ville** (11/11, réponse « Avec champ ville » donnée à la session de la maquette animée, fiche produit v3 : https://claude.ai/artifact/58m2ku79Bz8NEiidPZaVyd) :
+   - un seul libellé « Adresse de livraison » / « عنوان التوصيل » ; dans un même cadre, la liste des gouvernorats (option vide « Gouvernorat » / « الولاية ») et un texte « Ville, cité, rue… » / « المدينة، الحومة، النهج… » ;
+   - une ville connue tapée dans le texte remplit le gouvernorat, avec un flash orange et « Gouvernorat ajouté : Sousse. Vous pouvez le changer. » ; un gouvernorat choisi à la main n'est jamais remplacé ;
+   - téléphone : « +216 » affiché fixe hors de la valeur, numéro groupé « XX XXX XXX » à la frappe, +216 ou 00216 collé retiré, `inputmode="numeric"`, `autocomplete="tel-national"`, même règle `^[2-579]\d{7}$` ;
+   - texte en 16 px (pas de zoom sur iPhone), cibles de 48 px, propriétés CSS logiques pour l'arabe ;
+   - la table villes → gouvernorats de la maquette n'est PAS reprise : seule la liste officielle des délégations (Ministère de l'Intérieur, l'INS n'en publie pas ; tâche 4) fait foi ; les phrases en derja de la maquette sont à relire par le propriétaire.
+
+   - **ville facultative** (réponse du 11/11) : seul le gouvernorat est exigé ; l'appel de confirmation complète l'adresse si elle manque.
+
+   Choix technique : le texte part dans `billing_address_1` (champ « Adresse » standard de WooCommerce, déjà non obligatoire pour la commande express). Il laisse `billing_city` propre pour la CAPI (`ct`) : la tâche 4 pourra y mettre le nom officiel de la délégation reconnue.
+
+## Décisions d'architecture
+
+- **On ne touche pas aux protections contre les doubles commandes.** Le parcours « devis → envoi final → statut » (`prepare`, `submitFinal`, `sendFinal`, `recover`) et le registre en `sessionStorage` restent tels quels. Les corrections interviennent avant l'envoi : validation, menu, ordre des champs.
+- **Rien de nouveau ne part vers Meta.** L'événement `form_error` reste dans le journal des visites (interne). Le Pixel et la CAPI ne changent pas.
+- **Aucune valeur saisie dans les événements.** `form_error` ne transporte que des codes de champs, pris dans une liste blanche côté serveur : `phone`, `name`, `state`, `size`, `form`, `storage`, `network`, `server`, `changed`.
+- **Compatibilité avec le cache.** LiteSpeed peut servir un ancien HTML avec le nouveau script, ou l'inverse. Le script doit donc fonctionner avec les deux gabarits, comme le correctif 0848b15 l'a déjà fait.
+- **Tout texte visible passe par l'admin** (règle « tout paramétrable ») ou par `__()` avec le domaine `famma-core`, en FR et en derja, en propriétés CSS logiques pour l'arabe.
+- **Données des délégations** : uniquement la liste officielle des délégations (Ministère de l'Intérieur ; l'INS n'en publie pas), source citée en tête du fichier, filtrable par `famma_governorate_places`. Noms courants hors liste officielle : refusés par le propriétaire le 11/11, aucun n'est ajouté. Aucune donnée inventée.
+- **Documentation à jour** : Context7 est consulté au début de chaque tâche de code (attributs `autocomplete` et `enterkeyhint` sur MDN, API WooCommerce utilisées). S'il est indisponible, on le dit avant de continuer.
+- **Lecture du code par le graphe d'abord** : graphe de famma-core reconstruit le 11/11 (`graphify update`, 1 245 nœuds) ; à relancer après chaque tâche.
+
+## Graphe des dépendances
+
+```
+T1 form_error (mesure) ──┬── T2 rapport « Formulaire » (admin)
+                         ├── T3 gouvernorat non bloquant ── T4 villes/délégations
+                         │            └── T5 téléphone en premier + saisie FB ── T6 phrase rassurante
+                         └── T7 commande rattachée à sa visite
+T1…T7 ── T8 version 0.3.9, traductions, contrôles, paquet de mise en ligne
+```
+
+T3, T4, T5 et T7 touchent tous `assets/js/express-order.js` : ils se font l'un après l'autre. T2 peut avancer en parallèle de T3, car il ne touche que l'admin.
+
+## Liste des tâches
+
+Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) est dans `tasks/todo.md`.
+
+### Phase 1 : mesurer les blocages
+- [x] T1 : Enregistrer chaque envoi refusé et le champ en cause (`form_error`)
+- [x] T2 : Entonnoir du formulaire et blocages par champ dans le tableau de bord visiteurs
+
+### Point de contrôle 1
+- [x] Tests Node et PHP verts, phpcs propre
+- [x] En local, un envoi sans gouvernorat apparaît dans le rapport avec le code `state` (site Local, 11/11, 20/20)
+
+### Phase 2 : corriger le formulaire
+- [x] T3 : Adresse de livraison : liste des gouvernorats et ville facultative, dans un même cadre
+- [x] T4 : La ville tapée remplit le gouvernorat (liste du Ministère de l'Intérieur)
+- [x] T5 : Téléphone en premier et saisie adaptée au navigateur de Facebook (clavier réel à revoir au point de contrôle 2)
+- [x] T6 : Phrase rassurante sous le téléphone, modifiable dans l'admin
+
+### Point de contrôle 2
+- [ ] Parcours complet en local, en émulation mobile 390 px avec l'agent utilisateur du navigateur Facebook
+- [x] Revue du propriétaire : ordre des champs et derja validés le 11/11, phrase laissée vide, noms courants refusés ; clavier de l'appli Facebook à essayer après la mise en ligne
+
+### Phase 3 : fiabiliser la mesure et livrer
+- [x] T7 : Chaque commande express est rattachée à sa visite, même sans cookie (intégration Docker verte le 11/11)
+- [x] T8 : Version 0.3.9, traductions, contrôles du projet et paquet de mise en ligne (intégration Docker verte le 11/11 ; `test-capi-fbc-integration` échoue aussi en 0.3.8, hors lot)
+
+### Point de contrôle 3 : prêt à mettre en ligne
+- [x] Tous les contrôles du § 11 de ClaudeMemo sont verts : `php -l`, phpcs WordPress, `WP_DEBUG` sans notice, parcours COD complet jusqu'à « Livrée », Purchase envoyé une seule fois (site Local en ligne de commande et intégration Docker, 11/11 ; fiche réelle contrôlée en production, sans envoi)
+- [x] Feu vert explicite du propriétaire, puis mise en ligne : SHA vérifiés, `~/.lsphp_restart.txt`, purge LiteSpeed *(fait le 11/11 vers 17:50-18:00, 19/19 fichiers conformes ; détail dans `tasks/todo.md`)*
+- [ ] Mesure à J+7 : formulaire commencé → commande ≥ 60 %, blocages `state` proches de 0, visite → commande ≥ 2,5 %
+
+## Risques et parades
+
+| Risque | Impact | Parade |
+|---|---|---|
+| Une erreur dans le menu empêche toute commande | Élevé | Le `<select>` natif reste dans la page ; tests Node sur chaque cas ; repli sur le select si le menu échoue |
+| Le cache LiteSpeed sert un ancien HTML avec le nouveau script | Moyen | Script compatible avec les deux gabarits ; purge après la mise en ligne |
+| OPcache garde l'ancien PHP après l'envoi | Moyen | Créer `~/.lsphp_restart.txt`, vérifier la version servie |
+| Liste des délégations erronée ou inventée | Moyen | Liste officielle du Ministère de l'Intérieur uniquement, source citée ; noms courants refusés par le propriétaire (11/11) |
+| La correction arrive en pleine campagne et brouille le verdict du 15/11 | Faible | Lecture des chiffres par date, avant et après la mise en ligne |
+| Une double commande en cas de réseau lent | Élevé | Parcours d'envoi et registre inchangés ; tests d'intégration express rejoués |
+| Un zip avec des entrées de dossier casse les droits en production | Élevé | Zip sans entrées de dossier, comme pour les lots précédents |
+| Le test réel dans l'appli Facebook n'est possible qu'en production | Moyen | Émulation locale, puis une commande test sur le téléphone du propriétaire après la mise en ligne, annulée ensuite |
+
+## Questions ouvertes
+
+- ~~Forme du gouvernorat~~ : tranché le 11/11, liste simple (décision 1).
+- ~~Ville obligatoire ?~~ : tranché le 11/11, facultative (décision 5).
+
+- **Texte de la phrase rassurante** : Claude propose une version FR et derja, le propriétaire la valide ou la réécrit dans l'admin.
+- ~~**Noms courants des villes** hors liste officielle~~ : tranché le 11/11, proposition refusée par le propriétaire ; la liste officielle seule fait foi.
+- **Message d'erreur du gouvernorat** : aujourd'hui en anglais dans le code et traduit par le fichier `.po`. Il passera en FR + derja, comme les autres messages du formulaire.

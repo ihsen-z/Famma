@@ -54,7 +54,8 @@
 	var qtyInput = form.querySelector( '[name="famma_quantity"]' );
 	var totalNode = form.querySelector( '.famma-express__total' );
 	var phoneInput = form.querySelector( '[name="billing_phone"]' );
-	var phoneError = phoneInput ? document.getElementById( phoneInput.getAttribute( 'aria-describedby' ) ) : null;
+	// Premier identifiant de `aria-describedby` : l'erreur (la phrase sous le téléphone suit, 0.3.9).
+	var phoneError = phoneInput ? document.getElementById( String( phoneInput.getAttribute( 'aria-describedby' ) || '' ).split( ' ' )[ 0 ] ) : null;
 
 	/*
 	 * Choix de taille (0.3.0), seulement sur les produits qui en proposent.
@@ -335,14 +336,7 @@
 	 * @return {string}
 	 */
 	function normalizePhone( value ) {
-		var digitsOnly = String( value || '' )
-			.replace( /[٠-٩]/g, function ( c ) {
-				return String( c.charCodeAt( 0 ) - 0x0660 );
-			} )
-			.replace( /[۰-۹]/g, function ( c ) {
-				return String( c.charCodeAt( 0 ) - 0x06F0 );
-			} )
-			.replace( /\D/g, '' );
+		var digitsOnly = latinDigits( value ).replace( /\D/g, '' );
 
 		if ( 13 === digitsOnly.length && 0 === digitsOnly.indexOf( '00216' ) ) {
 			digitsOnly = digitsOnly.slice( 5 );
@@ -387,13 +381,154 @@
 		return ok;
 	}
 
+	/** Chiffres arabes-indiens et persans en chiffres latins. */
+	function latinDigits( value ) {
+		return String( value || '' )
+			.replace( /[٠-٩]/g, function ( c ) {
+				return String( c.charCodeAt( 0 ) - 0x0660 );
+			} )
+			.replace( /[۰-۹]/g, function ( c ) {
+				return String( c.charCodeAt( 0 ) - 0x06F0 );
+			} );
+	}
+
+	/** « 20123456 » → « 20 123 456 » (aussi en cours de frappe : « 20 1 »). */
+	function groupPhone( digits ) {
+		return digits.slice( 0, 2 ) + ( digits.length > 2 ? ' ' + digits.slice( 2, 5 ) : '' ) + ( digits.length > 5 ? ' ' + digits.slice( 5, 8 ) : '' );
+	}
+
+	var lastPhoneDigits = '';
+
+	/**
+	 * Groupe le numéro « XX XXX XXX » pendant la frappe (0.3.9).
+	 *
+	 * Le curseur reste après le même nombre de chiffres. Un +216 ou 00216
+	 * collé est retiré : l'indicatif est affiché à côté du champ. Effacer une
+	 * espace efface le chiffre d'avant, sinon le groupage la remettrait. Plus
+	 * de 8 chiffres sans indicatif : la saisie reste telle quelle, le contrôle
+	 * du numéro la signale.
+	 *
+	 * @param {Event} event Événement `input`.
+	 */
+	function formatPhone( event ) {
+		var raw = String( phoneInput.value || '' );
+		var digits = latinDigits( raw ).replace( /\D/g, '' );
+		var caret = 'number' === typeof phoneInput.selectionStart ? phoneInput.selectionStart : raw.length;
+		var before = latinDigits( raw.slice( 0, caret ) ).replace( /\D/g, '' ).length;
+		var formatted;
+		var position;
+
+		if ( 13 === digits.length && 0 === digits.indexOf( '00216' ) ) {
+			digits = digits.slice( 5 );
+			before = digits.length;
+		} else if ( 11 === digits.length && 0 === digits.indexOf( '216' ) ) {
+			digits = digits.slice( 3 );
+			before = digits.length;
+		} else if ( event && 'deleteContentBackward' === event.inputType && digits === lastPhoneDigits && before > 0 ) {
+			digits = digits.slice( 0, before - 1 ) + digits.slice( before );
+			before -= 1;
+		}
+
+		lastPhoneDigits = digits;
+		if ( digits.length > 8 ) {
+			return;
+		}
+
+		formatted = groupPhone( digits );
+		if ( formatted === raw ) {
+			return;
+		}
+		phoneInput.value = formatted;
+
+		position = 0;
+		while ( position < formatted.length && before > 0 ) {
+			if ( /\d/.test( formatted.charAt( position ) ) ) {
+				before--;
+			}
+			position++;
+		}
+		if ( document.activeElement === phoneInput && phoneInput.setSelectionRange ) {
+			try {
+				phoneInput.setSelectionRange( position, position );
+			} catch ( error ) {
+				// Type de champ sans sélection (ancien navigateur) : le curseur part en fin de champ.
+			}
+		}
+	}
+
 	if ( phoneInput ) {
 		phoneInput.addEventListener( 'blur', function () {
 			checkPhone( true, false );
 		} );
-		phoneInput.addEventListener( 'input', function () {
+		phoneInput.addEventListener( 'input', function ( event ) {
+			formatPhone( event );
 			checkPhone( false, false );
 		} );
+	}
+
+	/*
+	 * Touche « Suivant » du clavier (`enterkeyhint="next"`) : passe au champ
+	 * à taper suivant au lieu d'envoyer le formulaire. La liste des
+	 * gouvernorats est sautée : la mettre au point ne l'ouvre pas sur mobile et
+	 * fermerait le clavier ; la ville tapée juste après la remplit, et la
+	 * tabulation la dessert toujours dans l'ordre.
+	 */
+	function nextTypingField( field ) {
+		var fields = Array.prototype.filter.call( form.querySelectorAll( 'input[type="text"], input[type="tel"]' ), function ( item ) {
+			return ! item.disabled && ! item.readOnly && 0 !== String( item.name || '' ).indexOf( 'famma_hp' );
+		} );
+		var position = fields.indexOf( field );
+
+		return position >= 0 && position + 1 < fields.length ? fields[ position + 1 ] : null;
+	}
+
+	form.addEventListener( 'keydown', function ( event ) {
+		var field = event.target;
+		var next;
+
+		if ( ( 'Enter' !== event.key && 13 !== event.keyCode ) || event.isComposing ) {
+			return;
+		}
+		if ( ! field || ! field.getAttribute || 'next' !== field.getAttribute( 'enterkeyhint' ) ) {
+			return;
+		}
+		next = nextTypingField( field );
+		if ( next ) {
+			event.preventDefault();
+			next.focus();
+		}
+	} );
+
+	/*
+	 * Navigateur intégré de Facebook, surtout sur iPhone : le clavier recouvre
+	 * la page sans la redimensionner et le champ actif peut rester dessous. Une
+	 * fois le clavier ouvert, un champ caché remonte au tiers de la zone
+	 * visible (`visualViewport`, à défaut la fenêtre). Un champ déjà visible
+	 * ne bouge pas.
+	 */
+	function keepFieldVisible() {
+		var field = document.activeElement;
+		var view = window.visualViewport;
+		var top = view ? view.offsetTop : 0;
+		var height = view ? view.height : window.innerHeight;
+		var rect;
+
+		if ( ! field || ! field.getBoundingClientRect || ! form.contains || ! form.contains( field ) || ! height ) {
+			return;
+		}
+		rect = field.getBoundingClientRect();
+		if ( rect.top >= top + 8 && rect.bottom <= top + height - 8 ) {
+			return;
+		}
+		window.scrollBy( 0, rect.top - top - height / 3 );
+	}
+
+	form.addEventListener( 'focusin', function () {
+		// Le temps que le clavier finisse de s'ouvrir.
+		window.setTimeout( keepFieldVisible, 350 );
+	} );
+	if ( window.visualViewport && window.visualViewport.addEventListener ) {
+		window.visualViewport.addEventListener( 'resize', keepFieldVisible );
 	}
 
 	/*
@@ -436,8 +571,9 @@
 	 * Champ visible correspondant à un nom de champ WooCommerce (`data-id`).
 	 *
 	 * Le nom complet est redécoupé en prénom + nom côté serveur : une erreur
-	 * sur le nom pointe le champ unique. Le gouvernorat est saisi dans le
-	 * menu à recherche, pas dans le `<select>` masqué.
+	 * sur le nom pointe le champ unique. Depuis 0.3.9, le gouvernorat est la
+	 * liste native elle-même ; avec l'ancien gabarit encore en cache, il est
+	 * saisi dans le menu à recherche, pas dans le `<select>` masqué.
 	 *
 	 * @param {string} name Nom du champ.
 	 * @return {Element|null}
@@ -461,6 +597,58 @@
 	}
 
 	/**
+	 * Code de journal d'un champ WooCommerce. Un champ inconnu compte comme
+	 * un refus du serveur.
+	 *
+	 * @param {string} name Nom du champ (`data-id` d'une erreur WooCommerce).
+	 * @return {string}
+	 */
+	function errorCode( name ) {
+		var codes = {
+			billing_phone: 'phone',
+			billing_first_name: 'name',
+			billing_last_name: 'name',
+			billing_state: 'state',
+			famma_size: 'size'
+		};
+		return Object.prototype.hasOwnProperty.call( codes, name ) ? codes[ name ] : 'server';
+	}
+
+	/**
+	 * Signale un envoi refusé au journal des visites (`visitor-journal.js`).
+	 *
+	 * Seuls des codes partent, jamais une valeur saisie ; le serveur les filtre
+	 * encore par liste blanche. Sans journal sur la page (équipe connectée,
+	 * ancien script en cache), l'événement se perd sans effet.
+	 *
+	 * @param {Array<string>} codes phone, name, state, size, form, storage, network, server, changed.
+	 */
+	function blocked( codes ) {
+		var unique = [];
+		codes.forEach( function ( code ) {
+			if ( code && unique.indexOf( code ) < 0 ) {
+				unique.push( code );
+			}
+		} );
+		try {
+			document.dispatchEvent( new CustomEvent( 'famma:express-error', { detail: { fields: unique } } ) );
+		} catch ( error ) {
+			// La mesure ne bloque jamais une commande.
+		}
+	}
+
+	/**
+	 * Refus sans champ précis : message au-dessus du bouton, cause au journal.
+	 *
+	 * @param {string} code Cause : form, storage, network, server ou changed.
+	 * @param {string} text Message affiché.
+	 */
+	function refuse( code, text ) {
+		message( text );
+		blocked( [ code ] );
+	}
+
+	/**
 	 * Affiche les avis WooCommerce au-dessus du bouton et marque les champs.
 	 *
 	 * Les `<li>` d'erreur de WooCommerce portent `data-id="<champ>"`.
@@ -469,29 +657,33 @@
 	 * @return {void}
 	 */
 	function showError( html ) {
-		if ( ! notices ) {
-			return;
+		var codes = [];
+
+		if ( notices ) {
+			notices.innerHTML = html;
+
+			if ( ! String( notices.textContent || html ).trim() ) {
+				notices.textContent = fammaExpress.genericError;
+			}
+
+			if ( notices.querySelectorAll ) {
+				Array.prototype.forEach.call( notices.querySelectorAll( '[data-id]' ), function ( item ) {
+					var name = item.getAttribute( 'data-id' );
+					markInvalid( fieldFor( name ) );
+					codes.push( errorCode( name ) );
+				} );
+			}
+
+			reveal( notices );
 		}
 
-		notices.innerHTML = html;
-
-		if ( ! String( notices.textContent || html ).trim() ) {
-			notices.textContent = fammaExpress.genericError;
-		}
-
-		if ( notices.querySelectorAll ) {
-			Array.prototype.forEach.call( notices.querySelectorAll( '[data-id]' ), function ( item ) {
-				markInvalid( fieldFor( item.getAttribute( 'data-id' ) ) );
-			} );
-		}
-
-		reveal( notices );
+		blocked( codes.length ? codes : [ 'server' ] );
 	}
 
 	/**
 	 * Validation locale, avant tout appel réseau : nom, téléphone, gouvernorat.
 	 *
-	 * @return {Array<Array>} Couples [champ, message].
+	 * @return {Array<Array>} Triplets [champ, message, code du journal].
 	 */
 	function validate() {
 		var problems = [];
@@ -500,16 +692,16 @@
 
 		// Même règle que `Tunisia::validate_full_name()` : au moins 3 caractères.
 		if ( name && String( name.value || '' ).trim().length < 3 ) {
-			problems.push( [ name, fammaExpress.nameError ] );
+			problems.push( [ name, fammaExpress.nameError, 'name' ] );
 		}
 		if ( ! sizeChosen() ) {
-			problems.push( [ sizeGroup, sizeText() ] );
+			problems.push( [ sizeGroup, sizeText(), 'size' ] );
 		}
 		if ( phoneInput && ! checkPhone( true, true ) ) {
-			problems.push( [ phoneInput, fammaExpress.phoneError ] );
+			problems.push( [ phoneInput, fammaExpress.phoneError, 'phone' ] );
 		}
 		if ( state && ! state.value ) {
-			problems.push( [ fieldFor( 'billing_state' ), fammaExpress.stateError ] );
+			problems.push( [ fieldFor( 'billing_state' ), fammaExpress.stateError, 'state' ] );
 		}
 
 		return problems;
@@ -809,6 +1001,8 @@
 
 	form.addEventListener( 'change', function ( event ) {
 		if ( event.target && 'billing_state' === event.target.name ) {
+			// Liste native (0.3.9) : un vieux navigateur intégré n'émet pas `input` sur un <select>.
+			clearInvalid( event.target );
 			invalidateQuote();
 		}
 		if ( event.target && 'famma_size' === event.target.name ) {
@@ -817,6 +1011,210 @@
 			invalidateQuote();
 		}
 	} );
+
+	/*
+	 * La ville tapée propose le gouvernorat (0.3.9). Les noms viennent de la
+	 * liste officielle des délégations (`fammaExpressPlaces`, voir
+	 * `Governorate_Places`) et des intitulés de la liste elle-même. Le script
+	 * ne fait que proposer : il ne remplit que si le gouvernorat n'a pas été
+	 * choisi à la main, l'annonce, et le client peut toujours le changer.
+	 */
+	var stateList = form.querySelector( 'select[name="billing_state"]:not([data-famma-combo])' );
+	var addressInput = form.querySelector( 'input[name="billing_address_1"]' );
+
+	if ( stateList && addressInput ) {
+		initPlaces( stateList, addressInput );
+	}
+
+	/**
+	 * Forme de comparaison d'un texte : minuscules, sans accents, voyelles
+	 * arabes ni tatwil, alif/ta marbouta/alif maqsoura unifiés, « l' » et
+	 * « d' » ôtés, ponctuation en espaces, articles le/la/el en « el ».
+	 *
+	 * @param {string} text Texte tapé ou nom de lieu.
+	 * @return {string} Mots séparés par une espace.
+	 */
+	function foldPlace( text ) {
+		var value = String( text || '' ).toLowerCase();
+		if ( value.normalize ) {
+			value = value.normalize( 'NFD' );
+		}
+		value = value
+			.replace( /[̀-ًͯ-ٰٟـ]/g, '' )
+			.replace( /[آأإٱ]/g, 'ا' )
+			.replace( /ة/g, 'ه' )
+			.replace( /[ىئ]/g, 'ي' )
+			.replace( /ؤ/g, 'و' )
+			.replace( /ڨ/g, 'ق' )
+			.replace( /ڤ/g, 'ف' )
+			.replace( /(^|[^a-z])[ld]['’ʼ`´]/g, '$1 ' )
+			.replace( /['’ʼ`´]/g, '' )
+			.replace( /[^a-z0-9ء-ي]+/g, ' ' );
+		return value.split( ' ' ).filter( Boolean ).map( function ( word ) {
+			return 'le' === word || 'la' === word ? 'el' : word;
+		} ).join( ' ' );
+	}
+
+	/**
+	 * Index des noms de lieux : forme de comparaison → code du gouvernorat.
+	 *
+	 * Un nom porté par deux gouvernorats ne désigne aucun des deux : il est
+	 * écarté. « La Marsa » se tape aussi « Marsa » : l'article est facultatif
+	 * quand le reste compte au moins cinq lettres (« El Ksar » ne devient pas
+	 * « Ksar », trop courant).
+	 *
+	 * @param {Object} places Noms par code de gouvernorat.
+	 * @param {Element} select Liste des gouvernorats.
+	 * @return {{keys: Object, longest: number}}
+	 */
+	function placeIndex( places, select ) {
+		var keys = Object.create( null );
+		var longest = 1;
+
+		function add( key, code ) {
+			if ( ! key ) {
+				return;
+			}
+			if ( key in keys && keys[ key ] !== code ) {
+				keys[ key ] = '';
+				return;
+			}
+			keys[ key ] = code;
+			longest = Math.max( longest, key.split( ' ' ).length );
+		}
+
+		function addName( name, code ) {
+			var key = foldPlace( name );
+			add( key, code );
+			if ( 0 === key.indexOf( 'el ' ) && key.length >= 8 ) {
+				add( key.slice( 3 ), code );
+			}
+		}
+
+		Array.prototype.forEach.call( select.options, function ( option ) {
+			var names = places && Array.isArray( places[ option.value ] ) ? places[ option.value ] : [];
+			if ( ! option.value ) {
+				return;
+			}
+			addName( option.text, option.value );
+			addName( option.getAttribute( 'data-alt' ), option.value );
+			names.forEach( function ( name ) {
+				addName( name, option.value );
+			} );
+		} );
+
+		return { keys: keys, longest: longest };
+	}
+
+	/**
+	 * Gouvernorat reconnu dans le texte, ou chaîne vide.
+	 *
+	 * Le nom le plus long l'emporte (« Hammam Sousse » avant « Sousse ») ; à
+	 * longueur égale, deux gouvernorats différents (« rue de Tunis, Sfax »)
+	 * ne donnent rien plutôt qu'un choix au hasard.
+	 *
+	 * @param {string} text Texte tapé.
+	 * @param {{keys: Object, longest: number}} index Index de `placeIndex`.
+	 * @return {string} Code du gouvernorat.
+	 */
+	function placeFor( text, index ) {
+		var words = foldPlace( text ).split( ' ' ).filter( Boolean );
+		var size;
+		var start;
+		var code;
+		var hit;
+
+		for ( size = Math.min( index.longest, words.length ); size > 0; size-- ) {
+			code = '';
+			for ( start = 0; start + size <= words.length; start++ ) {
+				hit = index.keys[ words.slice( start, start + size ).join( ' ' ) ];
+				if ( ! hit ) {
+					continue;
+				}
+				if ( code && code !== hit ) {
+					return '';
+				}
+				code = hit;
+			}
+			if ( code ) {
+				return code;
+			}
+		}
+		return '';
+	}
+
+	/** Événement `change` qui remonte, y compris dans un vieux navigateur intégré. */
+	function fireChange( field ) {
+		var event;
+		try {
+			event = new Event( 'change', { bubbles: true } );
+		} catch ( error ) {
+			event = document.createEvent( 'HTMLEvents' );
+			event.initEvent( 'change', true, false );
+		}
+		field.dispatchEvent( event );
+	}
+
+	function initPlaces( select, input ) {
+		var index = placeIndex( window.fammaExpressPlaces || {}, select );
+		var hint = document.getElementById( select.getAttribute( 'aria-describedby' ) || '' );
+		var hintText = hint ? hint.textContent : '';
+		// Déjà rempli au chargement (retour arrière, remplissage du navigateur) : c'est un choix du client.
+		var byHand = '' !== select.value;
+		var filling = false;
+		var timer = 0;
+		var flashTimer = 0;
+
+		function suggest() {
+			var code;
+			window.clearTimeout( timer );
+			if ( byHand || select.disabled || busy || unresolved() ) {
+				return;
+			}
+			code = placeFor( input.value, index );
+			if ( ! code || code === select.value ) {
+				return;
+			}
+			select.value = code;
+			if ( select.value !== code ) {
+				return;
+			}
+			filling = true;
+			try {
+				fireChange( select );
+			} finally {
+				filling = false;
+			}
+			if ( hint && fammaExpress.stateFound ) {
+				hint.textContent = fammaExpress.stateFound.replace( '%s', select.options[ select.selectedIndex ].text );
+			}
+			if ( select.classList ) {
+				window.clearTimeout( flashTimer );
+				select.classList.add( 'famma-express__flash' );
+				flashTimer = window.setTimeout( function () {
+					select.classList.remove( 'famma-express__flash' );
+				}, 1600 );
+			}
+		}
+
+		select.addEventListener( 'change', function () {
+			if ( filling ) {
+				return;
+			}
+			// Remis sur « Gouvernorat » : la proposition reprend.
+			byHand = '' !== select.value;
+			if ( hint ) {
+				hint.textContent = hintText;
+			}
+		} );
+
+		input.addEventListener( 'input', function () {
+			window.clearTimeout( timer );
+			timer = window.setTimeout( suggest, 600 );
+		} );
+		// Fin de saisie, collage, remplissage du navigateur : sans attendre.
+		input.addEventListener( 'change', suggest );
+	}
 
 	/** InitiateCheckout déjà envoyé par ce navigateur pour ce produit (persisté, survit au rechargement). */
 	function checkoutEmitted() {
@@ -1038,7 +1436,7 @@
 
 		return prepare().then( function ( result ) {
 			if ( id !== record.preparation_id ) {
-				message( fammaExpress.changed );
+				refuse( 'changed', fammaExpress.changed );
 				return null;
 			}
 			if ( result && 'success' === result.result && result.summary && result.cart_hash && result.preparation_id === id ) {
@@ -1061,9 +1459,9 @@
 			if ( result && result.messages ) {
 				showError( result.messages );
 			} else if ( result ) {
-				message( fammaExpress.genericError );
+				refuse( 'server', fammaExpress.genericError );
 			} else {
-				message( fammaExpress.networkError || fammaExpress.genericError );
+				refuse( 'network', fammaExpress.networkError || fammaExpress.genericError );
 			}
 			return null;
 		} );
@@ -1083,7 +1481,7 @@
 		if ( ! saveRecord() ) {
 			record.phase = 'quoted';
 			delete record.fields;
-			message( fammaExpress.storageError );
+			refuse( 'storage', fammaExpress.storageError );
 			return Promise.resolve( null );
 		}
 		return sendFinal();
@@ -1170,7 +1568,7 @@
 			if ( html ) {
 				showError( html );
 			} else {
-				message( fammaExpress.genericError );
+				refuse( 'server', fammaExpress.genericError );
 			}
 			return;
 		}
@@ -1200,7 +1598,7 @@
 			if ( result && ( 'cart_changed' === result.famma_code || 'preparation_missing' === result.famma_code ) ) {
 				// The backend guarantees these guards ran before intent reservation.
 				backToDraft();
-				message( fammaExpress.changed );
+				refuse( 'changed', fammaExpress.changed );
 				return;
 			}
 			if ( result && ( 'success' === result.result || 'processing' === result.result || 'failed' === result.famma_state ) ) {
@@ -1221,7 +1619,7 @@
 					if ( result.messages ) {
 						showError( result.messages );
 					} else {
-						message( fammaExpress.genericError );
+						refuse( 'server', fammaExpress.genericError );
 					}
 					return;
 				}
@@ -1512,7 +1910,7 @@
 			lockFields();
 			message( fammaExpress.recovery );
 		} else {
-			message( fammaExpress.networkError || fammaExpress.genericError );
+			refuse( 'network', fammaExpress.networkError || fammaExpress.genericError );
 		}
 	}
 
@@ -1543,7 +1941,11 @@
 	renderQuantity();
 
 	/**
-	 * Gouvernorat : menu déroulant à recherche.
+	 * Gouvernorat : menu déroulant à recherche (gabarit d'avant 0.3.9).
+	 *
+	 * Le gabarit 0.3.9 affiche la liste native sans `data-famma-combo` : ce
+	 * menu ne s'applique plus qu'à l'ancien HTML que le cache LiteSpeed peut
+	 * encore servir avec ce script. À retirer une fois ce cache expiré.
 	 *
 	 * Le `<select>` natif reste dans le formulaire et porte la valeur envoyée ;
 	 * sans script, c'est lui qui s'affiche. Le champ de saisie le remplace : on
@@ -1802,14 +2204,19 @@
 			var problems = validate();
 			if ( problems.length ) {
 				showProblems( problems );
+				blocked( problems.map( function ( problem ) {
+					return problem[ 2 ];
+				} ) );
 				return;
 			}
 			if ( 'function' === typeof form.reportValidity && ! form.reportValidity() ) {
+				// Contrôle natif du navigateur (champ `required`) : il affiche sa bulle.
+				blocked( [ 'form' ] );
 				return;
 			}
 		}
 		if ( ! record || ! saveRecord() ) {
-			message( fammaExpress.storageError );
+			refuse( 'storage', fammaExpress.storageError );
 			return;
 		}
 		if ( qtyInput && ! unresolved() ) {

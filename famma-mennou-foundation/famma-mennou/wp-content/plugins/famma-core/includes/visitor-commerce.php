@@ -13,7 +13,9 @@
  *
  * La commande reçoit `_famma_visitor_id` et `_famma_visitor_session` : depuis
  * la fiche commande, on retrouve le parcours qui l'a précédée (choix du
- * propriétaire : parcours rattaché à la commande).
+ * propriétaire : parcours rattaché à la commande). Les identifiants viennent
+ * des cookies du journal ; à défaut, des champs cachés du formulaire express
+ * (0.3.9, voir `ids()`).
  *
  * @package famma-core
  */
@@ -36,6 +38,16 @@ final class Visitor_Commerce {
 	 * Méta commande : identifiant de session.
 	 */
 	public const META_SESSION = '_famma_visitor_session';
+
+	/**
+	 * Champ caché du formulaire express : identifiant visiteur, rempli par le journal.
+	 */
+	public const FIELD_VISITOR = 'famma_vj_visitor';
+
+	/**
+	 * Champ caché du formulaire express : identifiant de session, rempli par le journal.
+	 */
+	public const FIELD_SESSION = 'famma_vj_session';
 
 	/**
 	 * Instance partagée.
@@ -70,7 +82,12 @@ final class Visitor_Commerce {
 
 	/**
 	 * Identifiants visiteur et session de la requête, ou null s'il ne faut rien
-	 * enregistrer (pas de cookie, robot, équipe).
+	 * enregistrer (aucun identifiant, robot, équipe).
+	 *
+	 * Le cookie reste prioritaire. Un cookie absent est remplacé par le champ
+	 * caché du formulaire express : 8 des 40 commandes passées entre le 17/10
+	 * et le 10/11 n'avaient pas de session, le navigateur intégré de Facebook
+	 * ne renvoyant pas toujours les cookies du journal.
 	 *
 	 * @return array{0: string, 1: string}|null
 	 */
@@ -80,7 +97,33 @@ final class Visitor_Commerce {
 		}
 		$visitor = Visitor_Context::cookie_id( Visitor_Context::VISITOR_COOKIE );
 		$session = Visitor_Context::cookie_id( Visitor_Context::SESSION_COOKIE );
+		if ( '' === $visitor ) {
+			$visitor = self::posted_id( self::FIELD_VISITOR );
+		}
+		if ( '' === $session ) {
+			$session = self::posted_id( self::FIELD_SESSION );
+		}
 		return ( '' === $visitor || '' === $session ) ? null : array( $visitor, $session );
+	}
+
+	/**
+	 * Identifiant envoyé par le formulaire express, ou chaîne vide.
+	 *
+	 * Lu seulement pendant un checkout dont WooCommerce a déjà vérifié le jeton
+	 * (`woocommerce_checkout_process` passé), et gardé seulement s'il a la
+	 * forme d'un UUID v4 généré par le journal.
+	 *
+	 * @param string $field Nom du champ caché.
+	 * @return string
+	 */
+	private static function posted_id( string $field ): string {
+		if ( ! did_action( 'woocommerce_checkout_process' ) ) {
+			return '';
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- jeton du checkout vérifié par WC_Checkout::process_checkout() avant woocommerce_checkout_process.
+		$raw = isset( $_POST[ $field ] ) && is_scalar( $_POST[ $field ] ) ? sanitize_text_field( wp_unslash( (string) $_POST[ $field ] ) ) : '';
+		$raw = strtolower( $raw );
+		return Visitor_Context::is_uuid( $raw ) ? $raw : '';
 	}
 
 	/**

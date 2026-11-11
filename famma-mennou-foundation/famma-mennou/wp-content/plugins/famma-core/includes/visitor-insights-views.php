@@ -21,7 +21,7 @@ final class Visitor_Insights_Views {
 	 * @param int $whole Total.
 	 * @return string
 	 */
-	private static function pct( int $part, int $whole ): string {
+	public static function pct( int $part, int $whole ): string {
 		return $whole > 0 ? number_format_i18n( 100 * $part / $whole, 1 ) . ' %' : '—';
 	}
 
@@ -31,7 +31,7 @@ final class Visitor_Insights_Views {
 	 * @param array<int, string> $heads Libellés ; ceux suffixés « # » sont numériques.
 	 * @return void
 	 */
-	private static function head( array $heads ): void {
+	public static function head( array $heads ): void {
 		echo '<table class="widefat striped"><thead><tr>';
 		foreach ( $heads as $head ) {
 			$num = str_ends_with( $head, '#' );
@@ -46,7 +46,7 @@ final class Visitor_Insights_Views {
 	 * @param string $value Valeur déjà formatée.
 	 * @return string
 	 */
-	private static function num( string $value ): string {
+	public static function num( string $value ): string {
 		return '<td class="num">' . esc_html( $value ) . '</td>';
 	}
 

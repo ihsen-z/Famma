@@ -175,3 +175,22 @@ msgstr "المقاس هذا موش موجود، اختار مقاس من الق�
 
 msgid "Choisir la taille / اختار المقاس"
 msgstr "اختار المقاس"
+
+msgid "Adresse de livraison / عنوان التوصيل"
+msgstr "عنوان التوصيل"
+
+msgid "Gouvernorat"
+msgstr "الولاية"
+
+msgid "Ville, cité, rue…"
+msgstr "المدينة، الحومة، النهج…"
+
+msgid "Choisissez le gouvernorat. La ville ou la cité est facultative, elle aide le livreur."
+msgstr "إختار الولاية. المدينة ولا الحومة موش لازم، أما تعاون الليفرور."
+
+msgid "Choisissez votre gouvernorat. / إختار الولاية متاعك."
+msgstr "إختار الولاية متاعك."
+
+#. translators: %s: governorate name, e.g. "Nabeul".
+msgid "Gouvernorat ajouté : %s. Vous pouvez le changer."
+msgstr "زدنا الولاية: %s. تنجم تبدّلها."
