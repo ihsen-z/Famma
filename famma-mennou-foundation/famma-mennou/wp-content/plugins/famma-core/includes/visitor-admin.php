@@ -136,6 +136,7 @@ final class Visitor_Admin {
 			'form_start'        => __( 'Formulaire commencé', 'famma-core' ),
 			'form_field'        => __( 'Champ touché', 'famma-core' ),
 			'form_submit'       => __( 'Formulaire envoyé', 'famma-core' ),
+			'form_error'        => __( 'Envoi refusé', 'famma-core' ),
 			'order_placed'      => __( 'Commande passée', 'famma-core' ),
 			'click_whatsapp'    => __( 'Clic WhatsApp', 'famma-core' ),
 			'click_phone'       => __( 'Clic téléphone', 'famma-core' ),

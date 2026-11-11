@@ -42,6 +42,7 @@ final class Visitor_Collector {
 		'form_start',
 		'form_field',
 		'form_submit',
+		'form_error',
 		'click_whatsapp',
 		'click_phone',
 		'click_outbound',
@@ -55,6 +56,13 @@ final class Visitor_Collector {
 	 * Types de page reconnus.
 	 */
 	private const PAGE_TYPES = array( 'home', 'shop', 'product', 'cart', 'checkout', 'thankyou', 'search', 'page', 'other' );
+
+	/**
+	 * Codes qu'un `form_error` peut porter : un champ du formulaire, ou la
+	 * cause d'un refus sans champ (contrôle du navigateur, stockage, réseau,
+	 * serveur, panier changé).
+	 */
+	private const FORM_ERROR_CODES = array( 'phone', 'name', 'state', 'size', 'form', 'storage', 'network', 'server', 'changed' );
 
 	/**
 	 * Événements par lot, au plus.
@@ -232,20 +240,47 @@ final class Visitor_Collector {
 			if ( ! is_array( $event ) || ! in_array( $event['n'] ?? '', self::EVENTS, true ) ) {
 				continue;
 			}
+			$name  = (string) $event['n'];
+			$label = Visitor_Context::text( $event['l'] ?? '', 100 );
+			if ( 'form_error' === $name ) {
+				// Codes de la liste blanche seulement : jamais une valeur saisie.
+				$label = self::form_error_codes( $event['l'] ?? '' );
+				if ( '' === $label ) {
+					continue;
+				}
+			}
 			$type = (string) ( $event['pt'] ?? '' );
 			// Âge de l'événement côté navigateur, borné : un lot retardé garde son heure.
 			$age    = min( 1800, max( 0, (int) ( ( $event['a'] ?? 0 ) / 1000 ) ) );
 			$rows[] = $common + array(
 				'created_at' => gmdate( 'Y-m-d H:i:s', $now - $age ),
-				'event'      => (string) $event['n'],
+				'event'      => $name,
 				'page_type'  => in_array( $type, self::PAGE_TYPES, true ) ? $type : 'other',
 				'path'       => Visitor_Context::path( $event['p'] ?? '' ),
 				'product_id' => absint( $event['pid'] ?? 0 ),
-				'label'      => Visitor_Context::text( $event['l'] ?? '', 100 ),
+				'label'      => $label,
 				'num'        => min( 86400, absint( $event['x'] ?? 0 ) ),
 			);
 		}
 		Visitor_Store::instance()->insert_many( $rows );
 		return $done;
+	}
+
+	/**
+	 * Ne garde d'un libellé `form_error` que les codes connus, sans doublon,
+	 * dans l'ordre de la liste blanche.
+	 *
+	 * Le libellé vient du navigateur : rien d'autre qu'un code de la liste
+	 * n'entre dans la base, donc jamais une valeur tapée par la cliente.
+	 *
+	 * @param mixed $label Libellé reçu : codes séparés par des virgules.
+	 * @return string Codes retenus, séparés par des virgules ; vide si aucun.
+	 */
+	public static function form_error_codes( mixed $label ): string {
+		if ( ! is_string( $label ) || '' === $label ) {
+			return '';
+		}
+		$sent = array_map( 'trim', explode( ',', strtolower( substr( $label, 0, 100 ) ) ) );
+		return implode( ',', array_intersect( self::FORM_ERROR_CODES, $sent ) );
 	}
 }

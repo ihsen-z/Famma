@@ -461,6 +461,58 @@
 	}
 
 	/**
+	 * Code de journal d'un champ WooCommerce. Un champ inconnu compte comme
+	 * un refus du serveur.
+	 *
+	 * @param {string} name Nom du champ (`data-id` d'une erreur WooCommerce).
+	 * @return {string}
+	 */
+	function errorCode( name ) {
+		var codes = {
+			billing_phone: 'phone',
+			billing_first_name: 'name',
+			billing_last_name: 'name',
+			billing_state: 'state',
+			famma_size: 'size'
+		};
+		return Object.prototype.hasOwnProperty.call( codes, name ) ? codes[ name ] : 'server';
+	}
+
+	/**
+	 * Signale un envoi refusé au journal des visites (`visitor-journal.js`).
+	 *
+	 * Seuls des codes partent, jamais une valeur saisie ; le serveur les filtre
+	 * encore par liste blanche. Sans journal sur la page (équipe connectée,
+	 * ancien script en cache), l'événement se perd sans effet.
+	 *
+	 * @param {Array<string>} codes phone, name, state, size, form, storage, network, server, changed.
+	 */
+	function blocked( codes ) {
+		var unique = [];
+		codes.forEach( function ( code ) {
+			if ( code && unique.indexOf( code ) < 0 ) {
+				unique.push( code );
+			}
+		} );
+		try {
+			document.dispatchEvent( new CustomEvent( 'famma:express-error', { detail: { fields: unique } } ) );
+		} catch ( error ) {
+			// La mesure ne bloque jamais une commande.
+		}
+	}
+
+	/**
+	 * Refus sans champ précis : message au-dessus du bouton, cause au journal.
+	 *
+	 * @param {string} code Cause : form, storage, network, server ou changed.
+	 * @param {string} text Message affiché.
+	 */
+	function refuse( code, text ) {
+		message( text );
+		blocked( [ code ] );
+	}
+
+	/**
 	 * Affiche les avis WooCommerce au-dessus du bouton et marque les champs.
 	 *
 	 * Les `<li>` d'erreur de WooCommerce portent `data-id="<champ>"`.
@@ -469,29 +521,33 @@
 	 * @return {void}
 	 */
 	function showError( html ) {
-		if ( ! notices ) {
-			return;
+		var codes = [];
+
+		if ( notices ) {
+			notices.innerHTML = html;
+
+			if ( ! String( notices.textContent || html ).trim() ) {
+				notices.textContent = fammaExpress.genericError;
+			}
+
+			if ( notices.querySelectorAll ) {
+				Array.prototype.forEach.call( notices.querySelectorAll( '[data-id]' ), function ( item ) {
+					var name = item.getAttribute( 'data-id' );
+					markInvalid( fieldFor( name ) );
+					codes.push( errorCode( name ) );
+				} );
+			}
+
+			reveal( notices );
 		}
 
-		notices.innerHTML = html;
-
-		if ( ! String( notices.textContent || html ).trim() ) {
-			notices.textContent = fammaExpress.genericError;
-		}
-
-		if ( notices.querySelectorAll ) {
-			Array.prototype.forEach.call( notices.querySelectorAll( '[data-id]' ), function ( item ) {
-				markInvalid( fieldFor( item.getAttribute( 'data-id' ) ) );
-			} );
-		}
-
-		reveal( notices );
+		blocked( codes.length ? codes : [ 'server' ] );
 	}
 
 	/**
 	 * Validation locale, avant tout appel réseau : nom, téléphone, gouvernorat.
 	 *
-	 * @return {Array<Array>} Couples [champ, message].
+	 * @return {Array<Array>} Triplets [champ, message, code du journal].
 	 */
 	function validate() {
 		var problems = [];
@@ -500,16 +556,16 @@
 
 		// Même règle que `Tunisia::validate_full_name()` : au moins 3 caractères.
 		if ( name && String( name.value || '' ).trim().length < 3 ) {
-			problems.push( [ name, fammaExpress.nameError ] );
+			problems.push( [ name, fammaExpress.nameError, 'name' ] );
 		}
 		if ( ! sizeChosen() ) {
-			problems.push( [ sizeGroup, sizeText() ] );
+			problems.push( [ sizeGroup, sizeText(), 'size' ] );
 		}
 		if ( phoneInput && ! checkPhone( true, true ) ) {
-			problems.push( [ phoneInput, fammaExpress.phoneError ] );
+			problems.push( [ phoneInput, fammaExpress.phoneError, 'phone' ] );
 		}
 		if ( state && ! state.value ) {
-			problems.push( [ fieldFor( 'billing_state' ), fammaExpress.stateError ] );
+			problems.push( [ fieldFor( 'billing_state' ), fammaExpress.stateError, 'state' ] );
 		}
 
 		return problems;
@@ -1038,7 +1094,7 @@
 
 		return prepare().then( function ( result ) {
 			if ( id !== record.preparation_id ) {
-				message( fammaExpress.changed );
+				refuse( 'changed', fammaExpress.changed );
 				return null;
 			}
 			if ( result && 'success' === result.result && result.summary && result.cart_hash && result.preparation_id === id ) {
@@ -1061,9 +1117,9 @@
 			if ( result && result.messages ) {
 				showError( result.messages );
 			} else if ( result ) {
-				message( fammaExpress.genericError );
+				refuse( 'server', fammaExpress.genericError );
 			} else {
-				message( fammaExpress.networkError || fammaExpress.genericError );
+				refuse( 'network', fammaExpress.networkError || fammaExpress.genericError );
 			}
 			return null;
 		} );
@@ -1083,7 +1139,7 @@
 		if ( ! saveRecord() ) {
 			record.phase = 'quoted';
 			delete record.fields;
-			message( fammaExpress.storageError );
+			refuse( 'storage', fammaExpress.storageError );
 			return Promise.resolve( null );
 		}
 		return sendFinal();
@@ -1170,7 +1226,7 @@
 			if ( html ) {
 				showError( html );
 			} else {
-				message( fammaExpress.genericError );
+				refuse( 'server', fammaExpress.genericError );
 			}
 			return;
 		}
@@ -1200,7 +1256,7 @@
 			if ( result && ( 'cart_changed' === result.famma_code || 'preparation_missing' === result.famma_code ) ) {
 				// The backend guarantees these guards ran before intent reservation.
 				backToDraft();
-				message( fammaExpress.changed );
+				refuse( 'changed', fammaExpress.changed );
 				return;
 			}
 			if ( result && ( 'success' === result.result || 'processing' === result.result || 'failed' === result.famma_state ) ) {
@@ -1221,7 +1277,7 @@
 					if ( result.messages ) {
 						showError( result.messages );
 					} else {
-						message( fammaExpress.genericError );
+						refuse( 'server', fammaExpress.genericError );
 					}
 					return;
 				}
@@ -1512,7 +1568,7 @@
 			lockFields();
 			message( fammaExpress.recovery );
 		} else {
-			message( fammaExpress.networkError || fammaExpress.genericError );
+			refuse( 'network', fammaExpress.networkError || fammaExpress.genericError );
 		}
 	}
 
@@ -1802,14 +1858,19 @@
 			var problems = validate();
 			if ( problems.length ) {
 				showProblems( problems );
+				blocked( problems.map( function ( problem ) {
+					return problem[ 2 ];
+				} ) );
 				return;
 			}
 			if ( 'function' === typeof form.reportValidity && ! form.reportValidity() ) {
+				// Contrôle natif du navigateur (champ `required`) : il affiche sa bulle.
+				blocked( [ 'form' ] );
 				return;
 			}
 		}
 		if ( ! record || ! saveRecord() ) {
-			message( fammaExpress.storageError );
+			refuse( 'storage', fammaExpress.storageError );
 			return;
 		}
 		if ( qtyInput && ! unresolved() ) {

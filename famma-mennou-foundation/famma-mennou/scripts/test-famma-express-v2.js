@@ -116,7 +116,7 @@ function setup(responses = [], options = {}) {
   };
   form.reportValidity = () => true;
 
-  const calls = [], events = [], created = [];
+  const calls = [], events = [], created = [], blocks = [];
   const body = element('body');
   const documentElement = element('html');
   const document = {
@@ -124,6 +124,9 @@ function setup(responses = [], options = {}) {
     querySelector(s) { return s === '.famma-express__form' ? form : s === 'form.cart input.qty' ? cartQty : null; },
     getElementById(k) { return k === 'famma-express-billing-phone-error' ? phoneError : null; },
     createElement(tag) { const e = element(tag); created.push(e); return e; },
+    // Envois refusés signalés au journal des visites (lot 23, `famma:express-error`).
+    // Array.from : tableau de l'hôte, comparable par deepStrictEqual (le bac à sable a son propre Array).
+    dispatchEvent(e) { if (e.type === 'famma:express-error') blocks.push(Array.from(e.detail.fields)); return true; },
   };
   const window = {
     location: { href: '' },
@@ -163,6 +166,8 @@ function setup(responses = [], options = {}) {
   const sandbox = {
     document, window, fammaExpress, FormData: MockFormData, Uint8Array, Date, JSON, Math,
     Event: class { constructor(type, init) { this.type = type; Object.assign(this, init); } },
+    // Ancien navigateur intégré sans CustomEvent : option noCustomEvent.
+    ...(options.noCustomEvent ? {} : { CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init && init.detail; } } }),
     fetch(url, init) {
       const call = { url, values: init.body.values, init };
       calls.push(call);
@@ -183,7 +188,7 @@ function setup(responses = [], options = {}) {
       text: find('famma-express-modal__confirm-text'), content: find('famma-express-modal__content') };
   };
   return { sizeGroup, sizeError, sizeRadios, cartButton, terms, recap, qty, phone, phoneError, name, state, total, button, submitText, notices, info, minus, plus, cartQty, form,
-    window, calls, events, storage, submit, modal, documentElement,
+    window, calls, events, blocks, storage, submit, modal, documentElement,
     urls: () => calls.map(c => c.url),
     record: () => JSON.parse(storage.get('famma_express_intent_123')) };
 }
@@ -768,6 +773,101 @@ async function test(name, run) {
     const s = setup([token, internal, accepted], { fbqLoaded: true });
     s.submit(); await flush();
     assert.equal(s.events.length, 0);
+    assert.equal(s.window.location.href, accepted.redirect);
+  });
+
+  // ── Lot 23 : chaque envoi refusé est signalé au journal (`form_error`) ──
+  const CODES = ['phone', 'name', 'state', 'size', 'form', 'storage', 'network', 'server', 'changed'];
+  const onlyCodes = s => s.blocks.every(list => list.length && list.every(c => CODES.includes(c)));
+
+  await test('Journal : gouvernorat absent → form_error [state], aucun appel', async () => {
+    const s = setup([], { state: '' });
+    s.submit(); await flush();
+    assert.equal(s.calls.length, 0);
+    assert.deepEqual(s.blocks, [['state']]);
+  });
+
+  await test('Journal : téléphone invalide → [phone] ; plusieurs champs → un seul événement, dans l’ordre du contrôle', async () => {
+    const a = setup([], { phone: '123' });
+    a.submit(); await flush();
+    assert.deepEqual(a.blocks, [['phone']]);
+    const b = setup([], { name: '', state: '' });
+    b.submit(); await flush();
+    assert.deepEqual(b.blocks, [['name', 'state']]);
+  });
+
+  await test('Journal : aucune valeur tapée ne part, seulement des codes', async () => {
+    const s = setup([], { phone: '20 12', name: 'Am', state: '' });
+    s.submit(); await flush();
+    assert.ok(onlyCodes(s));
+    const sent = JSON.stringify(s.blocks);
+    assert.ok(!sent.includes('20 12') && !sent.includes('Am'));
+  });
+
+  await test('Journal : contrôle natif du navigateur refusé → [form]', async () => {
+    const s = setup([]);
+    s.form.reportValidity = () => false;
+    s.submit(); await flush();
+    assert.equal(s.calls.length, 0);
+    assert.deepEqual(s.blocks, [['form']]);
+  });
+
+  await test('Journal : stockage bloqué → [storage]', async () => {
+    const s = setup([], { storageBlocked: true });
+    s.submit(); await flush();
+    assert.deepEqual(s.blocks, [['storage']]);
+  });
+
+  await test('Journal : réseau coupé au devis → [network] ; réponse illisible → [network] ; refus sans champ → [server]', async () => {
+    const a = setup([token, new Error('réseau coupé')]);
+    a.submit(); await flush(); await flush();
+    assert.deepEqual(a.blocks, [['network']]);
+    const b = setup([token, 'Fatal error: <b>synthétique</b>']);
+    b.submit(); await flush();
+    assert.deepEqual(b.blocks, [['network']]);
+    const c = setup([token, { result: 'failure', messages: '' }]);
+    c.submit(); await flush();
+    assert.deepEqual(c.blocks, [['server']]);
+  });
+
+  await test('Journal : refus WooCommerce data-id="billing_phone" → un seul [phone], même après la lecture du statut', async () => {
+    const s = setup([token, quote(), wooPhoneError, failedState]);
+    s.submit(); await flush();
+    assert.deepEqual(s.blocks, [['phone']]);
+  });
+
+  await test('Journal : refus WooCommerce au devis, champ inconnu → [server] ; gouvernorat → [state]', async () => {
+    const a = setup([token, { result: 'failure', messages: '<ul><li data-id="billing_postcode">Code postal</li></ul>' }]);
+    a.submit(); await flush();
+    assert.deepEqual(a.blocks, [['server']]);
+    const b = setup([token, { result: 'failure', messages: '<ul><li data-id="billing_state">Gouvernorat invalide</li></ul>' }]);
+    b.submit(); await flush();
+    assert.deepEqual(b.blocks, [['state']]);
+  });
+
+  await test('Journal : panier changé entre devis et commande → [changed]', async () => {
+    const s = setup([token, quote(), { result: 'failure', famma_code: 'cart_changed' }]);
+    s.submit(); await flush();
+    assert.deepEqual(s.blocks, [['changed']]);
+  });
+
+  await test('Journal : commande acceptée ou réponse perdue (résultat inconnu) → aucun form_error', async () => {
+    const a = setup([token, quote(), accepted]);
+    a.submit(); await flush();
+    assert.deepEqual(a.blocks, []);
+    const b = setup([token, quote(), new Error('réponse perdue')]);
+    b.submit(); await flush();
+    assert.equal(b.record().phase, 'unknown');
+    assert.deepEqual(b.blocks, [], 'une commande a peut-être été créée : ce n’est pas un refus');
+  });
+
+  await test('Journal : navigateur sans CustomEvent → le refus s’affiche, la commande suivante passe', async () => {
+    const s = setup([token, quote(), accepted], { noCustomEvent: true, state: '' });
+    s.submit(); await flush();
+    assert.equal(s.notices.textContent, 'Gouvernorat');
+    assert.deepEqual(s.blocks, []);
+    s.state.value = 'Tunis';
+    s.submit(); await flush();
     assert.equal(s.window.location.href, accepted.redirect);
   });
 

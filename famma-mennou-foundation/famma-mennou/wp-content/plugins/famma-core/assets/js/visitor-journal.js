@@ -304,6 +304,20 @@
 		}
 	}, true );
 
+	// Envoi refusé par le formulaire express (`famma:express-error`, émis par
+	// express-order.js) : les codes des champs en cause, jamais leur valeur.
+	// Envoyé tout de suite : la cliente quitte souvent la page juste après.
+	document.addEventListener( 'famma:express-error', function ( event ) {
+		var fields = event && event.detail && Array.isArray( event.detail.fields ) ? event.detail.fields : [];
+		var codes = fields.filter( function ( code ) {
+			return 'string' === typeof code && /^[a-z]{1,12}$/.test( code );
+		} );
+		if ( codes.length ) {
+			track( 'form_error', { label: codes.join( ',' ) } );
+			flush();
+		}
+	} );
+
 	// ── Saisies : valeurs tapées, envoyées à part (famma/v1/inputs) ──
 	// Actif seulement si le réglage « Capture des saisies » l'est (ctx.inputs).
 	// Une seule ligne par session côté serveur : chaque envoi porte l'état
