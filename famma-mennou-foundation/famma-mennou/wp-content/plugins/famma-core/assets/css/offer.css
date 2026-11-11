@@ -1,131 +1,237 @@
 /**
  * Offre après achat — bloc de la page de remerciement.
  *
- * Jetons du thème avec valeur de repli (le plugin ne suppose aucun thème) et
- * propriétés logiques partout : le bloc mêle français et derja (RTL).
- * Bouton principal d'au moins 48 px de haut, pleine largeur sur mobile.
+ * Placé tout en haut du contenu, sous le titre « Commande reçue ». Mesuré le
+ * 12/11/2026 sur une copie de la prod : bouton visible sans défiler à
+ * 360 × 740, 390 × 844, 768 × 1024 et 1366 × 768.
+ *
+ * Toutes les règles sont préfixées par `.famma-offer` : le thème pose des
+ * marges sur `.single-content p` et des styles sur `button`, qui écartaient
+ * les lignes du bloc. Jetons du thème avec valeur de repli (le plugin ne
+ * suppose aucun thème) et propriétés logiques (FR + derja, RTL).
  */
 
 .famma-offer {
-	margin-block: var(--sp-6, 24px);
-	padding: var(--sp-4, 16px);
+	box-sizing: border-box;
+	max-inline-size: 760px;
+	margin-block: var(--sp-4, 16px) var(--sp-5, 20px);
+	padding: var(--sp-3, 12px) var(--sp-4, 16px);
 	border: 2px solid var(--famma-orange, #FF7A00);
 	border-radius: var(--famma-radius, 12px);
 	background: var(--famma-white, #FFF);
+	box-shadow: 0 6px 20px rgba(255, 122, 0, 0.14);
 }
 
-.famma-offer__kicker {
-	margin-block: 0 var(--sp-2, 8px);
-	font-size: var(--fs-caption, 0.8125rem);
-	font-weight: var(--fw-semibold, 600);
-	color: var(--famma-orange, #FF7A00);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-}
-
-.famma-offer__title {
-	margin-block: 0 var(--sp-3, 12px);
-	font-size: 1.25rem;
-	line-height: 1.3;
-}
-
-.famma-offer__body {
-	display: flex;
-	gap: var(--sp-3, 12px);
-	align-items: center;
-}
-
-.famma-offer__media {
-	flex: 0 0 96px;
-}
-
-.famma-offer__media img {
-	display: block;
-	inline-size: 96px;
-	block-size: 96px;
-	object-fit: cover;
-	border-radius: var(--famma-radius-sm, 8px);
-}
-
-.famma-offer__info {
-	flex: 1 1 auto;
-	min-inline-size: 0;
-}
-
-.famma-offer__name {
-	margin-block: 0 var(--sp-2, 8px);
-	font-weight: var(--fw-semibold, 600);
-}
-
-.famma-offer__price {
-	margin-block: 0 var(--sp-2, 8px);
-	display: flex;
-	gap: var(--sp-2, 8px);
-	align-items: baseline;
-}
-
-.famma-offer__price del {
-	color: var(--famma-text-2, #6B7280);
-}
-
-.famma-offer__price strong {
-	font-size: 1.25rem;
-	color: var(--famma-blue, #1D4ED8);
-}
-
-.famma-offer__text {
+.famma-offer .famma-offer__inner {
 	margin: 0;
-	font-size: var(--fs-caption, 0.8125rem);
-	color: var(--famma-text-2, #6B7280);
 }
 
-.famma-offer__form {
+.famma-offer .famma-offer__head {
 	display: flex;
-	flex-direction: column;
-	gap: var(--sp-2, 8px);
-	margin-block-start: var(--sp-4, 16px);
-}
-
-.famma-offer__accept.button,
-.famma-offer__accept {
-	display: flex;
-	flex-direction: column;
 	align-items: center;
-	justify-content: center;
-	inline-size: 100%;
-	min-block-size: 56px;
-	padding-block: var(--sp-2, 8px);
-	padding-inline: var(--sp-4, 16px);
-	border: 0;
-	border-radius: var(--famma-radius-sm, 8px);
-	background: var(--famma-orange, #FF7A00);
-	color: var(--famma-white, #FFF);
-	font-size: 1.0625rem;
-	font-weight: var(--fw-semibold, 600);
-	cursor: pointer;
+	justify-content: space-between;
+	gap: var(--sp-2, 8px);
+	margin: 0 0 var(--sp-2, 8px);
 }
 
-.famma-offer__accept span {
-	font-size: 0.9375rem;
-	font-weight: 400;
+.famma-offer .famma-offer__kicker {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+	margin: 0;
+	font-size: 0.75rem;
+	font-weight: 700;
+	line-height: 1.3;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--famma-orange, #FF7A00);
 }
 
-.famma-offer__decline {
-	align-self: center;
+.famma-offer .famma-offer__kicker [lang="ar"] {
+	font-size: 0.8125rem;
+	letter-spacing: 0;
+	text-transform: none;
+}
+
+/* « Non merci » : discret, mais une vraie cible tactile de 48 px. */
+.famma-offer .famma-offer__decline {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
 	min-block-size: 48px;
-	padding-inline: var(--sp-4, 16px);
+	margin-block: -14px;
+	margin-inline-end: -8px;
+	padding: 0 8px;
 	border: 0;
 	background: none;
+	box-shadow: none;
 	color: var(--famma-text-2, #6B7280);
+	font-size: 0.8125rem;
+	font-weight: 400;
 	text-decoration: underline;
 	cursor: pointer;
 }
 
+.famma-offer .famma-offer__body {
+	display: grid;
+	grid-template-columns: 84px minmax(0, 1fr);
+	gap: var(--sp-3, 12px);
+	align-items: center;
+}
+
+.famma-offer .famma-offer__media {
+	position: relative;
+	margin: 0;
+}
+
+.famma-offer .famma-offer__media img {
+	display: block;
+	inline-size: 84px;
+	block-size: 84px;
+	max-inline-size: none;
+	object-fit: cover;
+	border-radius: var(--famma-radius-sm, 8px);
+}
+
+.famma-offer .famma-offer__badge {
+	position: absolute;
+	inset-block-start: -6px;
+	inset-inline-start: -6px;
+	padding: 2px 7px;
+	border-radius: 999px;
+	background: var(--famma-orange, #FF7A00);
+	color: #FFF;
+	font-size: 0.75rem;
+	font-weight: 700;
+	line-height: 1.4;
+}
+
+.famma-offer .famma-offer__info {
+	min-inline-size: 0;
+}
+
+.famma-offer .famma-offer__title {
+	margin: 0 0 2px;
+	padding: 0;
+	font-size: 1.0625rem;
+	font-weight: 700;
+	line-height: 1.25;
+}
+
+.famma-offer .famma-offer__name {
+	display: -webkit-box;
+	margin: 0 0 4px;
+	overflow: hidden;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	color: var(--famma-text-2, #4B5563);
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+.famma-offer .famma-offer__price {
+	display: flex;
+	gap: var(--sp-2, 8px);
+	align-items: baseline;
+	margin: 0;
+}
+
+.famma-offer .famma-offer__price del {
+	font-size: 0.875rem;
+	color: var(--famma-text-2, #6B7280);
+}
+
+.famma-offer .famma-offer__price strong {
+	font-size: 1.25rem;
+	line-height: 1.2;
+	color: var(--famma-blue, #1D4ED8);
+}
+
+.famma-offer .famma-offer__form {
+	grid-column: 1 / -1;
+	margin: 0;
+}
+
+.famma-offer .famma-offer__accept {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	align-items: center;
+	justify-content: center;
+	inline-size: 100%;
+	min-block-size: 56px;
+	margin: 0;
+	padding: 6px var(--sp-4, 16px);
+	border: 0;
+	border-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-orange, #FF7A00);
+	box-shadow: none;
+	color: #FFF;
+	line-height: 1.2;
+	text-transform: none;
+	cursor: pointer;
+}
+
+.famma-offer .famma-offer__accept:hover {
+	filter: brightness(0.95);
+}
+
+.famma-offer .famma-offer__cta {
+	font-size: 1.0625rem;
+	font-weight: 700;
+}
+
+.famma-offer .famma-offer__cta-ar {
+	font-size: 0.875rem;
+	font-weight: 500;
+}
+
+.famma-offer .famma-offer__accept:focus-visible,
+.famma-offer .famma-offer__decline:focus-visible {
+	outline: 3px solid var(--famma-blue, #1D4ED8);
+	outline-offset: 2px;
+}
+
+.famma-offer .famma-offer__text {
+	margin: var(--sp-2, 8px) 0 0;
+	font-size: 0.8125rem;
+	line-height: 1.35;
+	color: var(--famma-text-2, #6B7280);
+	text-align: center;
+}
+
+/* Tablette et ordinateur : image | texte | bouton sur une ligne. */
+@media (min-width: 600px) {
+	.famma-offer .famma-offer__body {
+		grid-template-columns: 96px minmax(0, 1fr) auto;
+	}
+
+	.famma-offer .famma-offer__media img {
+		inline-size: 96px;
+		block-size: 96px;
+	}
+
+	.famma-offer .famma-offer__form {
+		grid-column: auto;
+	}
+
+	.famma-offer .famma-offer__accept {
+		inline-size: auto;
+		min-inline-size: 240px;
+	}
+
+	.famma-offer .famma-offer__text {
+		text-align: start;
+	}
+}
+
+/* Messages après le clic (ajouté, offre fermée, à réessayer). */
 .famma-offer-message {
+	max-inline-size: 760px;
 	margin-block: var(--sp-4, 16px);
 	padding: var(--sp-3, 12px) var(--sp-4, 16px);
-	border-radius: var(--famma-radius-sm, 8px);
 	border-inline-start: 4px solid var(--famma-blue, #1D4ED8);
+	border-radius: var(--famma-radius-sm, 8px);
 	background: var(--famma-line, #F3F4F6);
 }
 

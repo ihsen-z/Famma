@@ -111,7 +111,7 @@ final class Offer_Admin {
 				'id'          => Offer_Settings::META_TITLE,
 				'value'       => $value( Offer_Settings::META_TITLE ),
 				'label'       => __( 'Titre du bloc', 'famma-core' ),
-				'placeholder' => __( 'Ajoutez-le à votre colis / زيدو مع الكوليس متاعك', 'famma-core' ),
+				'placeholder' => __( 'Ajoutez-le à votre colis', 'famma-core' ),
 				'desc_tip'    => false,
 				'description' => __( 'Facultatif. Vide : titre par défaut.', 'famma-core' ),
 			)
@@ -122,7 +122,7 @@ final class Offer_Admin {
 				'id'          => Offer_Settings::META_TEXT,
 				'value'       => $value( Offer_Settings::META_TEXT ),
 				'label'       => __( 'Texte du bloc', 'famma-core' ),
-				'placeholder' => __( 'Même colis, livraison gratuite, prix réservé à cette page.', 'famma-core' ),
+				'placeholder' => __( 'Même colis, livraison gratuite. Valable jusqu’à notre appel de confirmation.', 'famma-core' ),
 				'desc_tip'    => false,
 				'description' => __( 'Facultatif. Vide : texte par défaut.', 'famma-core' ),
 			)

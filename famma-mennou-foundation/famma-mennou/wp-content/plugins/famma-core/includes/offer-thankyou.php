@@ -45,7 +45,9 @@ final class Offer_Thankyou {
 		if ( null === self::$i ) {
 			self::$i = new self();
 			add_action( 'template_redirect', array( self::$i, 'handle' ), 5 );
-			add_action( 'woocommerce_thankyou', array( self::$i, 'render' ), 5 );
+			// Tout en haut du contenu, juste sous le titre « Commande reçue » : seul
+			// emplacement visible sans défiler sur téléphone (mesuré le 12/11).
+			add_action( 'woocommerce_before_thankyou', array( self::$i, 'render' ), 10 );
 			add_action( 'wp_enqueue_scripts', array( self::$i, 'assets' ) );
 		}
 		return self::$i;
@@ -246,7 +248,7 @@ final class Offer_Thankyou {
 				sprintf(
 					/* translators: %s: new order total. */
 					__( 'C\'est ajouté à votre commande. Nouveau total à payer à la livraison : %s DT.', 'famma-core' ),
-					wc_format_decimal( $order->get_total(), 3 )
+					self::amount( (float) $order->get_total() )
 				),
 				__( 'تزاد للكوموند متاعك', 'famma-core' ),
 				'ok'
@@ -278,7 +280,18 @@ final class Offer_Thankyou {
 	}
 
 	/**
-	 * Bloc de l'offre.
+	 * Montant affiché sans zéros inutiles (« 22 », « 22.5 »).
+	 *
+	 * @param float $value Montant.
+	 * @return string
+	 */
+	private static function amount( float $value ): string {
+		return (string) wc_format_decimal( $value, 3, true );
+	}
+
+	/**
+	 * Bloc de l'offre : un seul formulaire, compact, pensé pour tenir dans le
+	 * premier écran d'un téléphone (bouton sous 600 px de haut à 390 × 844).
 	 *
 	 * @param \WC_Order                                                                                        $order Commande.
 	 * @param array{source: int, target: int, price: float, title: string, text: string, product: \WC_Product} $offer Offre.
@@ -287,43 +300,53 @@ final class Offer_Thankyou {
 	private function offer_block( \WC_Order $order, array $offer ): void {
 		$product = $offer['product'];
 		$regular = (float) $product->get_price();
-		$title   = '' !== $offer['title'] ? $offer['title'] : __( 'Ajoutez-le à votre colis / زيدو مع الكوليس متاعك', 'famma-core' );
-		$text    = '' !== $offer['text'] ? $offer['text'] : __( 'Même colis, livraison gratuite, prix réservé à cette page.', 'famma-core' );
-		$url     = $order->get_checkout_order_received_url();
+		$off     = $regular > $offer['price'] ? (int) round( 100 * ( $regular - $offer['price'] ) / $regular ) : 0;
+		$title   = '' !== $offer['title'] ? $offer['title'] : __( 'Ajoutez-le à votre colis', 'famma-core' );
+		$text    = '' !== $offer['text'] ? $offer['text'] : __( 'Même colis, livraison gratuite. Valable jusqu’à notre appel de confirmation.', 'famma-core' );
+		$action  = self::FIELD_ACTION;
 		?>
 		<section class="famma-offer" aria-labelledby="famma-offer-title">
-			<p class="famma-offer__kicker"><?php esc_html_e( 'Offre réservée à votre commande', 'famma-core' ); ?></p>
-			<h2 id="famma-offer-title" class="famma-offer__title"><?php echo esc_html( $title ); ?></h2>
-			<div class="famma-offer__body">
-				<div class="famma-offer__media"><?php echo wp_kses_post( $product->get_image( 'woocommerce_thumbnail' ) ); ?></div>
-				<div class="famma-offer__info">
-					<p class="famma-offer__name"><?php echo esc_html( $product->get_name() ); ?></p>
-					<p class="famma-offer__price">
-						<?php if ( $regular > $offer['price'] ) : ?>
-							<del><?php echo esc_html( wc_format_decimal( $regular, 3 ) . ' DT' ); ?></del>
-						<?php endif; ?>
-						<strong><?php echo esc_html( wc_format_decimal( $offer['price'], 3 ) . ' DT' ); ?></strong>
-					</p>
-					<p class="famma-offer__text"><?php echo esc_html( $text ); ?></p>
+			<form method="post" action="<?php echo esc_url( $order->get_checkout_order_received_url() ); ?>" class="famma-offer__inner">
+				<input type="hidden" name="<?php echo esc_attr( self::FIELD_NONCE ); ?>" value="<?php echo esc_attr( wp_create_nonce( self::nonce_action( $order->get_id() ) ) ); ?>" />
+				<div class="famma-offer__head">
+					<p class="famma-offer__kicker"><?php esc_html_e( 'Offre spéciale', 'famma-core' ); ?> <span lang="ar" dir="rtl"><?php esc_html_e( 'عرض خاص', 'famma-core' ); ?></span></p>
+					<button type="submit" name="<?php echo esc_attr( $action ); ?>" value="decline" class="famma-offer__decline"><?php esc_html_e( 'Non merci', 'famma-core' ); ?></button>
 				</div>
-			</div>
-			<form method="post" action="<?php echo esc_url( $url ); ?>" class="famma-offer__form">
-				<?php wp_nonce_field( self::nonce_action( $order->get_id() ), self::FIELD_NONCE, false ); ?>
-				<button type="submit" name="<?php echo esc_attr( self::FIELD_ACTION ); ?>" value="accept" class="famma-offer__accept button">
-					<?php
-					echo esc_html(
-						sprintf(
-							/* translators: %s: special price. */
-							__( 'Ajouter à ma commande (+%s DT)', 'famma-core' ),
-							wc_format_decimal( $offer['price'], 3 )
-						)
-					);
-					?>
-					<span lang="ar" dir="rtl"><?php esc_html_e( 'زيدها للكوموند', 'famma-core' ); ?></span>
-				</button>
-				<button type="submit" name="<?php echo esc_attr( self::FIELD_ACTION ); ?>" value="decline" class="famma-offer__decline">
-					<?php esc_html_e( 'Non merci', 'famma-core' ); ?>
-				</button>
+				<div class="famma-offer__body">
+					<div class="famma-offer__media">
+						<?php echo wp_kses_post( $product->get_image( 'woocommerce_thumbnail', array( 'alt' => '' ) ) ); ?>
+						<?php if ( $off > 0 ) : ?>
+							<span class="famma-offer__badge" dir="ltr"><?php echo esc_html( '-' . $off . ' %' ); ?></span>
+						<?php endif; ?>
+					</div>
+					<div class="famma-offer__info">
+						<h2 id="famma-offer-title" class="famma-offer__title"><?php echo esc_html( $title ); ?></h2>
+						<p class="famma-offer__name"><?php echo esc_html( $product->get_name() ); ?></p>
+						<p class="famma-offer__price">
+							<?php if ( $off > 0 ) : ?>
+								<del dir="ltr"><?php echo esc_html( self::amount( $regular ) . ' DT' ); ?></del>
+							<?php endif; ?>
+							<strong dir="ltr"><?php echo esc_html( self::amount( $offer['price'] ) . ' DT' ); ?></strong>
+						</p>
+					</div>
+					<div class="famma-offer__form">
+						<button type="submit" name="<?php echo esc_attr( $action ); ?>" value="accept" class="famma-offer__accept">
+							<span class="famma-offer__cta">
+								<?php
+								echo esc_html(
+									sprintf(
+										/* translators: %s: special price. */
+										__( 'Oui, ajouter · +%s DT', 'famma-core' ),
+										self::amount( $offer['price'] )
+									)
+								);
+								?>
+							</span>
+							<span class="famma-offer__cta-ar" lang="ar" dir="rtl"><?php esc_html_e( 'زيدها للكوموند', 'famma-core' ); ?></span>
+						</button>
+					</div>
+				</div>
+				<p class="famma-offer__text"><?php echo esc_html( $text ); ?></p>
 			</form>
 		</section>
 		<?php
