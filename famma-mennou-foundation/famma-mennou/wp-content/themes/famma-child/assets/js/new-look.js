@@ -346,4 +346,75 @@
 			}, 0 );
 		} );
 	} );
+	/* Navigation du bureau : un trait orange glisse sous le lien survolé ou
+	   focalisé, puis revient sous l'entrée active. Seulement avec un pointeur
+	   fin et sans demande de moins de mouvement ; sinon le soulignement CSS
+	   d'origine reste en place. Aucun changement de mise en page : le trait
+	   est en position absolue et ne bouge que par `transform`. */
+	guard( 'navigation', function () {
+		if ( ! has( 'motion' ) || reduced || ! fine ) {
+			return;
+		}
+
+		var list = document.querySelector( '.famma-nav--desktop .famma-nav__list' );
+
+		if ( ! list ) {
+			return;
+		}
+
+		var links = Array.prototype.filter.call( list.children, function ( li ) {
+			return li.tagName === 'LI' && li.querySelector( 'a' );
+		} ).map( function ( li ) {
+			return li.querySelector( 'a' );
+		} );
+		var current = list.querySelector( ':scope > .current-menu-item > a, :scope > .current-menu-ancestor > a, :scope > .current_page_item > a' );
+		var ink = document.createElement( 'span' );
+
+		ink.className = 'famma-nav__ink';
+		ink.setAttribute( 'aria-hidden', 'true' );
+		list.appendChild( ink );
+		list.classList.add( 'has-ink' );
+
+		function moveTo( link, instant ) {
+			if ( ! link ) {
+				ink.style.opacity = '0';
+				return;
+			}
+
+			var box = list.getBoundingClientRect();
+			var r = link.getBoundingClientRect();
+
+			ink.style.transition = instant ? 'none' : '';
+			ink.style.opacity = '1';
+			ink.style.transform = 'translateX(' + ( r.left - box.left ) + 'px) scaleX(' + r.width + ')';
+		}
+
+		links.forEach( function ( link ) {
+			link.addEventListener( 'mouseenter', function () {
+				moveTo( link, false );
+			} );
+			link.addEventListener( 'focus', function () {
+				moveTo( link, false );
+			} );
+		} );
+		list.addEventListener( 'mouseleave', function () {
+			moveTo( current, false );
+		} );
+		list.addEventListener( 'focusout', function ( event ) {
+			if ( ! list.contains( event.relatedTarget ) ) {
+				moveTo( current, false );
+			}
+		} );
+
+		var place = function () {
+			moveTo( current, true );
+		};
+
+		place();
+		window.addEventListener( 'resize', place, { passive: true } );
+
+		if ( document.fonts && document.fonts.ready ) {
+			document.fonts.ready.then( place );
+		}
+	} );
 } )();

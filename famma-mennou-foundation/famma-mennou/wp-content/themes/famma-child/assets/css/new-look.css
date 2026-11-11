@@ -394,3 +394,67 @@ body.famma-nl-journey .famma-how .famma-steps li::after {
 	from { opacity: 0; }
 	to { opacity: 1; }
 }
+
+/* --- En-tête : trait orange glissant (bureau) ---
+   Posé par new-look.js seulement avec un pointeur fin et sans demande de
+   moins de mouvement ; `.has-ink` retire alors le soulignement fixe de
+   l'entrée active, que le trait remplace. Sans script, rien ne change. */
+
+body.famma-nl-motion .famma-nav--desktop .famma-nav__list.has-ink {
+	position: relative;
+}
+
+body.famma-nl-motion .famma-nav--desktop .famma-nav__list.has-ink > li > a {
+	border-block-end-color: transparent;
+}
+
+body.famma-nl-motion .famma-nav__ink {
+	position: absolute;
+	inset-block-end: 0;
+	left: 0; /* physique : la position est calculée depuis le bord gauche, en LTR comme en RTL. */
+	inline-size: 1px;
+	block-size: 2px;
+	background: var(--famma-orange);
+	opacity: 0;
+	pointer-events: none;
+	transform-origin: 0 50%;
+	transition:
+		transform var(--dur-slide) var(--nl-spring),
+		opacity var(--dur-base) ease;
+}
+
+/* --- En-tête : ouverture du menu mobile ---
+   Le panneau reste ouvert et fermé par l'attribut `hidden` (navigation.js).
+   `@starting-style` donne l'état de départ à l'ouverture ; les entrées
+   glissent l'une après l'autre. La fermeture reste immédiate. */
+
+@media (prefers-reduced-motion: no-preference) {
+	body.famma-nl-motion .famma-header__panel:not([hidden]) {
+		transition:
+			opacity var(--dur-base) var(--ease-out),
+			transform var(--dur-slide) var(--nl-spring);
+	}
+
+	body.famma-nl-motion .famma-header__panel:not([hidden]) .famma-nav__list > li {
+		transition:
+			opacity var(--dur-base) var(--ease-out),
+			transform var(--dur-slide) var(--nl-spring);
+	}
+
+	body.famma-nl-motion .famma-header__panel:not([hidden]) .famma-nav__list > li:nth-child(2) { transition-delay: 30ms; }
+	body.famma-nl-motion .famma-header__panel:not([hidden]) .famma-nav__list > li:nth-child(3) { transition-delay: 60ms; }
+	body.famma-nl-motion .famma-header__panel:not([hidden]) .famma-nav__list > li:nth-child(4) { transition-delay: 90ms; }
+	body.famma-nl-motion .famma-header__panel:not([hidden]) .famma-nav__list > li:nth-child(n + 5) { transition-delay: 120ms; }
+
+	@starting-style {
+		body.famma-nl-motion .famma-header__panel:not([hidden]) {
+			opacity: 0;
+			transform: translateY(-8px);
+		}
+
+		body.famma-nl-motion .famma-header__panel:not([hidden]) .famma-nav__list > li {
+			opacity: 0;
+			transform: translateY(-6px);
+		}
+	}
+}
