@@ -76,7 +76,7 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 
 ### Point de contrôle 2
 - [ ] Parcours complet en local, en émulation mobile 390 px avec l'agent utilisateur du navigateur Facebook
-- [ ] Revue du propriétaire : ordre des champs, texte de la phrase (noms courants : refusés le 11/11)
+- [ ] Revue du propriétaire : ordre des champs, texte de la phrase (phrase laissée vide le 11/11 ; noms courants : refusés le 11/11)
 
 ### Phase 3 : fiabiliser la mesure et livrer
 - [x] T7 : Chaque commande express est rattachée à sa visite, même sans cookie (intégration Docker verte le 11/11)

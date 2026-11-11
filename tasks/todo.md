@@ -186,7 +186,7 @@ Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide s
 
 > Fait le 11/11 :
 > - Champ `reassure_phone` dans FAMMA → Pages → Fiche produit (schéma de `Product_Content`, écran et assainissement de `Pages_Content`).
-> - Proposition par défaut, à valider par le propriétaire : « Nous vous appelons sur ce numéro pour confirmer la commande avant l’envoi. » / « نكلموك على النمرة هذي باش نأكدو الطلبية قبل ما نبعثوها. ». Même promesse que « Nos engagements » de la page À propos (commande confirmée par téléphone avant l'expédition).
+> - Proposition par défaut d'abord écrite (« Nous vous appelons sur ce numéro pour confirmer la commande avant l’envoi. »), puis **vidée le 11/11 à la demande du propriétaire** : rien ne s'affiche sous le téléphone tant qu'il n'a pas écrit sa phrase dans l'admin.
 > - Affichage : sous l'erreur du téléphone ; derja en seconde ligne sur le site français. À 390 px : 4 lignes sur le site français, 2 sur le site arabe.
 > - `aria-describedby` = erreur puis phrase ; le script ne lit plus que le premier identifiant pour trouver l'erreur.
 > - Tests : `scripts/test-express-phone-note-isolated.php` 12/12, front 105/105.
@@ -202,7 +202,7 @@ Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide s
 
 ### Point de contrôle 2 : après les tâches 3 à 6
 - [ ] Parcours complet en local, en émulation mobile 390 px avec l'agent utilisateur du navigateur Facebook : téléphone, nom, « Hammamet », taille, commande créée
-- [ ] Revue du propriétaire : ordre des champs, texte de la phrase (noms courants des villes : refusés le 11/11, liste officielle seule)
+- [ ] Revue du propriétaire : ordre des champs, texte de la phrase (phrase : laissée vide le 11/11 ; noms courants des villes : refusés le 11/11, liste officielle seule)
 
 ---
 
