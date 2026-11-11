@@ -527,7 +527,7 @@ function famma_child_home_why(): void {
 					<span class="famma-why__mark"><?php famma_child_the_icon( $item['icon'] ); ?></span>
 					<span class="famma-why__text">
 						<span class="famma-why__title"><?php echo esc_html( $item['title'] ); ?></span>
-						<?php echo '' !== $item['text'] ? '<span class="famma-why__sub">' . esc_html( $item['text'] ) . '</span>' : ''; ?>
+						<?php echo '' !== $item['text'] ? '<span class="famma-why__sub">' . esc_html( $item['text'] ) . "</span>\n" : "\n"; ?>
 					</span>
 				</li>
 			<?php endforeach; ?>
