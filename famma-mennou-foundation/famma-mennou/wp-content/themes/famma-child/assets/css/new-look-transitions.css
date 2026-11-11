@@ -1,0 +1,48 @@
+/* ============================================================
+   FAMMA — nouveau look : transitions entre les pages de la boutique
+
+   Transition de vue entre documents (CSS seul, aucun script) : un
+   clic sur un filtre, un tri ou une catégorie reste une vraie
+   navigation servie par le serveur — même URL, même cache, même
+   référencement, mêmes paramètres utm_* et fbclid — mais la page
+   change en fondu, l'en-tête restant en place.
+
+   Les navigateurs qui ne connaissent pas `@view-transition` ignorent
+   simplement cette feuille. Jamais d'effet si le visiteur demande
+   moins de mouvement.
+
+   Chargée seulement sur l'accueil, la boutique et les catégories :
+   la règle doit être présente sur les DEUX pages pour s'appliquer,
+   donc la fiche produit, le panier et le tunnel n'en ont jamais.
+   ============================================================ */
+
+@media (prefers-reduced-motion: no-preference) {
+	@view-transition {
+		navigation: auto;
+	}
+
+	.famma-header {
+		view-transition-name: famma-header;
+	}
+
+	::view-transition-old(root) {
+		animation: famma-vt-out 160ms ease-in both;
+	}
+
+	::view-transition-new(root) {
+		animation: famma-vt-in 280ms cubic-bezier(0.23, 1, 0.32, 1) both;
+	}
+
+	@keyframes famma-vt-out {
+		to {
+			opacity: 0;
+		}
+	}
+
+	@keyframes famma-vt-in {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+	}
+}

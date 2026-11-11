@@ -126,6 +126,16 @@
 				<element value="famma_child_home_hero_stack"/>
 				<element value="famma_child_home_hero_showcase"/>
 				<element value="famma_child_home_hero_thumbs"/>
+				<element value="famma_child_new_look"/>
+				<element value="famma_child_new_look_page"/>
+				<element value="famma_child_new_look_parts"/>
+				<element value="famma_child_new_look_on_orange"/>
+				<element value="famma_child_enqueue_new_look"/>
+				<element value="famma_child_new_look_body_class"/>
+				<element value="famma_child_loop_alt_photo"/>
+				<element value="famma_child_new_look_dock_markup"/>
+				<element value="famma_child_new_look_dock"/>
+				<element value="famma_child_new_look_dock_fragment"/>
 				<element value="famma_child_defer_image"/>
 				<element value="famma_child_remove_parent_callback"/>
 				<element value="famma_child_swap_scrollbar_script"/>

@@ -1,0 +1,245 @@
+/* ============================================================
+   FAMMA — nouveau look animé (maquettes du 04-06/11/2026)
+
+   Surcouche chargée seulement si FAMMA → Pages → Nouveau look animé
+   est actif, et seulement sur l'accueil, la boutique et les
+   catégories. Tout est rangé sous `body.famma-nl-*` : sans ces
+   classes, cette feuille ne s'applique à rien.
+
+   Règles tenues :
+   - aucun soulèvement de carte au survol (retiré exprès : il faisait
+     sauter la grille, voir product-card.css) ;
+   - jetons de tokens.css uniquement, propriétés logiques pour le RTL ;
+   - aucune animation si le visiteur demande moins de mouvement.
+   ============================================================ */
+
+body.famma-nl {
+	--nl-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+	--nl-dock-h: 64px;
+}
+
+@supports (animation-timing-function: linear(0, 1)) {
+	body.famma-nl {
+		--nl-spring: linear(0, 0.06 3%, 0.22 7%, 0.55 14%, 0.86 22%, 1.04 30%, 1.09 36%, 1.07 44%, 1.01 58%, 0.99 72%, 1);
+	}
+}
+
+/* --- Photo de la carte : léger zoom au survol, jamais de saut de grille --- */
+
+body.famma-nl-motion ul.products.famma-cards li.product .woocommerce-loop-image-link {
+	display: block;
+	overflow: hidden;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+	body.famma-nl-motion ul.products.famma-cards li.product a img {
+		transition: transform 700ms var(--ease-out-strong);
+	}
+
+	body.famma-nl-motion ul.products.famma-cards li.product:hover .woocommerce-loop-image-link img {
+		transform: scale(1.04);
+	}
+}
+
+/* --- Seconde photo au survol --- */
+
+body.famma-nl-alt-photo ul.products.famma-cards li.product .famma-alt {
+	position: absolute;
+	inset-block-start: 0;
+	inset-inline: 0;
+	z-index: 1;
+	display: none;
+	aspect-ratio: var(--card-media-ratio);
+	overflow: hidden;
+	background: var(--famma-surface-media);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity var(--dur-slide) var(--ease-out);
+}
+
+body.famma-nl-alt-photo ul.products.famma-cards li.product .famma-alt img {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+	object-fit: cover;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	body.famma-nl-alt-photo ul.products.famma-cards li.product .famma-alt.is-ready {
+		display: block;
+	}
+
+	body.famma-nl-alt-photo ul.products.famma-cards li.product:hover .famma-alt.is-ready {
+		opacity: 1;
+	}
+}
+
+/* Badge et cœur restent au-dessus de la seconde photo. */
+body.famma-nl-alt-photo ul.products.famma-cards li.product .onsale {
+	z-index: 2;
+}
+
+/* En affichage liste, la photo n'est plus en haut de carte : pas de survol. */
+body.famma-nl-alt-photo .famma-shop.is-list .famma-alt {
+	display: none !important;
+}
+
+/* --- Effets ponctuels : étincelles et vol vers le panier --- */
+
+.famma-nl-spark {
+	position: fixed;
+	inset-block-start: 0;
+	inset-inline-start: 0;
+	z-index: 1000;
+	inline-size: 3px;
+	block-size: 11px;
+	margin: -5px 0 0 -1px;
+	border-radius: 3px;
+	background: var(--famma-orange);
+	pointer-events: none;
+}
+
+.famma-nl-fly {
+	position: fixed;
+	inset-block-start: 0;
+	inset-inline-start: 0;
+	z-index: 1000;
+	pointer-events: none;
+}
+
+.famma-nl-fly img {
+	display: block;
+	inline-size: 72px;
+	block-size: 72px;
+	margin: -36px 0 0 -36px;
+	border-radius: var(--famma-radius);
+	object-fit: cover;
+	box-shadow: var(--elev-2);
+}
+
+/* --- Barre du panier : « Aujourd'hui 0 DT », le total au livreur --- */
+
+.famma-dock {
+	position: fixed;
+	inset-inline: calc(10px + env(safe-area-inset-left, 0px)) calc(10px + env(safe-area-inset-right, 0px));
+	inset-block-end: calc(10px + env(safe-area-inset-bottom, 0px));
+	z-index: 300;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-3);
+	max-inline-size: 560px;
+	min-block-size: var(--nl-dock-h);
+	margin-inline: auto;
+	padding-block: 7px;
+	padding-inline: 14px 7px;
+	border: 1px solid var(--famma-overlay-line);
+	border-radius: 14px;
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	box-shadow: var(--elev-3);
+	font-family: var(--famma-font);
+}
+
+.famma-dock[hidden] {
+	display: none;
+}
+
+.famma-dock__sums {
+	display: grid;
+	gap: 1px;
+	min-inline-size: 0;
+	font-size: var(--fs-card-meta);
+	line-height: 1.3;
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-dock__row {
+	display: flex;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.famma-dock__label {
+	color: var(--famma-on-dark);
+}
+
+.famma-dock__zero,
+.famma-dock__total {
+	font-weight: var(--fw-bold);
+}
+
+/* Vert clair sur marine : 9,6:1. Le zéro est le chiffre qu'on veut voir retenu. */
+.famma-dock__zero {
+	color: var(--famma-success-on-dark);
+}
+
+.famma-dock__go {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	gap: var(--sp-2);
+	min-block-size: 48px;
+	padding-inline: 14px;
+	border-radius: 9px;
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+	text-decoration: none;
+	white-space: nowrap;
+	transition: background-color var(--dur-base) var(--ease-out);
+}
+
+.famma-dock__go:hover,
+.famma-dock__go:focus-visible {
+	background: var(--famma-orange-600);
+	color: var(--famma-on-orange);
+}
+
+.famma-dock__go:focus-visible {
+	outline: 3px solid var(--famma-white);
+	outline-offset: 2px;
+}
+
+.famma-dock__count {
+	display: inline-grid;
+	place-items: center;
+	min-block-size: 22px;
+	padding-inline: 7px;
+	border-radius: 11px;
+	background: var(--famma-veil-on-orange);
+	font-size: var(--fs-caption);
+}
+
+@media (max-width: 420px) {
+	.famma-dock__count {
+		display: none;
+	}
+}
+
+/* La barre ne cache jamais le bas de page. */
+body.famma-dock-on {
+	padding-block-end: calc(var(--nl-dock-h) + 24px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Le bouton WhatsApp flottant (famma-core) remonte au-dessus de la barre. */
+body.famma-nl-dock .famma-wa {
+	transition: inset-block-end var(--dur-slide) var(--ease-out);
+}
+
+body.famma-dock-on .famma-wa {
+	inset-block-end: calc(var(--nl-dock-h) + 22px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Arabe : la police arabe est plus haute, on garde l'interligne de base. */
+:root[dir="rtl"] .famma-dock {
+	font-family: var(--famma-font-ar);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body.famma-nl ul.products.famma-cards li.product a img,
+	body.famma-nl .famma-alt {
+		transition: none !important;
+	}
+}

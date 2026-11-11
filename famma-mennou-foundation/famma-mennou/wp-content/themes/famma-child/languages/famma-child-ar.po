@@ -627,3 +627,19 @@ msgstr "الوزن"
 #: inc/product.php
 msgid "Dimensions"
 msgstr "القياسات"
+
+# --- Nouveau look : barre du panier (06/11/2026, derja à relire par le propriétaire) ---
+msgid "Aujourd’hui"
+msgstr "اليوم"
+
+msgid "À la réception"
+msgstr "كي يوصلك"
+
+msgid "%d article"
+msgid_plural "%d articles"
+msgstr[0] "فارغة"
+msgstr[1] "منتج واحد"
+msgstr[2] "زوز منتجات"
+msgstr[3] "%d منتجات"
+msgstr[4] "%d منتج"
+msgstr[5] "%d منتج"
