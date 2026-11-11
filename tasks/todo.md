@@ -43,13 +43,16 @@ Contrôles communs à chaque tâche (ClaudeMemo § 3 et § 11) :
 **Description :** un bloc « Formulaire de commande » dans le rapport des visites affiche, sur 7 et 30 jours et par produit : les visites qui ont commencé le formulaire, celles qui l'ont envoyé, les commandes, le pourcentage à chaque étape et les blocages par champ.
 
 **Critères d'acceptation :**
-- [ ] Les chiffres correspondent au comptage direct du journal sur un jeu de données de test.
-- [ ] Le bloc n'est visible qu'avec la capacité `manage_woocommerce`, et toutes les sorties sont échappées.
-- [ ] Le calcul est mis en cache (transient de 10 minutes) : aucune requête lourde à chaque affichage.
+- [x] Les chiffres correspondent au comptage direct du journal sur un jeu de données de test.
+- [x] Le bloc n'est visible qu'avec la capacité `manage_woocommerce`, et toutes les sorties sont échappées.
+- [x] Le calcul est mis en cache : aucune requête lourde à chaque affichage. Transient de 5 minutes, comme les autres agrégats du rapport (au lieu des 10 minutes prévues).
+
+Fait : bloc « Formulaire express : de commencé à commandé » dans l'onglet Synthèse (`includes/visitor-form-funnel.php` et `-views.php`). Par produit : commencés, envoyés, commandes, sessions bloquées, envois refusés, bloquées puis commandées. Puis les refus par cause, avec les sessions restées sans commande. La période vient des boutons existants (1, 7, 30, 90, 180 jours).
 
 **Vérification :**
-- [ ] Test PHP sur des événements fictifs marqués « test »
-- [ ] Contrôle manuel dans l'admin locale avec `WP_DEBUG` actif, `debug.log` propre
+- [x] `php scripts/test-visitor-form-funnel-isolated.php` (nouveau) : 18/18 sur des événements fictifs marqués « test »
+- [ ] Requête SQL lancée sur la base MySQL locale : non faite, le site Local était arrêté (point de contrôle 1)
+- [ ] Contrôle manuel dans l'admin locale avec `WP_DEBUG` actif, `debug.log` propre (point de contrôle 1)
 
 **Dépendances :** tâche 1.
 

@@ -60,9 +60,9 @@ final class Visitor_Collector {
 	/**
 	 * Codes qu'un `form_error` peut porter : un champ du formulaire, ou la
 	 * cause d'un refus sans champ (contrôle du navigateur, stockage, réseau,
-	 * serveur, panier changé).
+	 * serveur, panier changé). Visitor_Form_Funnel les relit pour son rapport.
 	 */
-	private const FORM_ERROR_CODES = array( 'phone', 'name', 'state', 'size', 'form', 'storage', 'network', 'server', 'changed' );
+	public const FORM_ERROR_CODES = array( 'phone', 'name', 'state', 'size', 'form', 'storage', 'network', 'server', 'changed' );
 
 	/**
 	 * Événements par lot, au plus.

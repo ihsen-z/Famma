@@ -98,6 +98,8 @@ require_once __DIR__ . '/includes/visitor-admin.php';
 require_once __DIR__ . '/includes/visitor-admin-views.php';
 require_once __DIR__ . '/includes/visitor-insights.php';
 require_once __DIR__ . '/includes/visitor-insights-views.php';
+require_once __DIR__ . '/includes/visitor-form-funnel.php';
+require_once __DIR__ . '/includes/visitor-form-funnel-views.php';
 require_once __DIR__ . '/includes/visitor-order-box.php';
 require_once __DIR__ . '/includes/visitor-privacy.php';
 require_once __DIR__ . '/includes/visitor-performance.php';

@@ -52,7 +52,7 @@ Le détail de chaque tâche (critères d'acceptation, vérification, fichiers) e
 
 ### Phase 1 : mesurer les blocages
 - [x] T1 : Enregistrer chaque envoi refusé et le champ en cause (`form_error`)
-- [ ] T2 : Entonnoir du formulaire et blocages par champ dans le tableau de bord visiteurs
+- [x] T2 : Entonnoir du formulaire et blocages par champ dans le tableau de bord visiteurs
 
 ### Point de contrôle 1
 - [ ] Tests Node et PHP verts, phpcs propre

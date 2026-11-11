@@ -240,6 +240,7 @@ final class Visitor_Admin {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination.
 		$paged = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1;
 		Visitor_Admin_Views::summary( $report->summary( $days ) );
+		Visitor_Form_Funnel_Views::render( ( new Visitor_Form_Funnel() )->express( $days ) );
 		Visitor_Admin_Views::forms( $report->form_fields( $days ) );
 		Visitor_Session_Type::legend( Visitor_Session_Type::counts( $days ) );
 		Visitor_Admin_Views::sessions( $report->sessions( $days, $paged ), $days, $paged, array( $this, 'url' ) );
