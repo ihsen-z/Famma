@@ -91,6 +91,15 @@ final class Product_Content {
 				'default_ar' => 'زيد للسلّة',
 			),
 			array(
+				'key'        => 'reassure_phone',
+				'type'       => 'text',
+				'label'      => __( 'Formulaire — phrase sous le téléphone', 'famma-core' ),
+				'help'       => __( 'Dit au client à quoi sert son numéro. N’y promettez que ce que vous faites vraiment. Vide : rien n’est affiché sous le téléphone.', 'famma-core' ),
+				// Vide par décision du propriétaire (11/11/2026) : rien sous le téléphone tant qu'il n'a pas écrit sa phrase ici.
+				'default_fr' => '',
+				'default_ar' => '',
+			),
+			array(
 				'key'        => 'whatsapp_card',
 				'type'       => 'text',
 				'label'      => __( 'Bouton WhatsApp sous le formulaire', 'famma-core' ),

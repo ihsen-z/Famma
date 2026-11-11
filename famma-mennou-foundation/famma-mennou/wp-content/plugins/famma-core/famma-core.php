@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.3.8
+ * Version:           0.3.9
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.3.8' );
+define( 'FAMMA_CORE_VERSION', '0.3.9' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -49,6 +49,7 @@ require_once __DIR__ . '/includes/order-channel-list.php';
 require_once __DIR__ . '/includes/order-note.php';
 require_once __DIR__ . '/includes/product-sizes.php';
 require_once __DIR__ . '/includes/product-sizes-admin.php';
+require_once __DIR__ . '/includes/governorate-places.php';
 require_once __DIR__ . '/includes/express-order.php';
 require_once __DIR__ . '/includes/express-checkout.php';
 require_once __DIR__ . '/includes/express-idempotency.php';
@@ -98,6 +99,8 @@ require_once __DIR__ . '/includes/visitor-admin.php';
 require_once __DIR__ . '/includes/visitor-admin-views.php';
 require_once __DIR__ . '/includes/visitor-insights.php';
 require_once __DIR__ . '/includes/visitor-insights-views.php';
+require_once __DIR__ . '/includes/visitor-form-funnel.php';
+require_once __DIR__ . '/includes/visitor-form-funnel-views.php';
 require_once __DIR__ . '/includes/visitor-order-box.php';
 require_once __DIR__ . '/includes/visitor-privacy.php';
 require_once __DIR__ . '/includes/visitor-performance.php';

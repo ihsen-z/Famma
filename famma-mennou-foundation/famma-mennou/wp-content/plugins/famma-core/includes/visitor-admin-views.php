@@ -51,6 +51,33 @@ final class Visitor_Admin_Views {
 	}
 
 	/**
+	 * Causes lisibles d'un envoi refusé (`form_error`).
+	 *
+	 * @param string $codes Codes séparés par des virgules, déjà filtrés à la collecte.
+	 * @return string
+	 */
+	public static function error_label( string $codes ): string {
+		$labels = array(
+			'phone'   => __( 'Téléphone', 'famma-core' ),
+			'name'    => __( 'Nom', 'famma-core' ),
+			'state'   => __( 'Gouvernorat', 'famma-core' ),
+			'size'    => __( 'Taille', 'famma-core' ),
+			'form'    => __( 'Contrôle du navigateur', 'famma-core' ),
+			'storage' => __( 'Stockage du navigateur indisponible', 'famma-core' ),
+			'network' => __( 'Réseau coupé', 'famma-core' ),
+			'server'  => __( 'Refus du serveur', 'famma-core' ),
+			'changed' => __( 'Panier ou prix changé', 'famma-core' ),
+		);
+		$out    = array();
+		foreach ( explode( ',', $codes ) as $code ) {
+			if ( '' !== $code ) {
+				$out[] = $labels[ $code ] ?? $code;
+			}
+		}
+		return implode( ' · ', $out );
+	}
+
+	/**
 	 * Indicateurs clés et entonnoir.
 	 *
 	 * @param array<string, int> $s Agrégats de la période.
@@ -250,6 +277,8 @@ final class Visitor_Admin_Views {
 				$detail = sprintf( __( '%1$s s actives · défilement %2$s %%', 'famma-core' ), $row['num'], $row['label'] );
 			} elseif ( 'form_field' === $row['event'] ) {
 				$detail = self::field_label( $row['label'] );
+			} elseif ( 'form_error' === $row['event'] ) {
+				$detail = self::error_label( $row['label'] );
 			} elseif ( 'add_to_cart' === $row['event'] ) {
 				/* translators: %s: quantity. */
 				$detail = sprintf( __( 'Quantité %s', 'famma-core' ), $row['num'] );

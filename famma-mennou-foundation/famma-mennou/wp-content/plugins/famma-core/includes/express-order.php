@@ -418,9 +418,11 @@ final class Express_Order {
 				'genericError'  => Express_Checkout::generic_error(),
 				'sending'       => __( 'Envoi en cours… / قاعد نبعث…', 'famma-core' ),
 				'phoneError'    => __( 'Check the number: 8 digits (XX XXX XXX).', 'famma-core' ),
-				'stateError'    => __( 'Pick your governorate from the list.', 'famma-core' ),
+				'stateError'    => __( 'Choisissez votre gouvernorat. / إختار الولاية متاعك.', 'famma-core' ),
 				'noMatch'       => __( 'No governorate found', 'famma-core' ),
 				'stateHint'     => __( 'Type to search…', 'famma-core' ),
+				/* translators: %s: governorate name, e.g. "Nabeul". */
+				'stateFound'    => __( 'Gouvernorat ajouté : %s. Vous pouvez le changer.', 'famma-core' ),
 				'confirmLabel'  => __( 'Confirmer ma commande / أكد طلبيتك', 'famma-core' ),
 				'retryLabel'    => __( 'Vérifier ma commande en cours / ثبت طلبيتك', 'famma-core' ),
 				'amountChanged' => __( 'Le total a été mis à jour. Vérifiez-le puis validez votre commande. تبدل المجموع، راجعو وأكّد.', 'famma-core' ),
@@ -462,6 +464,48 @@ final class Express_Order {
 				),
 			)
 		);
+
+		/*
+		 * Noms de lieux pour proposer le gouvernorat d'après la ville tapée :
+		 * des données, pas des chaînes à traduire, donc un script en ligne
+		 * plutôt que `wp_localize_script()`. `JSON_HEX_TAG` : aucun nom ne peut
+		 * fermer la balise <script>.
+		 */
+		wp_add_inline_script(
+			'famma-express',
+			'var fammaExpressPlaces = ' . wp_json_encode( self::places_for_script(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP ) . ';',
+			'before'
+		);
+	}
+
+	/**
+	 * Noms de lieux par gouvernorat, limités aux gouvernorats de la liste.
+	 *
+	 * Le filtre `famma_governorate_places` peut ajouter des noms : chacun est
+	 * nettoyé (texte brut, 60 caractères au plus) avant d'aller au navigateur.
+	 *
+	 * @return array<string, array<int, string>>
+	 */
+	private static function places_for_script(): array {
+		$states = WC()->countries->get_states( 'TN' );
+		$states = is_array( $states ) ? $states : array();
+		$out    = array();
+		foreach ( Governorate_Places::places() as $code => $names ) {
+			if ( ! isset( $states[ $code ] ) || ! is_array( $names ) ) {
+				continue;
+			}
+			$clean = array();
+			foreach ( $names as $name ) {
+				$name = is_string( $name ) ? sanitize_text_field( $name ) : '';
+				if ( '' !== $name && mb_strlen( $name ) <= 60 ) {
+					$clean[] = $name;
+				}
+			}
+			if ( $clean ) {
+				$out[ (string) $code ] = array_values( array_unique( $clean ) );
+			}
+		}
+		return $out;
 	}
 
 	/**
@@ -473,11 +517,11 @@ final class Express_Order {
 	 * @param string $autocomplete Valeur d'`autocomplete`.
 	 * @param bool   $wide         Champ sur toute la largeur de la grille.
 	 * @param bool   $required     Champ obligatoire.
+	 * @param array  $attrs        Attributs de saisie en plus (`enterkeyhint`, `autocapitalize`…).
 	 * @return void
 	 */
-	private function text_field( string $name, string $label, string $type = 'text', string $autocomplete = '', bool $wide = false, bool $required = true ): void {
-		$id    = 'famma-express-' . str_replace( '_', '-', $name );
-		$error = $id . '-error';
+	private function text_field( string $name, string $label, string $type = 'text', string $autocomplete = '', bool $wide = false, bool $required = true, array $attrs = array() ): void {
+		$id = 'famma-express-' . str_replace( '_', '-', $name );
 		?>
 		<p class="famma-express__field<?php echo $wide ? ' famma-express__field--wide' : ''; ?>">
 			<label for="<?php echo esc_attr( $id ); ?>">
@@ -495,21 +539,71 @@ final class Express_Order {
 				<?php if ( '' !== $autocomplete ) : ?>
 					autocomplete="<?php echo esc_attr( $autocomplete ); ?>"
 				<?php endif; ?>
-				<?php if ( 'tel' === $type ) : ?>
-					<?php
-					/*
-					 * `inputmode` sort le pavé numérique sur mobile. Le contrôle
-					 * en direct du script n'est qu'un confort : la règle qui fait
-					 * foi reste `Tunisia::validate_phone()`, côté serveur.
-					 */
-					?>
-					inputmode="tel" placeholder="XX XXX XXX" maxlength="20"
-					aria-describedby="<?php echo esc_attr( $error ); ?>"
-				<?php endif; ?>
+				<?php foreach ( $attrs as $attr => $value ) : ?>
+					<?php echo esc_attr( (string) $attr ); ?>="<?php echo esc_attr( (string) $value ); ?>"
+				<?php endforeach; ?>
 				<?php echo $required ? 'required' : ''; ?>
 			/>
-			<?php if ( 'tel' === $type ) : ?>
-				<span class="famma-express__error" id="<?php echo esc_attr( $error ); ?>" hidden></span>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Téléphone, premier champ du formulaire (maquette fiche produit v3).
+	 *
+	 * « +216 » est affiché à côté du champ, hors de la valeur : le client ne
+	 * tape que ses 8 chiffres, groupés « XX XXX XXX » par le script. Un numéro
+	 * collé avec +216, 00216, des espaces ou des chiffres arabes reste
+	 * accepté : la règle qui fait foi est `Tunisia::normalize_phone()`, côté
+	 * serveur. Le cadre est en `dir="ltr"` : un numéro se lit de gauche à
+	 * droite, même sur le site arabe.
+	 *
+	 * `inputmode="numeric"` : pavé de chiffres seuls. `tel-national` : le
+	 * navigateur propose le numéro enregistré sans l'indicatif.
+	 *
+	 * Sous le champ, la phrase « à quoi sert ce numéro » saisie dans FAMMA →
+	 * Pages → Fiche produit (`reassure_phone`) : vidée, elle disparaît. Sur le
+	 * site français, sa version derja suit sur sa propre ligne, comme les
+	 * lignes sous le prix. L'erreur reste le premier identifiant de
+	 * `aria-describedby` : le script la retrouve par lui.
+	 *
+	 * @return void
+	 */
+	private function phone_field(): void {
+		$error     = 'famma-express-billing-phone-error';
+		$note_id   = 'famma-express-phone-note';
+		$note      = Product_Content::text( 'reassure_phone' );
+		$derja     = is_rtl() ? '' : Product_Content::derja( 'reassure_phone' );
+		$described = '' !== $note ? $error . ' ' . $note_id : $error;
+		?>
+		<p class="famma-express__field famma-express__field--wide famma-express__phone">
+			<label for="famma-express-billing-phone">
+				<?php esc_html_e( 'Phone / الهاتف', 'famma-core' ); ?>
+				<abbr class="required" title="<?php esc_attr_e( 'required', 'famma-core' ); ?>">*</abbr>
+			</label>
+			<span class="famma-express__phone-box" dir="ltr">
+				<span class="famma-express__prefix" aria-hidden="true">+216</span>
+				<input
+					type="tel"
+					id="famma-express-billing-phone"
+					name="billing_phone"
+					autocomplete="tel-national"
+					inputmode="numeric"
+					enterkeyhint="next"
+					placeholder="XX XXX XXX"
+					maxlength="20"
+					aria-describedby="<?php echo esc_attr( $described ); ?>"
+					required
+				/>
+			</span>
+			<span class="famma-express__error" id="<?php echo esc_attr( $error ); ?>" hidden></span>
+			<?php if ( '' !== $note ) : ?>
+				<span class="famma-express__note" id="<?php echo esc_attr( $note_id ); ?>">
+					<span class="famma-express__note-line"><?php echo esc_html( $note ); ?></span>
+					<?php if ( '' !== $derja && $derja !== $note ) : ?>
+						<span class="famma-express__note-line" lang="ar" dir="rtl"><?php echo esc_html( $derja ); ?></span>
+					<?php endif; ?>
+				</span>
 			<?php endif; ?>
 		</p>
 		<?php
@@ -550,30 +644,63 @@ final class Express_Order {
 	}
 
 	/**
-	 * Liste déroulante des gouvernorats.
+	 * Adresse de livraison : liste des gouvernorats et ville facultative, dans un même cadre.
+	 *
+	 * Décision du propriétaire du 11/11 (maquette fiche produit v3) : la liste
+	 * native remplace le menu à recherche. On choisit dans la liste du
+	 * téléphone ; aucun texte tapé ne peut rester « non choisi » et bloquer
+	 * l'envoi. La ville, la cité ou la rue part dans `billing_address_1`, champ
+	 * standard de WooCommerce, facultatif pour la commande express
+	 * (`Express_Checkout::relax_address_fields()`).
 	 *
 	 * La liste vient de `WC()->countries`, donc du filtre posé par `Tunisia` :
-	 * une seule source pour les 24 gouvernorats, ici comme au checkout.
+	 * une seule source pour les 24 gouvernorats, ici comme au checkout. Le nom
+	 * arabe (`data-alt`) sert à reconnaître une ville tapée en arabe.
+	 *
+	 * Sans `data-famma-combo` : le menu à recherche de `express-order.js` ne
+	 * s'applique plus qu'à l'ancien gabarit, tant que le cache peut le servir.
 	 *
 	 * @return void
 	 */
-	private function governorate_field(): void {
+	private function address_field(): void {
 		$states = WC()->countries->get_states( 'TN' );
 		$states = is_array( $states ) ? $states : array();
 		$arabic = self::governorate_arabic_names();
+		$hint   = 'famma-express-address-hint';
 		?>
-		<p class="famma-express__field">
-			<label for="famma-express-billing-state">
-				<?php esc_html_e( 'Governorate / الولاية', 'famma-core' ); ?>
+		<div class="famma-express__field famma-express__field--wide famma-express__address">
+			<label for="famma-express-billing-address-1">
+				<?php esc_html_e( 'Adresse de livraison / عنوان التوصيل', 'famma-core' ); ?>
 				<abbr class="required" title="<?php esc_attr_e( 'required', 'famma-core' ); ?>">*</abbr>
 			</label>
-			<select id="famma-express-billing-state" name="billing_state" autocomplete="address-level1" data-famma-combo required>
-				<option value=""><?php esc_html_e( 'Choose… / اختار', 'famma-core' ); ?></option>
-				<?php foreach ( $states as $code => $label ) : ?>
-					<option value="<?php echo esc_attr( $code ); ?>" data-alt="<?php echo esc_attr( $arabic[ $code ] ?? '' ); ?>"><?php echo esc_html( $label ); ?></option>
-				<?php endforeach; ?>
-			</select>
-		</p>
+			<div class="famma-express__address-box">
+				<select id="famma-express-billing-state" name="billing_state" autocomplete="address-level1" aria-label="<?php esc_attr_e( 'Gouvernorat', 'famma-core' ); ?>" aria-describedby="<?php echo esc_attr( $hint ); ?>" required>
+					<option value=""><?php esc_html_e( 'Gouvernorat', 'famma-core' ); ?></option>
+					<?php foreach ( $states as $code => $label ) : ?>
+						<option value="<?php echo esc_attr( $code ); ?>" data-alt="<?php echo esc_attr( $arabic[ $code ] ?? '' ); ?>"><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<input
+					type="text"
+					id="famma-express-billing-address-1"
+					name="billing_address_1"
+					autocomplete="address-line1"
+					autocapitalize="words"
+					enterkeyhint="send"
+					maxlength="100"
+					placeholder="<?php esc_attr_e( 'Ville, cité, rue…', 'famma-core' ); ?>"
+					aria-describedby="<?php echo esc_attr( $hint ); ?>"
+				/>
+			</div>
+			<?php
+			/*
+			 * Une seule langue par site : mêlés dans une phrase, le français et
+			 * l'arabe s'entrecroisent à la coupure de ligne (3 lignes à 390 px).
+			 * Le site arabe affiche la derja par le fichier `famma-core-ar.po`.
+			 */
+			?>
+			<span class="famma-express__hint" id="<?php echo esc_attr( $hint ); ?>" aria-live="polite"><?php esc_html_e( 'Choisissez le gouvernorat. La ville ou la cité est facultative, elle aide le livreur.', 'famma-core' ); ?></span>
+		</div>
 		<?php
 	}
 
@@ -739,9 +866,21 @@ final class Express_Order {
 					<legend class="famma-express__legend"><?php esc_html_e( 'Your details / معلوماتك', 'famma-core' ); ?></legend>
 					<div class="famma-express__grid">
 						<?php
-						$this->text_field( 'billing_first_name', __( 'Full name / الاسم واللقب', 'famma-core' ), 'text', 'name', true );
-						$this->text_field( 'billing_phone', __( 'Phone / الهاتف', 'famma-core' ), 'tel', 'tel' );
-						$this->governorate_field();
+						// Téléphone d'abord : c'est lui qui permet de rappeler un client qui s'arrête en route.
+						$this->phone_field();
+						$this->text_field(
+							'billing_first_name',
+							__( 'Full name / الاسم واللقب', 'famma-core' ),
+							'text',
+							'name',
+							true,
+							true,
+							array(
+								'autocapitalize' => 'words',
+								'enterkeyhint'   => 'next',
+							)
+						);
+						$this->address_field();
 						?>
 					</div>
 				</fieldset>
@@ -773,6 +912,15 @@ final class Express_Order {
 				?>
 				<input type="hidden" name="payment_method" value="cod" />
 				<input type="hidden" name="billing_country" value="TN" />
+				<?php
+				/*
+				 * Identifiants du journal des visites, vides dans la page (servie
+				 * par le cache) et remplis par `visitor-journal.js`. Le serveur ne
+				 * s'en sert que si ses cookies manquent : voir `Visitor_Commerce::ids()`.
+				 */
+				?>
+				<input type="hidden" name="<?php echo esc_attr( Visitor_Commerce::FIELD_VISITOR ); ?>" value="" />
+				<input type="hidden" name="<?php echo esc_attr( Visitor_Commerce::FIELD_SESSION ); ?>" value="" />
 				<input type="hidden" name="famma_product_id" value="<?php echo esc_attr( (string) $product->get_id() ); ?>" />
 				<?php
 				/*
