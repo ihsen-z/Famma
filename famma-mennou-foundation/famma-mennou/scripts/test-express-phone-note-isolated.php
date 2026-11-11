@@ -7,7 +7,9 @@
  * `Product_Content` : texte vide → rien sous le champ ; texte saisi → affiché
  * échappé et relié au champ par `aria-describedby`, l'erreur gardant la
  * première place ; derja en seconde ligne sur le site français seulement.
- * Le schéma réel de `Product_Content` est lu pour la proposition par défaut.
+ * Le schéma réel de `Product_Content` est lu : par décision du propriétaire
+ * (11/11/2026), la phrase par défaut est vide, donc rien ne s'affiche tant
+ * qu'il ne l'a pas écrite dans l'admin.
  *
  * @package Famma_Test_Scenarios
  */
@@ -137,11 +139,12 @@ namespace {
 	);
 	check( str_contains( $html, '>نكلموك قبل ما نبعثوها.<' ) && ! str_contains( $html, 'Nous vous appelons' ) && ! str_contains( $html, 'lang="ar"' ), 'site arabe : la derja seule, sans seconde ligne' );
 
-	// Proposition par défaut, lue dans le vrai schéma (le double ci-dessus ne remplace que la lecture).
+	// Textes par défaut, lus dans le vrai schéma (le double ci-dessus ne remplace que la lecture).
 	$source = (string) file_get_contents( $famma_plugin . '/includes/product-content.php' );
-	check( 1 === preg_match( "/'key'\s*=> 'reassure_phone',\s*'type'\s*=> 'text',/", $source ), 'admin : champ reassure_phone dans FAMMA → Pages → Fiche produit' );
-	check( str_contains( $source, "'default_fr' => 'Nous vous appelons sur ce numéro pour confirmer la commande avant l’envoi.'" ), 'admin : proposition française par défaut' );
-	check( str_contains( $source, "'default_ar' => 'نكلموك على النمرة هذي باش نأكدو الطلبية قبل ما نبعثوها.'" ), 'admin : proposition derja par défaut' );
+	$entry  = preg_match( "/'key'\s*=> 'reassure_phone',.*?'default_ar' => [^\n]*/s", $source, $m ) ? $m[0] : '';
+	check( 1 === preg_match( "/'key'\s*=> 'reassure_phone',\s*'type'\s*=> 'text',/", $entry ), 'admin : champ reassure_phone dans FAMMA → Pages → Fiche produit' );
+	check( 1 === preg_match( "/'default_fr' => '',/", $entry ), 'défaut français vide (décision du 11/11) : rien sous le téléphone avant saisie' );
+	check( 1 === preg_match( "/'default_ar' => '',/", $entry ), 'défaut derja vide (décision du 11/11)' );
 
 	echo 'RESULT ' . $passed . '/' . ( $passed + $failed ) . ' contrôles de la phrase sous le téléphone réussis' . ( $failed ? ', ' . $failed . ' ÉCHEC(S)' : '' ) . '.' . PHP_EOL;
 	exit( $failed ? 1 : 0 );

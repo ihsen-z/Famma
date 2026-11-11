@@ -95,9 +95,9 @@ final class Product_Content {
 				'type'       => 'text',
 				'label'      => __( 'Formulaire — phrase sous le téléphone', 'famma-core' ),
 				'help'       => __( 'Dit au client à quoi sert son numéro. N’y promettez que ce que vous faites vraiment. Vide : rien n’est affiché sous le téléphone.', 'famma-core' ),
-				// Même promesse que « Nos engagements » (page À propos) : commande confirmée par téléphone avant l'expédition.
-				'default_fr' => 'Nous vous appelons sur ce numéro pour confirmer la commande avant l’envoi.',
-				'default_ar' => 'نكلموك على النمرة هذي باش نأكدو الطلبية قبل ما نبعثوها.',
+				// Vide par décision du propriétaire (11/11/2026) : rien sous le téléphone tant qu'il n'a pas écrit sa phrase ici.
+				'default_fr' => '',
+				'default_ar' => '',
 			),
 			array(
 				'key'        => 'whatsapp_card',

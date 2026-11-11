@@ -46,9 +46,9 @@ deviennent des commandes de 33 % à 60 %.
 ### Phrase sous le téléphone
 
 Nouveau texte « Formulaire — phrase sous le téléphone » dans FAMMA → Pages →
-Fiche produit (français et derja). Vidé, il disparaît. Proposition par
-défaut, à valider : « Nous vous appelons sur ce numéro pour confirmer la
-commande avant l'envoi. »
+Fiche produit (français et derja). Vide par défaut, sur décision du
+propriétaire du 11/11 : rien ne s'affiche sous le téléphone tant qu'une
+phrase n'y est pas écrite.
 
 ### Mesure
 
