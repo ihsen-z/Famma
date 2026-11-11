@@ -201,8 +201,8 @@ Fait : `Express_Order::address_field()` remplace `governorate_field()`. L'aide s
 **Taille :** S.
 
 ### Point de contrôle 2 : après les tâches 3 à 6
-- [ ] Parcours complet en local, en émulation mobile 390 px avec l'agent utilisateur du navigateur Facebook : téléphone, nom, « Hammamet », taille, commande créée
-- [ ] Revue du propriétaire : ordre des champs, texte de la phrase (phrase : laissée vide le 11/11 ; noms courants des villes : refusés le 11/11, liste officielle seule)
+- [ ] Parcours complet en local, en émulation mobile 390 px avec l'agent utilisateur du navigateur Facebook : téléphone, nom, « Hammamet », taille, commande créée *(remplacé le 11/11 par le parcours réel en ligne de commande sur le site Local, 24/24, et l'intégration Docker ; navigateur non fait, le site Local sert la copie principale)*
+- [x] Revue du propriétaire : ordre des champs, texte de la phrase *(11/11 : ordre téléphone, nom, adresse et phrases en derja du formulaire VALIDÉS ; phrase sous le téléphone laissée vide ; noms courants des villes refusés, liste officielle seule ; clavier réel de l'appli Facebook à essayer après la mise en ligne)*
 
 ---
 
