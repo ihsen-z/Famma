@@ -19,6 +19,8 @@
  * - transitions : transition de vue entre pages de la boutique (CSS seul) ;
  * - tools       : puces rayons et budget collées sous l'en-tête, sur mobile
  *                 (inc/new-look-tools.php) ;
+ * - how         : bloc « Comment commander » en bas de la boutique
+ *                 (inc/new-look-how.php) ;
  * - dock        : barre « Aujourd'hui 0 DT · À la réception », remplie côté
  *                 navigateur — jamais rendue avec un panier dans le HTML en cache.
  *
@@ -78,6 +80,7 @@ function famma_child_new_look_parts(): array {
 		$parts[] = 'journey';
 	} else {
 		$parts[] = 'tools';
+		$parts[] = 'how';
 	}
 
 	return array_values( array_filter( $parts, 'famma_child_new_look' ) );

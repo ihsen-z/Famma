@@ -144,6 +144,7 @@
 				<element value="famma_child_tools_budget_url"/>
 				<element value="famma_child_tools_category_chips"/>
 				<element value="famma_child_new_look_tools"/>
+				<element value="famma_child_new_look_how"/>
 				<element value="famma_child_defer_image"/>
 				<element value="famma_child_remove_parent_callback"/>
 				<element value="famma_child_swap_scrollbar_script"/>

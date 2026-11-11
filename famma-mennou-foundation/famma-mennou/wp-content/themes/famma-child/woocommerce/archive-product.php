@@ -151,6 +151,11 @@ do_action( 'woocommerce_before_main_content' );
 		</div>
 	</div>
 
+	<?php
+	/** Après la grille : bloc « Comment commander » du nouveau look (inc/new-look-how.php). */
+	do_action( 'famma_child_after_shop_results' );
+	?>
+
 	<?php famma_child_shop_whatsapp_band(); ?>
 
 </div>

@@ -37,6 +37,7 @@ require_once __DIR__ . '/includes/home-hero-style.php';
 require_once __DIR__ . '/includes/new-look.php';
 require_once __DIR__ . '/includes/delivery-content.php';
 require_once __DIR__ . '/includes/returns-content.php';
+require_once __DIR__ . '/includes/shop-content.php';
 require_once __DIR__ . '/includes/newsletter.php';
 require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';

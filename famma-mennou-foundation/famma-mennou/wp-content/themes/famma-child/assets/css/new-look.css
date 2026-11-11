@@ -251,9 +251,13 @@ body.famma-dock-on .famma-wa {
    modifiables dans l'éditeur, et traduits par TranslatePress sur /ar/.
    L'état écrit ici est l'état final (route pleine, étapes cochées) : c'est
    ce que voient les navigateurs sans `animation-timeline` et les visiteurs
-   qui demandent moins de mouvement. */
+   qui demandent moins de mouvement.
+   Le même dessin sert au bloc « Comment commander » de la boutique
+   (.famma-how--journey, brique how, inc/new-look-how.php). */
 
-body.famma-nl-journey .famma-how {
+body.famma-nl-journey .famma-how,
+
+.famma-how--journey {
 	--node: 44px;
 	margin-block: var(--sp-12) 0;
 	padding: clamp(32px, 6vw, 56px) clamp(20px, 5vw, 48px);
@@ -262,17 +266,23 @@ body.famma-nl-journey .famma-how {
 	color: var(--famma-white);
 }
 
-body.famma-nl-journey .famma-how .famma-section__title {
+body.famma-nl-journey .famma-how .famma-section__title,
+
+.famma-how--journey .famma-section__title {
 	color: inherit;
 	text-wrap: balance;
 }
 
-body.famma-nl-journey .famma-how > p {
+body.famma-nl-journey .famma-how > p,
+
+.famma-how--journey > p {
 	color: var(--famma-on-dark);
 	line-height: 1.65;
 }
 
-body.famma-nl-journey .famma-how .famma-steps {
+body.famma-nl-journey .famma-how .famma-steps,
+
+.famma-how--journey .famma-steps {
 	position: relative;
 	display: grid;
 	gap: var(--sp-8);
@@ -284,7 +294,9 @@ body.famma-nl-journey .famma-how .famma-steps {
 
 /* La route : un tireté et son remplissage orange, d'une pastille à l'autre. */
 body.famma-nl-journey .famma-how .famma-steps::before,
-body.famma-nl-journey .famma-how .famma-steps::after {
+.famma-how--journey .famma-steps::before,
+body.famma-nl-journey .famma-how .famma-steps::after,
+.famma-how--journey .famma-steps::after {
 	content: "";
 	position: absolute;
 	inset-block: calc(var(--node) / 2);
@@ -293,16 +305,22 @@ body.famma-nl-journey .famma-how .famma-steps::after {
 	pointer-events: none;
 }
 
-body.famma-nl-journey .famma-how .famma-steps::before {
+body.famma-nl-journey .famma-how .famma-steps::before,
+
+.famma-how--journey .famma-steps::before {
 	background: repeating-linear-gradient(180deg, var(--famma-on-dark-muted) 0 8px, transparent 8px 16px);
 }
 
-body.famma-nl-journey .famma-how .famma-steps::after {
+body.famma-nl-journey .famma-how .famma-steps::after,
+
+.famma-how--journey .famma-steps::after {
 	background: var(--famma-orange);
 	transform-origin: 50% 0;
 }
 
-body.famma-nl-journey .famma-how .famma-steps li {
+body.famma-nl-journey .famma-how .famma-steps li,
+
+.famma-how--journey .famma-steps li {
 	position: relative;
 	display: flex;
 	align-items: center;
@@ -315,7 +333,8 @@ body.famma-nl-journey .famma-how .famma-steps li {
 }
 
 /* La pastille : numéro de l'étape, puis coche une fois l'étape atteinte. */
-body.famma-nl-journey .famma-how .famma-steps li::before {
+body.famma-nl-journey .famma-how .famma-steps li::before,
+.famma-how--journey .famma-steps li::before {
 	content: counter(famma-step);
 	position: absolute;
 	inset-block-start: 50%;
@@ -334,7 +353,9 @@ body.famma-nl-journey .famma-how .famma-steps li::before {
 	font-weight: var(--fw-semibold);
 }
 
-body.famma-nl-journey .famma-how .famma-steps li::after {
+body.famma-nl-journey .famma-how .famma-steps li::after,
+
+.famma-how--journey .famma-steps li::after {
 	content: "";
 	position: absolute;
 	inset-block-start: 50%;
@@ -352,19 +373,24 @@ body.famma-nl-journey .famma-how .famma-steps li::after {
 /* L'animation au défilement : CSS seul, aucun script. */
 @supports (animation-timeline: view()) {
 	@media (prefers-reduced-motion: no-preference) {
-		body.famma-nl-journey .famma-how .famma-steps::after {
+		body.famma-nl-journey .famma-how .famma-steps::after,
+		.famma-how--journey .famma-steps::after {
 			animation: famma-nl-road linear both;
 			animation-timeline: view();
 			animation-range: entry 80% cover 55%;
 		}
 
-		body.famma-nl-journey .famma-how .famma-steps li::before {
+		body.famma-nl-journey .famma-how .famma-steps li::before,
+
+		.famma-how--journey .famma-steps li::before {
 			animation: famma-nl-node linear both;
 			animation-timeline: view();
 			animation-range: cover 40% cover 50%;
 		}
 
-		body.famma-nl-journey .famma-how .famma-steps li::after {
+		body.famma-nl-journey .famma-how .famma-steps li::after,
+
+		.famma-how--journey .famma-steps li::after {
 			animation: famma-nl-check linear both;
 			animation-timeline: view();
 			animation-range: cover 40% cover 50%;
@@ -576,4 +602,27 @@ body.famma-nl-motion .famma-hero2__deck.has-tilt {
 	.famma-tools {
 		display: none;
 	}
+}
+
+/* --- Boutique : bloc « Comment commander » (brique how) ---
+   Dessin partagé avec la brique journey, plus haut. La boutique ne charge
+   pas home.css : le titre et l'écart avant la bande WhatsApp sont posés ici. */
+.famma-how--journey {
+	margin-block-end: var(--sp-12);
+}
+
+.famma-how--journey .famma-section__title {
+	margin: 0;
+	font-size: clamp(1.25rem, 2.6vw, 1.75rem);
+	font-weight: var(--fw-bold);
+	line-height: var(--lh-tight);
+}
+
+.famma-how--journey .famma-steps li > span {
+	color: var(--famma-on-dark);
+}
+
+.famma-how--journey .famma-steps b {
+	color: var(--famma-white);
+	font-weight: var(--fw-semibold);
 }
