@@ -1,6 +1,26 @@
 # Changelog — FAMMA Core
 
-## 0.3.14 — 2026-11-12 (préparée, non envoyée)
+## 0.3.15 — 2026-11-12 (préparée, non envoyée)
+
+Toute la galerie du produit proposé dans la fiche rapide « Découvrir le
+produit ».
+
+### Modifications
+
+- **Toutes les photos** du produit proposé (principale + galerie) dans la
+  fiche rapide, au lieu de 5 : plafond de sécurité porté à 12
+  (`Offer_Settings::MAX_PHOTOS`). Seules les vraies images comptent : une
+  pièce jointe supprimée ou qui n'est pas une image est écartée.
+- **Flèches précédent / suivant** sur la photo (44 px, masquées au début et
+  à la fin, inversées en arabe), **compteur « 2 / 6 »** annoncé aux
+  lecteurs d'écran, et **points cliquables** pour aller à une photo.
+  Le glissement au doigt reste possible.
+- Défilement calculé sur la position réelle de la photo : juste en
+  français comme en arabe ; un double toucher rapide ne saute pas de photo.
+- Au-delà des deux premières, les photos se chargent à l'approche
+  (`loading=lazy`).
+
+## 0.3.14 — 2026-11-12 (en prod depuis le 12/11, lot 28)
 
 Fiche rapide « Découvrir le produit » dans l'offre après achat, pour la
 cliente qui ne connaît pas l'article proposé.

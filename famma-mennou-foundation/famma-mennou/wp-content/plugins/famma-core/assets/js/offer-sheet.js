@@ -22,9 +22,15 @@
 	var pushed = false;
 	var tracked = false;
 
-	/** Photos chargées à la première ouverture seulement. */
+	/**
+	 * Photos chargées à la première ouverture seulement ; au-delà des deux
+	 * premières, le navigateur les charge à l'approche (loading=lazy).
+	 */
 	function loadPhotos() {
-		sheet.querySelectorAll( 'img[data-src]' ).forEach( function ( img ) {
+		sheet.querySelectorAll( 'img[data-src]' ).forEach( function ( img, i ) {
+			if ( i > 1 ) {
+				img.loading = 'lazy';
+			}
 			if ( img.dataset.srcset ) {
 				img.srcset = img.dataset.srcset;
 			}
@@ -72,6 +78,7 @@
 		if ( photos ) {
 			photos.scrollLeft = 0;
 		}
+		setActive( 0 );
 		root.classList.add( 'famma-sheet-open' );
 		// Une entrée d'historique : le bouton retour du téléphone ferme la
 		// fiche au lieu de quitter la page de remerciement.
@@ -165,21 +172,80 @@
 		drag.addEventListener( 'pointercancel', end );
 	}
 
-	// Points sous les photos : suivent la photo visible.
+	// Galerie : glisser (doigt, pavé tactile, flèches du clavier), flèches
+	// précédent / suivant, points cliquables et compteur « 2 / 6 ».
 	var gallery = sheet.querySelector( '.famma-sheet__gallery' );
+	var slides = gallery ? gallery.querySelectorAll( '.famma-sheet__slide' ) : [];
 	var dots = sheet.querySelectorAll( '.famma-sheet__dot' );
-	if ( gallery && dots.length > 1 && 'IntersectionObserver' in window ) {
-		var slides = gallery.querySelectorAll( '.famma-sheet__slide' );
+	var prev = sheet.querySelector( '[data-famma-gallery="prev"]' );
+	var next = sheet.querySelector( '[data-famma-gallery="next"]' );
+	var counter = sheet.querySelector( '[data-famma-gallery-index]' );
+	var current = 0;
+	var steering = 0;
+	var calm = window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+
+	function setActive( index ) {
+		current = index;
+		dots.forEach( function ( dot, i ) {
+			dot.classList.toggle( 'is-active', i === index );
+			if ( i === index ) {
+				dot.setAttribute( 'aria-current', 'true' );
+			} else {
+				dot.removeAttribute( 'aria-current' );
+			}
+		} );
+		if ( counter ) {
+			counter.textContent = String( index + 1 );
+		}
+		if ( prev ) {
+			prev.disabled = 0 === index;
+		}
+		if ( next ) {
+			next.disabled = index === slides.length - 1;
+		}
+	}
+
+	// Défilement calculé sur la position réelle de la photo : juste en
+	// français comme en arabe (sens de lecture inversé).
+	function goTo( index, smooth ) {
+		if ( ! gallery || ! slides.length ) {
+			return;
+		}
+		index = Math.max( 0, Math.min( slides.length - 1, index ) );
+		// Pendant le défilement fluide, les photos traversées ne doivent pas
+		// changer le compteur (sinon un double toucher perd une photo).
+		steering = Date.now() + 700;
+		var delta = slides[ index ].getBoundingClientRect().left - gallery.getBoundingClientRect().left;
+		gallery.scrollBy( { left: delta, behavior: smooth && ! calm ? 'smooth' : 'auto' } );
+		setActive( index );
+	}
+
+	if ( prev ) {
+		prev.addEventListener( 'click', function () {
+			goTo( current - 1, true );
+		} );
+	}
+	if ( next ) {
+		next.addEventListener( 'click', function () {
+			goTo( current + 1, true );
+		} );
+	}
+	dots.forEach( function ( dot, i ) {
+		dot.addEventListener( 'click', function () {
+			goTo( i, true );
+		} );
+	} );
+
+	if ( gallery && slides.length > 1 && 'IntersectionObserver' in window ) {
 		var observer = new IntersectionObserver(
 			function ( entries ) {
+				if ( Date.now() < steering ) {
+					return;
+				}
 				entries.forEach( function ( entry ) {
-					if ( ! entry.isIntersecting ) {
-						return;
+					if ( entry.isIntersecting ) {
+						setActive( Array.prototype.indexOf.call( slides, entry.target ) );
 					}
-					var index = Array.prototype.indexOf.call( slides, entry.target );
-					dots.forEach( function ( dot, i ) {
-						dot.classList.toggle( 'is-active', i === index );
-					} );
 				} );
 			},
 			{ root: gallery, threshold: 0.6 }

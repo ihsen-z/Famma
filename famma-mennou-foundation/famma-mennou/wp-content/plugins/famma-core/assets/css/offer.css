@@ -428,14 +428,87 @@ html.famma-sheet-open {
 	object-fit: contain;
 }
 
-.famma-offer .famma-sheet__dots {
-	display: flex;
-	gap: 6px;
-	justify-content: center;
-	padding-block: 8px 0;
+.famma-offer .famma-sheet__media {
+	position: relative;
 }
 
+/* Flèches précédent / suivant : visibles partout, cible de 44 px. */
+.famma-offer .famma-sheet__nav {
+	position: absolute;
+	z-index: 1;
+	inset-block-start: 50%;
+	display: grid;
+	place-items: center;
+	inline-size: 44px;
+	block-size: 44px;
+	margin: -22px 0 0;
+	padding: 0;
+	border: 0;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.92);
+	box-shadow: 0 2px 8px rgba(17, 24, 39, 0.2);
+	color: var(--famma-text, #111827);
+	cursor: pointer;
+	transition: opacity 0.2s ease;
+}
+
+.famma-offer .famma-sheet__nav--prev {
+	inset-inline-start: 8px;
+}
+
+.famma-offer .famma-sheet__nav--next {
+	inset-inline-end: 8px;
+}
+
+.famma-offer .famma-sheet__nav:disabled {
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* En arabe, « précédent » est à droite : la flèche se retourne. */
+.rtl .famma-offer .famma-sheet__nav .famma-icon,
+[dir="rtl"] .famma-offer .famma-sheet__nav .famma-icon {
+	transform: scaleX(-1);
+}
+
+.famma-offer .famma-sheet__count {
+	position: absolute;
+	inset-block-end: 8px;
+	inset-inline-start: 8px;
+	padding: 2px 9px;
+	border-radius: 999px;
+	background: rgba(17, 24, 39, 0.72);
+	color: #FFF;
+	font-size: 0.75rem;
+	font-weight: 600;
+	line-height: 1.6;
+}
+
+.famma-offer .famma-sheet__dots {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	padding-block: 4px 0;
+}
+
+/* Point cliquable : cible de 24 px, pastille visible de 7 px. */
 .famma-offer .famma-sheet__dot {
+	display: grid;
+	place-items: center;
+	inline-size: 24px;
+	min-inline-size: 0;
+	block-size: 24px;
+	min-block-size: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	cursor: pointer;
+}
+
+.famma-offer .famma-sheet__dot::before {
+	content: "";
 	inline-size: 7px;
 	block-size: 7px;
 	border-radius: 999px;
@@ -443,9 +516,19 @@ html.famma-sheet-open {
 	transition: inline-size 0.2s ease;
 }
 
-.famma-offer .famma-sheet__dot.is-active {
+.famma-offer .famma-sheet__dot.is-active::before {
 	inline-size: 18px;
 	background: var(--famma-orange, #FF7A00);
+}
+
+.famma-offer .famma-sheet__dot.is-active {
+	inline-size: 30px;
+}
+
+.famma-offer .famma-sheet__nav:focus-visible,
+.famma-offer .famma-sheet__dot:focus-visible {
+	outline: 3px solid var(--famma-blue, #1D4ED8);
+	outline-offset: 2px;
 }
 
 .famma-offer .famma-sheet__content {
@@ -648,7 +731,8 @@ html.famma-sheet-open {
 @media (prefers-reduced-motion: reduce) {
 	.famma-offer .famma-sheet,
 	.famma-offer .famma-sheet[open],
-	.famma-offer .famma-sheet__dot {
+	.famma-offer .famma-sheet__nav,
+	.famma-offer .famma-sheet__dot::before {
 		transition: none;
 		animation: none;
 	}

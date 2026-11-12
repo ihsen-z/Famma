@@ -46,8 +46,11 @@ final class Offer_Settings {
 	/** Nombre maximal de points forts affichés. */
 	public const MAX_POINTS = 3;
 
-	/** Nombre maximal de photos dans la fiche rapide. */
-	public const MAX_PHOTOS = 5;
+	/**
+	 * Nombre maximal de photos dans la fiche rapide : toute la galerie du
+	 * produit, avec un plafond de sécurité (photos chargées à l'ouverture).
+	 */
+	public const MAX_PHOTOS = 12;
 
 	/** Commande : horodatage du premier affichage de l'offre. */
 	public const ORDER_SHOWN = '_famma_offer_shown_at';

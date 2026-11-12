@@ -444,17 +444,38 @@ final class Offer_Thankyou {
 				</button>
 				<div class="famma-sheet__scroll">
 					<?php if ( array() !== $photos ) : ?>
-						<div class="famma-sheet__gallery" tabindex="0" aria-label="<?php esc_attr_e( 'Photos du produit', 'famma-core' ); ?>">
-							<?php foreach ( $photos as $n => $photo_id ) : ?>
-								<figure class="famma-sheet__slide">
-									<?php $this->lazy_image( $photo_id, $product->get_name(), $n + 1, count( $photos ) ); ?>
-								</figure>
-							<?php endforeach; ?>
-						</div>
-						<?php if ( count( $photos ) > 1 ) : ?>
-							<div class="famma-sheet__dots" aria-hidden="true">
+						<?php $total = count( $photos ); ?>
+						<div class="famma-sheet__media">
+							<div class="famma-sheet__gallery" tabindex="0" aria-label="<?php esc_attr_e( 'Photos du produit', 'famma-core' ); ?>">
 								<?php foreach ( $photos as $n => $photo_id ) : ?>
-									<span class="famma-sheet__dot<?php echo 0 === $n ? ' is-active' : ''; ?>"></span>
+									<figure class="famma-sheet__slide">
+										<?php $this->lazy_image( $photo_id, $product->get_name(), $n + 1, $total ); ?>
+									</figure>
+								<?php endforeach; ?>
+							</div>
+							<?php if ( $total > 1 ) : ?>
+								<button type="button" class="famma-sheet__nav famma-sheet__nav--prev" data-famma-gallery="prev" disabled>
+									<?php $this->icon( 'prev' ); ?>
+									<span class="screen-reader-text"><?php esc_html_e( 'Photo précédente', 'famma-core' ); ?></span>
+								</button>
+								<button type="button" class="famma-sheet__nav famma-sheet__nav--next" data-famma-gallery="next">
+									<?php $this->icon( 'next' ); ?>
+									<span class="screen-reader-text"><?php esc_html_e( 'Photo suivante', 'famma-core' ); ?></span>
+								</button>
+								<span class="famma-sheet__count" aria-live="polite"><span dir="ltr"><span data-famma-gallery-index>1</span> / <?php echo esc_html( (string) $total ); ?></span></span>
+							<?php endif; ?>
+						</div>
+						<?php if ( $total > 1 ) : ?>
+							<div class="famma-sheet__dots">
+								<?php foreach ( $photos as $n => $photo_id ) : ?>
+									<button type="button" class="famma-sheet__dot<?php echo 0 === $n ? ' is-active' : ''; ?>" data-famma-gallery-dot="<?php echo esc_attr( (string) $n ); ?>"<?php echo 0 === $n ? ' aria-current="true"' : ''; ?>>
+										<span class="screen-reader-text">
+											<?php
+											/* translators: 1: photo number, 2: number of photos. */
+											echo esc_html( sprintf( __( 'Photo %1$d sur %2$d', 'famma-core' ), $n + 1, $total ) );
+											?>
+										</span>
+									</button>
 								<?php endforeach; ?>
 							</div>
 						<?php endif; ?>
@@ -572,7 +593,9 @@ final class Offer_Thankyou {
 	 */
 	private function photo_ids( \WC_Product $product ): array {
 		$ids = array_merge( array( (int) $product->get_image_id() ), array_map( 'intval', $product->get_gallery_image_ids() ) );
-		$ids = array_values( array_unique( array_filter( $ids ) ) );
+		// Seules les vraies images comptent : le compteur « 2 / 6 » doit
+		// correspondre aux photos réellement affichées.
+		$ids = array_values( array_filter( array_unique( array_filter( $ids ) ), 'wp_attachment_is_image' ) );
 		return array_slice( $ids, 0, Offer_Settings::MAX_PHOTOS );
 	}
 
@@ -617,6 +640,8 @@ final class Offer_Thankyou {
 		$paths = array(
 			'eye'   => '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
 			'close' => '<path d="M6 6l12 12M18 6 6 18"/>',
+			'prev'  => '<path d="m15 5-7 7 7 7"/>',
+			'next'  => '<path d="m9 5 7 7-7 7"/>',
 			'check' => '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
 			'cash'  => '<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
 			'box'   => '<path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/>',
