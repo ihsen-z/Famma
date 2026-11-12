@@ -1,6 +1,47 @@
 # Changelog — FAMMA Core
 
-## 0.3.12 — 2026-11-12 (préparée, non envoyée)
+## 0.3.14 — 2026-11-12 (préparée, non envoyée)
+
+Accueil animé, lot 2 de la maquette. Construite sur la 0.3.13 en
+production. Thème FAMMA Child 0.2.2.
+
+### Ajouts
+
+- **Case « Accueil : animations de la maquette »** (brique `home_motion`,
+  FAMMA → Pages → Nouveau look), **livrée décochée**. Page d'accueil
+  seulement :
+  - barre d'avancement de la lecture en haut de l'écran ;
+  - mascotte du logo qui cligne, antenne et étincelles ; clin d'œil à
+    chaque ajout au panier ; mascotte à la place du cadeau dans
+    l'infolettre, clin d'œil à son arrivée ;
+  - entrée du héros (nom, A, slogan, accroche, avantages, bouton), pile en
+    ressort sans fondu (l'image LCP reste peinte d'emblée), bulle fantôme
+    et deux étincelles ;
+  - carrousel : bouton pause (`aria-pressed`) et minuteur ; la barre pleine
+    fait avancer, se fige au survol, au clavier, hors écran et sur pause ;
+  - parcours « Vous payez à la livraison » (avec la case du parcours) :
+    bande qui s'ouvre, colis qui roule sur la route, route horizontale dès
+    800 px, 24 gouvernorats (états WooCommerce) en deux bandes décoratives ;
+  - apparition des sections au défilement.
+- Tout mouvement est coupé pour « moins d'animations » ; les effets liés au
+  défilement sont en CSS (`animation-timeline`), sans écouteur de
+  défilement. Feuille `new-look-home.css` (4,2 Ko compressés), chargée
+  seulement quand la case est cochée.
+
+### Contrôles (banc Docker, 12/11)
+
+- Case décochée : accueil, boutique, fiche et panier identiques au code de
+  la 0.3.13 (hors identifiants aléatoires WooCommerce).
+- Case cochée : balisage attendu, aucun débordement à 375 et 1024 px,
+  console propre, `debug.log` sans ligne ajoutée, parcours COD conforme
+  (payée seulement à « livrée », pas de double encaissement).
+
+## 0.3.13 — 2026-11-12 (en production depuis le 12/11/2026, lot 27)
+
+Bloc d'offre après achat visible au premier écran de la page de
+remerciement.
+
+## 0.3.12 — 2026-11-11 (en production depuis le 11/11/2026, lot 26)
 
 Offre après achat en un clic. Construite sur la 0.3.11 (non envoyée) :
 les deux partent ensemble ou la 0.3.11 d'abord.
@@ -41,7 +82,7 @@ les deux partent ensemble ou la 0.3.11 d'abord.
 - Non vérifié : rendu réel de la page de remerciement et clic dans un
   navigateur (la jonction du site Local pointe sur la copie principale).
 
-## 0.3.11 — 2026-11-11 (préparée, non envoyée)
+## 0.3.11 — 2026-11-11 (en production depuis le 11/11/2026, lot 26)
 
 Accueil rapproché de la maquette (« lot 1 », mise au propre) et bande
 « 0 DT » de la fiche. Trois nouvelles cases dans FAMMA → Pages → « Nouveau
