@@ -171,6 +171,10 @@ add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_home_extras', 24 );
  * Les deux moitiés de la bascule restent exclusives : le lien du panneau
  * se range quand l'icône apparaît, le compte existe toujours une seule fois.
  *
+ * Logo (173 px) + trois boutons de 48 px : sous 430 px, l'en-tête resserre
+ * ses marges et ses écarts pour ne pas déborder (360 px = Android courant).
+ * Sous 360 px, la place manque : le compte reste dans le menu.
+ *
  * @return void
  */
 function famma_child_new_look_mobile_account(): void {
@@ -180,7 +184,8 @@ function famma_child_new_look_mobile_account(): void {
 
 	wp_add_inline_style(
 		'famma-layout',
-		'@media (max-width:999.98px){.famma-header__action--account{display:inline-flex}.famma-header__panel-account{display:none}}'
+		'@media (min-width:360px) and (max-width:999.98px){.famma-header__action--account{display:inline-flex}.famma-header__panel-account{display:none}}'
+		. '@media (min-width:360px) and (max-width:429.98px){.famma-container.famma-header__inner{--gutter:14px;--chrome-header-gap:4px}.famma-header__actions{gap:0}}'
 	);
 }
 add_action( 'wp_enqueue_scripts', 'famma_child_new_look_mobile_account', 22 );
