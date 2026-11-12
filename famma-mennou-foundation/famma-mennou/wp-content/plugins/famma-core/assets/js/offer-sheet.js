@@ -63,6 +63,15 @@
 		loadPhotos();
 		sheet.style.transform = '';
 		sheet.showModal();
+		// Toujours repartir des photos, même après une première lecture.
+		var scroller = sheet.querySelector( '.famma-sheet__scroll' );
+		var photos = sheet.querySelector( '.famma-sheet__gallery' );
+		if ( scroller ) {
+			scroller.scrollTop = 0;
+		}
+		if ( photos ) {
+			photos.scrollLeft = 0;
+		}
 		root.classList.add( 'famma-sheet-open' );
 		// Une entrée d'historique : le bouton retour du téléphone ferme la
 		// fiche au lieu de quitter la page de remerciement.

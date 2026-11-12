@@ -304,7 +304,7 @@ final class Offer_Thankyou {
 			$this->message(
 				sprintf(
 					/* translators: %s: new order total. */
-					__( 'C\'est ajouté à votre commande. Nouveau total à payer à la livraison : %s DT.', 'famma-core' ),
+					__( 'C\'est ajouté à votre commande. Nouveau total à payer à la livraison : %s DT.', 'famma-core' ),
 					self::amount( (float) $order->get_total() )
 				),
 				__( 'تزاد للكوموند متاعك', 'famma-core' ),

@@ -187,7 +187,9 @@ final class Offer_Settings {
 	 */
 	public static function points( string $raw ): array {
 		$out = array();
-		foreach ( preg_split( '/\R/', $raw ) as $line ) {
+		// Fins de ligne seulement : sans le drapeau u, « \R » couperait les lettres
+		// arabes dont un octet vaut 0x85 (ex. « م »).
+		foreach ( preg_split( '/\r\n|\r|\n/u', $raw ) as $line ) {
 			$parts = array_map( 'trim', explode( '|', (string) $line, 2 ) );
 			if ( '' === $parts[0] ) {
 				continue;
