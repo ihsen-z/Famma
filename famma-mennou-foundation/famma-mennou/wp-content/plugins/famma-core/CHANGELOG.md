@@ -1,5 +1,27 @@
 # Changelog — FAMMA Core
 
+## 0.3.17 — 2026-11-12 (préparée, non envoyée)
+
+Passerelle avec le plugin indépendant **Upsell One Click** (offre après achat
+en un clic, futur produit vendu).
+
+### Ajouts
+
+- `includes/uoc-bridge.php` : quand Upsell One Click est actif, l'offre après
+  achat de famma-core **se met en veille** (bloc de remerciement et onglet
+  produit) ; désactiver le plugin lui rend aussitôt la main.
+- **Reprise unique** des réglages `_famma_offer_*` des produits, de
+  l'historique des 60 derniers jours et des textes FAMMA (français + derja,
+  statut « En attente de confirmation », paiement à la livraison). Copie
+  seulement : rien n'est effacé, rien n'est écrasé.
+- Produits à tailles exclus et commandes d'essai hors des chiffres, comme
+  avant ; chaque étape est recopiée dans les méta `_famma_offer_*` et l'ajout
+  met toujours en file l'événement Meta OfferAccepted (si la case est
+  cochée).
+
+Sans Upsell One Click installé, cette version se comporte exactement comme
+la 0.3.16.
+
 ## 0.3.16 — 2026-11-12 (accueil, lot 3 de la maquette) · thème famma-child 0.2.3
 
 Six nouvelles cases dans FAMMA → Pages → Nouveau look, **toutes livrées
