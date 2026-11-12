@@ -1,5 +1,40 @@
 # Changelog — FAMMA Core
 
+## 0.3.22 — 2026-11-12 (« Mon compte » aligné sur la maquette, étape C : adresses et informations) · thème famma-child 0.2.9
+
+Nouvelle case `acct_forms` (« Mon compte : adresses et informations de la
+maquette »), **livrée décochée**, qui agit seulement avec `acct_look`. Case
+décochée : « Mes adresses » et « Mes informations » restent ceux de
+WooCommerce.
+
+- « Mes adresses » : l'adresse du client dans une carte (icône maison,
+  « Par défaut », nom, téléphone, gouvernorat et adresse) ou une carte
+  « Ajouter une adresse ». « Modifier » ouvre une feuille qui monte du bas sur
+  téléphone et glisse du côté sur ordinateur (à droite, à gauche en arabe) ;
+  elle contient le formulaire d'adresse de WooCommerce, envoyé à WooCommerce
+  comme sur sa propre page. Sans script, le lien mène à cette page.
+- Sur la page du compte seulement (pas au paiement), le formulaire d'adresse
+  ne garde que nom, prénom, gouvernorat, « Ville, cité, rue » et téléphone
+  (nouvelle classe `Famma\Core\Account_Address`, filtres
+  `woocommerce_billing_fields` et `woocommerce_address_to_edit`).
+- « Mes informations » : boîtes « Identité » et « Connexion » ; le
+  changement de mot de passe se déplie dans « Connexion », au-dessus de
+  « Me déconnecter » (avec script ; sans script il reste dans le formulaire).
+  Les deux boutons de WooCommerce deviennent « Enregistrer ».
+- Nouvelle classe `Famma\Core\Account_Panels` (`includes/account-panels.php`) :
+  15 textes dans FAMMA → Pages → « Mon compte », en français et en derja (à
+  relire).
+
+Écarts voulus avec la maquette, en attendant les lots concernés : une seule
+adresse (titre « Mon adresse », pas « Maison » ; ni suppression ni « Utiliser
+par défaut ») ; l'adresse de livraison séparée n'est plus listée ; la
+feuille garde nom et téléphone (la maquette les prend du profil) ;
+préférences et suppression du compte non faites (décisions D1-D6 et textes du
+propriétaire).
+
+Le thème porte l'affichage (`inc/new-look-account-forms.php`,
+`assets/css/new-look-account-forms.css`, `assets/js/new-look-account-forms.js`).
+
 ## 0.3.21 — 2026-11-12 (« Mon compte » aligné sur la maquette, étape B : connexion) · thème famma-child 0.2.8
 
 Toujours derrière la case `acct_look` (décochée en production).

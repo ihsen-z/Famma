@@ -128,6 +128,16 @@
 				<element value="famma_child_account_auth_open"/>
 				<element value="famma_child_account_auth_close"/>
 				<element value="famma_child_account_auth_up_sub"/>
+				<element value="famma_child_account_forms"/>
+				<element value="famma_child_account_forms_setup"/>
+				<element value="famma_child_account_forms_body_class"/>
+				<element value="famma_child_account_forms_strings"/>
+				<element value="famma_child_enqueue_account_forms"/>
+				<element value="famma_child_account_forms_text"/>
+				<element value="famma_child_account_forms_addresses"/>
+				<element value="famma_child_account_forms_infos_title"/>
+				<element value="famma_child_account_forms_identity"/>
+				<element value="famma_child_account_forms_connection"/>
 				<element value="famma_child_account_track"/>
 				<element value="famma_child_account_track_setup"/>
 				<element value="famma_child_enqueue_account_track"/>

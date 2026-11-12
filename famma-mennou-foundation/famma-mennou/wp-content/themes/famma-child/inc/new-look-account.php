@@ -265,8 +265,15 @@ function famma_child_account_look_logout(): void {
 		return;
 	}
 
+	echo '<div class="famma-acct-box famma-acct-logout">';
+
+	// Case « adresses et informations » : titre « Connexion » et mot de passe.
+	if ( function_exists( 'famma_child_account_forms_connection' ) ) {
+		famma_child_account_forms_connection();
+	}
+
 	printf(
-		'<div class="famma-acct-box famma-acct-logout"><a class="button famma-acct-logout__btn" href="%1$s">%2$s<span>%3$s</span></a></div>',
+		'<a class="button famma-acct-logout__btn" href="%1$s">%2$s<span>%3$s</span></a></div>',
 		esc_url( wc_logout_url() ),
 		wp_kses( famma_child_icon( 'logout' ), famma_child_svg_allowed_html() ),
 		esc_html( $label )

@@ -185,6 +185,10 @@ final class New_Look {
 				'label' => __( 'Mon compte : suivi en 4 étapes et « Recommander »', 'famma-core' ),
 				'help'  => __( 'Dans « Mon compte » : chaque commande devient une carte comme dans la maquette (photos, « En route » ou « Livrée », total, frise Reçue → Confirmée → Expédiée → Livrée avec l’heure de chaque étape, rappel pour le livreur, détail dépliable avec les articles, le récapitulatif et le lieu) ; le détail d’une commande montre la même carte, ouverte. Une commande refusée, retournée ou annulée affiche son statut à la place de la frise. Boutons « Recommander » (commandes livrées, aux prix du jour) et « Une question » (WhatsApp). Textes réglables dans la section « Mon compte ».', 'famma-core' ),
 			),
+			'acct_forms'  => array(
+				'label' => __( 'Mon compte : adresses et informations de la maquette', 'famma-core' ),
+				'help'  => __( 'Dans « Mon compte », avec la case « présentation de la maquette » : « Mes adresses » montre l’adresse du client dans une carte (ou une carte « Ajouter une adresse ») ; « Modifier » ouvre une feuille qui glisse du bas sur téléphone, du côté sur ordinateur, avec le formulaire d’adresse de WooCommerce. « Mes informations » range le formulaire en deux boîtes, « Identité » et « Connexion » (mot de passe à déplier, puis « Me déconnecter »). Une seule adresse, celle de la commande : l’adresse de livraison séparée de WooCommerce n’est plus montrée dans la liste. Champs, contrôles et enregistrement inchangés. Textes réglables dans la section « Mon compte ».', 'famma-core' ),
+			),
 			'journey'     => array(
 				'label' => __( 'Accueil : bloc « Vous payez à la livraison » en parcours animé', 'famma-core' ),
 				'help'  => __( 'Le bloc déjà présent dans la page d’accueil devient une bande marine : une route relie les étapes, qui se cochent au défilement. Ses textes se modifient toujours dans l’éditeur de la page d’accueil.', 'famma-core' ),

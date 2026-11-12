@@ -1,0 +1,492 @@
+/*
+ * Nouveau look — « Mes adresses » et « Mes informations » comme la maquette
+ * (.ads, .ad, .add, dialog.sheet, .box, .dbtn, .disc). Case `acct_forms`,
+ * chargée seulement sur « Mon compte », sous body.famma-nl-acct-forms.
+ * Propriétés logiques : la feuille arrive du bon côté en arabe.
+ */
+
+.famma-nl-acct-forms .famma-acct-p-h {
+	margin: 0;
+	font-size: 20px;
+	font-weight: 600;
+}
+
+.famma-nl-acct-forms .famma-acct-empty {
+	margin: 0;
+	color: var(--acct-text-3, #5B6470);
+	font-size: 12.5px;
+}
+
+/* ---------- Mes adresses ---------- */
+
+.famma-acct-ads {
+	display: grid;
+	gap: 12px;
+}
+
+@media (min-width: 700px) {
+	.famma-acct-ads {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 1050px) {
+	.famma-acct-ads {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+.famma-acct-ad {
+	display: grid;
+	gap: 8px;
+	align-content: start;
+	padding: 16px;
+	border: 1px solid var(--famma-line);
+	border-radius: 20px;
+	background: var(--famma-white);
+}
+
+.famma-acct-ad.is-def {
+	border-color: var(--famma-orange);
+	box-shadow: 0 0 0 1px var(--famma-orange);
+}
+
+.famma-acct-ad__t {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.famma-acct-ad__t b {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--famma-ink);
+	font-weight: 600;
+}
+
+.famma-acct-ad__t .famma-icon {
+	width: 18px;
+	height: 18px;
+	color: var(--acct-accent-text, #B85300);
+}
+
+.famma-acct-chip {
+	display: inline-flex;
+	align-items: center;
+	min-height: 24px;
+	padding-inline: 9px;
+	border-radius: 999px;
+	background: var(--acct-go-bg, #FFF1E3);
+	color: var(--acct-accent-text, #B85300);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.famma-nl-acct-forms .famma-acct-ad p {
+	margin: 0;
+	color: var(--famma-text-2);
+	font-size: 14px;
+	overflow-wrap: anywhere;
+}
+
+.famma-acct-ad p strong {
+	color: var(--famma-text-2);
+	font-weight: 600;
+}
+
+.famma-acct-ad__a {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 14px;
+}
+
+body.famma-nl-acct-forms .woocommerce-MyAccount-content .famma-acct-ad__a a {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	color: var(--famma-ink);
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+body.famma-nl-acct-forms .woocommerce-MyAccount-content a.famma-acct-add {
+	display: grid;
+	place-items: center;
+	align-content: center;
+	gap: 6px;
+	min-height: 150px;
+	padding: 16px;
+	border: 1.5px dashed var(--famma-line-field);
+	border-radius: 20px;
+	color: var(--famma-text-2);
+	font-weight: 600;
+	text-decoration: none;
+	transition: border-color .18s, color .18s;
+}
+
+.famma-acct-add i {
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: var(--acct-surface-2, #F1F4F9);
+	color: var(--famma-ink);
+	font-size: 24px;
+	font-style: normal;
+	line-height: 1;
+}
+
+@media (hover: hover) {
+	body.famma-nl-acct-forms .woocommerce-MyAccount-content a.famma-acct-add:hover {
+		border-color: var(--famma-orange);
+		color: var(--famma-ink);
+	}
+}
+
+/* ---------- Feuille qui glisse (maquette : dialog.sheet) ---------- */
+
+dialog.famma-acct-sheet {
+	position: fixed;
+	width: 100%;
+	max-width: 100%;
+	max-height: 92dvh;
+	margin: auto 0 0;
+	padding: 0;
+	border: 0;
+	border-radius: 20px 20px 0 0;
+	background: var(--famma-white);
+	color: var(--famma-ink);
+	box-shadow: 0 16px 40px rgba(11, 31, 58, .18);
+	overflow: auto;
+	overscroll-behavior: contain;
+	transform: translateY(100%);
+	transition: transform 260ms ease-in, display 260ms allow-discrete, overlay 260ms allow-discrete;
+}
+
+dialog.famma-acct-sheet[open] {
+	transform: none;
+	transition: transform var(--acct-slide, 420ms) cubic-bezier(.32, .72, 0, 1), display var(--acct-slide, 420ms) allow-discrete, overlay var(--acct-slide, 420ms) allow-discrete;
+}
+
+@starting-style {
+	dialog.famma-acct-sheet[open] {
+		transform: translateY(100%);
+	}
+}
+
+dialog.famma-acct-sheet::backdrop {
+	background: rgba(5, 15, 29, 0);
+	transition: background-color 260ms, display 260ms allow-discrete, overlay 260ms allow-discrete;
+}
+
+dialog.famma-acct-sheet[open]::backdrop {
+	background: rgba(5, 15, 29, .55);
+}
+
+@starting-style {
+	dialog.famma-acct-sheet[open]::backdrop {
+		background: rgba(5, 15, 29, 0);
+	}
+}
+
+@media (min-width: 640px) {
+	dialog.famma-acct-sheet {
+		max-width: 460px;
+		height: 100dvh;
+		max-height: 100dvh;
+		margin: 0 0 0 auto;
+		border-radius: 0;
+		transform: translateX(100%);
+	}
+
+	[dir="rtl"] dialog.famma-acct-sheet {
+		margin: 0 auto 0 0;
+		transform: translateX(-100%);
+	}
+
+	dialog.famma-acct-sheet[open],
+	[dir="rtl"] dialog.famma-acct-sheet[open] {
+		transform: none;
+	}
+
+	@starting-style {
+		dialog.famma-acct-sheet[open] {
+			transform: translateX(100%);
+		}
+
+		[dir="rtl"] dialog.famma-acct-sheet[open] {
+			transform: translateX(-100%);
+		}
+	}
+}
+
+/* La règle « marges à zéro » du contenu du compte ne doit pas décoller la
+   feuille de son bord (bas sur téléphone, côté sur ordinateur). */
+.famma-nl-acct .woocommerce-MyAccount-content > dialog.famma-acct-sheet {
+	margin: auto 0 0;
+}
+
+@media (min-width: 640px) {
+	.famma-nl-acct .woocommerce-MyAccount-content > dialog.famma-acct-sheet {
+		margin: 0 0 0 auto;
+	}
+
+	[dir="rtl"] .famma-nl-acct .woocommerce-MyAccount-content > dialog.famma-acct-sheet {
+		margin: 0 auto 0 0;
+	}
+}
+
+.famma-acct-sheet__in {
+	display: grid;
+	gap: 16px;
+	padding: 16px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+}
+
+.famma-acct-sheet__h {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.famma-nl-acct .famma-acct-sheet__h h2 {
+	margin: 0;
+	font-size: 19px;
+	font-weight: 600;
+}
+
+.famma-nl-acct .famma-acct-sheet__x {
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	box-shadow: none;
+	color: var(--famma-ink);
+	cursor: pointer;
+}
+
+.famma-nl-acct .famma-acct-sheet__x:hover,
+.famma-nl-acct .famma-acct-sheet__x:focus {
+	background: var(--acct-surface-2, #F1F4F9);
+	color: var(--famma-ink);
+}
+
+.famma-acct-sheet__x .famma-icon {
+	width: 22px;
+	height: 22px;
+}
+
+/* Le titre du modèle de WooCommerce fait doublon avec celui de la feuille */
+.famma-acct-sheet form > h2,
+.famma-acct-sheet form > h3 {
+	display: none;
+}
+
+/* Bouton de la feuille : orange, comme la maquette (.btn.cta) */
+body.famma-nl-acct .famma-acct-sheet form .button {
+	width: 100%;
+	min-height: 48px;
+	border: 0;
+	border-radius: 9px;
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+}
+
+@media (hover: hover) {
+	body.famma-nl-acct .famma-acct-sheet form .button:hover {
+		background: var(--famma-orange-600);
+		color: var(--famma-on-orange);
+	}
+}
+
+/* ---------- Mes informations : boîtes ---------- */
+
+.famma-nl-acct-forms .woocommerce-EditAccountForm,
+.famma-nl-acct-forms .famma-acct-box {
+	gap: 14px;
+	padding: 18px;
+	border: 1px solid var(--famma-line);
+	border-radius: 20px;
+	background: var(--famma-white);
+}
+
+.famma-nl-acct-forms .woocommerce-EditAccountForm {
+	display: grid;
+	row-gap: 0;
+}
+
+.famma-nl-acct-forms .woocommerce-MyAccount-content .famma-acct-box__h {
+	margin: 0 0 14px;
+	font-size: 16.5px;
+	font-weight: 600;
+}
+
+.famma-nl-acct-forms .woocommerce-MyAccount-content .famma-acct-box .famma-acct-box__h {
+	margin: 0;
+}
+
+@media (min-width: 900px) {
+	body.famma-nl-acct-infos .woocommerce-MyAccount-content {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		align-items: start;
+	}
+
+	body.famma-nl-acct-infos .woocommerce-MyAccount-content > * {
+		grid-column: 1 / -1;
+	}
+
+	body.famma-nl-acct-infos .woocommerce-MyAccount-content > .woocommerce-EditAccountForm {
+		grid-column: 1;
+	}
+
+	body.famma-nl-acct-infos .woocommerce-MyAccount-content > .famma-acct-logout {
+		grid-column: 2;
+	}
+}
+
+/* Avant le script, le mot de passe ne s'affiche pas dans « Identité » */
+@media (scripting: enabled) {
+	.famma-nl-acct-forms .woocommerce-EditAccountForm fieldset {
+		display: none;
+	}
+}
+
+.famma-nl-acct .famma-acct-dbtn {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+	color: var(--acct-accent-text, #B85300);
+	font: inherit;
+	font-size: 14.5px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.famma-nl-acct .famma-acct-dbtn:hover,
+.famma-nl-acct .famma-acct-dbtn:focus {
+	background: transparent;
+	color: var(--famma-ink);
+}
+
+.famma-acct-dbtn[hidden] {
+	display: none;
+}
+
+.famma-acct-dbtn .famma-icon {
+	width: 18px;
+	height: 18px;
+	transition: transform var(--acct-slide, 420ms) var(--acct-ease, cubic-bezier(.23, 1, .32, 1));
+}
+
+.famma-acct-dbtn[aria-expanded="true"] .famma-icon {
+	transform: rotate(180deg);
+}
+
+.famma-acct-disc {
+	display: grid;
+	grid-template-rows: 0fr;
+	transition: grid-template-rows var(--acct-slide, 420ms) cubic-bezier(.32, .72, 0, 1);
+}
+
+.famma-acct-disc.is-open {
+	grid-template-rows: 1fr;
+}
+
+.famma-acct-disc > div {
+	min-height: 0;
+	overflow: hidden;
+	visibility: hidden;
+	transition: visibility var(--acct-slide, 420ms);
+}
+
+.famma-acct-disc.is-open > div {
+	visibility: visible;
+}
+
+.famma-acct-disc__in {
+	display: grid;
+	gap: 14px;
+	padding-block-start: 4px;
+}
+
+.famma-acct-disc__in:empty {
+	display: none;
+}
+
+.famma-nl-acct .famma-acct-disc fieldset {
+	display: grid;
+	gap: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.famma-nl-acct .famma-acct-disc fieldset legend {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+body.famma-nl-acct .famma-acct-disc .famma-acct-pw-save {
+	min-height: 48px;
+	border: 1.5px solid var(--famma-line-field);
+	background: var(--famma-white);
+	color: var(--famma-ink);
+}
+
+@media (hover: hover) {
+	body.famma-nl-acct .famma-acct-disc .famma-acct-pw-save:hover {
+		border-color: var(--famma-ink);
+		background: var(--famma-white);
+		color: var(--famma-ink);
+	}
+}
+
+/* ---------- Mouvement ---------- */
+
+/* Les cartes montent une à une : pas leur conteneur, ni la feuille (qui
+   glisse déjà, et rejouerait l'apparition à chaque ouverture). */
+body.famma-nl-acct-forms.famma-nl-acct .woocommerce-MyAccount-content > .famma-acct-ads.famma-acct-ads,
+body.famma-nl-acct-forms.famma-nl-acct .woocommerce-MyAccount-content > dialog.famma-acct-sheet.famma-acct-sheet {
+	animation: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.famma-acct-ads > * {
+		animation: famma-acct-rise-box 460ms var(--acct-spring, cubic-bezier(.34, 1.56, .64, 1)) 40ms backwards;
+	}
+
+	.famma-acct-ads > :nth-child(2) {
+		animation-delay: 100ms;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	dialog.famma-acct-sheet,
+	dialog.famma-acct-sheet[open],
+	dialog.famma-acct-sheet::backdrop,
+	.famma-acct-disc,
+	.famma-acct-disc > div,
+	.famma-acct-dbtn .famma-icon {
+		transition: none;
+	}
+}
