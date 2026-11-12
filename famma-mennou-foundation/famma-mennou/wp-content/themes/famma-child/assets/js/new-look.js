@@ -505,4 +505,137 @@
 
 		row.scrollLeft += ( c.left + c.width / 2 ) - ( r.left + r.width / 2 );
 	} );
+
+	/*
+	 * Accueil animé (brique home_motion). La barre d'avancement, l'entrée du
+	 * héros et la route du parcours sont en CSS (new-look-home.css) ; ici,
+	 * seulement ce que le CSS ne sait pas faire seul.
+	 */
+
+	/* Clin d'œil de la mascotte : au logo à chaque ajout, à l'infolettre à l'arrivée. */
+	function wink( mark ) {
+		if ( reduced || ! mark ) {
+			return;
+		}
+		mark.classList.remove( 'is-winking' );
+		void mark.getBoundingClientRect();
+		mark.classList.add( 'is-winking' );
+		window.setTimeout( function () {
+			mark.classList.remove( 'is-winking' );
+		}, 700 );
+	}
+
+	guard( 'clin d’œil', function () {
+		if ( ! has( 'home-motion' ) ) {
+			return;
+		}
+
+		if ( $ ) {
+			$( document.body ).on( 'added_to_cart', function () {
+				wink( document.querySelector( '.famma-header .famma-lockup__mark' ) );
+			} );
+		}
+
+		var mascot = document.querySelector( '.famma-nl-mascot' );
+
+		if ( mascot && 'IntersectionObserver' in window ) {
+			var seen = new IntersectionObserver( function ( entries ) {
+				if ( entries[ 0 ].isIntersecting ) {
+					seen.disconnect();
+					window.setTimeout( function () {
+						wink( mascot );
+					}, 300 );
+				}
+			}, { threshold: 0.6 } );
+			seen.observe( mascot );
+		}
+	} );
+
+	/* Le colis du parcours : une boîte posée sur la route, que le CSS fait rouler. */
+	guard( 'colis', function () {
+		if ( ! has( 'home-motion' ) || ! has( 'journey' ) ) {
+			return;
+		}
+
+		var road = document.querySelector( '.famma-home__editorial .famma-how .famma-steps' );
+
+		if ( ! road || road.querySelector( '.famma-nl-parcel' ) ) {
+			return;
+		}
+
+		var parcel = document.createElement( 'span' );
+		parcel.className = 'famma-nl-parcel';
+		parcel.setAttribute( 'aria-hidden', 'true' );
+		parcel.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>';
+		road.appendChild( parcel );
+	} );
+
+	/* Apparitions des sections de l'accueil, comme la maquette. */
+	guard( 'sections', function () {
+		if ( ! has( 'home-motion' ) || reduced || ! ( 'IntersectionObserver' in window ) ) {
+			return;
+		}
+
+		var UP = [ { opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' } ];
+		var SCALE = [ { opacity: 0, transform: 'translateY(16px) scale(.94)' }, { opacity: 1, transform: 'none' } ];
+
+		function play( el ) {
+			var kind = el.getAttribute( 'data-famma-rv' );
+			var delay = Number( el.getAttribute( 'data-famma-rv-delay' ) ) || 0;
+
+			if ( 'title' === kind ) {
+				var parts = el.children;
+				animate( parts[ 1 ], UP, { duration: 520, easing: EASE, fill: 'backwards' } );
+				[ parts[ 0 ], parts[ 2 ] ].forEach( function ( rule ) {
+					animate( rule, [ { transform: 'scaleX(0)' }, { transform: 'scaleX(1)' } ], { duration: 640, delay: 120, easing: EASE, fill: 'backwards' } );
+				} );
+				return;
+			}
+
+			animate( el, 'scale' === kind ? SCALE : UP, {
+				duration: 'scale' === kind ? 520 : 480,
+				delay: delay,
+				easing: 'scale' === kind ? SPRING : EASE,
+				fill: 'backwards',
+			} );
+		}
+
+		var io = new IntersectionObserver( function ( entries ) {
+			entries.forEach( function ( entry ) {
+				if ( entry.isIntersecting ) {
+					io.unobserve( entry.target );
+					play( entry.target );
+				}
+			} );
+		}, { rootMargin: '0px 0px 4% 0px' } );
+
+		function watch( el, kind, delay ) {
+			// Déjà à l'écran au chargement : le premier rendu reste celui du serveur.
+			if ( el.getBoundingClientRect().top < window.innerHeight ) {
+				return;
+			}
+			el.setAttribute( 'data-famma-rv', kind );
+			el.setAttribute( 'data-famma-rv-delay', String( delay ) );
+			io.observe( el );
+		}
+
+		[
+			[ '.famma-home .famma-sectitle', 'title', false ],
+			[ '.famma-home .famma-cats', 'scale', true ],
+			[ '.famma-home .famma-why', 'scale', true ],
+			[ '.famma-home__editorial .famma-faq', 'up', true ],
+			[ '.famma-home__editorial .famma-contact', 'up', false ],
+			[ '.famma-home .famma-newsletter', 'up', true ],
+		].forEach( function ( rule ) {
+			Array.prototype.forEach.call( document.querySelectorAll( rule[ 0 ] ), function ( el ) {
+				if ( ! rule[ 2 ] ) {
+					watch( el, rule[ 1 ], 0 );
+					return;
+				}
+				Array.prototype.forEach.call( el.children, function ( child, i ) {
+					watch( child, rule[ 1 ], Math.min( i, 5 ) * 70 );
+				} );
+			} );
+		} );
+	} );
 } )();

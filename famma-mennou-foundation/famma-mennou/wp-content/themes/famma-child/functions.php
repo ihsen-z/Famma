@@ -23,7 +23,7 @@ const FAMMA_CHILD_VERSION = '0.2.1';
  * Chaque fichier est testé avant d'être inclus : un thème dont un fichier
  * manque doit dégrader, pas produire une erreur fatale sur toutes les pages.
  */
-foreach ( array( 'i18n', 'icons', 'catalog', 'header-parts', 'footer-parts', 'shop', 'shop-widgets', 'product', 'product-video', 'home', 'home-hero', 'home-social', 'pages', 'tunnel', 'cart', 'checkout', 'checkout-layout', 'editorial-guards', 'assets', 'scrollbar', 'gallery-lazy', 'new-look', 'new-look-tools', 'new-look-how', 'new-look-ledger' ) as $famma_child_part ) {
+foreach ( array( 'i18n', 'icons', 'catalog', 'header-parts', 'footer-parts', 'shop', 'shop-widgets', 'product', 'product-video', 'home', 'home-hero', 'home-social', 'pages', 'tunnel', 'cart', 'checkout', 'checkout-layout', 'editorial-guards', 'assets', 'scrollbar', 'gallery-lazy', 'new-look', 'new-look-tools', 'new-look-how', 'new-look-ledger', 'new-look-home' ) as $famma_child_part ) {
 	$famma_child_file = get_stylesheet_directory() . '/inc/' . $famma_child_part . '.php';
 
 	if ( file_exists( $famma_child_file ) ) {
@@ -80,7 +80,26 @@ add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_styles', 20 );
  */
 function famma_child_lockup_markup(): string {
 	return '<span class="famma-lockup">'
-		. '<svg class="famma-lockup__mark" viewBox="0 0 124 122" aria-hidden="true" focusable="false">'
+		. famma_child_mascot_svg( 'famma-lockup__mark' )
+		. '<span class="famma-lockup__text">'
+		. '<span class="famma-lockup__word">FAMM<span class="famma-lockup__a">A</span></span>'
+		. '<span class="famma-lockup__tagline" lang="ar" dir="rtl">'
+		. '<span class="famma-lockup__ar">فمّا</span> ديما حاجة جديدة'
+		. '</span></span></span>';
+}
+
+/**
+ * La mascotte FAMMA seule (bulle, œil, antenne, trois étincelles), décorative.
+ *
+ * Ordre des éléments fixe : la feuille de l'accueil animé (brique
+ * home_motion) cible l'œil (`rect`), l'antenne (2e `path` et `circle`) et
+ * les étincelles (`g path`).
+ *
+ * @param string $css_class Classe(s) du `<svg>`.
+ * @return string
+ */
+function famma_child_mascot_svg( string $css_class ): string {
+	return '<svg class="' . esc_attr( $css_class ) . '" viewBox="0 0 124 122" aria-hidden="true" focusable="false">'
 		. '<path d="M34 28 H74 A20 20 0 0 1 94 48 V76 A20 20 0 0 1 74 96 H60 L50 114 L42 96 H34 A20 20 0 0 1 14 76 V48 A20 20 0 0 1 34 28 Z" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>'
 		. '<path d="M54 28 V17" stroke="#FF7A00" stroke-width="7" stroke-linecap="round"/>'
 		. '<circle cx="54" cy="10" r="8" fill="#FF7A00"/>'
@@ -89,12 +108,7 @@ function famma_child_lockup_markup(): string {
 		. '<path d="M44 76 Q54 87 64 76" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>'
 		. '<g stroke="#FF7A00" stroke-width="6.5" stroke-linecap="round">'
 		. '<path d="M104 22 L114 12"/><path d="M110 36 L122 32"/><path d="M100 11 L104 2"/>'
-		. '</g></svg>'
-		. '<span class="famma-lockup__text">'
-		. '<span class="famma-lockup__word">FAMM<span class="famma-lockup__a">A</span></span>'
-		. '<span class="famma-lockup__tagline" lang="ar" dir="rtl">'
-		. '<span class="famma-lockup__ar">فمّا</span> ديما حاجة جديدة'
-		. '</span></span></span>';
+		. '</g></svg>';
 }
 
 /**

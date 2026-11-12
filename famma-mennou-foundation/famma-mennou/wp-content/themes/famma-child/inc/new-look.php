@@ -85,6 +85,7 @@ function famma_child_new_look_parts(): array {
 
 	if ( is_front_page() ) {
 		$parts[] = 'home_polish';
+		$parts[] = 'home_motion';
 		$parts[] = 'journey';
 	} else {
 		$parts[] = 'tools';
@@ -184,6 +185,15 @@ function famma_child_enqueue_new_look(): void {
 		);
 	}
 
+	if ( in_array( 'home_motion', $parts, true ) && file_exists( $dir . '/assets/css/new-look-home.css' ) ) {
+		wp_enqueue_style(
+			'famma-new-look-home',
+			$uri . '/assets/css/new-look-home.css',
+			array( 'famma-new-look' ),
+			(string) filemtime( $dir . '/assets/css/new-look-home.css' )
+		);
+	}
+
 	if ( in_array( 'transitions', $parts, true ) && file_exists( $dir . '/assets/css/new-look-transitions.css' ) ) {
 		wp_enqueue_style(
 			'famma-new-look-transitions',
@@ -193,7 +203,7 @@ function famma_child_enqueue_new_look(): void {
 		);
 	}
 
-	if ( array_intersect( array( 'motion', 'alt_photo', 'dock', 'tools' ), $parts ) && file_exists( $dir . '/assets/js/new-look.js' ) ) {
+	if ( array_intersect( array( 'motion', 'alt_photo', 'dock', 'tools', 'home_motion' ), $parts ) && file_exists( $dir . '/assets/js/new-look.js' ) ) {
 		wp_enqueue_script(
 			'famma-new-look',
 			$uri . '/assets/js/new-look.js',

@@ -149,6 +149,10 @@ final class New_Look {
 				'label' => __( 'Accueil : mise en page de la maquette', 'famma-core' ),
 				'help'  => __( 'Sur la page d’accueil : bouton « Commander » juste sous le nom sur téléphone, rayons en grille, nouveautés sur deux colonnes, questions fréquentes avec chevrons, carte WhatsApp verte, cartes « Pourquoi FAMMA » et infolettre claire. Seuls l’ordre et le dessin changent : les textes restent ceux de l’éditeur.', 'famma-core' ),
 			),
+			'home_motion' => array(
+				'label' => __( 'Accueil : animations de la maquette', 'famma-core' ),
+				'help'  => __( 'Sur la page d’accueil : barre d’avancement en haut de l’écran, logo qui cligne de l’œil (et fait un clin d’œil à chaque ajout au panier), entrée animée du nom et du carrousel, bouton pause et minuteur du carrousel, sections qui apparaissent au défilement. Avec le parcours animé : un colis roule sur la route, la route passe à l’horizontale sur ordinateur, et les 24 gouvernorats (ceux de WooCommerce) défilent sous les étapes. Désactivé d’office si le visiteur a demandé moins d’animations. Aucun texte ne change.', 'famma-core' ),
+			),
 			'journey'     => array(
 				'label' => __( 'Accueil : bloc « Vous payez à la livraison » en parcours animé', 'famma-core' ),
 				'help'  => __( 'Le bloc déjà présent dans la page d’accueil devient une bande marine : une route relie les étapes, qui se cochent au défilement. Ses textes se modifient toujours dans l’éditeur de la page d’accueil.', 'famma-core' ),

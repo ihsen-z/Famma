@@ -1,0 +1,562 @@
+/* ============================================================
+   FAMMA — Accueil animé (brique home_motion), page d'accueil seulement.
+
+   Les mouvements de la maquette d'accueil, portés sur le site :
+   barre d'avancement, mascotte qui cligne, entrée du héros, étincelles
+   et bulle fantôme, minuteur du carrousel, bande du parcours qui s'ouvre,
+   colis sur la route (horizontale sur ordinateur), gouvernorats qui
+   défilent. Tout mouvement est sous `prefers-reduced-motion:
+   no-preference` ; les effets liés au défilement sont en CSS seul
+   (`animation-timeline`), sans script, et absents des navigateurs qui ne
+   le gèrent pas : la page reste alors celle du lot 1, complète.
+   ============================================================ */
+
+/* --- Minuteur et pause du carrousel (inc/new-look-home.php, hero.js) --- */
+.famma-hero2__timer {
+	display: flex;
+	align-items: center;
+	gap: var(--sp-3);
+	inline-size: 100%;
+	max-inline-size: 22.5rem;
+}
+
+/* Après un clic sur une flèche, le carrousel ne tourne plus seul :
+   le minuteur s'efface sans faire sauter la mise en page. */
+.famma-hero2__timer:has(> .famma-hero2__pause[hidden]) {
+	visibility: hidden;
+}
+
+.famma-hero2__pause {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	inline-size: 48px;
+	block-size: 48px;
+	padding: 0;
+	border: 1px solid var(--famma-overlay-line);
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-blue-600);
+	color: var(--famma-white);
+	cursor: pointer;
+}
+
+.famma-hero2__pause:focus-visible {
+	outline: 2px solid var(--famma-orange);
+	outline-offset: 2px;
+}
+
+.famma-hero2__pause svg {
+	inline-size: 18px;
+	block-size: 18px;
+}
+
+.famma-hero2__play-i,
+.famma-hero2__pause[aria-pressed="true"] .famma-hero2__pause-i {
+	display: none;
+}
+
+.famma-hero2__pause[aria-pressed="true"] .famma-hero2__play-i {
+	display: block;
+}
+
+.famma-hero2__rail {
+	position: relative;
+	flex: 1 1 auto;
+	min-inline-size: 0;
+	block-size: 3px;
+	overflow: hidden;
+	border-radius: 3px;
+	background: var(--famma-overlay-line);
+}
+
+.famma-hero2__rail::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: var(--famma-orange);
+	transform: scaleX(0);
+	transform-origin: left center;
+}
+
+[dir="rtl"] .famma-hero2__rail::after {
+	transform-origin: right center;
+}
+
+/* Même remplissage que les barres de la vitrine (hero-variants.css). */
+.famma-hero2__rail.is-running::after {
+	animation: famma-hero-fill var(--hero-interval) linear forwards;
+}
+
+.famma-hero2__media.is-paused .famma-hero2__rail::after,
+.famma-hero2__media.is-away .famma-hero2__rail::after {
+	animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-hero2__timer {
+		display: none;
+	}
+}
+
+/* --- Mascotte de l'infolettre : la couleur de la bande --- */
+.famma-nl-mascot {
+	color: var(--famma-white);
+}
+
+body.famma-nl-home-polish .famma-nl-mascot {
+	color: var(--famma-blue);
+}
+
+/* --- Gouvernorats (inc/new-look-home.php) --- */
+body.famma-nl-home-motion .famma-nl-govs {
+	display: grid;
+	gap: 10px;
+	margin-block-start: var(--sp-8);
+	overflow: hidden;
+	-webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+	mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.famma-nl-govs__track {
+	display: flex;
+	inline-size: max-content;
+}
+
+.famma-nl-govs span {
+	display: inline-flex;
+	align-items: center;
+	gap: 14px;
+	padding-inline-end: 14px;
+	color: var(--famma-on-dark);
+	font-size: var(--fs-small);
+	white-space: nowrap;
+}
+
+.famma-nl-govs span::after {
+	content: "";
+	inline-size: 5px;
+	block-size: 5px;
+	border-radius: 50%;
+	background: var(--famma-orange);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body.famma-nl-home-motion .famma-nl-govs {
+		-webkit-mask-image: none;
+		mask-image: none;
+	}
+
+	.famma-nl-govs__track {
+		flex-wrap: wrap;
+		inline-size: auto;
+		row-gap: 6px;
+	}
+
+	.famma-nl-govs__dup {
+		display: none !important;
+	}
+}
+
+/* --- Parcours : le colis (posé par new-look.js) --- */
+body.famma-nl-home-motion .famma-how .famma-nl-parcel {
+	position: absolute;
+	inset-block-start: 0;
+	inset-inline-start: 0;
+	z-index: 3;
+	display: none;
+	place-items: center;
+	inline-size: var(--node);
+	block-size: var(--node);
+	border-radius: 12px;
+	background: var(--famma-white);
+	color: var(--famma-blue);
+	box-shadow: 0 6px 18px rgb(0 0 0 / 0.28);
+	pointer-events: none;
+}
+
+/* --- Ordinateur : la route passe à l'horizontale, une colonne par étape --- */
+@media (min-width: 800px) {
+	body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-steps {
+		--n: 3;
+		grid-auto-columns: minmax(0, 1fr);
+		grid-auto-flow: column;
+		gap: 0;
+	}
+
+	body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-steps:has(> li:last-child:nth-child(2)) {
+		--n: 2;
+	}
+
+	body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-steps:has(> li:nth-child(4)) {
+		--n: 4;
+	}
+
+	body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-steps:has(> li:nth-child(5)) {
+		--n: 5;
+	}
+
+	/* La route relie le centre de la première pastille à celui de la dernière. */
+	body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-steps::before,
+	body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-steps::after {
+		inset-block: calc(var(--node) / 2 - 1.5px) auto;
+		inset-inline: calc(50% / var(--n));
+		inline-size: auto;
+		block-size: 3px;
+	}
+
+	body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-steps::before {
+		background: repeating-linear-gradient(90deg, var(--famma-on-dark-muted) 0 8px, transparent 8px 16px);
+	}
+
+	body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-steps::after {
+		transform-origin: left center;
+	}
+
+	[dir="rtl"] body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-steps::after {
+		transform-origin: right center;
+	}
+
+	body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-steps li {
+		display: block;
+		padding: calc(var(--node) + var(--sp-4)) var(--sp-3) 0;
+		text-align: center;
+	}
+
+	body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-steps li::before {
+		inset-block-start: 0;
+		inset-inline-start: 50%;
+		margin-block-start: 0;
+		margin-inline-start: calc(var(--node) / -2);
+	}
+
+	body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-steps li::after {
+		inset-block-start: calc(var(--node) / 2);
+		inset-inline-start: calc(50% - 6px);
+	}
+
+	body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-nl-parcel {
+		inset-inline-start: calc(50% / var(--n) - var(--node) / 2);
+	}
+}
+
+/* ============================================================
+   Mouvements : rien de ce qui suit pour « moins d'animations ».
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+
+	/* --- Mascotte : clignement, antenne, étincelles ; clin d'œil + saut --- */
+	body.famma-nl-home-motion .famma-lockup__mark rect,
+	body.famma-nl-home-motion .famma-nl-mascot rect {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: famma-nl-blink 7s infinite;
+	}
+
+	body.famma-nl-home-motion .famma-lockup__mark > path:nth-of-type(2),
+	body.famma-nl-home-motion .famma-lockup__mark > circle,
+	body.famma-nl-home-motion .famma-nl-mascot > path:nth-of-type(2),
+	body.famma-nl-home-motion .famma-nl-mascot > circle {
+		transform-box: view-box;
+		transform-origin: 54px 28px;
+		animation: famma-nl-antenna 7s infinite;
+	}
+
+	body.famma-nl-home-motion .famma-lockup__mark g path,
+	body.famma-nl-home-motion .famma-nl-mascot g path {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: famma-nl-twinkle 3.4s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+	}
+
+	body.famma-nl-home-motion .famma-lockup__mark g path:nth-child(2),
+	body.famma-nl-home-motion .famma-nl-mascot g path:nth-child(2) {
+		animation-delay: 0.25s;
+	}
+
+	body.famma-nl-home-motion .famma-lockup__mark g path:nth-child(3),
+	body.famma-nl-home-motion .famma-nl-mascot g path:nth-child(3) {
+		animation-delay: 0.5s;
+	}
+
+	body.famma-nl-home-motion .is-winking rect {
+		animation: famma-nl-wink 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+	}
+
+	body.famma-nl-home-motion svg.is-winking {
+		animation: famma-nl-hop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+	}
+
+	/* --- Entrée du héros : le nom monte, le slogan se dévoile, le reste suit --- */
+	body.famma-nl-home-motion .famma-hero2__word {
+		animation: famma-nl-rise 720ms cubic-bezier(0.23, 1, 0.32, 1) 80ms backwards;
+	}
+
+	body.famma-nl-home-motion .famma-hero2__a {
+		display: inline-block;
+		animation: famma-nl-pop 520ms 420ms backwards;
+		animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+		animation-timing-function: linear(0, 0.06 3%, 0.22 7%, 0.55 14%, 0.86 22%, 1.04 30%, 1.09 36%, 1.07 44%, 1.01 58%, 0.99 72%, 1);
+	}
+
+	body.famma-nl-home-motion .famma-hero2__slogan {
+		animation: famma-nl-wipe 700ms cubic-bezier(0.23, 1, 0.32, 1) 300ms backwards;
+	}
+
+	body.famma-nl-home-motion .famma-hero2__lead,
+	body.famma-nl-home-motion .famma-hero2__perk,
+	body.famma-nl-home-motion .famma-hero2__cta,
+	body.famma-nl-home-motion .famma-hero2__timer {
+		animation: famma-nl-lift 560ms cubic-bezier(0.23, 1, 0.32, 1) 420ms backwards;
+	}
+
+	body.famma-nl-home-motion .famma-hero2__perk:nth-child(1) {
+		animation-delay: 480ms;
+	}
+
+	body.famma-nl-home-motion .famma-hero2__perk:nth-child(2) {
+		animation-delay: 540ms;
+	}
+
+	body.famma-nl-home-motion .famma-hero2__perk:nth-child(n+3) {
+		animation-delay: 600ms;
+	}
+
+	body.famma-nl-home-motion .famma-hero2__cta {
+		animation-delay: 660ms;
+	}
+
+	body.famma-nl-home-motion .famma-hero2__timer {
+		animation-delay: 720ms;
+	}
+
+	/* La pile arrive en ressort, sans fondu : la photo (LCP) est peinte d'emblée. */
+	body.famma-nl-home-motion .famma-hero2__media--stack {
+		animation: famma-nl-stack 780ms 200ms backwards;
+		animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+		animation-timing-function: linear(0, 0.06 3%, 0.22 7%, 0.55 14%, 0.86 22%, 1.04 30%, 1.09 36%, 1.07 44%, 1.01 58%, 0.99 72%, 1);
+	}
+
+	/* --- Bulle fantôme derrière le texte, deux étincelles près de la pile --- */
+	body.famma-nl-home-motion .famma-hero2 {
+		position: relative;
+		isolation: isolate;
+	}
+
+	body.famma-nl-home-motion .famma-hero2::before {
+		content: "";
+		position: absolute;
+		inset-block-start: 0;
+		inset-inline-end: 0;
+		z-index: -1;
+		inline-size: min(70%, 460px);
+		aspect-ratio: 124 / 122;
+		background: var(--famma-white);
+		opacity: 0.06;
+		pointer-events: none;
+		-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 124 122'%3E%3Cg fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke-width='6' d='M34 28H74A20 20 0 0 1 94 48V76A20 20 0 0 1 74 96H60L50 114L42 96H34A20 20 0 0 1 14 76V48A20 20 0 0 1 34 28Z'/%3E%3Cpath stroke-width='5' d='M74 52L64 61L74 70M44 76Q54 87 64 76'/%3E%3C/g%3E%3Crect x='36' y='50' width='10' height='20' rx='5'/%3E%3C/svg%3E") center / contain no-repeat;
+		mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 124 122'%3E%3Cg fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke-width='6' d='M34 28H74A20 20 0 0 1 94 48V76A20 20 0 0 1 74 96H60L50 114L42 96H34A20 20 0 0 1 14 76V48A20 20 0 0 1 34 28Z'/%3E%3Cpath stroke-width='5' d='M74 52L64 61L74 70M44 76Q54 87 64 76'/%3E%3C/g%3E%3Crect x='36' y='50' width='10' height='20' rx='5'/%3E%3C/svg%3E") center / contain no-repeat;
+	}
+
+	body.famma-nl-home-motion .famma-hero2__media--stack::before,
+	body.famma-nl-home-motion .famma-hero2__media--stack::after {
+		content: "";
+		position: absolute;
+		/* Au-dessus des cartes de la pile (z-index 4), posées sur leur coin. */
+		z-index: 6;
+		background: var(--famma-orange);
+		pointer-events: none;
+		-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M6 15L16 5M12 22l11-4M2 8l3-7'/%3E%3C/svg%3E") center / contain no-repeat;
+		mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M6 15L16 5M12 22l11-4M2 8l3-7'/%3E%3C/svg%3E") center / contain no-repeat;
+		animation: famma-nl-twinkle 4s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+	}
+
+	body.famma-nl-home-motion .famma-hero2__media--stack::before {
+		inset-block-start: -14px;
+		inset-inline-end: -8px;
+		inline-size: 42px;
+		block-size: 42px;
+	}
+
+	body.famma-nl-home-motion .famma-hero2__media--stack::after {
+		inset-block-start: 55%;
+		inset-inline-start: -10px;
+		inline-size: 30px;
+		block-size: 30px;
+		rotate: 180deg;
+		animation-duration: 5s;
+		animation-delay: 0.6s;
+	}
+}
+
+/* --- Liés au défilement : CSS seul, navigateurs récents --- */
+@supports (animation-timeline: scroll()) {
+	@media (prefers-reduced-motion: no-preference) {
+
+		/* Barre d'avancement de la lecture, au-dessus de l'en-tête. */
+		body.famma-nl-home-motion::before {
+			content: "";
+			position: fixed;
+			inset-block-start: var(--wp-admin--admin-bar--height, 0px);
+			inset-inline: 0;
+			z-index: calc(var(--z-header) + 1);
+			block-size: 3px;
+			background: var(--famma-orange);
+			transform: scaleX(0);
+			transform-origin: left center;
+			pointer-events: none;
+			animation: famma-nl-progress linear both;
+			animation-timeline: scroll(root);
+		}
+
+		[dir="rtl"] body.famma-nl-home-motion::before {
+			transform-origin: right center;
+		}
+
+		/* La bulle fantôme glisse un peu plus lentement que la page. */
+		body.famma-nl-home-motion .famma-hero2::before {
+			animation: famma-nl-drift linear both;
+			animation-timeline: scroll(root);
+			animation-range: 0px 800px;
+		}
+	}
+}
+
+@supports (animation-timeline: view()) {
+	@media (prefers-reduced-motion: no-preference) {
+
+		/* La bande marine du parcours s'ouvre jusqu'à ses bords en arrivant. */
+		body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how {
+			animation: famma-nl-band linear both;
+			animation-timeline: view();
+			animation-range: entry 0% cover 35%;
+		}
+
+		/* Le colis suit la route, au même rythme que son remplissage. */
+		body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-steps {
+			view-timeline-name: --famma-road;
+		}
+
+		body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-nl-parcel {
+			display: grid;
+			animation: famma-nl-parcel linear both;
+			animation-timeline: --famma-road;
+			animation-range: entry 80% cover 55%;
+		}
+	}
+
+	@media (prefers-reduced-motion: no-preference) and (min-width: 800px) {
+		body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-steps::after {
+			animation-name: famma-nl-road-x;
+		}
+
+		body.famma-nl-home-motion.famma-nl-journey .famma-home__editorial .famma-how .famma-nl-parcel {
+			animation-name: famma-nl-parcel-x;
+		}
+	}
+}
+
+/* Les gouvernorats défilent partout où le mouvement est permis. */
+@media (prefers-reduced-motion: no-preference) {
+	body.famma-nl-home-motion .famma-nl-govs__track {
+		animation: famma-nl-govs 70s linear infinite;
+	}
+
+	body.famma-nl-home-motion .famma-nl-govs__track--rev {
+		animation-direction: reverse;
+	}
+
+	[dir="rtl"] body.famma-nl-home-motion .famma-nl-govs__track {
+		animation-name: famma-nl-govs-rtl;
+	}
+
+	body.famma-nl-home-motion .famma-nl-govs:hover .famma-nl-govs__track {
+		animation-play-state: paused;
+	}
+}
+
+@keyframes famma-nl-progress {
+	to { transform: scaleX(1); }
+}
+
+@keyframes famma-nl-drift {
+	to { transform: translateY(72px); }
+}
+
+@keyframes famma-nl-band {
+	from { clip-path: inset(0 max(12px, 3vw) round 24px); }
+	to { clip-path: inset(0 round var(--famma-radius-lg)); }
+}
+
+@keyframes famma-nl-parcel {
+	0% { inset-block-start: 0; }
+	88% { opacity: 1; scale: 1; }
+	100% { inset-block-start: calc(100% - var(--node)); opacity: 0; scale: 0.5; }
+}
+
+@keyframes famma-nl-parcel-x {
+	0% { inset-inline-start: calc(50% / var(--n) - var(--node) / 2); }
+	88% { opacity: 1; scale: 1; }
+	100% { inset-inline-start: calc(100% - 50% / var(--n) - var(--node) / 2); opacity: 0; scale: 0.5; }
+}
+
+@keyframes famma-nl-road-x {
+	from { transform: scaleX(0); }
+	to { transform: scaleX(1); }
+}
+
+@keyframes famma-nl-govs {
+	to { transform: translateX(-50%); }
+}
+
+@keyframes famma-nl-govs-rtl {
+	to { transform: translateX(50%); }
+}
+
+@keyframes famma-nl-blink {
+	0%, 91%, 100% { transform: scaleY(1); }
+	95% { transform: scaleY(0.12); }
+}
+
+@keyframes famma-nl-wink {
+	0%, 100% { transform: scaleY(1); }
+	40%, 60% { transform: scaleY(0.12); }
+}
+
+@keyframes famma-nl-antenna {
+	0%, 88%, 100% { transform: rotate(0); }
+	91% { transform: rotate(-9deg); }
+	94% { transform: rotate(7deg); }
+	97% { transform: rotate(-3deg); }
+}
+
+@keyframes famma-nl-twinkle {
+	0%, 70%, 100% { opacity: 1; transform: scale(1); }
+	82% { opacity: 0.25; transform: scale(0.55); }
+}
+
+@keyframes famma-nl-hop {
+	0%, 100% { transform: translateY(0); }
+	40% { transform: translateY(-14%); }
+}
+
+@keyframes famma-nl-rise {
+	from { transform: translateY(55%); clip-path: inset(-20% -20% 55% -20%); }
+	to { transform: none; clip-path: inset(-20% -20% -20% -20%); }
+}
+
+@keyframes famma-nl-pop {
+	from { transform: scale(0); opacity: 0; }
+}
+
+@keyframes famma-nl-wipe {
+	from { clip-path: inset(-30% 0 -30% 100%); }
+	to { clip-path: inset(-30% 0 -30% 0); }
+}
+
+@keyframes famma-nl-lift {
+	from { opacity: 0; transform: translateY(14px); }
+}
+
+@keyframes famma-nl-stack {
+	from { transform: translateY(26px) scale(0.92); }
+}

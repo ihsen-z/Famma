@@ -37,6 +37,10 @@
 	var hero = track.closest( '.famma-hero2' ) || track;
 	var dots = media.querySelectorAll( '[data-famma-hero-dot]' );
 	var captions = media.querySelectorAll( '[data-famma-hero-caption]' );
+	// Minuteur et bouton pause : posés par la brique « accueil animé »
+	// (inc/new-look-home.php). Sans eux, rien ne change.
+	var rail = media.querySelector( '[data-famma-hero-rail]' );
+	var pauseButton = media.querySelector( '[data-famma-hero-pause]' );
 	var forEach = Array.prototype.forEach;
 
 	/*
@@ -73,6 +77,10 @@
 	var timer = null;
 	var auto = 'thumbs' !== style;
 	var reduced = window.matchMedia( '(prefers-reduced-motion: reduce)' );
+	// Rythmé par une barre (vitrine, ou minuteur de la pile) : la barre pleine
+	// fait avancer, une pause la fige là où elle en est.
+	var paced = 'showcase' === style || !! rail;
+	var held = false;
 	var rtl = 'rtl' === window.getComputedStyle( track ).direction;
 
 	/*
@@ -190,6 +198,12 @@
 			}
 		} );
 
+		if ( rail ) {
+			rail.classList.remove( 'is-running' );
+			void rail.offsetWidth;
+			rail.classList.toggle( 'is-running', auto && ! reduced.matches );
+		}
+
 		if ( 'stack' === style ) {
 			layoutStack( previous, options );
 		} else if ( 'showcase' === style ) {
@@ -200,7 +214,7 @@
 	}
 
 	function stop() {
-		if ( 'showcase' === style ) {
+		if ( paced ) {
 			// Les barres se figent là où elles en sont : la pause se voit.
 			media.classList.add( 'is-paused' );
 			return;
@@ -213,11 +227,11 @@
 	}
 
 	function start() {
-		if ( ! auto || reduced.matches ) {
+		if ( ! auto || held || reduced.matches ) {
 			return;
 		}
 
-		if ( 'showcase' === style ) {
+		if ( paced ) {
 			media.classList.remove( 'is-paused' );
 			return;
 		}
@@ -234,6 +248,10 @@
 	function intent() {
 		auto = false;
 		stop();
+
+		if ( pauseButton ) {
+			pauseButton.hidden = true;
+		}
 	}
 
 	forEach.call( dots, function ( dot, i ) {
@@ -250,8 +268,8 @@
 		} );
 	} );
 
-	// Vitrine : chaque barre pleine fait avancer d'une diapo.
-	if ( 'showcase' === style ) {
+	// Vitrine et minuteur : chaque barre pleine fait avancer d'une diapo.
+	if ( paced ) {
 		media.addEventListener( 'animationend', function ( event ) {
 			if ( 'famma-hero-fill' === event.animationName && auto ) {
 				show( current + 1 );
@@ -387,12 +405,38 @@
 		swipe( track );
 	}
 
+	if ( pauseButton ) {
+		pauseButton.hidden = reduced.matches;
+		pauseButton.addEventListener( 'click', function () {
+			held = ! held;
+			pauseButton.setAttribute( 'aria-pressed', held ? 'true' : 'false' );
+			media.classList.toggle( 'is-held', held );
+
+			if ( held ) {
+				stop();
+			} else {
+				start();
+			}
+		} );
+	}
+
+	// Hors de l'écran, le minuteur attend : on ne rate pas une carte.
+	if ( rail && 'IntersectionObserver' in window ) {
+		new IntersectionObserver( function ( entries ) {
+			media.classList.toggle( 'is-away', ! entries[ 0 ].isIntersecting );
+		}, { threshold: 0.25 } ).observe( hero );
+	}
+
 	hero.addEventListener( 'mouseenter', stop );
 	hero.addEventListener( 'mouseleave', start );
 	hero.addEventListener( 'focusin', stop );
 
 	if ( typeof reduced.addEventListener === 'function' ) {
 		reduced.addEventListener( 'change', function ( event ) {
+			if ( pauseButton && auto ) {
+				pauseButton.hidden = event.matches;
+			}
+
 			if ( event.matches ) {
 				stop();
 			} else {

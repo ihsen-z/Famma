@@ -96,7 +96,11 @@ function famma_child_home_newsletter(): void {
 	?>
 	<section class="famma-home__section famma-newsletter" id="famma-newsletter" aria-labelledby="famma-newsletter-title">
 		<div class="famma-newsletter__intro">
-			<?php famma_child_the_icon( 'gift', 'famma-newsletter__icon' ); ?>
+			<?php
+			if ( ! function_exists( 'famma_child_home_newsletter_mascot' ) || ! famma_child_home_newsletter_mascot() ) {
+				famma_child_the_icon( 'gift', 'famma-newsletter__icon' );
+			}
+			?>
 			<div class="famma-newsletter__text">
 				<?php if ( '' !== $title ) : ?>
 					<h2 class="famma-newsletter__title" id="famma-newsletter-title" <?php echo famma_child_text_dir_attrs( $title ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- attributs échappés par la fonction. ?>><?php echo esc_html( $title ); ?></h2>

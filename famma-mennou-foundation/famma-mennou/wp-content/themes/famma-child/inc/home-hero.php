@@ -232,6 +232,9 @@ function famma_child_home_hero_stack( array $products, int $count ): void {
 		<?php endif; ?>
 	</div>
 	<?php
+	if ( $count > 1 && function_exists( 'famma_child_home_hero_timer' ) ) {
+		famma_child_home_hero_timer();
+	}
 }
 
 /**

@@ -134,6 +134,10 @@
 				<element value="famma_child_new_look_parts"/>
 				<element value="famma_child_new_look_on_orange"/>
 				<element value="famma_child_new_look_site_polish"/>
+				<element value="famma_child_home_motion"/>
+				<element value="famma_child_home_hero_timer"/>
+				<element value="famma_child_home_newsletter_mascot"/>
+				<element value="famma_child_home_govs"/>
 				<element value="famma_child_enqueue_new_look"/>
 				<element value="famma_child_new_look_body_class"/>
 				<element value="famma_child_loop_alt_photo"/>
@@ -218,6 +222,7 @@
 				<element value="famma_child_language_switcher"/>
 				<element value="famma_child_legal_bar"/>
 				<element value="famma_child_lockup_markup"/>
+				<element value="famma_child_mascot_svg"/>
 				<element value="famma_child_loop_add_to_cart_description"/>
 				<element value="famma_child_loop_add_to_cart_icon"/>
 				<element value="famma_child_loop_add_to_cart_text"/>
