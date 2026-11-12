@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.3.18
+ * Version:           0.3.19
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.3.18' );
+define( 'FAMMA_CORE_VERSION', '0.3.19' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -39,6 +39,7 @@ require_once __DIR__ . '/includes/cat-icons.php';
 require_once __DIR__ . '/includes/delivery-content.php';
 require_once __DIR__ . '/includes/returns-content.php';
 require_once __DIR__ . '/includes/shop-content.php';
+require_once __DIR__ . '/includes/order-track.php';
 require_once __DIR__ . '/includes/newsletter.php';
 require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';
@@ -3596,6 +3597,7 @@ function boot(): void {
 	add_filter( 'famma_seo_composed_description', array( Delivery_Content::class, 'seo_description' ), 10, 2 );
 	add_filter( 'famma_seo_composed_description', array( Returns_Content::class, 'seo_description' ), 10, 2 );
 	Returns_Content::hooks();
+	Order_Track::hooks();
 	Hardening::instance();
 	Performance::instance();
 	Cache_Warmup::instance();

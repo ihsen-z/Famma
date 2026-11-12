@@ -1,5 +1,31 @@
 # Changelog — FAMMA Core
 
+## 0.3.19 — 2026-11-12 (suivi de commande, lot 3 de l'espace client) · thème famma-child 0.2.6
+
+Une nouvelle case dans FAMMA → Pages → Nouveau look, **livrée décochée** :
+tant qu'elle n'est pas cochée, « Mon compte » est identique à la 0.3.18.
+
+- `acct_track` : dans la liste des commandes, une barre de 4 segments sous le
+  statut ; en tête du détail d'une commande, la frise Reçue → Confirmée →
+  Expédiée → Livrée (date de réception, date de livraison), l'étape en cours
+  qui bat doucement (coupé si le visiteur demande moins d'animations) et la
+  ligne « À payer au livreur : {total} » tant que la commande n'est pas
+  livrée. Une commande refusée, retournée, annulée, échouée ou remboursée
+  montre son statut à la place de la frise.
+- « Recommander » : les commandes **livrées** gagnent le lien natif de
+  WooCommerce (`order_again`, signé, réservé au client de la commande) dans
+  la liste, et son bouton dans le détail ; le panier est rempli aux prix du
+  jour.
+- Nouvelle classe `Famma\Core\Order_Track` (`includes/order-track.php`) :
+  correspondance statut → étape (filtre `famma_order_track_step`) et textes.
+- Nouvelle section **« Mon compte — suivi de commande (nouveau look) »** dans
+  FAMMA → Pages (option `famma_page_account`) : les 4 étapes, la ligne du
+  livreur et le bouton, en français et en derja (derja de la maquette, à
+  relire).
+
+Le thème porte l'affichage (`inc/new-look-account-track.php`,
+`assets/css/new-look-account-track.css`, icônes `box` et `home`).
+
 ## 0.3.18 — 2026-11-12 (« Mon compte », lot 1 de l'espace client) · thème famma-child 0.2.5
 
 Une nouvelle case dans FAMMA → Pages → Nouveau look, **livrée décochée** :

@@ -64,11 +64,16 @@ final class Pages_Content {
 	public const OPTION_SHOP = 'famma_page_shop';
 
 	/**
+	 * Option abritant les textes du suivi de commande (schéma : `Order_Track`).
+	 */
+	public const OPTION_ACCOUNT = 'famma_page_account';
+
+	/**
 	 * Pages gérées par cet écran, dans leur ordre d'affichage.
 	 *
 	 * @var array<int, string>
 	 */
-	private const PAGES = array( 'home', 'shop', 'about', 'contact', 'delivery', 'returns', 'product' );
+	private const PAGES = array( 'home', 'shop', 'account', 'about', 'contact', 'delivery', 'returns', 'product' );
 
 	/**
 	 * Groupe de réglages, au sens de la Settings API.
@@ -372,6 +377,7 @@ final class Pages_Content {
 			'delivery' => Delivery_Content::schema(),
 			'returns'  => Returns_Content::schema(),
 			'shop'     => Shop_Content::schema(),
+			'account'  => Order_Track::schema(),
 			default    => self::contact_schema(),
 		};
 	}
@@ -390,6 +396,7 @@ final class Pages_Content {
 			'delivery' => self::OPTION_DELIVERY,
 			'returns'  => self::OPTION_RETURNS,
 			'shop'     => self::OPTION_SHOP,
+			'account'  => self::OPTION_ACCOUNT,
 			default    => self::OPTION_CONTACT,
 		};
 	}
@@ -408,6 +415,7 @@ final class Pages_Content {
 			'delivery' => __( 'Page Livraison', 'famma-core' ),
 			'returns'  => __( 'Page Retours', 'famma-core' ),
 			'shop'     => __( 'Boutique — bloc « Comment commander » (nouveau look)', 'famma-core' ),
+			'account'  => __( 'Mon compte — suivi de commande (nouveau look)', 'famma-core' ),
 			default    => __( 'Page Contact', 'famma-core' ),
 		};
 	}

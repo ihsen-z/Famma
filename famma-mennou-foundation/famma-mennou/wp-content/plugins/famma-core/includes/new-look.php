@@ -181,6 +181,10 @@ final class New_Look {
 				'label' => __( 'Mon compte : présentation de la maquette', 'famma-core' ),
 				'help'  => __( 'Sur la page « Mon compte » : connexion et création de compte en deux onglets, champs et boutons de la charte, carte marine avec le nom du client, menu avec icônes, commandes en cartes avec leur statut en couleur, adresses et informations en cartes. Les champs, les e-mails et le fonctionnement de WooCommerce ne changent pas ; seul le lien « Téléchargements », inutile ici, disparaît du menu. Les apparitions s’arrêtent si le visiteur a demandé moins d’animations.', 'famma-core' ),
 			),
+			'acct_track'  => array(
+				'label' => __( 'Mon compte : suivi en 4 étapes et « Recommander »', 'famma-core' ),
+				'help'  => __( 'Dans « Mon compte » : chaque commande montre où elle en est (Reçue, Confirmée, Expédiée, Livrée) et la somme à payer au livreur ; une commande refusée, retournée ou annulée affiche son statut à la place. Les commandes livrées gagnent un bouton « Recommander » qui remet les mêmes articles dans le panier, aux prix du jour. Textes réglables dans la section « Mon compte — suivi de commande ».', 'famma-core' ),
+			),
 			'journey'     => array(
 				'label' => __( 'Accueil : bloc « Vous payez à la livraison » en parcours animé', 'famma-core' ),
 				'help'  => __( 'Le bloc déjà présent dans la page d’accueil devient une bande marine : une route relie les étapes, qui se cochent au défilement. Ses textes se modifient toujours dans l’éditeur de la page d’accueil.', 'famma-core' ),
