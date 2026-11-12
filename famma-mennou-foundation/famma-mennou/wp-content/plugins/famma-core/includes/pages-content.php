@@ -377,7 +377,7 @@ final class Pages_Content {
 			'delivery' => Delivery_Content::schema(),
 			'returns'  => Returns_Content::schema(),
 			'shop'     => Shop_Content::schema(),
-			'account'  => Order_Track::schema(),
+			'account'  => array_merge( Account_Profile::schema(), Order_Track::schema() ),
 			default    => self::contact_schema(),
 		};
 	}
@@ -415,7 +415,7 @@ final class Pages_Content {
 			'delivery' => __( 'Page Livraison', 'famma-core' ),
 			'returns'  => __( 'Page Retours', 'famma-core' ),
 			'shop'     => __( 'Boutique — bloc « Comment commander » (nouveau look)', 'famma-core' ),
-			'account'  => __( 'Mon compte — suivi de commande (nouveau look)', 'famma-core' ),
+			'account'  => __( 'Mon compte — en-tête, onglets et suivi de commande (nouveau look)', 'famma-core' ),
 			default    => __( 'Page Contact', 'famma-core' ),
 		};
 	}

@@ -1,5 +1,32 @@
 # Changelog — FAMMA Core
 
+## 0.3.20 — 2026-11-12 (« Mon compte » aligné sur la maquette, étape A) · thème famma-child 0.2.7
+
+Aucune nouvelle case : `acct_look` et `acct_track` (toujours décochées en
+production) suivent maintenant la maquette espace client à l'identique pour
+le compte connecté. Cases décochées : « Mon compte » reste celui de
+WooCommerce.
+
+- `acct_look` : fil d'Ariane ; bandeau de titre de Kadence retiré ; carte
+  marine (initiales, nom, téléphone, « Membre depuis », anneau « profil
+  complété » 50/+30/+20 % et rappels) ; compteurs (commandes, en route,
+  favoris lus dans le navigateur) ; onglets Mes commandes · Mes adresses ·
+  Mes informations à toutes les largeurs, soulignement qui glisse d'un onglet
+  à l'autre, panneau qui arrive du bon côté ; le compte s'ouvre sur les
+  commandes ; « Me déconnecter » en bas de « Mes informations ».
+- `acct_track` : commandes en cartes (photos, pastille « En route » /
+  « Livrée », total et paiement, frise avec l'heure de chaque étape qui se
+  remplit à l'écran, rappel pour le livreur, détail dépliable, « Recommander »
+  et « Une question » sur WhatsApp) ; la page d'une commande montre la carte
+  ouverte au lieu du tableau de WooCommerce. Même requête et même pagination
+  que WooCommerce.
+- Nouvelle classe `Famma\Core\Account_Profile` (`includes/account-profile.php`)
+  et heure de chaque étape gardée dans la méta `_famma_track_times` (à partir
+  de cette version ; les anciennes commandes montrent la date de réception et,
+  si elle est connue, celle du paiement à la livraison).
+- Section FAMMA → Pages « Mon compte » : en-tête, compteurs, onglets,
+  déconnexion et textes des cartes, en français et en derja (à relire).
+
 ## 0.3.19 — 2026-11-12 (suivi de commande, lot 3 de l'espace client) · thème famma-child 0.2.6
 
 Une nouvelle case dans FAMMA → Pages → Nouveau look, **livrée décochée** :
