@@ -1,0 +1,737 @@
+/**
+ * Upsell One Click — offer block on the thank-you page and quick view.
+ *
+ * Placed at the very top of the content, under the "Order received" title:
+ * the add button is visible without scrolling at 360 x 740, 390 x 844,
+ * 768 x 1024 and 1366 x 768.
+ *
+ * Every rule is scoped to `.uoc-offer` so that theme styles on `p` and
+ * `button` do not break the block. Colours are custom properties with a
+ * fallback (Settings > Upsell One Click > Colours) and spacing uses logical
+ * properties, so the block works in left-to-right and right-to-left.
+ */
+
+.uoc-offer {
+	box-sizing: border-box;
+	max-inline-size: 760px;
+	margin-block: var(--sp-4, 16px) var(--sp-5, 20px);
+	padding: var(--sp-3, 12px) var(--sp-4, 16px);
+	border: 2px solid var(--uoc-accent, #FF7A00);
+	border-radius: var(--uoc-radius, 12px);
+	background: var(--uoc-white, #FFF);
+	box-shadow: 0 6px 20px rgba(255, 122, 0, 0.14);
+}
+
+.uoc-offer .uoc-offer__inner {
+	margin: 0;
+}
+
+.uoc-offer .uoc-offer__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-2, 8px);
+	margin: 0 0 var(--sp-2, 8px);
+}
+
+.uoc-offer .uoc-offer__kicker {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+	margin: 0;
+	font-size: 0.75rem;
+	font-weight: 700;
+	line-height: 1.3;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--uoc-accent, #FF7A00);
+}
+
+.uoc-offer .uoc-offer__kicker .uoc-alt {
+	font-size: 0.8125rem;
+	letter-spacing: 0;
+	text-transform: none;
+}
+
+/* "No thanks": discreet, but a real 48 px touch target. */
+.uoc-offer .uoc-offer__decline {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	min-block-size: 48px;
+	margin-block: -14px;
+	margin-inline-end: -8px;
+	padding: 0 8px;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	color: var(--uoc-text-2, #6B7280);
+	font-size: 0.8125rem;
+	font-weight: 400;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.uoc-offer .uoc-offer__body {
+	display: grid;
+	grid-template-columns: 84px minmax(0, 1fr);
+	gap: var(--sp-3, 12px);
+	align-items: center;
+}
+
+.uoc-offer .uoc-offer__media {
+	position: relative;
+	margin: 0;
+}
+
+.uoc-offer .uoc-offer__media img {
+	display: block;
+	inline-size: 84px;
+	block-size: 84px;
+	max-inline-size: none;
+	object-fit: cover;
+	border-radius: var(--uoc-radius-sm, 8px);
+}
+
+.uoc-offer .uoc-offer__badge {
+	position: absolute;
+	inset-block-start: -6px;
+	inset-inline-start: -6px;
+	padding: 2px 7px;
+	border-radius: 999px;
+	background: var(--uoc-accent, #FF7A00);
+	color: #FFF;
+	font-size: 0.75rem;
+	font-weight: 700;
+	line-height: 1.4;
+}
+
+.uoc-offer .uoc-offer__info {
+	min-inline-size: 0;
+}
+
+.uoc-offer .uoc-offer__title {
+	margin: 0 0 2px;
+	padding: 0;
+	font-size: 1.0625rem;
+	font-weight: 700;
+	line-height: 1.25;
+}
+
+.uoc-offer .uoc-offer__name {
+	display: -webkit-box;
+	margin: 0 0 4px;
+	overflow: hidden;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	color: var(--uoc-text-2, #4B5563);
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+.uoc-offer .uoc-offer__price {
+	display: flex;
+	gap: var(--sp-2, 8px);
+	align-items: baseline;
+	margin: 0;
+}
+
+.uoc-offer .uoc-offer__price del {
+	font-size: 0.875rem;
+	color: var(--uoc-text-2, #6B7280);
+}
+
+.uoc-offer .uoc-offer__price strong {
+	font-size: 1.25rem;
+	line-height: 1.2;
+	color: var(--uoc-primary, #1D4ED8);
+}
+
+.uoc-offer .uoc-offer__form {
+	grid-column: 1 / -1;
+	margin: 0;
+}
+
+.uoc-offer .uoc-offer__accept {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	align-items: center;
+	justify-content: center;
+	inline-size: 100%;
+	min-block-size: 56px;
+	margin: 0;
+	padding: 6px var(--sp-4, 16px);
+	border: 0;
+	border-radius: var(--uoc-radius-sm, 8px);
+	background: var(--uoc-accent, #FF7A00);
+	box-shadow: none;
+	color: #FFF;
+	line-height: 1.2;
+	text-transform: none;
+	cursor: pointer;
+}
+
+.uoc-offer .uoc-offer__accept:hover {
+	filter: brightness(0.95);
+}
+
+.uoc-offer .uoc-offer__cta {
+	font-size: 1.0625rem;
+	font-weight: 700;
+}
+
+.uoc-offer .uoc-offer__cta-alt {
+	font-size: 0.875rem;
+	font-weight: 500;
+}
+
+.uoc-offer .uoc-offer__accept:focus-visible,
+.uoc-offer .uoc-offer__decline:focus-visible {
+	outline: 3px solid var(--uoc-primary, #1D4ED8);
+	outline-offset: 2px;
+}
+
+.uoc-offer .uoc-offer__text {
+	margin: var(--sp-2, 8px) 0 0;
+	font-size: 0.8125rem;
+	line-height: 1.35;
+	color: var(--uoc-text-2, #6B7280);
+	text-align: center;
+}
+
+/* Tablet and desktop: image | text | button on one line. */
+@media (min-width: 600px) {
+	.uoc-offer .uoc-offer__body {
+		grid-template-columns: 96px minmax(0, 1fr) auto;
+	}
+
+	.uoc-offer .uoc-offer__media img {
+		inline-size: 96px;
+		block-size: 96px;
+	}
+
+	.uoc-offer .uoc-offer__form {
+		grid-column: auto;
+	}
+
+	.uoc-offer .uoc-offer__accept {
+		inline-size: auto;
+		min-inline-size: 240px;
+	}
+
+	.uoc-offer .uoc-offer__text {
+		text-align: start;
+	}
+}
+
+/* Messages after the click (added, offer closed, try again). */
+.uoc-message {
+	max-inline-size: 760px;
+	margin-block: var(--sp-4, 16px);
+	padding: var(--sp-3, 12px) var(--sp-4, 16px);
+	border-inline-start: 4px solid var(--uoc-primary, #1D4ED8);
+	border-radius: var(--uoc-radius-sm, 8px);
+	background: var(--uoc-line, #F3F4F6);
+}
+
+.uoc-message--ok {
+	border-inline-start-color: #16A34A;
+}
+
+/* Second language on its own line: otherwise bidirectional ordering
+ * moves the amount of the main sentence. */
+.uoc-message .uoc-alt {
+	display: block;
+	margin-block-start: 4px;
+}
+
+/* ------------------------------------------------------------------
+ * Quick view: clickable photo and sheet.
+ * ------------------------------------------------------------------ */
+
+.uoc-offer .uoc-offer__media--link {
+	display: block;
+	border-radius: var(--uoc-radius-sm, 8px);
+	color: inherit;
+	text-decoration: none;
+}
+
+.uoc-offer .uoc-offer__media--link:focus-visible,
+.uoc-offer .uoc-offer__more:focus-visible {
+	outline: 3px solid var(--uoc-primary, #1D4ED8);
+	outline-offset: 2px;
+}
+
+/* Small eye: tells that the photo opens. */
+.uoc-offer .uoc-offer__zoom {
+	position: absolute;
+	inset-block-end: 4px;
+	inset-inline-end: 4px;
+	display: grid;
+	place-items: center;
+	inline-size: 26px;
+	block-size: 26px;
+	border-radius: 999px;
+	background: rgba(17, 24, 39, 0.72);
+	color: #FFF;
+}
+
+.uoc-offer .uoc-offer__zoom .uoc-icon {
+	inline-size: 16px;
+	block-size: 16px;
+}
+
+/* Text link: one line, larger touch area without a larger block. */
+.uoc-offer .uoc-offer__more {
+	display: inline-block;
+	margin-block: -6px -10px;
+	padding-block: 10px;
+	color: var(--uoc-primary, #1D4ED8);
+	font-size: 0.875rem;
+	font-weight: 600;
+	line-height: 1.3;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.uoc-offer .uoc-offer__more .uoc-alt {
+	display: inline-block;
+	margin-inline-start: 6px;
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+html.uoc-sheet-open {
+	overflow: hidden;
+}
+
+/* Quick view: bottom sheet on phones. */
+.uoc-offer .uoc-sheet {
+	box-sizing: border-box;
+	position: fixed;
+	inset: auto 0 0;
+	inline-size: 100%;
+	max-inline-size: 100%;
+	block-size: auto;
+	max-block-size: 88vh;
+	max-block-size: 88dvh;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	border: 0;
+	border-radius: 16px 16px 0 0;
+	background: var(--uoc-white, #FFF);
+	color: var(--uoc-text, #111827);
+	box-shadow: 0 -8px 30px rgba(17, 24, 39, 0.2);
+	transition: transform 0.2s ease;
+}
+
+.uoc-offer .uoc-sheet[open] {
+	display: flex;
+	animation: uoc-sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.uoc-offer .uoc-sheet.is-dragging {
+	transition: none;
+}
+
+.uoc-offer .uoc-sheet::backdrop {
+	background: rgba(17, 24, 39, 0.55);
+}
+
+@keyframes uoc-sheet-up {
+	from {
+		transform: translateY(100%);
+	}
+}
+
+.uoc-offer .uoc-sheet__panel {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	inline-size: 100%;
+	min-block-size: 0;
+}
+
+/* Handle: drag the area down to close. */
+.uoc-offer .uoc-sheet__top {
+	display: grid;
+	flex: 0 0 auto;
+	place-items: center;
+	block-size: 28px;
+	touch-action: none;
+	cursor: grab;
+}
+
+.uoc-offer .uoc-sheet__handle {
+	inline-size: 40px;
+	block-size: 5px;
+	border-radius: 999px;
+	background: #D1D5DB;
+}
+
+.uoc-offer .uoc-sheet__close {
+	position: absolute;
+	z-index: 2;
+	inset-block-start: 36px;
+	inset-inline-end: 12px;
+	display: grid;
+	place-items: center;
+	inline-size: 44px;
+	block-size: 44px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.95);
+	box-shadow: 0 2px 8px rgba(17, 24, 39, 0.2);
+	color: var(--uoc-text, #111827);
+	cursor: pointer;
+}
+
+.uoc-offer .uoc-sheet__scroll {
+	flex: 1 1 auto;
+	min-block-size: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+
+/* Photos: swipe from one photo to the next, no library. */
+.uoc-offer .uoc-sheet__gallery {
+	display: flex;
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+	scrollbar-width: none;
+	background: #F7F7F8;
+}
+
+.uoc-offer .uoc-sheet__gallery::-webkit-scrollbar {
+	display: none;
+}
+
+.uoc-offer .uoc-sheet__slide {
+	display: grid;
+	flex: 0 0 100%;
+	place-items: center;
+	margin: 0;
+	scroll-snap-align: center;
+}
+
+.uoc-offer .uoc-sheet__slide img {
+	display: block;
+	inline-size: 100%;
+	block-size: min(100vw, 42vh);
+	max-inline-size: none;
+	object-fit: contain;
+}
+
+.uoc-offer .uoc-sheet__media {
+	position: relative;
+}
+
+/* Previous / next arrows: always visible, 44 px target. */
+.uoc-offer .uoc-sheet__nav {
+	position: absolute;
+	z-index: 1;
+	inset-block-start: 50%;
+	display: grid;
+	place-items: center;
+	inline-size: 44px;
+	block-size: 44px;
+	margin: -22px 0 0;
+	padding: 0;
+	border: 0;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.92);
+	box-shadow: 0 2px 8px rgba(17, 24, 39, 0.2);
+	color: var(--uoc-text, #111827);
+	cursor: pointer;
+	transition: opacity 0.2s ease;
+}
+
+.uoc-offer .uoc-sheet__nav--prev {
+	inset-inline-start: 8px;
+}
+
+.uoc-offer .uoc-sheet__nav--next {
+	inset-inline-end: 8px;
+}
+
+.uoc-offer .uoc-sheet__nav:disabled {
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* Right-to-left: "previous" is on the right, the arrow flips. */
+.rtl .uoc-offer .uoc-sheet__nav .uoc-icon,
+[dir="rtl"] .uoc-offer .uoc-sheet__nav .uoc-icon {
+	transform: scaleX(-1);
+}
+
+.uoc-offer .uoc-sheet__count {
+	position: absolute;
+	inset-block-end: 8px;
+	inset-inline-start: 8px;
+	padding: 2px 9px;
+	border-radius: 999px;
+	background: rgba(17, 24, 39, 0.72);
+	color: #FFF;
+	font-size: 0.75rem;
+	font-weight: 600;
+	line-height: 1.6;
+}
+
+.uoc-offer .uoc-sheet__dots {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	padding-block: 4px 0;
+}
+
+/* Clickable dot: 24 px target, 7 px visible dot. */
+.uoc-offer .uoc-sheet__dot {
+	display: grid;
+	place-items: center;
+	inline-size: 24px;
+	min-inline-size: 0;
+	block-size: 24px;
+	min-block-size: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	cursor: pointer;
+}
+
+.uoc-offer .uoc-sheet__dot::before {
+	content: "";
+	inline-size: 7px;
+	block-size: 7px;
+	border-radius: 999px;
+	background: #D1D5DB;
+	transition: inline-size 0.2s ease;
+}
+
+.uoc-offer .uoc-sheet__dot.is-active::before {
+	inline-size: 18px;
+	background: var(--uoc-accent, #FF7A00);
+}
+
+.uoc-offer .uoc-sheet__dot.is-active {
+	inline-size: 30px;
+}
+
+.uoc-offer .uoc-sheet__nav:focus-visible,
+.uoc-offer .uoc-sheet__dot:focus-visible {
+	outline: 3px solid var(--uoc-primary, #1D4ED8);
+	outline-offset: 2px;
+}
+
+.uoc-offer .uoc-sheet__content {
+	padding: var(--sp-3, 12px) var(--sp-4, 16px) var(--sp-4, 16px);
+}
+
+.uoc-offer .uoc-sheet__title {
+	margin: 2px 0 4px;
+	padding: 0;
+	font-size: 1.125rem;
+	font-weight: 700;
+	line-height: 1.3;
+}
+
+.uoc-offer .uoc-sheet__price {
+	display: flex;
+	gap: var(--sp-2, 8px);
+	align-items: baseline;
+	margin: 0 0 var(--sp-3, 12px);
+}
+
+.uoc-offer .uoc-sheet__price del {
+	font-size: 0.9375rem;
+	color: var(--uoc-text-2, #6B7280);
+}
+
+.uoc-offer .uoc-sheet__price strong {
+	font-size: 1.375rem;
+	color: var(--uoc-primary, #1D4ED8);
+}
+
+.uoc-offer .uoc-sheet__points {
+	display: grid;
+	gap: 10px;
+	margin: 0 0 var(--sp-3, 12px);
+	padding: 0;
+	list-style: none;
+}
+
+.uoc-offer .uoc-sheet__points li {
+	display: grid;
+	grid-template-columns: 22px minmax(0, 1fr);
+	gap: 10px;
+	align-items: start;
+	margin: 0;
+	font-size: 0.9375rem;
+	line-height: 1.4;
+}
+
+.uoc-offer .uoc-sheet__points .uoc-icon {
+	box-sizing: border-box;
+	inline-size: 22px;
+	block-size: 22px;
+	padding: 3px;
+	border-radius: 999px;
+	background: rgba(255, 122, 0, 0.14);
+	color: var(--uoc-accent, #FF7A00);
+}
+
+.uoc-offer .uoc-sheet__alt {
+	display: block;
+	margin-block-start: 2px;
+	font-size: 0.875rem;
+	color: var(--uoc-text-2, #4B5563);
+}
+
+.uoc-offer .uoc-sheet__desc {
+	margin: 0 0 var(--sp-3, 12px);
+	font-size: 0.9375rem;
+	line-height: 1.45;
+}
+
+.uoc-offer .uoc-sheet__desc p {
+	margin: 0 0 6px;
+}
+
+.uoc-offer .uoc-sheet__subtitle {
+	margin: 0 0 4px;
+	padding: 0;
+	font-size: 0.9375rem;
+	font-weight: 700;
+}
+
+.uoc-offer .uoc-sheet__usage {
+	margin: 0 0 var(--sp-3, 12px);
+	font-size: 0.9375rem;
+	line-height: 1.45;
+}
+
+.uoc-offer .uoc-sheet__trust {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 6px;
+	margin: 0 0 var(--sp-2, 8px);
+	padding: 0;
+	list-style: none;
+}
+
+.uoc-offer .uoc-sheet__trust li {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	align-items: center;
+	margin: 0;
+	padding: 8px 4px;
+	border-radius: var(--uoc-radius-sm, 8px);
+	background: var(--uoc-line, #F3F4F6);
+	font-size: 0.75rem;
+	line-height: 1.25;
+	text-align: center;
+}
+
+.uoc-offer .uoc-sheet__trust .uoc-icon {
+	color: var(--uoc-primary, #1D4ED8);
+}
+
+.uoc-offer .uoc-sheet__note {
+	margin: 0;
+	font-size: 0.8125rem;
+	color: var(--uoc-text-2, #6B7280);
+	text-align: center;
+}
+
+/* Bottom bar: always visible while browsing. */
+.uoc-offer .uoc-sheet__bar {
+	display: grid;
+	flex: 0 0 auto;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: var(--sp-2, 8px);
+	align-items: center;
+	padding: 10px var(--sp-4, 16px) calc(10px + env(safe-area-inset-bottom, 0px));
+	border-block-start: 1px solid #E5E7EB;
+	background: var(--uoc-white, #FFF);
+}
+
+.uoc-offer .uoc-sheet__back {
+	min-block-size: 56px;
+	min-inline-size: 88px;
+	margin: 0;
+	padding: 0 12px;
+	border: 1px solid #D1D5DB;
+	border-radius: var(--uoc-radius-sm, 8px);
+	background: var(--uoc-white, #FFF);
+	box-shadow: none;
+	color: var(--uoc-text, #111827);
+	font-size: 0.9375rem;
+	font-weight: 600;
+	text-transform: none;
+	cursor: pointer;
+}
+
+.uoc-offer .uoc-sheet .uoc-sheet__accept {
+	inline-size: 100%;
+	min-inline-size: 0;
+}
+
+.uoc-offer .uoc-sheet__close:focus-visible,
+.uoc-offer .uoc-sheet__back:focus-visible,
+.uoc-offer .uoc-sheet__gallery:focus-visible {
+	outline: 3px solid var(--uoc-primary, #1D4ED8);
+	outline-offset: 2px;
+}
+
+/* Desktop and tablet: centred window. */
+@media (min-width: 768px) {
+	.uoc-offer .uoc-sheet {
+		inset: 0;
+		inline-size: min(560px, calc(100% - 32px));
+		block-size: fit-content;
+		max-block-size: min(88vh, 820px);
+		margin: auto;
+		border-radius: 16px;
+		box-shadow: 0 20px 50px rgba(17, 24, 39, 0.3);
+	}
+
+	.uoc-offer .uoc-sheet[open] {
+		animation-name: uoc-sheet-in;
+	}
+
+	.uoc-offer .uoc-sheet__top {
+		display: none;
+	}
+
+	.uoc-offer .uoc-sheet__close {
+		inset-block-start: 12px;
+	}
+
+	.uoc-offer .uoc-sheet__slide img {
+		block-size: min(400px, 46vh);
+	}
+}
+
+@keyframes uoc-sheet-in {
+	from {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.uoc-offer .uoc-sheet,
+	.uoc-offer .uoc-sheet[open],
+	.uoc-offer .uoc-sheet__nav,
+	.uoc-offer .uoc-sheet__dot::before {
+		transition: none;
+		animation: none;
+	}
+}

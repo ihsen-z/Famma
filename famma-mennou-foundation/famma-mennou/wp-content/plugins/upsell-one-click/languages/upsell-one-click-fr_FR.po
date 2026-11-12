@@ -1,0 +1,341 @@
+# Copyright (C) 2026 FAMMA
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Upsell One Click 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/upsell-one-click\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-11-12T14:41:18+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: upsell-one-click\n"
+"Language: fr_FR\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#. Plugin Name of the plugin
+#: upsell-one-click.php
+#: includes/class-product-tab.php:51
+#: includes/class-settings-page.php:25
+msgid "Upsell One Click"
+msgstr "Upsell One Click"
+
+#. Description of the plugin
+#: upsell-one-click.php
+msgid "One-click post-purchase upsell for cash on delivery stores: after checkout, the thank-you page offers a complementary product at a special price, added to the same order in one click, without filling the form again."
+msgstr "Offre après achat en un clic pour les boutiques à paiement à la livraison : après la commande, la page de remerciement propose un produit complémentaire à prix spécial, ajouté à la même commande en un clic, sans remplir le formulaire une deuxième fois."
+
+#. Author of the plugin
+#: upsell-one-click.php
+msgid "FAMMA"
+msgstr "FAMMA"
+
+#. translators: %s: product name.
+#: includes/class-block-view.php:57
+#, php-format
+msgid "See the photos: %s"
+msgstr "Voir les photos : %s"
+
+#: includes/class-product-tab.php:79
+msgid "Offer a product"
+msgstr "Proposer un produit"
+
+#: includes/class-product-tab.php:80
+msgid "After an order of this product, the thank-you page offers the product below, added to the same order in one click. The offer closes as soon as the order leaves the open statuses set in WooCommerce > Settings > Upsell One Click."
+msgstr "Après une commande de ce produit, la page de remerciement propose le produit ci-dessous, ajouté à la même commande en un clic. L’offre se ferme dès que la commande quitte les statuts ouverts réglés dans WooCommerce > Réglages > Upsell One Click."
+
+#: includes/class-product-tab.php:88
+msgid "Offered product"
+msgstr "Produit proposé"
+
+#: includes/class-product-tab.php:91
+msgid "Published simple products only: the add must take one click."
+msgstr "Produits simples publiés seulement : l’ajout doit tenir en un clic."
+
+#. translators: %s: currency symbol.
+#: includes/class-product-tab.php:100
+#, php-format
+msgid "Special price (%s)"
+msgstr "Prix spécial (%s)"
+
+#: includes/class-product-tab.php:107
+msgid "Price of the product in the offer. The regular price is shown struck through next to it."
+msgstr "Prix du produit dans l’offre. Le prix normal est affiché barré à côté."
+
+#: includes/class-product-tab.php:115
+msgid "Block title"
+msgstr "Titre du bloc"
+
+#: includes/class-product-tab.php:118
+msgid "Optional. Empty: default title from the settings."
+msgstr "Facultatif. Vide : titre par défaut des réglages."
+
+#: includes/class-product-tab.php:126
+msgid "Block text"
+msgstr "Texte du bloc"
+
+#: includes/class-product-tab.php:129
+msgid "Optional. Empty: default text from the settings."
+msgstr "Facultatif. Vide : texte par défaut des réglages."
+
+#: includes/class-product-tab.php:139
+msgid "Quick view"
+msgstr "Fiche rapide"
+
+#: includes/class-product-tab.php:140
+msgid "A tap on the photo or on the link opens a quick view (all photos, key points, usage) without leaving the page, with the add button at the bottom."
+msgstr "Un toucher sur la photo ou sur le lien ouvre une fiche rapide (toutes les photos, points forts, mode d’emploi) sans quitter la page, avec le bouton d’ajout en bas."
+
+#: includes/class-product-tab.php:148
+msgid "Key points (quick view)"
+msgstr "Points forts (fiche rapide)"
+
+#: includes/class-product-tab.php:150
+msgid "One point per line, 3 at most. Optional second language after \"|\", for example: Reusable | قابلة لإعادة الاستعمال"
+msgstr "Un point par ligne, 3 au maximum. Deuxième langue facultative après « | », par exemple : Réutilisables | تنجم تعاود تستعملهم"
+
+#: includes/class-product-tab.php:152
+msgid "Empty: the short description of the offered product is shown."
+msgstr "Vide : la description courte du produit proposé est affichée."
+
+#: includes/class-product-tab.php:160
+#: includes/class-texts.php:67
+msgid "How to use it"
+msgstr "Comment l’utiliser"
+
+#: includes/class-product-tab.php:163
+msgid "Optional. One or two sentences. Empty: the section is hidden."
+msgstr "Facultatif. Une ou deux phrases. Vide : la rubrique n’apparaît pas."
+
+#: includes/class-product-tab.php:186
+msgid "Results over 30 days"
+msgstr "Résultats sur 30 jours"
+
+#. translators: 1: times shown, 2: times accepted, 3: acceptance rate, 4: times declined, 5: amount added.
+#: includes/class-product-tab.php:190
+#, php-format
+msgid "Offer shown %1$d times, accepted %2$d times (%3$d%%), declined %4$d times. Amount added: %5$s."
+msgstr "Offre vue %1$d fois, acceptée %2$d fois (%3$d %%), refusée %4$d fois. Montant ajouté : %5$s."
+
+#. translators: 1: times the quick view was opened, 2: offers accepted after opening it.
+#: includes/class-product-tab.php:201
+#, php-format
+msgid "Quick view opened %1$d times, %2$d of them followed by an add."
+msgstr "Fiche rapide ouverte %1$d fois, dont %2$d suivies d’un ajout."
+
+#: includes/class-product-tab.php:206
+msgid "Updated every 10 minutes."
+msgstr "Chiffres mis à jour toutes les 10 minutes."
+
+#: includes/class-product-tab.php:216
+msgid "— Choose a product —"
+msgstr "— Choisir un produit —"
+
+#. translators: 1: product name, 2: product ID, 3: price.
+#: includes/class-product-tab.php:234
+#, php-format
+msgid "%1$s (#%2$d, %3$s)"
+msgstr "%1$s (n° %2$d, %3$s)"
+
+#: includes/class-settings-page.php:44
+msgid "When the offer is shown"
+msgstr "Quand l’offre est proposée"
+
+#: includes/class-settings-page.php:46
+msgid "The offer stays open while the order is in one of these statuses. Choose the statuses of an order not yet confirmed or shipped."
+msgstr "L’offre reste ouverte tant que la commande est dans l’un de ces statuts. Choisissez les statuts d’une commande pas encore confirmée ni expédiée."
+
+#: includes/class-settings-page.php:50
+msgid "Open order statuses"
+msgstr "Statuts où l’offre reste ouverte"
+
+#: includes/class-settings-page.php:58
+msgid "Payment methods"
+msgstr "Moyens de paiement"
+
+#: includes/class-settings-page.php:64
+msgid "Orders paid with these methods only. Keep cash on delivery: an order already paid online must not change its total."
+msgstr "Seulement les commandes payées avec ces moyens. Gardez le paiement à la livraison : une commande déjà payée en ligne ne doit pas changer de total."
+
+#: includes/class-settings-page.php:71
+msgid "Colours"
+msgstr "Couleurs"
+
+#: includes/class-settings-page.php:73
+msgid "Empty: default colours."
+msgstr "Vide : couleurs par défaut."
+
+#: includes/class-settings-page.php:77
+msgid "Accent (border, offer label, add button, badge)"
+msgstr "Accent (bordure, mention de l’offre, bouton d’ajout, pastille)"
+
+#: includes/class-settings-page.php:84
+msgid "Links, prices and focus"
+msgstr "Liens, prix et focus"
+
+#: includes/class-settings-page.php:95
+msgid "Texts"
+msgstr "Textes"
+
+#: includes/class-settings-page.php:97
+msgid "Empty: the default text, shown in grey, is used. The \"second language\" line is optional and is shown under the main text (for example French and Arabic)."
+msgstr "Vide : le texte par défaut, affiché en gris, est utilisé. La ligne « deuxième langue » est facultative et s’affiche sous le texte principal (par exemple français et arabe)."
+
+#. translators: %s: label of the main text.
+#: includes/class-settings-page.php:114
+#, php-format
+msgid "%s — second language"
+msgstr "%s — deuxième langue"
+
+#: includes/class-sheet-view.php:46
+msgid "Close"
+msgstr "Fermer"
+
+#: includes/class-sheet-view.php:51
+msgid "Product photos"
+msgstr "Photos du produit"
+
+#: includes/class-sheet-view.php:61
+msgid "Previous photo"
+msgstr "Photo précédente"
+
+#: includes/class-sheet-view.php:65
+msgid "Next photo"
+msgstr "Photo suivante"
+
+#. translators: 1: photo number, 2: number of photos.
+#: includes/class-sheet-view.php:77
+#, php-format
+msgid "Photo %1$d of %2$d"
+msgstr "Photo %1$d sur %2$d"
+
+#. translators: 1: product name, 2: photo number, 3: number of photos.
+#: includes/class-sheet-view.php:162
+#, php-format
+msgid "%1$s, photo %2$d of %3$d"
+msgstr "%1$s, photo %2$d sur %3$d"
+
+#: includes/class-texts.php:38
+msgid "Offer label"
+msgstr "Mention de l’offre"
+
+#: includes/class-texts.php:39
+msgid "Special offer"
+msgstr "Offre spéciale"
+
+#: includes/class-texts.php:42
+msgid "Default block title"
+msgstr "Titre du bloc par défaut"
+
+#: includes/class-texts.php:43
+msgid "Add it to your parcel"
+msgstr "Ajoutez-le à votre colis"
+
+#: includes/class-texts.php:46
+msgid "Default block text"
+msgstr "Texte du bloc par défaut"
+
+#: includes/class-texts.php:47
+msgid "Same parcel, paid on delivery. Available until your order is confirmed."
+msgstr "Même colis, payé à la livraison. Valable jusqu’à la confirmation de votre commande."
+
+#: includes/class-texts.php:50
+msgid "Accept button ({price} = special price)"
+msgstr "Bouton d’ajout ({price} = prix spécial)"
+
+#: includes/class-texts.php:51
+msgid "Yes, add it · +{price}"
+msgstr "Oui, ajouter · +{price}"
+
+#: includes/class-texts.php:54
+msgid "Decline button"
+msgstr "Bouton de refus"
+
+#: includes/class-texts.php:55
+msgid "No thanks"
+msgstr "Non merci"
+
+#: includes/class-texts.php:58
+msgid "Quick view link"
+msgstr "Lien vers la fiche rapide"
+
+#: includes/class-texts.php:59
+msgid "Discover the product"
+msgstr "Découvrir le produit"
+
+#: includes/class-texts.php:62
+msgid "Quick view: back button"
+msgstr "Fiche rapide : bouton retour"
+
+#: includes/class-texts.php:63
+msgid "Back"
+msgstr "Retour"
+
+#: includes/class-texts.php:66
+msgid "Quick view: usage heading"
+msgstr "Fiche rapide : titre du mode d’emploi"
+
+#: includes/class-texts.php:70
+msgid "Quick view: reassurance 1 (payment)"
+msgstr "Fiche rapide : garantie 1 (paiement)"
+
+#: includes/class-texts.php:71
+msgid "Cash on delivery"
+msgstr "Paiement à la livraison"
+
+#: includes/class-texts.php:74
+msgid "Quick view: reassurance 2 (parcel)"
+msgstr "Fiche rapide : garantie 2 (colis)"
+
+#: includes/class-texts.php:75
+msgid "In the same parcel"
+msgstr "Dans le même colis"
+
+#: includes/class-texts.php:78
+msgid "Quick view: reassurance 3 (delivery, empty = hidden)"
+msgstr "Fiche rapide : garantie 3 (livraison, vide = masquée)"
+
+#: includes/class-texts.php:82
+msgid "Quick view: note"
+msgstr "Fiche rapide : remarque"
+
+#: includes/class-texts.php:83
+msgid "You can still change your mind when we call to confirm your order."
+msgstr "Vous pourrez encore changer d’avis lors de notre appel de confirmation."
+
+#: includes/class-texts.php:86
+msgid "Message after adding ({total} = new total)"
+msgstr "Message après l’ajout ({total} = nouveau total)"
+
+#: includes/class-texts.php:87
+msgid "Added to your order. New total to pay on delivery: {total}."
+msgstr "C’est ajouté à votre commande. Nouveau total à payer à la livraison : {total}."
+
+#: includes/class-texts.php:90
+msgid "Message when the offer has closed"
+msgstr "Message quand l’offre est fermée"
+
+#: includes/class-texts.php:91
+msgid "This offer is no longer available: your order is already being prepared."
+msgstr "Cette offre n’est plus disponible : votre commande est déjà en préparation."
+
+#: includes/class-texts.php:94
+msgid "Message when a click failed"
+msgstr "Message quand un clic n’a pas abouti"
+
+#: includes/class-texts.php:95
+msgid "The click did not go through. Please try the button again."
+msgstr "Le clic n’a pas abouti. Réessayez le bouton."
+
+#. translators: 1: product name, 2: special price, 3: new order total.
+#: includes/class-thankyou.php:179
+#, php-format
+msgid "Upsell One Click: the customer accepted the offer. %1$s added at %2$s. New total: %3$s."
+msgstr "Upsell One Click : offre acceptée par le client. %1$s ajouté à %2$s. Nouveau total : %3$s."
+
+#: upsell-one-click.php:77
+msgid "Settings"
+msgstr "Réglages"

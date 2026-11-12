@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.3.16
+ * Version:           0.3.17
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.3.16' );
+define( 'FAMMA_CORE_VERSION', '0.3.17' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -53,6 +53,7 @@ require_once __DIR__ . '/includes/order-note.php';
 require_once __DIR__ . '/includes/offer-settings.php';
 require_once __DIR__ . '/includes/offer-admin.php';
 require_once __DIR__ . '/includes/offer-thankyou.php';
+require_once __DIR__ . '/includes/uoc-bridge.php';
 require_once __DIR__ . '/includes/product-sizes.php';
 require_once __DIR__ . '/includes/product-sizes-admin.php';
 require_once __DIR__ . '/includes/governorate-places.php';
@@ -3572,7 +3573,13 @@ function boot(): void {
 	Express_Preparation::instance();
 	Express_Checkout::instance();
 	Express_Cart_Isolation::instance();
-	Offer_Thankyou::instance();
+	// Upsell One Click actif : il reprend l'offre après achat, famma-core se
+	// met en veille (le désactiver rend aussitôt la main à famma-core).
+	if ( Uoc_Bridge::active() ) {
+		Uoc_Bridge::instance();
+	} else {
+		Offer_Thankyou::instance();
+	}
 	Order_Emails::instance();
 	Anti_Abuse::instance();
 	Checkout_Lite::instance();
@@ -3629,7 +3636,9 @@ function boot(): void {
 		Visitor_Inputs_Export::instance();
 		Visitor_Inputs_Order::instance();
 		Order_Note::instance();
-		Offer_Admin::instance();
+		if ( ! Uoc_Bridge::active() ) {
+			Offer_Admin::instance();
+		}
 	}
 }
 
