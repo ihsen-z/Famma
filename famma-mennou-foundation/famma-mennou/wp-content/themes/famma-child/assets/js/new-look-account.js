@@ -6,8 +6,9 @@
  * noms, même envoi. Sans script, les deux formulaires restent l'un sous
  * l'autre, tels que WooCommerce les rend.
  *
- * L'onglet « Créer un compte » s'ouvre d'office si l'adresse #register est
- * demandée, ou si WooCommerce a regarni l'e-mail après un refus.
+ * Comme la maquette, « Créer un compte » vient en premier et s'ouvre
+ * d'office ; « Me connecter » s'ouvre si l'adresse #login est demandée, ou si
+ * WooCommerce a regarni l'identifiant après un refus de connexion.
  */
 ( function () {
 	'use strict';
@@ -18,22 +19,23 @@
 		return;
 	}
 
-	var cols = [ box.querySelector( '.u-column1' ), box.querySelector( '.u-column2' ) ];
+	// Comme la maquette : « Créer un compte » d'abord, « Me connecter » ensuite.
+	var cols = [ box.querySelector( '.u-column2' ), box.querySelector( '.u-column1' ) ];
 
 	if ( ! cols[ 0 ] || ! cols[ 1 ] ) {
 		return;
 	}
 
-	var heads = cols.map( function ( col ) {
+	var cfg = window.fammaAccount || {};
+	var heads = cols.map( function ( col, i ) {
+		var own = String( ( 0 === i ? cfg.up : cfg.in ) || '' ).trim();
 		var h = col.querySelector( 'h2' );
-		return h ? h.textContent.replace( /\s+/g, ' ' ).trim() : '';
+		return own || ( h ? h.textContent.replace( /\s+/g, ' ' ).trim() : '' );
 	} );
 
 	if ( ! heads[ 0 ] || ! heads[ 1 ] ) {
 		return;
 	}
-
-	var cfg = window.fammaAccount || {};
 	var seg = document.createElement( 'div' );
 	var pill = document.createElement( 'span' );
 
@@ -108,11 +110,16 @@
 	box.insertBefore( seg, box.firstChild );
 	box.classList.add( 'is-tabbed' );
 
-	var email = cols[ 1 ].querySelector( 'input[name="email"]' );
-	show( '#register' === window.location.hash || ( email && email.value ) ? 1 : 0, false );
+	// Création ouverte d'office ; connexion si l'adresse le demande ou si
+	// WooCommerce a regarni l'identifiant après un refus de connexion.
+	var user = cols[ 1 ].querySelector( 'input[name="username"]' );
+	var wantsIn = '#login' === window.location.hash || ( user && user.value );
+	show( wantsIn ? 1 : 0, false );
 
 	window.addEventListener( 'hashchange', function () {
 		if ( '#register' === window.location.hash ) {
+			show( 0, true );
+		} else if ( '#login' === window.location.hash ) {
 			show( 1, true );
 		}
 	} );

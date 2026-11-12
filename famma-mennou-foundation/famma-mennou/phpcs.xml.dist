@@ -121,6 +121,13 @@
 				<element value="famma_child_account_look_head"/>
 				<element value="famma_child_account_look_logout"/>
 				<element value="famma_child_enqueue_account_panel"/>
+				<element value="famma_child_account_auth"/>
+				<element value="famma_child_account_auth_setup"/>
+				<element value="famma_child_account_auth_strings"/>
+				<element value="famma_child_account_mascot"/>
+				<element value="famma_child_account_auth_open"/>
+				<element value="famma_child_account_auth_close"/>
+				<element value="famma_child_account_auth_up_sub"/>
 				<element value="famma_child_account_track"/>
 				<element value="famma_child_account_track_setup"/>
 				<element value="famma_child_enqueue_account_track"/>

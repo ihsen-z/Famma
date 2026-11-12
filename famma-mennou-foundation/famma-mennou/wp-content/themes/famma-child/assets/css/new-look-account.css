@@ -264,14 +264,183 @@
 	box-shadow: none;
 }
 
-/* Le titre devient l'onglet : il reste lu par les lecteurs d'écran */
+/* Titre du formulaire ouvert, et phrase dessous (maquette : .pane h2, .sub) */
 .famma-nl-acct #customer_login.is-tabbed h2 {
-	position: absolute;
-	width: 1px;
-	height: 1px;
+	margin: 0 0 14px;
+	font-size: 21px;
+}
+
+.famma-nl-acct .famma-acct-sub {
+	margin: -8px 0 14px;
+	color: var(--famma-text-2);
+	font-size: 14px;
+}
+
+/* ---------- Carte « Votre espace FAMMA » (maquette : .auth, .promise) ---------- */
+
+.famma-acct-auth {
+	display: grid;
+	gap: 20px;
+}
+
+@media (min-width: 900px) {
+	.famma-acct-auth {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 470px);
+		align-items: start;
+		gap: 32px;
+	}
+}
+
+.famma-acct-auth__card {
+	min-width: 0;
+}
+
+.famma-nl-acct .famma-acct-auth #customer_login {
+	max-width: none;
+	margin: 0;
+}
+
+.famma-acct-promise {
+	position: relative;
+	display: grid;
+	gap: 18px;
+	padding: 20px 18px;
+	border-radius: var(--acct-radius-lg);
+	background: var(--famma-blue);
+	color: var(--famma-white);
 	overflow: hidden;
-	clip-path: inset(50%);
-	white-space: nowrap;
+}
+
+@media (min-width: 900px) {
+	.famma-acct-promise {
+		padding: 26px 22px;
+	}
+}
+
+.famma-acct-mascot {
+	position: absolute;
+	inset-block-start: 16px;
+	inset-inline-end: 16px;
+	width: 64px;
+	height: 64px;
+	color: var(--famma-white);
+	opacity: .95;
+}
+
+.famma-acct-mascot__eye {
+	transform-box: fill-box;
+	transform-origin: center;
+}
+
+.famma-acct-mascot__ant {
+	transform-box: view-box;
+	transform-origin: 54px 28px;
+}
+
+.famma-nl-acct .famma-acct-promise h1 {
+	margin: 0;
+	padding-inline-end: 76px;
+	color: var(--famma-white);
+	font-size: clamp(26px, 4vw, 36px);
+	font-weight: 700;
+	line-height: 1.15;
+	text-wrap: balance;
+}
+
+.famma-acct-promise h1 em {
+	color: var(--famma-orange);
+	font-style: normal;
+}
+
+.famma-nl-acct .famma-acct-promise__lead {
+	max-width: 46ch;
+	margin: 0;
+	color: var(--famma-on-dark);
+	font-size: 16px;
+	line-height: 1.5;
+	text-wrap: pretty;
+}
+
+.famma-nl-acct .famma-acct-ben {
+	display: grid;
+	gap: 12px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+@media (min-width: 560px) and (max-width: 899px) {
+	.famma-nl-acct .famma-acct-ben {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+.famma-nl-acct .famma-acct-ben li {
+	display: grid;
+	grid-template-columns: 40px minmax(0, 1fr);
+	gap: 12px;
+	align-items: start;
+	margin: 0;
+}
+
+.famma-acct-ben i {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	border-radius: 12px;
+	background: rgba(255, 122, 0, .16);
+	color: var(--famma-orange);
+}
+
+.famma-acct-ben i .famma-icon {
+	width: 21px;
+	height: 21px;
+}
+
+.famma-acct-ben b {
+	display: block;
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.famma-acct-ben span span {
+	display: block;
+	color: var(--famma-on-dark);
+	font-size: 13.5px;
+}
+
+.famma-nl-acct .famma-acct-alt {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 12px;
+	margin: 0;
+	padding: 12px 14px;
+	border: 1px dashed rgba(255, 255, 255, .3);
+	border-radius: var(--acct-radius);
+	color: var(--famma-on-dark);
+	font-size: 14px;
+}
+
+.famma-acct-alt b {
+	color: var(--famma-white);
+	font-weight: 600;
+}
+
+.famma-nl-acct .famma-acct-alt a {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	color: var(--famma-orange);
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.famma-nl-acct .famma-acct-alt a:hover,
+.famma-nl-acct .famma-acct-alt a:focus-visible {
+	color: var(--famma-white);
 }
 
 .famma-acct-seg {
@@ -287,7 +456,7 @@
 	position: relative;
 	z-index: 1;
 	min-height: 44px;
-	padding: 6px 10px;
+	padding: 6px 4px;
 	border: 0;
 	border-radius: var(--famma-radius-pill, 999px);
 	background: transparent;
@@ -1292,6 +1461,20 @@ body.famma-nl-acct .woocommerce-MyAccount-content .woocommerce-Address-title a.e
 		animation: famma-acct-in .32s var(--acct-ease) both;
 	}
 
+	/* Page de connexion : avantages en cascade, mascotte qui cligne */
+	.famma-acct-ben li {
+		animation: famma-acct-rise-ben 520ms var(--acct-spring) backwards;
+		animation-delay: calc(200ms + var(--i, 0) * 110ms);
+	}
+
+	.famma-acct-mascot__eye {
+		animation: famma-acct-blink 7s infinite, famma-acct-wink .6s cubic-bezier(.2, .8, .2, 1) 900ms;
+	}
+
+	.famma-acct-mascot__ant {
+		animation: famma-acct-antenna 7s infinite;
+	}
+
 	/* Arrivée : la carte monte, les compteurs suivent, l'anneau se remplit */
 	.famma-acct-intro .famma-acct-head {
 		animation: famma-acct-rise-head 560ms var(--acct-spring) backwards;
@@ -1367,6 +1550,57 @@ body.famma-nl-acct .woocommerce-MyAccount-content .woocommerce-Address-title a.e
 	to {
 		opacity: 1;
 		transform: none;
+	}
+}
+
+@keyframes famma-acct-rise-ben {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+}
+
+@keyframes famma-acct-blink {
+	0%,
+	91%,
+	100% {
+		transform: scaleY(1);
+	}
+
+	95% {
+		transform: scaleY(.12);
+	}
+}
+
+@keyframes famma-acct-wink {
+	0%,
+	100% {
+		transform: scaleY(1);
+	}
+
+	40%,
+	60% {
+		transform: scaleY(.12);
+	}
+}
+
+@keyframes famma-acct-antenna {
+	0%,
+	88%,
+	100% {
+		transform: rotate(0);
+	}
+
+	91% {
+		transform: rotate(-9deg);
+	}
+
+	94% {
+		transform: rotate(7deg);
+	}
+
+	97% {
+		transform: rotate(-3deg);
 	}
 }
 

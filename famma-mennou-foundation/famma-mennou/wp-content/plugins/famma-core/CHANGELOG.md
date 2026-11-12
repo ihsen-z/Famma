@@ -1,5 +1,30 @@
 # Changelog — FAMMA Core
 
+## 0.3.21 — 2026-11-12 (« Mon compte » aligné sur la maquette, étape B : connexion) · thème famma-child 0.2.8
+
+Toujours derrière la case `acct_look` (décochée en production).
+
+- Carte marine « Votre espace FAMMA » à côté du formulaire, comme la
+  maquette : mascotte qui cligne, phrase d'accroche, quatre avantages qui
+  apparaissent en cascade, encadré « Pas besoin de compte pour commander »
+  avec le lien « Commander sans compte » vers la boutique. Côte à côte à
+  partir de 900 px, l'une sous l'autre sur téléphone.
+- Onglets dans l'ordre de la maquette : « Créer un compte » d'abord et ouvert
+  d'office, « Me connecter » ensuite (ouvert si l'adresse finit par #login ou
+  après un refus de connexion).
+- Titres et boutons de la maquette : « Créer mon compte » (titre et bouton),
+  « Content de vous revoir », « Me connecter ». Seuls ces trois textes de
+  WooCommerce changent, et seulement sur cette page.
+- Nouvelle classe `Famma\Core\Account_Auth` (`includes/account-auth.php`) :
+  20 textes dans FAMMA → Pages → « Mon compte », en français et en derja (à
+  relire). Écarts voulus avec la maquette, en attendant les lots concernés :
+  « Gardez votre adresse » (au singulier : une seule adresse pour l'instant)
+  et pas de phrase « Trois champs… » sous « Créer mon compte » (l'inscription
+  par téléphone n'existe pas encore).
+
+Le thème porte l'affichage (`inc/new-look-account-auth.php`, nouvelle icône
+`heart`).
+
 ## 0.3.20 — 2026-11-12 (« Mon compte » aligné sur la maquette, étape A) · thème famma-child 0.2.7
 
 Aucune nouvelle case : `acct_look` et `acct_track` (toujours décochées en

@@ -57,6 +57,8 @@ function famma_child_icon_paths(): array {
 		// Suivi de commande dans « Mon compte » : reçue, puis livrée.
 		'box'       => '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
 		'home'      => '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>',
+		// Carte « Votre espace FAMMA » : « Retrouvez votre sélection ».
+		'heart'     => '<path d="M12 20.5s-7.5-4.6-9.3-9.2A5.2 5.2 0 0 1 12 7a5.2 5.2 0 0 1 9.3 4.3C19.5 15.9 12 20.5 12 20.5z"/>',
 		// « Me déconnecter », en bas de « Mes informations ».
 		'logout'    => '<path d="M14.5 4.5h4a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5h-4"/><path d="M10 16l-4-4 4-4M6 12h10"/>',
 		// Cartes de commande : « Recommander » et « Une question » (WhatsApp).

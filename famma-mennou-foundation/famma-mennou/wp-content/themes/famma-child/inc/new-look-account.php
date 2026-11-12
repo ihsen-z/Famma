@@ -79,11 +79,15 @@ function famma_child_enqueue_account_look(): void {
 		)
 	);
 
+	$auth = class_exists( '\Famma\Core\Account_Auth' );
+
 	wp_add_inline_script(
 		'famma-new-look-account',
 		'window.fammaAccount=' . wp_json_encode(
 			array(
 				'tabs' => __( 'Se connecter ou créer un compte', 'famma-child' ),
+				'up'   => $auth ? \Famma\Core\Account_Auth::text( 'tab_up' ) : '',
+				'in'   => $auth ? \Famma\Core\Account_Auth::text( 'tab_in' ) : '',
 			)
 		) . ';',
 		'before'
