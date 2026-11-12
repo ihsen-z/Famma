@@ -1,9 +1,68 @@
 # Changelog — FAMMA Core
 
-## 0.3.14 — 2026-11-12 (préparée, non envoyée)
+## 0.3.15 — 2026-11-12 (en production depuis le 12/11 ~02:55, lot 30)
+
+Toute la galerie du produit proposé dans la fiche rapide « Découvrir le
+produit ».
+
+### Modifications
+
+- **Toutes les photos** du produit proposé (principale + galerie) dans la
+  fiche rapide, au lieu de 5 : plafond de sécurité porté à 12
+  (`Offer_Settings::MAX_PHOTOS`). Seules les vraies images comptent : une
+  pièce jointe supprimée ou qui n'est pas une image est écartée.
+- **Flèches précédent / suivant** sur la photo (44 px, masquées au début et
+  à la fin, inversées en arabe), **compteur « 2 / 6 »** annoncé aux
+  lecteurs d'écran, et **points cliquables** pour aller à une photo.
+  Le glissement au doigt reste possible.
+- Défilement calculé sur la position réelle de la photo : juste en
+  français comme en arabe ; un double toucher rapide ne saute pas de photo.
+- Au-delà des deux premières, les photos se chargent à l'approche
+  (`loading=lazy`).
+
+## 0.3.14 — 2026-11-12 (en prod depuis le 12/11, lot 28)
+
+Fiche rapide « Découvrir le produit » dans l'offre après achat, pour la
+cliente qui ne connaît pas l'article proposé.
+
+### Ajouts
+
+- **Photo cliquable et lien « Découvrir le produit · شوف المنتج »** dans le
+  bloc de l'offre : ils ouvrent une fiche rapide **sans quitter la page de
+  remerciement** (`includes/offer-thankyou.php`, `assets/js/offer-sheet.js`).
+  Sur la fiche produit, la cliente perdait le prix spécial et pouvait passer
+  une deuxième commande.
+- **Fiche rapide** (`<dialog>` natif) : photos à faire glisser (principale +
+  galerie, 5 au maximum, chargées seulement à l'ouverture), nom, prix barré
+  et prix spécial, 3 points forts (FR + derja), « Comment l'utiliser »,
+  rappels vrais (paiement à la livraison, même colis, livraison gratuite,
+  changement d'avis possible à l'appel). **Barre fixe en bas** avec
+  « Oui, ajouter · +22 DT » (même formulaire, mêmes gardes) et « Retour ».
+  Bas d'écran sur téléphone, fenêtre centrée à partir de 768 px.
+- **Fermeture facile** : croix, « Retour », Échap, toucher le fond, glisser
+  la poignée vers le bas, et **bouton retour du téléphone** (entrée
+  d'historique), qui ferme la fiche au lieu de quitter la page.
+- **Onglet « Offre après achat »** (`includes/offer-admin.php`) : case
+  « Fiche « Découvrir le produit » » (cochée par défaut), points forts (un
+  par ligne, derja après « | », 3 au maximum ; vide = description courte de
+  l'article), mode d'emploi facultatif, et nouveau chiffre « fiche ouverte X
+  fois, dont Y suivies d'un ajout ».
+- **Mesure d'ouverture** : envoi discret (`sendBeacon`) vers la page de
+  remerciement, action `view` vérifiée par clé de commande + nonce, méta
+  `_famma_offer_viewed_at`, réponse 204 sans redirection.
+
+### Comportement inchangé
+
+- Sans JavaScript, le lien mène à la fiche produit ; le bouton d'ajout du
+  bloc fonctionne toujours sans script.
+- Script différé (`strategy => defer`), chargé seulement sur la page de
+  remerciement ; aucune bibliothèque ajoutée.
+
+## 0.3.14 (accueil) — 2026-11-12 (en production depuis le 12/11 ~02:27, lot 29)
 
 Accueil animé, lot 2 de la maquette. Construite sur la 0.3.13 en
-production. Thème FAMMA Child 0.2.2.
+production. Envoyée une minute après le lot 28 (fiche rapide), qui porte
+le même numéro : `famma-core.php` identique dans les deux lots. Thème FAMMA Child 0.2.2.
 
 ### Ajouts
 
@@ -36,13 +95,22 @@ production. Thème FAMMA Child 0.2.2.
   console propre, `debug.log` sans ligne ajoutée, parcours COD conforme
   (payée seulement à « livrée », pas de double encaissement).
 
-## 0.3.13 — 2026-11-12 (en production depuis le 12/11/2026, lot 27)
+## 0.3.13 — 2026-11-12 (en production depuis le 12/11, lot 27)
 
-Bloc d'offre après achat visible au premier écran de la page de
-remerciement.
+### Changements
 
-## 0.3.12 — 2026-11-11 (en production depuis le 11/11/2026, lot 26)
+- **Bloc de l'offre déplacé tout en haut** de la page de remerciement
+  (`woocommerce_before_thankyou`), sous le titre « Commande reçue » : le
+  bouton est visible sans défiler à 360 × 740, 390 × 844, 768 × 1024 et
+  1366 × 768 (mesuré sur une copie de la prod).
+- **Carte compacte** : en-tête « Offre spéciale · عرض خاص » avec « Non
+  merci », photo avec pastille de remise, titre « Ajoutez-le à votre
+  colis », prix barré et prix spécial (montants `dir="ltr"` pour l'arabe),
+  bouton « Oui, ajouter · +22 DT » ; un seul formulaire.
+- `offer.css` réécrite, toutes les règles préfixées `.famma-offer`.
+- Feuille redatée le 12/11 (lot 27b) pour forcer un nouveau `?ver=`.
 
+## 0.3.12 — 2026-11-12 (en production depuis le 11/11, lot 26)
 Offre après achat en un clic. Construite sur la 0.3.11 (non envoyée) :
 les deux partent ensemble ou la 0.3.11 d'abord.
 
