@@ -34,11 +34,29 @@ final class Offer_Settings {
 	/** Texte du bloc. */
 	public const META_TEXT = '_famma_offer_text';
 
+	/** Fiche rapide « Découvrir le produit » (`no` pour la masquer). */
+	public const META_SHEET = '_famma_offer_sheet';
+
+	/** Points forts de la fiche rapide : un par ligne, « français | derja ». */
+	public const META_POINTS = '_famma_offer_points';
+
+	/** Mode d'emploi court de la fiche rapide. */
+	public const META_USAGE = '_famma_offer_usage';
+
+	/** Nombre maximal de points forts affichés. */
+	public const MAX_POINTS = 3;
+
+	/** Nombre maximal de photos dans la fiche rapide. */
+	public const MAX_PHOTOS = 5;
+
 	/** Commande : horodatage du premier affichage de l'offre. */
 	public const ORDER_SHOWN = '_famma_offer_shown_at';
 
 	/** Commande : horodatage de l'acceptation. */
 	public const ORDER_ACCEPTED = '_famma_offer_accepted_at';
+
+	/** Commande : horodatage de la première ouverture de la fiche rapide. */
+	public const ORDER_VIEWED = '_famma_offer_viewed_at';
 
 	/** Commande : horodatage du refus (« Non merci »). */
 	public const ORDER_DECLINED = '_famma_offer_declined_at';
@@ -62,7 +80,7 @@ final class Offer_Settings {
 	 * Réglages d'un produit, ou null si aucune offre n'est active.
 	 *
 	 * @param \WC_Product $product Produit acheté.
-	 * @return array{source: int, target: int, price: float, title: string, text: string}|null
+	 * @return array{source: int, target: int, price: float, title: string, text: string, sheet: bool, points: string, usage: string}|null
 	 */
 	public static function for_product( \WC_Product $product ): ?array {
 		if ( 'yes' !== (string) $product->get_meta( self::META_ENABLED ) ) {
@@ -82,6 +100,9 @@ final class Offer_Settings {
 			'price'  => round( $price, 3 ),
 			'title'  => (string) $product->get_meta( self::META_TITLE ),
 			'text'   => (string) $product->get_meta( self::META_TEXT ),
+			'sheet'  => 'no' !== (string) $product->get_meta( self::META_SHEET ),
+			'points' => (string) $product->get_meta( self::META_POINTS ),
+			'usage'  => (string) $product->get_meta( self::META_USAGE ),
 		);
 	}
 
@@ -94,7 +115,7 @@ final class Offer_Settings {
 	 * commande.
 	 *
 	 * @param \WC_Order $order Commande.
-	 * @return array{source: int, target: int, price: float, title: string, text: string, product: \WC_Product}|null
+	 * @return array{source: int, target: int, price: float, title: string, text: string, sheet: bool, points: string, usage: string, product: \WC_Product}|null
 	 */
 	public static function for_order( \WC_Order $order ): ?array {
 		if ( ! $order->has_status( self::OPEN_STATUS ) ) {
@@ -158,26 +179,53 @@ final class Offer_Settings {
 	}
 
 	/**
+	 * Points forts saisis : au plus trois, chacun en français avec sa
+	 * traduction en derja facultative après « | ».
+	 *
+	 * @param string $raw Texte saisi dans l'onglet, un point par ligne.
+	 * @return array<int, array{fr: string, ar: string}>
+	 */
+	public static function points( string $raw ): array {
+		$out = array();
+		foreach ( preg_split( '/\R/', $raw ) as $line ) {
+			$parts = array_map( 'trim', explode( '|', (string) $line, 2 ) );
+			if ( '' === $parts[0] ) {
+				continue;
+			}
+			$out[] = array(
+				'fr' => $parts[0],
+				'ar' => $parts[1] ?? '',
+			);
+			if ( count( $out ) >= self::MAX_POINTS ) {
+				break;
+			}
+		}
+		return $out;
+	}
+
+	/**
 	 * Statistiques des 30 derniers jours pour un produit déclencheur.
 	 *
 	 * Calculées depuis les commandes (méta `_famma_offer_*`), mises en cache
 	 * dix minutes (règle 10).
 	 *
 	 * @param int $source_id Produit déclencheur.
-	 * @return array{shown: int, accepted: int, declined: int, amount: float}
+	 * @return array{shown: int, viewed: int, accepted: int, viewed_accepted: int, declined: int, amount: float}
 	 */
 	public static function stats( int $source_id ): array {
-		$key    = 'famma_offer_stats_' . $source_id;
+		$key    = 'famma_offer_stats2_' . $source_id;
 		$cached = get_transient( $key );
 		if ( is_array( $cached ) ) {
 			return $cached;
 		}
 
 		$out = array(
-			'shown'    => 0,
-			'accepted' => 0,
-			'declined' => 0,
-			'amount'   => 0.0,
+			'shown'           => 0,
+			'viewed'          => 0,
+			'accepted'        => 0,
+			'viewed_accepted' => 0,
+			'declined'        => 0,
+			'amount'          => 0.0,
 		);
 
 		$ids = wc_get_orders(
@@ -198,9 +246,16 @@ final class Offer_Settings {
 			if ( $order->get_meta( self::ORDER_SHOWN ) ) {
 				++$out['shown'];
 			}
+			$viewed = (bool) $order->get_meta( self::ORDER_VIEWED );
+			if ( $viewed ) {
+				++$out['viewed'];
+			}
 			if ( $order->get_meta( self::ORDER_ACCEPTED ) ) {
 				++$out['accepted'];
 				$out['amount'] += (float) $order->get_meta( self::ORDER_AMOUNT );
+				if ( $viewed ) {
+					++$out['viewed_accepted'];
+				}
 			}
 			if ( $order->get_meta( self::ORDER_DECLINED ) ) {
 				++$out['declined'];
@@ -218,6 +273,6 @@ final class Offer_Settings {
 	 * @return void
 	 */
 	public static function flush_stats( int $source_id ): void {
-		delete_transient( 'famma_offer_stats_' . $source_id );
+		delete_transient( 'famma_offer_stats2_' . $source_id );
 	}
 }

@@ -5,6 +5,8 @@
  * 12/11/2026 sur une copie de la prod : bouton visible sans défiler à
  * 360 × 740, 390 × 844, 768 × 1024 et 1366 × 768.
  *
+ * La fiche rapide « Découvrir le produit » (0.3.14) est en fin de fichier.
+ *
  * Toutes les règles sont préfixées par `.famma-offer` : le thème pose des
  * marges sur `.single-content p` et des styles sur `button`, qui écartaient
  * les lignes du bloc. Jetons du thème avec valeur de repli (le plugin ne
@@ -237,4 +239,409 @@
 
 .famma-offer-message--ok {
 	border-inline-start-color: #16A34A;
+}
+
+/* ------------------------------------------------------------------
+ * 0.3.14 — « Découvrir le produit » : photo cliquable et fiche rapide.
+ * ------------------------------------------------------------------ */
+
+.famma-offer .famma-offer__media--link {
+	display: block;
+	border-radius: var(--famma-radius-sm, 8px);
+	color: inherit;
+	text-decoration: none;
+}
+
+.famma-offer .famma-offer__media--link:focus-visible,
+.famma-offer .famma-offer__more:focus-visible {
+	outline: 3px solid var(--famma-blue, #1D4ED8);
+	outline-offset: 2px;
+}
+
+/* Petit œil : signale que la photo s'ouvre. */
+.famma-offer .famma-offer__zoom {
+	position: absolute;
+	inset-block-end: 4px;
+	inset-inline-end: 4px;
+	display: grid;
+	place-items: center;
+	inline-size: 26px;
+	block-size: 26px;
+	border-radius: 999px;
+	background: rgba(17, 24, 39, 0.72);
+	color: #FFF;
+}
+
+.famma-offer .famma-offer__zoom .famma-icon {
+	inline-size: 16px;
+	block-size: 16px;
+}
+
+/* Lien texte : zone tactile de 44 px sans agrandir le bloc. */
+.famma-offer .famma-offer__more {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+	min-block-size: 44px;
+	margin-block: -10px -12px;
+	color: var(--famma-blue, #1D4ED8);
+	font-size: 0.875rem;
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.famma-offer .famma-offer__more [lang="ar"] {
+	font-weight: 500;
+	text-decoration: none;
+}
+
+html.famma-sheet-open {
+	overflow: hidden;
+}
+
+/* Fiche rapide : en bas de l'écran sur téléphone. */
+.famma-offer .famma-sheet {
+	box-sizing: border-box;
+	position: fixed;
+	inset: auto 0 0;
+	inline-size: 100%;
+	max-inline-size: 100%;
+	block-size: auto;
+	max-block-size: 88vh;
+	max-block-size: 88dvh;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	border: 0;
+	border-radius: 16px 16px 0 0;
+	background: var(--famma-white, #FFF);
+	color: var(--famma-text, #111827);
+	box-shadow: 0 -8px 30px rgba(17, 24, 39, 0.2);
+	transition: transform 0.2s ease;
+}
+
+.famma-offer .famma-sheet[open] {
+	display: flex;
+	animation: famma-sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.famma-offer .famma-sheet.is-dragging {
+	transition: none;
+}
+
+.famma-offer .famma-sheet::backdrop {
+	background: rgba(17, 24, 39, 0.55);
+}
+
+@keyframes famma-sheet-up {
+	from {
+		transform: translateY(100%);
+	}
+}
+
+.famma-offer .famma-sheet__panel {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	inline-size: 100%;
+	min-block-size: 0;
+}
+
+/* Poignée : la zone se glisse vers le bas pour fermer. */
+.famma-offer .famma-sheet__top {
+	display: grid;
+	flex: 0 0 auto;
+	place-items: center;
+	block-size: 28px;
+	touch-action: none;
+	cursor: grab;
+}
+
+.famma-offer .famma-sheet__handle {
+	inline-size: 40px;
+	block-size: 5px;
+	border-radius: 999px;
+	background: #D1D5DB;
+}
+
+.famma-offer .famma-sheet__close {
+	position: absolute;
+	z-index: 2;
+	inset-block-start: 36px;
+	inset-inline-end: 12px;
+	display: grid;
+	place-items: center;
+	inline-size: 44px;
+	block-size: 44px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.95);
+	box-shadow: 0 2px 8px rgba(17, 24, 39, 0.2);
+	color: var(--famma-text, #111827);
+	cursor: pointer;
+}
+
+.famma-offer .famma-sheet__scroll {
+	flex: 1 1 auto;
+	min-block-size: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+
+/* Photos : glisser d'une photo à l'autre, sans bibliothèque. */
+.famma-offer .famma-sheet__gallery {
+	display: flex;
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+	scrollbar-width: none;
+	background: #F7F7F8;
+}
+
+.famma-offer .famma-sheet__gallery::-webkit-scrollbar {
+	display: none;
+}
+
+.famma-offer .famma-sheet__slide {
+	display: grid;
+	flex: 0 0 100%;
+	place-items: center;
+	margin: 0;
+	scroll-snap-align: center;
+}
+
+.famma-offer .famma-sheet__slide img {
+	display: block;
+	inline-size: 100%;
+	block-size: min(100vw, 42vh);
+	max-inline-size: none;
+	object-fit: contain;
+}
+
+.famma-offer .famma-sheet__dots {
+	display: flex;
+	gap: 6px;
+	justify-content: center;
+	padding-block: 8px 0;
+}
+
+.famma-offer .famma-sheet__dot {
+	inline-size: 7px;
+	block-size: 7px;
+	border-radius: 999px;
+	background: #D1D5DB;
+	transition: inline-size 0.2s ease;
+}
+
+.famma-offer .famma-sheet__dot.is-active {
+	inline-size: 18px;
+	background: var(--famma-orange, #FF7A00);
+}
+
+.famma-offer .famma-sheet__content {
+	padding: var(--sp-3, 12px) var(--sp-4, 16px) var(--sp-4, 16px);
+}
+
+.famma-offer .famma-sheet__title {
+	margin: 2px 0 4px;
+	padding: 0;
+	font-size: 1.125rem;
+	font-weight: 700;
+	line-height: 1.3;
+}
+
+.famma-offer .famma-sheet__price {
+	display: flex;
+	gap: var(--sp-2, 8px);
+	align-items: baseline;
+	margin: 0 0 var(--sp-3, 12px);
+}
+
+.famma-offer .famma-sheet__price del {
+	font-size: 0.9375rem;
+	color: var(--famma-text-2, #6B7280);
+}
+
+.famma-offer .famma-sheet__price strong {
+	font-size: 1.375rem;
+	color: var(--famma-blue, #1D4ED8);
+}
+
+.famma-offer .famma-sheet__points {
+	display: grid;
+	gap: 10px;
+	margin: 0 0 var(--sp-3, 12px);
+	padding: 0;
+	list-style: none;
+}
+
+.famma-offer .famma-sheet__points li {
+	display: grid;
+	grid-template-columns: 22px minmax(0, 1fr);
+	gap: 10px;
+	align-items: start;
+	margin: 0;
+	font-size: 0.9375rem;
+	line-height: 1.4;
+}
+
+.famma-offer .famma-sheet__points .famma-icon {
+	box-sizing: border-box;
+	inline-size: 22px;
+	block-size: 22px;
+	padding: 3px;
+	border-radius: 999px;
+	background: rgba(255, 122, 0, 0.14);
+	color: var(--famma-orange, #FF7A00);
+}
+
+.famma-offer .famma-sheet__ar {
+	display: block;
+	margin-block-start: 2px;
+	font-size: 0.875rem;
+	color: var(--famma-text-2, #4B5563);
+}
+
+.famma-offer .famma-sheet__desc {
+	margin: 0 0 var(--sp-3, 12px);
+	font-size: 0.9375rem;
+	line-height: 1.45;
+}
+
+.famma-offer .famma-sheet__desc p {
+	margin: 0 0 6px;
+}
+
+.famma-offer .famma-sheet__subtitle {
+	margin: 0 0 4px;
+	padding: 0;
+	font-size: 0.9375rem;
+	font-weight: 700;
+}
+
+.famma-offer .famma-sheet__usage {
+	margin: 0 0 var(--sp-3, 12px);
+	font-size: 0.9375rem;
+	line-height: 1.45;
+}
+
+.famma-offer .famma-sheet__trust {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 6px;
+	margin: 0 0 var(--sp-2, 8px);
+	padding: 0;
+	list-style: none;
+}
+
+.famma-offer .famma-sheet__trust li {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	align-items: center;
+	margin: 0;
+	padding: 8px 4px;
+	border-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-line, #F3F4F6);
+	font-size: 0.75rem;
+	line-height: 1.25;
+	text-align: center;
+}
+
+.famma-offer .famma-sheet__trust .famma-icon {
+	color: var(--famma-blue, #1D4ED8);
+}
+
+.famma-offer .famma-sheet__note {
+	margin: 0;
+	font-size: 0.8125rem;
+	color: var(--famma-text-2, #6B7280);
+	text-align: center;
+}
+
+/* Barre du bas : toujours visible pendant la découverte. */
+.famma-offer .famma-sheet__bar {
+	display: grid;
+	flex: 0 0 auto;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: var(--sp-2, 8px);
+	align-items: center;
+	padding: 10px var(--sp-4, 16px) calc(10px + env(safe-area-inset-bottom, 0px));
+	border-block-start: 1px solid #E5E7EB;
+	background: var(--famma-white, #FFF);
+}
+
+.famma-offer .famma-sheet__back {
+	min-block-size: 56px;
+	min-inline-size: 88px;
+	margin: 0;
+	padding: 0 12px;
+	border: 1px solid #D1D5DB;
+	border-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-white, #FFF);
+	box-shadow: none;
+	color: var(--famma-text, #111827);
+	font-size: 0.9375rem;
+	font-weight: 600;
+	text-transform: none;
+	cursor: pointer;
+}
+
+.famma-offer .famma-sheet .famma-sheet__accept {
+	inline-size: 100%;
+	min-inline-size: 0;
+}
+
+.famma-offer .famma-sheet__close:focus-visible,
+.famma-offer .famma-sheet__back:focus-visible,
+.famma-offer .famma-sheet__gallery:focus-visible {
+	outline: 3px solid var(--famma-blue, #1D4ED8);
+	outline-offset: 2px;
+}
+
+/* Ordinateur et tablette : fenêtre centrée. */
+@media (min-width: 768px) {
+	.famma-offer .famma-sheet {
+		inset: 0;
+		inline-size: min(560px, calc(100% - 32px));
+		block-size: fit-content;
+		max-block-size: min(88vh, 820px);
+		margin: auto;
+		border-radius: 16px;
+		box-shadow: 0 20px 50px rgba(17, 24, 39, 0.3);
+	}
+
+	.famma-offer .famma-sheet[open] {
+		animation-name: famma-sheet-in;
+	}
+
+	.famma-offer .famma-sheet__top {
+		display: none;
+	}
+
+	.famma-offer .famma-sheet__close {
+		inset-block-start: 12px;
+	}
+
+	.famma-offer .famma-sheet__slide img {
+		block-size: min(400px, 46vh);
+	}
+}
+
+@keyframes famma-sheet-in {
+	from {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-offer .famma-sheet,
+	.famma-offer .famma-sheet[open],
+	.famma-offer .famma-sheet__dot {
+		transition: none;
+		animation: none;
+	}
 }

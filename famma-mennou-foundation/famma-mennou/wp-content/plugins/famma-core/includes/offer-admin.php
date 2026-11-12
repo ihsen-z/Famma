@@ -128,6 +128,40 @@ final class Offer_Admin {
 			)
 		);
 
+		echo '</div><div class="options_group">';
+
+		woocommerce_wp_checkbox(
+			array(
+				'id'          => Offer_Settings::META_SHEET,
+				'value'       => 'no' === $value( Offer_Settings::META_SHEET ) ? 'no' : 'yes',
+				'label'       => __( 'Fiche « Découvrir le produit »', 'famma-core' ),
+				'description' => __( 'Un toucher sur la photo ou sur « Découvrir le produit » ouvre une fiche rapide (photos, points forts, mode d’emploi) sans quitter la page, avec le bouton d’ajout en bas.', 'famma-core' ),
+			)
+		);
+
+		woocommerce_wp_textarea_input(
+			array(
+				'id'          => Offer_Settings::META_POINTS,
+				'value'       => $value( Offer_Settings::META_POINTS ),
+				'label'       => __( 'Points forts (fiche rapide)', 'famma-core' ),
+				'rows'        => 4,
+				'placeholder' => __( 'Un point par ligne, 3 au maximum. Derja facultative après « | », par exemple : Réutilisables | تنجم تعاود تستعملهم', 'famma-core' ),
+				'desc_tip'    => false,
+				'description' => __( 'Vide : la description courte de l’article proposé est affichée.', 'famma-core' ),
+			)
+		);
+
+		woocommerce_wp_textarea_input(
+			array(
+				'id'          => Offer_Settings::META_USAGE,
+				'value'       => $value( Offer_Settings::META_USAGE ),
+				'label'       => __( 'Comment l’utiliser', 'famma-core' ),
+				'rows'        => 2,
+				'desc_tip'    => false,
+				'description' => __( 'Facultatif. Une ou deux phrases. Vide : la rubrique n’apparaît pas.', 'famma-core' ),
+			)
+		);
+
 		echo '</div>';
 
 		if ( $product && $product->get_id() > 0 ) {
@@ -157,6 +191,14 @@ final class Offer_Admin {
 				$rate,
 				$s['declined'],
 				wc_format_decimal( $s['amount'], 3 )
+			)
+		);
+		echo '<br />' . esc_html(
+			sprintf(
+				/* translators: 1: times the quick sheet was opened, 2: offers accepted after opening it. */
+				__( 'Fiche « Découvrir le produit » ouverte %1$d fois, dont %2$d suivies d’un ajout.', 'famma-core' ),
+				$s['viewed'],
+				$s['viewed_accepted']
 			)
 		);
 		echo '<br /><span class="description">' . esc_html__( 'Commandes d\'essai exclues. Chiffres mis à jour toutes les 10 minutes.', 'famma-core' ) . '</span></p></div>';
@@ -215,6 +257,9 @@ final class Offer_Admin {
 		$price   = isset( $_POST[ Offer_Settings::META_PRICE ] ) ? (float) wc_format_decimal( sanitize_text_field( wp_unslash( $_POST[ Offer_Settings::META_PRICE ] ) ) ) : 0.0;
 		$title   = isset( $_POST[ Offer_Settings::META_TITLE ] ) ? sanitize_text_field( wp_unslash( $_POST[ Offer_Settings::META_TITLE ] ) ) : '';
 		$text    = isset( $_POST[ Offer_Settings::META_TEXT ] ) ? sanitize_textarea_field( wp_unslash( $_POST[ Offer_Settings::META_TEXT ] ) ) : '';
+		$sheet   = isset( $_POST[ Offer_Settings::META_SHEET ] ) ? 'yes' : 'no';
+		$points  = isset( $_POST[ Offer_Settings::META_POINTS ] ) ? sanitize_textarea_field( wp_unslash( $_POST[ Offer_Settings::META_POINTS ] ) ) : '';
+		$usage   = isset( $_POST[ Offer_Settings::META_USAGE ] ) ? sanitize_textarea_field( wp_unslash( $_POST[ Offer_Settings::META_USAGE ] ) ) : '';
 
 		if ( $target === $product->get_id() ) {
 			$target = 0;
@@ -225,5 +270,8 @@ final class Offer_Admin {
 		$product->update_meta_data( Offer_Settings::META_PRICE, $price > 0 ? wc_format_decimal( $price, 3 ) : '' );
 		$product->update_meta_data( Offer_Settings::META_TITLE, $title );
 		$product->update_meta_data( Offer_Settings::META_TEXT, $text );
+		$product->update_meta_data( Offer_Settings::META_SHEET, $sheet );
+		$product->update_meta_data( Offer_Settings::META_POINTS, $points );
+		$product->update_meta_data( Offer_Settings::META_USAGE, $usage );
 	}
 }
