@@ -177,6 +177,10 @@ final class New_Look {
 				'label' => __( 'Partout : icône « Mon compte » dans l’en-tête du téléphone', 'famma-core' ),
 				'help'  => __( 'Sur téléphone, l’icône du compte s’affiche à côté du panier, comme sur ordinateur, au lieu d’être rangée dans le menu.', 'famma-core' ),
 			),
+			'acct_look'   => array(
+				'label' => __( 'Mon compte : présentation de la maquette', 'famma-core' ),
+				'help'  => __( 'Sur la page « Mon compte » : connexion et création de compte en deux onglets, champs et boutons de la charte, carte marine avec le nom du client, menu avec icônes, commandes en cartes avec leur statut en couleur, adresses et informations en cartes. Les champs, les e-mails et le fonctionnement de WooCommerce ne changent pas ; seul le lien « Téléchargements », inutile ici, disparaît du menu. Les apparitions s’arrêtent si le visiteur a demandé moins d’animations.', 'famma-core' ),
+			),
 			'journey'     => array(
 				'label' => __( 'Accueil : bloc « Vous payez à la livraison » en parcours animé', 'famma-core' ),
 				'help'  => __( 'Le bloc déjà présent dans la page d’accueil devient une bande marine : une route relie les étapes, qui se cochent au défilement. Ses textes se modifient toujours dans l’éditeur de la page d’accueil.', 'famma-core' ),

@@ -1,5 +1,27 @@
 # Changelog — FAMMA Core
 
+## 0.3.18 — 2026-11-12 (« Mon compte », lot 1 de l'espace client) · thème famma-child 0.2.5
+
+Une nouvelle case dans FAMMA → Pages → Nouveau look, **livrée décochée** :
+tant qu'elle n'est pas cochée, la page « Mon compte » est identique à la
+0.3.17.
+
+- `acct_look` : la page « Mon compte » prend la présentation de la maquette
+  espace client — connexion et création de compte en deux onglets (sans
+  script : les deux formulaires l'un sous l'autre, comme aujourd'hui), champs
+  de 48 px et boutons de la charte, carte marine avec le nom du client, menu
+  à icônes (en ligne sur téléphone, en colonne sur ordinateur), commandes en
+  cartes sur téléphone avec le statut COD en couleur, détail de commande,
+  adresses et « Mes informations » en cartes, apparitions douces (coupées si
+  le visiteur demande moins d'animations).
+- Aucun champ, e-mail, réglage ou modèle WooCommerce ne change ; seul le lien
+  « Téléchargements » quitte le menu (la page reste servie).
+
+Le thème porte le code (`inc/new-look-account.php`,
+`assets/css/new-look-account.css`, `assets/js/new-look-account.js`) ; le
+plugin ne fait que déclarer la case. Contient aussi la 0.3.17 (passerelle
+Upsell One Click), fusionnée dans le nouveau look.
+
 ## 0.3.17 — 2026-11-12 (préparée, non envoyée)
 
 Passerelle avec le plugin indépendant **Upsell One Click** (offre après achat

@@ -1,0 +1,1039 @@
+/* ============================================================
+   FAMMA — « Mon compte » à la manière de la maquette espace client
+   Case acct_look (inc/new-look-account.php). Chargée seulement sur
+   la page du compte, sous body.famma-nl-acct.
+
+   Habillage seul : les formulaires et tableaux restent ceux de
+   WooCommerce. Propriétés logiques partout (arabe en RTL sans
+   feuille dédiée). Animations coupées si le visiteur demande moins
+   d'animations.
+   ============================================================ */
+
+.famma-nl-acct {
+	--acct-radius: 12px;
+	--acct-radius-lg: 20px;
+	--acct-shadow: 0 4px 14px rgba(11, 31, 58, .10);
+	--acct-ease: cubic-bezier(.23, 1, .32, 1);
+	--acct-spring: cubic-bezier(.34, 1.56, .64, 1);
+}
+
+@supports (animation-timing-function: linear(0, 1)) {
+	.famma-nl-acct {
+		--acct-spring: linear(0, .06 3%, .22 7%, .55 14%, .86 22%, 1.04 30%, 1.09 36%, 1.07 44%, 1.01 58%, .99 72%, 1);
+	}
+}
+
+/* ---------- Champs ---------- */
+
+.famma-nl-acct .woocommerce form .form-row {
+	margin-block: 0 14px;
+	padding: 0;
+}
+
+.famma-nl-acct .woocommerce form .form-row label {
+	display: block;
+	margin-block-end: 6px;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.4;
+	color: var(--famma-ink);
+}
+
+.famma-nl-acct .woocommerce form .form-row label.woocommerce-form__label-for-checkbox,
+.famma-nl-acct .woocommerce form .form-row label.checkbox {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 44px;
+	margin: 0;
+	font-weight: 500;
+}
+
+.famma-nl-acct .woocommerce form .input-text,
+.famma-nl-acct .woocommerce form select,
+.famma-nl-acct .woocommerce form textarea {
+	width: 100%;
+	min-height: 48px;
+	padding: 11px 14px;
+	border: 1.5px solid var(--famma-line-field);
+	border-radius: var(--acct-radius);
+	background: var(--famma-surface-field);
+	color: var(--famma-ink);
+	font-size: 16px; /* 16 px : pas de zoom forcé sur iPhone */
+	line-height: 1.4;
+	box-shadow: none;
+	transition: border-color .18s, box-shadow .18s, background-color .18s;
+}
+
+.famma-nl-acct .woocommerce form .input-text:focus,
+.famma-nl-acct .woocommerce form select:focus,
+.famma-nl-acct .woocommerce form textarea:focus {
+	border-color: var(--famma-blue);
+	background: var(--famma-white);
+	outline: none;
+	box-shadow: 0 0 0 3px rgba(11, 31, 58, .14);
+}
+
+.famma-nl-acct .woocommerce form .form-row.woocommerce-invalid .input-text {
+	border-color: var(--famma-danger);
+}
+
+.famma-nl-acct .woocommerce form input[type="checkbox"] {
+	width: 20px;
+	height: 20px;
+	margin: 0;
+	accent-color: var(--famma-orange);
+}
+
+/* Œil du mot de passe (posé par WooCommerce) */
+.famma-nl-acct .woocommerce .password-input {
+	position: relative;
+	display: block;
+}
+
+.famma-nl-acct .woocommerce .password-input .input-text {
+	padding-inline-end: 52px;
+}
+
+.famma-nl-acct .woocommerce .show-password-input {
+	position: absolute;
+	inset-block: 0;
+	inset-inline-end: 2px;
+	inset-inline-start: auto;
+	display: grid;
+	place-items: center;
+	width: 48px;
+	height: auto;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--famma-text-2);
+	cursor: pointer;
+	translate: none;
+	transform: none;
+}
+
+/* ---------- Boutons ---------- */
+
+.famma-nl-acct .woocommerce button.button,
+.famma-nl-acct .woocommerce a.button,
+.famma-nl-acct .woocommerce .woocommerce-Button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 48px;
+	padding: 12px 22px;
+	border: 1.5px solid var(--famma-blue);
+	border-radius: var(--acct-radius);
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	font-size: 15.5px;
+	font-weight: 600;
+	line-height: 1.2;
+	text-decoration: none;
+	box-shadow: none;
+	transition: background-color .18s, border-color .18s, transform .12s cubic-bezier(.2, .8, .2, 1);
+}
+
+.famma-nl-acct .woocommerce button.button:hover,
+.famma-nl-acct .woocommerce a.button:hover,
+.famma-nl-acct .woocommerce .woocommerce-Button:hover {
+	border-color: var(--famma-blue-600);
+	background: var(--famma-blue-600);
+	color: var(--famma-white);
+}
+
+.famma-nl-acct .woocommerce button.button:active,
+.famma-nl-acct .woocommerce a.button:active {
+	transform: scale(.97);
+}
+
+/* Se connecter / Créer un compte : l'appel à l'action orange de la charte */
+.famma-nl-acct .woocommerce button.woocommerce-form-login__submit,
+.famma-nl-acct .woocommerce button.woocommerce-form-register__submit {
+	width: 100%;
+	border-color: var(--famma-orange);
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+}
+
+.famma-nl-acct .woocommerce button.woocommerce-form-login__submit:hover,
+.famma-nl-acct .woocommerce button.woocommerce-form-register__submit:hover {
+	border-color: var(--famma-orange-600);
+	background: var(--famma-orange-600);
+	color: var(--famma-on-orange);
+}
+
+/* Actions secondaires (Voir, Modifier…) : bouton au trait */
+.famma-nl-acct .woocommerce .woocommerce-orders-table a.button,
+.famma-nl-acct .woocommerce .woocommerce-Address .edit {
+	min-height: 44px;
+	padding: 8px 16px;
+	border-color: var(--famma-line-field);
+	background: var(--famma-white);
+	color: var(--famma-ink);
+	font-size: 14px;
+}
+
+.famma-nl-acct .woocommerce .woocommerce-orders-table a.button:hover,
+.famma-nl-acct .woocommerce .woocommerce-Address .edit:hover {
+	border-color: var(--famma-blue);
+	background: var(--famma-white);
+	color: var(--famma-ink);
+}
+
+/* ---------- Connexion / création de compte ---------- */
+
+.famma-nl-acct #customer_login {
+	display: grid;
+	gap: 16px;
+	max-width: 520px;
+	margin-inline: auto;
+}
+
+.famma-nl-acct #customer_login::before,
+.famma-nl-acct #customer_login::after {
+	content: none;
+}
+
+.famma-nl-acct #customer_login .u-column1,
+.famma-nl-acct #customer_login .u-column2 {
+	float: none;
+	width: auto;
+	max-width: none;
+	margin: 0;
+	padding: 18px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--acct-radius-lg);
+	background: var(--famma-white);
+	box-shadow: var(--acct-shadow);
+}
+
+.famma-nl-acct #customer_login h2 {
+	margin: 0 0 14px;
+	font-size: 21px;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.famma-nl-acct #customer_login form.login,
+.famma-nl-acct #customer_login form.register {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+}
+
+.famma-nl-acct #customer_login .woocommerce-LostPassword {
+	margin: 4px 0 0;
+}
+
+.famma-nl-acct #customer_login .woocommerce-LostPassword a,
+.famma-nl-acct #customer_login .woocommerce-privacy-policy-text a {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	color: var(--famma-ink);
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.famma-nl-acct #customer_login .woocommerce-privacy-policy-text {
+	font-size: 12.5px;
+	color: var(--famma-text-2);
+}
+
+/* Onglets (posés par new-look-account.js) : une seule carte */
+.famma-nl-acct #customer_login.is-tabbed {
+	gap: 0;
+	padding: 18px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--acct-radius-lg);
+	background: var(--famma-white);
+	box-shadow: var(--acct-shadow);
+}
+
+.famma-nl-acct #customer_login.is-tabbed .u-column1,
+.famma-nl-acct #customer_login.is-tabbed .u-column2 {
+	padding: 18px 0 0;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+}
+
+/* Le titre devient l'onglet : il reste lu par les lecteurs d'écran */
+.famma-nl-acct #customer_login.is-tabbed h2 {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.famma-acct-seg {
+	position: relative;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	padding: 4px;
+	border-radius: var(--famma-radius-pill, 999px);
+	background: var(--famma-surface-icon);
+}
+
+.famma-acct-seg__tab {
+	position: relative;
+	z-index: 1;
+	min-height: 44px;
+	padding: 6px 10px;
+	border: 0;
+	border-radius: var(--famma-radius-pill, 999px);
+	background: transparent;
+	color: var(--famma-text-2);
+	font: inherit;
+	font-size: 14.5px;
+	font-weight: 600;
+	line-height: 1.25;
+	cursor: pointer;
+	transition: color .18s;
+}
+
+.famma-acct-seg__tab:hover,
+.famma-acct-seg__tab:focus {
+	background: transparent;
+	color: var(--famma-ink);
+}
+
+.famma-acct-seg__tab[aria-selected="true"] {
+	color: var(--famma-ink);
+}
+
+.famma-acct-seg__tab:focus-visible {
+	outline: 3px solid var(--famma-blue-600);
+	outline-offset: 2px;
+}
+
+.famma-acct-seg__pill {
+	position: absolute;
+	inset-block: 4px;
+	inset-inline-start: 4px;
+	width: calc(50% - 4px);
+	border-radius: var(--famma-radius-pill, 999px);
+	background: var(--famma-white);
+	box-shadow: var(--acct-shadow);
+	transition: transform .42s var(--acct-spring);
+}
+
+.famma-acct-seg.is-second .famma-acct-seg__pill {
+	transform: translateX(100%);
+}
+
+[dir="rtl"] .famma-acct-seg.is-second .famma-acct-seg__pill {
+	transform: translateX(-100%);
+}
+
+@media (min-width: 560px) {
+	.famma-nl-acct #customer_login .u-column1,
+	.famma-nl-acct #customer_login .u-column2,
+	.famma-nl-acct #customer_login.is-tabbed {
+		padding: 24px;
+	}
+
+	.famma-nl-acct #customer_login.is-tabbed .u-column1,
+	.famma-nl-acct #customer_login.is-tabbed .u-column2 {
+		padding: 20px 0 0;
+	}
+}
+
+/* ---------- Compte connecté : carte du client et menu ---------- */
+
+.famma-nl-acct .account-navigation-wrap {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 12px;
+	align-content: start;
+	min-width: 0;
+}
+
+.famma-nl-acct .account-navigation-wrap > * {
+	min-width: 0;
+}
+
+.famma-nl-acct .kadence-account-avatar {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: 14px;
+	align-items: center;
+	margin: 0;
+	padding: 16px 18px;
+	border: 0;
+	border-radius: var(--acct-radius-lg);
+	background: var(--famma-blue);
+	color: var(--famma-white);
+}
+
+.famma-nl-acct .kadence-account-avatar .kadence-customer-image {
+	margin: 0;
+}
+
+.famma-nl-acct .kadence-account-avatar .kadence-customer-image img {
+	display: block;
+	width: 56px;
+	height: 56px;
+	border: 3px solid var(--famma-orange);
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.famma-nl-acct .kadence-account-avatar .kadence-customer-name {
+	min-width: 0;
+	margin: 0;
+	color: var(--famma-white);
+	font-size: 18px;
+	font-weight: 600;
+	line-height: 1.3;
+	overflow-wrap: anywhere;
+}
+
+.famma-nl-acct .woocommerce-MyAccount-navigation {
+	float: none;
+	width: auto;
+	margin: 0;
+	padding: 0;
+}
+
+.famma-nl-acct .woocommerce-MyAccount-navigation ul {
+	display: flex;
+	gap: 4px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	overflow-x: auto;
+	scrollbar-width: none;
+	border-block-end: 1px solid var(--famma-line);
+}
+
+.famma-nl-acct .woocommerce-MyAccount-navigation ul::-webkit-scrollbar {
+	display: none;
+}
+
+.famma-nl-acct .woocommerce-MyAccount-navigation li {
+	flex: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.famma-nl-acct .woocommerce-MyAccount-navigation li a {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 50px;
+	padding: 0 12px;
+	border: 0;
+	background: transparent;
+	color: var(--famma-text-2);
+	font-size: 14.5px;
+	font-weight: 600;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: color .18s;
+}
+
+.famma-nl-acct .woocommerce-MyAccount-navigation li a::before {
+	content: "";
+	flex: none;
+	width: 19px;
+	height: 19px;
+	background: currentColor;
+	-webkit-mask: var(--acct-icon, none) center / contain no-repeat;
+	mask: var(--acct-icon, none) center / contain no-repeat;
+}
+
+.famma-nl-acct .woocommerce-MyAccount-navigation li a::after {
+	content: "";
+	position: absolute;
+	inset-inline: 10px;
+	inset-block-end: 0;
+	height: 3px;
+	border-radius: 2px 2px 0 0;
+	background: var(--famma-orange);
+	transform: scaleX(0);
+	transition: transform .42s var(--acct-ease);
+}
+
+body.famma-nl-acct .woocommerce-MyAccount-navigation ul li a:hover,
+body.famma-nl-acct .woocommerce-MyAccount-navigation ul li.is-active a {
+	border: 0;
+	background: transparent;
+	color: var(--famma-ink);
+}
+
+.famma-nl-acct .woocommerce-MyAccount-navigation li.is-active a::before {
+	background: var(--famma-orange);
+}
+
+.famma-nl-acct .woocommerce-MyAccount-navigation li.is-active a::after {
+	transform: scaleX(1);
+}
+
+.famma-nl-acct .woocommerce-MyAccount-navigation-link--dashboard a {
+	--acct-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 11L12 4l8.5 7'/%3E%3Cpath d='M5.5 9.5V20h13V9.5'/%3E%3C/svg%3E");
+}
+
+.famma-nl-acct .woocommerce-MyAccount-navigation-link--orders a {
+	--acct-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2.8l8.5 4.4v9.6L12 21.2l-8.5-4.4V7.2z'/%3E%3Cpath d='M3.7 7.3L12 11.7l8.3-4.4M12 11.7v9.3'/%3E%3C/svg%3E");
+}
+
+.famma-nl-acct .woocommerce-MyAccount-navigation-link--edit-address a {
+	--acct-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z'/%3E%3Ccircle cx='12' cy='9.5' r='2.5'/%3E%3C/svg%3E");
+}
+
+.famma-nl-acct .woocommerce-MyAccount-navigation-link--edit-account a {
+	--acct-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4.5 20.5c1-4 4-6 7.5-6s6.5 2 7.5 6'/%3E%3C/svg%3E");
+}
+
+.famma-nl-acct .woocommerce-MyAccount-navigation-link--customer-logout a {
+	--acct-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 4.5h4a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5h-4'/%3E%3Cpath d='M10 16l-4-4 4-4M6 12h10'/%3E%3C/svg%3E");
+}
+
+/* La flèche de sortie pointe vers l'extérieur dans les deux sens de lecture */
+[dir="rtl"] .famma-nl-acct .woocommerce-MyAccount-navigation-link--customer-logout a::before {
+	transform: scaleX(-1);
+}
+
+@media (min-width: 1025px) {
+	.famma-nl-acct .woocommerce-MyAccount-navigation ul {
+		flex-direction: column;
+		gap: 2px;
+		overflow: visible;
+		border: 0;
+	}
+
+	.famma-nl-acct .woocommerce-MyAccount-navigation li a {
+		width: 100%;
+		min-height: 48px;
+		padding: 0 14px;
+		border-radius: var(--acct-radius);
+	}
+
+	body.famma-nl-acct .woocommerce-MyAccount-navigation ul li a:hover,
+	body.famma-nl-acct .woocommerce-MyAccount-navigation ul li.is-active a {
+		background: var(--famma-surface-icon);
+	}
+
+	.famma-nl-acct .woocommerce-MyAccount-navigation li a::after {
+		inset-inline: 0 auto;
+		inset-block: 10px;
+		width: 3px;
+		height: auto;
+		border-radius: 0 2px 2px 0;
+		transform: scaleY(0);
+	}
+
+	.famma-nl-acct .woocommerce-MyAccount-navigation li.is-active a::after {
+		transform: scaleY(1);
+	}
+}
+
+/* ---------- Contenu du compte ---------- */
+
+.famma-nl-acct .woocommerce-MyAccount-content {
+	display: grid;
+	gap: 16px;
+	align-content: start;
+	color: var(--famma-text-1);
+}
+
+.famma-nl-acct .woocommerce-MyAccount-content > * {
+	margin: 0;
+}
+
+.famma-nl-acct .woocommerce-MyAccount-content a:not(.button) {
+	color: var(--famma-ink);
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.famma-nl-acct .woocommerce-MyAccount-content h2,
+.famma-nl-acct .woocommerce-MyAccount-content h3 {
+	margin: 0;
+	font-size: 20px;
+	font-weight: 600;
+	line-height: 1.3;
+	color: var(--famma-ink);
+}
+
+/* Messages de WooCommerce */
+.famma-nl-acct .woocommerce-message,
+.famma-nl-acct .woocommerce-info,
+.famma-nl-acct .woocommerce-error {
+	margin: 0 0 16px;
+	padding: 14px 16px;
+	border: 1px solid var(--famma-line);
+	border-inline-start: 4px solid var(--famma-blue);
+	border-radius: var(--acct-radius);
+	background: var(--famma-surface-icon);
+	color: var(--famma-ink);
+	font-size: 14.5px;
+}
+
+/* Bouton d'un message (WooCommerce le pose en premier, flottant) : sous le texte */
+.famma-nl-acct .woocommerce-message,
+.famma-nl-acct .woocommerce-info {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 10px;
+}
+
+.famma-nl-acct .woocommerce-message .button,
+.famma-nl-acct .woocommerce-info .button {
+	float: none;
+	order: 2;
+	margin: 0;
+}
+
+.famma-nl-acct .woocommerce-message::before,
+.famma-nl-acct .woocommerce-info::before,
+.famma-nl-acct .woocommerce-message::after,
+.famma-nl-acct .woocommerce-info::after {
+	content: none;
+}
+
+.famma-nl-acct .woocommerce-message {
+	border-inline-start-color: var(--famma-success);
+	background: var(--famma-success-bg, var(--famma-surface-icon));
+}
+
+.famma-nl-acct .woocommerce-error {
+	border-inline-start-color: var(--famma-danger);
+	background: var(--famma-danger-soft, var(--famma-surface-icon));
+}
+
+/* ---------- Commandes ---------- */
+
+body.famma-nl-acct .woocommerce table.woocommerce-orders-table {
+	width: 100%;
+	margin: 0;
+	border: 1px solid var(--famma-line);
+	border-collapse: separate;
+	border-spacing: 0;
+	border-radius: var(--acct-radius-lg);
+	background: var(--famma-white);
+	overflow: hidden;
+}
+
+body.famma-nl-acct .woocommerce table.woocommerce-orders-table th,
+body.famma-nl-acct .woocommerce table.woocommerce-orders-table td {
+	padding: 12px 14px;
+	border: 0;
+	border-block-end: 1px solid var(--famma-line-soft);
+	background: transparent;
+	text-align: start;
+	vertical-align: middle;
+}
+
+body.famma-nl-acct .woocommerce table.woocommerce-orders-table thead th {
+	background: var(--famma-surface-icon);
+	color: var(--famma-text-2);
+	font-size: 13px;
+	font-weight: 600;
+}
+
+@media (min-width: 768px) {
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tbody tr:last-child td,
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tbody tr:last-child th {
+		border-block-end: 0;
+	}
+}
+
+.famma-nl-acct .woocommerce-orders-table__cell-order-number a {
+	font-weight: 700;
+}
+
+.famma-nl-acct .woocommerce-orders-table__cell-order-total {
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-nl-acct .woocommerce-orders-table__cell-order-actions .button {
+	margin-block: 2px;
+	margin-inline-end: 6px;
+}
+
+/* Statut en couleur, lu dans la classe de la ligne */
+.famma-nl-acct .woocommerce-orders-table__cell-order-status {
+	font-weight: 600;
+	color: var(--famma-text-1);
+}
+
+.famma-nl-acct .woocommerce-orders-table__row--status-delivered .woocommerce-orders-table__cell-order-status,
+.famma-nl-acct .woocommerce-orders-table__row--status-completed .woocommerce-orders-table__cell-order-status {
+	color: var(--famma-success-700, var(--famma-success));
+}
+
+.famma-nl-acct .woocommerce-orders-table__row--status-shipped .woocommerce-orders-table__cell-order-status,
+.famma-nl-acct .woocommerce-orders-table__row--status-confirmed .woocommerce-orders-table__cell-order-status {
+	color: var(--famma-blue-600);
+}
+
+.famma-nl-acct .woocommerce-orders-table__row--status-pending-confirm .woocommerce-orders-table__cell-order-status,
+.famma-nl-acct .woocommerce-orders-table__row--status-on-hold .woocommerce-orders-table__cell-order-status,
+.famma-nl-acct .woocommerce-orders-table__row--status-pending .woocommerce-orders-table__cell-order-status,
+.famma-nl-acct .woocommerce-orders-table__row--status-processing .woocommerce-orders-table__cell-order-status {
+	color: var(--famma-warning-700, var(--famma-text-1));
+}
+
+.famma-nl-acct .woocommerce-orders-table__row--status-failed-delivery .woocommerce-orders-table__cell-order-status,
+.famma-nl-acct .woocommerce-orders-table__row--status-returned .woocommerce-orders-table__cell-order-status,
+.famma-nl-acct .woocommerce-orders-table__row--status-refused .woocommerce-orders-table__cell-order-status,
+.famma-nl-acct .woocommerce-orders-table__row--status-cancelled .woocommerce-orders-table__cell-order-status,
+.famma-nl-acct .woocommerce-orders-table__row--status-failed .woocommerce-orders-table__cell-order-status,
+.famma-nl-acct .woocommerce-orders-table__row--status-refunded .woocommerce-orders-table__cell-order-status {
+	color: var(--famma-danger-700, var(--famma-danger));
+}
+
+/* Téléphone : chaque commande devient une carte */
+/* Kadence pose déjà un tableau « responsive » (en-têtes cachés, libellés
+   flottants, filets) : les sélecteurs sont plus forts pour le remplacer. */
+@media (max-width: 767.98px) {
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table,
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tbody,
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tr {
+		display: block;
+	}
+
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table {
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		overflow: visible;
+	}
+
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table thead {
+		display: none;
+	}
+
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tbody {
+		display: grid;
+		gap: 12px;
+	}
+
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tbody tr {
+		border: 1px solid var(--famma-line);
+		border-radius: var(--acct-radius-lg);
+		background: var(--famma-white);
+		overflow: hidden;
+	}
+
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tbody tr td,
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tbody tr th {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		align-items: center;
+		gap: 2px 5px;
+		min-height: 44px;
+		padding: 8px 16px;
+		border: 0;
+		border-block-end: 1px solid var(--famma-line-soft);
+		background: transparent;
+		text-align: end;
+	}
+
+	/* Numéro de commande : l'en-tête de la carte */
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tbody tr th {
+		background: var(--famma-surface-icon);
+		font-size: 15px;
+	}
+
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tbody tr td::before,
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tbody tr th::before {
+		content: attr(data-title);
+		float: none;
+		flex: none;
+		margin-inline-end: auto;
+		padding-inline-end: 12px;
+		color: var(--famma-text-2);
+		font-size: 13px;
+		font-weight: 500;
+		text-align: start;
+	}
+
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tbody tr td:last-child {
+		border-block-end: 0;
+	}
+
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tbody tr td.woocommerce-orders-table__cell-order-actions {
+		justify-content: flex-end;
+		flex-wrap: wrap;
+		padding-block: 10px;
+	}
+
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tbody tr td.woocommerce-orders-table__cell-order-actions::before {
+		content: none;
+	}
+
+	body.famma-nl-acct .woocommerce table.woocommerce-orders-table tbody tr td.woocommerce-orders-table__cell-order-actions .button {
+		flex: 1 1 auto;
+		margin: 0;
+	}
+}
+
+/* Pagination des commandes */
+.famma-nl-acct .woocommerce-pagination {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+/* ---------- Détail d'une commande ---------- */
+
+.famma-nl-acct .woocommerce-MyAccount-content > p mark {
+	display: inline-block;
+	padding: 1px 8px;
+	border-radius: 6px;
+	background: var(--famma-surface-icon);
+	color: var(--famma-ink);
+	font-weight: 600;
+}
+
+.famma-nl-acct .woocommerce-order-details,
+.famma-nl-acct .woocommerce-customer-details,
+.famma-nl-acct .woocommerce-OrderUpdates {
+	margin: 0;
+}
+
+.famma-nl-acct .woocommerce-order-details .shop_table,
+.famma-nl-acct .woocommerce-table--order-details {
+	width: 100%;
+	margin: 12px 0 0;
+	border: 1px solid var(--famma-line);
+	border-collapse: separate;
+	border-spacing: 0;
+	border-radius: var(--acct-radius-lg);
+	background: var(--famma-white);
+	overflow: hidden;
+}
+
+.famma-nl-acct .woocommerce-table--order-details th,
+.famma-nl-acct .woocommerce-table--order-details td {
+	padding: 12px 14px;
+	border: 0;
+	border-block-end: 1px solid var(--famma-line-soft);
+	text-align: start;
+}
+
+.famma-nl-acct .woocommerce-table--order-details tfoot tr:last-child th,
+.famma-nl-acct .woocommerce-table--order-details tfoot tr:last-child td {
+	border-block-end: 0;
+	color: var(--famma-ink);
+	font-weight: 700;
+}
+
+.famma-nl-acct .woocommerce-table--order-details td:last-child,
+.famma-nl-acct .woocommerce-table--order-details th:last-child {
+	text-align: end;
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-nl-acct .woocommerce-customer-details address,
+.famma-nl-acct .woocommerce-Address address {
+	margin: 0;
+	padding: 16px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--acct-radius-lg);
+	background: var(--famma-white);
+	font-style: normal;
+	line-height: 1.6;
+}
+
+.famma-nl-acct .woocommerce-OrderUpdates {
+	display: grid;
+	gap: 10px;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-nl-acct .woocommerce-OrderUpdate {
+	padding: 12px 14px;
+	border-radius: var(--acct-radius);
+	background: var(--famma-surface-icon);
+}
+
+/* ---------- Adresses ---------- */
+
+.famma-nl-acct .woocommerce-Addresses {
+	display: grid;
+	gap: 14px;
+	margin: 0;
+}
+
+.famma-nl-acct .woocommerce-Addresses::before,
+.famma-nl-acct .woocommerce-Addresses::after {
+	content: none;
+}
+
+.famma-nl-acct .woocommerce-Addresses .woocommerce-Address {
+	float: none;
+	width: auto;
+	margin: 0;
+	padding: 0;
+}
+
+.famma-nl-acct .woocommerce-Address-title {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 8px 12px;
+	margin-block-end: 10px;
+}
+
+.famma-nl-acct .woocommerce-Address-title > :first-child {
+	margin-inline-end: auto;
+}
+
+body.famma-nl-acct .woocommerce-MyAccount-content .woocommerce-Address-title a.edit {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	padding: 8px 16px;
+	border: 1.5px solid var(--famma-line-field);
+	border-radius: var(--acct-radius);
+	background: var(--famma-white);
+	color: var(--famma-ink);
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+body.famma-nl-acct .woocommerce-MyAccount-content .woocommerce-Address-title a.edit:hover {
+	border-color: var(--famma-blue);
+}
+
+.famma-nl-acct .woocommerce-Address-title::before,
+.famma-nl-acct .woocommerce-Address-title::after {
+	content: none;
+}
+
+.famma-nl-acct .woocommerce-Address-title h2,
+.famma-nl-acct .woocommerce-Address-title h3 {
+	float: none;
+}
+
+.famma-nl-acct .woocommerce-Address-title .edit {
+	float: none;
+}
+
+@media (min-width: 900px) {
+	.famma-nl-acct .woocommerce-Addresses {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		align-items: start;
+	}
+}
+
+/* ---------- Mes informations / formulaires d'adresse ---------- */
+
+.famma-nl-acct .woocommerce-EditAccountForm,
+.famma-nl-acct .woocommerce-MyAccount-content form.edit-address,
+.famma-nl-acct .woocommerce-address-fields {
+	margin: 0;
+}
+
+.famma-nl-acct .woocommerce-EditAccountForm fieldset {
+	margin: 8px 0 14px;
+	padding: 16px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--acct-radius-lg);
+}
+
+.famma-nl-acct .woocommerce-EditAccountForm fieldset legend {
+	padding-inline: 6px;
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--famma-ink);
+}
+
+.famma-nl-acct .woocommerce-EditAccountForm .form-row-first,
+.famma-nl-acct .woocommerce-EditAccountForm .form-row-last {
+	float: none;
+	width: auto;
+}
+
+@media (min-width: 600px) {
+	.famma-nl-acct .woocommerce-EditAccountForm {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		column-gap: 16px;
+	}
+
+	.famma-nl-acct .woocommerce-EditAccountForm > * {
+		grid-column: 1 / -1;
+	}
+
+	.famma-nl-acct .woocommerce-EditAccountForm > .form-row-first {
+		grid-column: 1;
+	}
+
+	.famma-nl-acct .woocommerce-EditAccountForm > .form-row-last {
+		grid-column: 2;
+	}
+
+	.famma-nl-acct .woocommerce-EditAccountForm > .clear {
+		display: none;
+	}
+}
+
+/* ---------- Mouvement ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+	.famma-nl-acct #customer_login.is-tabbed [role="tabpanel"]:not([hidden]) {
+		animation: famma-acct-in .32s var(--acct-ease) both;
+	}
+
+	.famma-nl-acct .kadence-account-avatar,
+	.famma-nl-acct .woocommerce-MyAccount-content > *,
+	.famma-nl-acct .woocommerce-orders-table tbody tr {
+		animation: famma-acct-in .42s var(--acct-ease) both;
+	}
+
+	.famma-nl-acct .woocommerce-MyAccount-content > :nth-child(2),
+	.famma-nl-acct .woocommerce-orders-table tbody tr:nth-child(2) {
+		animation-delay: 60ms;
+	}
+
+	.famma-nl-acct .woocommerce-MyAccount-content > :nth-child(3),
+	.famma-nl-acct .woocommerce-orders-table tbody tr:nth-child(3) {
+		animation-delay: 120ms;
+	}
+
+	.famma-nl-acct .woocommerce-MyAccount-content > :nth-child(n+4),
+	.famma-nl-acct .woocommerce-orders-table tbody tr:nth-child(n+4) {
+		animation-delay: 180ms;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-acct-seg__pill,
+	.famma-nl-acct .woocommerce-MyAccount-navigation li a::after {
+		transition: none;
+	}
+}
+
+@keyframes famma-acct-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}

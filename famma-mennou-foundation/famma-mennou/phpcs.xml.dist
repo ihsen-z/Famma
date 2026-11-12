@@ -111,6 +111,10 @@
 		<properties>
 			<property name="functionWhitelist" type="array">
 				<element value="famma_child_always_show_add_to_cart"/>
+				<element value="famma_child_account_look"/>
+				<element value="famma_child_account_look_body_class"/>
+				<element value="famma_child_enqueue_account_look"/>
+				<element value="famma_child_account_look_menu"/>
 				<element value="famma_child_brand_link"/>
 				<element value="famma_child_brand_logo"/>
 				<element value="famma_child_drop_gallery_zoom"/>
