@@ -22,7 +22,7 @@ Le thème porte le code (`inc/new-look-account.php`,
 plugin ne fait que déclarer la case. Contient aussi la 0.3.17 (passerelle
 Upsell One Click), fusionnée dans le nouveau look.
 
-## 0.3.17 — 2026-11-12 (préparée, non envoyée)
+## 0.3.17 — 2026-11-12 (en production depuis le 12/11 ~17:15, lot 33b)
 
 Passerelle avec le plugin indépendant **Upsell One Click** (offre après achat
 en un clic, futur produit vendu).
