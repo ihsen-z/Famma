@@ -153,6 +153,30 @@ final class New_Look {
 				'label' => __( 'Accueil : animations de la maquette', 'famma-core' ),
 				'help'  => __( 'Sur la page d’accueil : barre d’avancement en haut de l’écran, logo qui cligne de l’œil (et fait un clin d’œil à chaque ajout au panier), entrée animée du nom et du carrousel, bouton pause et minuteur du carrousel, sections qui apparaissent au défilement. Avec le parcours animé : un colis roule sur la route, la route passe à l’horizontale sur ordinateur, et les 24 gouvernorats (ceux de WooCommerce) défilent sous les étapes. Désactivé d’office si le visiteur a demandé moins d’animations. Aucun texte ne change.', 'famma-core' ),
 			),
+			'home_facts'  => array(
+				'label' => __( 'Accueil : chiffres « 24 gouvernorats · 0 DT · 0 compte »', 'famma-core' ),
+				'help'  => __( 'Sous les étapes du bloc « Vous payez à la livraison », trois chiffres en grand qui se comptent à l’arrivée. Les chiffres et leurs légendes se modifient dans FAMMA → Pages → Accueil, champs « Chiffres » ; un chiffre vide disparaît.', 'famma-core' ),
+			),
+			'home_why'    => array(
+				'label' => __( 'Accueil : « Pourquoi FAMMA » juste après le paiement à la livraison', 'famma-core' ),
+				'help'  => __( 'Les cartes « Pourquoi choisir FAMMA ? » remontent juste sous le bloc « Vous payez à la livraison », comme dans la maquette, au lieu d’être après les questions fréquentes. Sans ce bloc dans la page d’accueil, elles restent à leur place.', 'famma-core' ),
+			),
+			'hide_band'   => array(
+				'label' => __( 'Accueil : retirer le bloc « Une question sur un produit ? »', 'famma-core' ),
+				'help'  => __( 'Le bloc WhatsApp du bas de l’accueil disparaît : la carte WhatsApp des questions fréquentes et le bouton vert flottant restent. Il reste affiché dans la boutique.', 'famma-core' ),
+			),
+			'cat_icons'   => array(
+				'label' => __( 'Accueil : icônes des rayons', 'famma-core' ),
+				'help'  => __( 'Un rayon sans miniature montre l’icône au trait choisie dans Produits → Catégories (champ « Icône sur l’accueil »), dessinée à l’arrivée, au lieu de l’étoile orange. Une miniature envoyée reste toujours prioritaire.', 'famma-core' ),
+			),
+			'wa_ring'     => array(
+				'label' => __( 'Accueil : anneau sur le bouton WhatsApp', 'famma-core' ),
+				'help'  => __( 'Le bouton vert flottant émet trois ondes à l’ouverture de l’accueil, puis s’arrête. Désactivé d’office si le visiteur a demandé moins d’animations.', 'famma-core' ),
+			),
+			'acct_mobile' => array(
+				'label' => __( 'Partout : icône « Mon compte » dans l’en-tête du téléphone', 'famma-core' ),
+				'help'  => __( 'Sur téléphone, l’icône du compte s’affiche à côté du panier, comme sur ordinateur, au lieu d’être rangée dans le menu.', 'famma-core' ),
+			),
 			'journey'     => array(
 				'label' => __( 'Accueil : bloc « Vous payez à la livraison » en parcours animé', 'famma-core' ),
 				'help'  => __( 'Le bloc déjà présent dans la page d’accueil devient une bande marine : une route relie les étapes, qui se cochent au défilement. Ses textes se modifient toujours dans l’éditeur de la page d’accueil.', 'famma-core' ),

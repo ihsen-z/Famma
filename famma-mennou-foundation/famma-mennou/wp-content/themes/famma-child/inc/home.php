@@ -368,8 +368,13 @@ function famma_child_home_categories(): void {
 					<li class="famma-cats__item">
 						<a class="famma-cats__card" href="<?php echo esc_url( famma_child_product_category_url( $term->slug ) ); ?>">
 							<span class="famma-cats__media">
-								<?php if ( $thumb_id ) : ?>
+								<?php
+								$famma_icon = $thumb_id ? '' : famma_child_home_cat_icon( (int) $term->term_id );
+								if ( $thumb_id ) :
+									?>
 									<?php echo wp_get_attachment_image( $thumb_id, 'thumbnail', false, array( 'alt' => '' ) ); ?>
+								<?php elseif ( '' !== $famma_icon ) : ?>
+									<span class="famma-cats__mark famma-cats__mark--icon" aria-hidden="true"><?php echo $famma_icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG constant de famma-core, filtré par wp_kses. ?></span>
 								<?php else : ?>
 									<span class="famma-cats__mark" aria-hidden="true">
 										<svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.4L12 17.4 6.2 20.4l1.1-6.4L2.6 9.4l6.5-.9z"/></svg>

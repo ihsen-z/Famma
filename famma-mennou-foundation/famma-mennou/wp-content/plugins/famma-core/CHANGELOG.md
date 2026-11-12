@@ -1,5 +1,45 @@
 # Changelog — FAMMA Core
 
+## 0.3.16 — 2026-11-12 (accueil, lot 3 de la maquette) · thème famma-child 0.2.3
+
+Six nouvelles cases dans FAMMA → Pages → Nouveau look, **toutes livrées
+décochées** : tant qu'aucune n'est cochée, les pages sont identiques à la
+0.3.15 (vérifié sur le banc : accueil, boutique, rayon, fiche, panier).
+
+### Ajouts
+
+- **« Accueil : chiffres « 24 gouvernorats · 0 DT · 0 compte » »**
+  (`home_facts`) : trois chiffres sous les étapes du bloc « Vous payez à la
+  livraison », comptés à l'arrivée (de 0, ou de 9 vers 0). Chiffres et
+  légendes modifiables en FR et en derja dans FAMMA → Pages → Accueil,
+  champs « Chiffres » (`Home_Content::facts_schema()`) ; un chiffre vide
+  disparaît. Valeur finale écrite par le serveur : rien ne se compte pour un
+  visiteur qui demande moins d'animations.
+- **« Accueil : « Pourquoi FAMMA » juste après le paiement à la
+  livraison »** (`home_why`) : le contenu de la page d'accueil est coupé
+  après ce bloc et les cartes s'y insèrent. Sans le bloc dans la page, elles
+  restent à leur place.
+- **« Accueil : retirer le bloc « Une question sur un produit ? » »**
+  (`hide_band`) : l'accueil seulement ; la boutique le garde, la carte
+  WhatsApp des questions et le bouton vert flottant restent.
+- **« Accueil : icônes des rayons »** (`cat_icons`) et champ **« Icône sur
+  l'accueil »** dans Produits → Catégories (`includes/cat-icons.php`, méta
+  de terme `_famma_cat_icon`, jeton + droit `edit_term`, valeur limitée à
+  6 icônes). Ordre : miniature de la catégorie, puis icône au trait dessinée
+  au défilement, puis l'étoile orange.
+- **« Accueil : anneau sur le bouton WhatsApp »** (`wa_ring`) : trois ondes
+  à l'ouverture, puis plus rien.
+- **« Partout : icône « Mon compte » dans l'en-tête du téléphone »**
+  (`acct_mobile`) : l'icône rejoint le panier ; le lien du menu se range
+  (le compte n'existe toujours qu'une fois).
+
+### Thème famma-child 0.2.3
+
+- `inc/new-look-home-extras.php` et `assets/css/new-look-home-extras.css`
+  (nouveaux, chargés sur l'accueil seulement si une case les sert) ;
+  `front-page.php`, `inc/home.php`, `inc/new-look.php`, `functions.php`,
+  `assets/js/new-look.js` (comptage des chiffres).
+
 ## 0.3.15 — 2026-11-12 (en production depuis le 12/11 ~02:55, lot 30)
 
 Toute la galerie du produit proposé dans la fiche rapide « Découvrir le

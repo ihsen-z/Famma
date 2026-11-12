@@ -43,6 +43,7 @@ final class Home_Content {
 		$fields = array_merge(
 			self::hero_schema(),
 			self::why_schema(),
+			self::facts_schema(),
 			self::newsletter_and_trust_schema()
 		);
 
@@ -225,6 +226,47 @@ final class Home_Content {
 				'help'       => __( 'Ne promettez que ce qui est vrai aujourd’hui.', 'famma-core' ),
 				'default_fr' => $texts[2],
 				'default_ar' => $texts[3],
+			);
+		}
+
+		return $fields;
+	}
+
+	/**
+	 * Trois chiffres sous le bloc « Vous payez à la livraison ».
+	 *
+	 * Affichés seulement si la case « Accueil : chiffres » du nouveau look est
+	 * cochée. Chaque valeur par défaut est un fait de la boutique : les 24
+	 * gouvernorats de WooCommerce, la livraison offerte, la commande sans
+	 * compte.
+	 *
+	 * @return array<int, array<string, string>>
+	 */
+	private static function facts_schema(): array {
+		$items = array(
+			1 => array( '24', 'gouvernorats livrés', 'ولاية نوصّلولها' ),
+			2 => array( '0 DT', 'de frais de livraison', 'مصاريف توصيل' ),
+			3 => array( '0', 'compte à créer', 'كونت تعملو' ),
+		);
+
+		$fields = array();
+		foreach ( $items as $i => $item ) {
+			$fields[] = array(
+				'key'        => 'facts_' . $i . '_value',
+				'type'       => 'text',
+				/* translators: %d: numéro du chiffre (1 à 3). */
+				'label'      => sprintf( __( 'Chiffres — chiffre %d', 'famma-core' ), $i ),
+				'help'       => 1 === $i ? __( 'Un chiffre vrai, suivi au besoin d’une unité (« 0 DT »). Il se compte à l’arrivée. Vide : la case disparaît. S’affiche si la case « Accueil : chiffres » du nouveau look est cochée.', 'famma-core' ) : '',
+				'default_fr' => $item[0],
+				'default_ar' => $item[0],
+			);
+			$fields[] = array(
+				'key'        => 'facts_' . $i . '_label',
+				'type'       => 'text',
+				/* translators: %d: numéro du chiffre (1 à 3). */
+				'label'      => sprintf( __( 'Chiffres — légende %d', 'famma-core' ), $i ),
+				'default_fr' => $item[1],
+				'default_ar' => $item[2],
 			);
 		}
 

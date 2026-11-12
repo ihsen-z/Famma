@@ -87,6 +87,11 @@ function famma_child_new_look_parts(): array {
 		$parts[] = 'home_polish';
 		$parts[] = 'home_motion';
 		$parts[] = 'journey';
+		$parts[] = 'home_facts';
+		$parts[] = 'home_why';
+		$parts[] = 'hide_band';
+		$parts[] = 'cat_icons';
+		$parts[] = 'wa_ring';
 	} else {
 		$parts[] = 'tools';
 		$parts[] = 'how';
@@ -203,7 +208,7 @@ function famma_child_enqueue_new_look(): void {
 		);
 	}
 
-	if ( array_intersect( array( 'motion', 'alt_photo', 'dock', 'tools', 'home_motion' ), $parts ) && file_exists( $dir . '/assets/js/new-look.js' ) ) {
+	if ( array_intersect( array( 'motion', 'alt_photo', 'dock', 'tools', 'home_motion', 'home_facts' ), $parts ) && file_exists( $dir . '/assets/js/new-look.js' ) ) {
 		wp_enqueue_script(
 			'famma-new-look',
 			$uri . '/assets/js/new-look.js',

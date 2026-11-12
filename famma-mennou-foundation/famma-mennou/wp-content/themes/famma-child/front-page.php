@@ -43,22 +43,49 @@ get_header();
 		$famma_content = trim( (string) get_the_content() );
 
 		if ( '' !== $famma_content ) :
-			?>
-			<section class="famma-home__editorial entry-content">
-				<?php the_content(); ?>
-			</section>
-			<?php
+			/*
+			 * Case « Pourquoi FAMMA après le paiement » : le contenu est coupé
+			 * après le bloc « Vous payez à la livraison », et les cartes
+			 * prennent place entre les deux moitiés.
+			 */
+			ob_start();
+			the_content();
+			$famma_parts = famma_child_home_editorial_parts( (string) ob_get_clean() );
+
+			foreach ( $famma_parts as $famma_i => $famma_part ) :
+				if ( $famma_i > 0 ) {
+					famma_child_home_why();
+					$famma_why_done = true;
+				}
+
+				if ( '' === trim( $famma_part ) ) {
+					continue;
+				}
+				?>
+				<section class="famma-home__editorial entry-content">
+					<?php echo $famma_part; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sortie de the_content, déjà filtrée par WordPress. ?>
+				</section>
+				<?php
+			endforeach;
 		endif;
 	endwhile;
 	?>
 
-	<?php famma_child_home_why(); ?>
+	<?php
+	if ( empty( $famma_why_done ) ) {
+		famma_child_home_why();
+	}
+	?>
 
 	<?php famma_child_home_newsletter(); ?>
 
 	<?php famma_child_home_reviews(); ?>
 
-	<?php famma_child_shop_whatsapp_band(); ?>
+	<?php
+	if ( famma_child_home_show_band() ) {
+		famma_child_shop_whatsapp_band();
+	}
+	?>
 
 </div>
 

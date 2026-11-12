@@ -138,6 +138,15 @@
 				<element value="famma_child_home_hero_timer"/>
 				<element value="famma_child_home_newsletter_mascot"/>
 				<element value="famma_child_home_govs"/>
+				<element value="famma_child_home_part"/>
+				<element value="famma_child_home_is_how"/>
+				<element value="famma_child_home_facts"/>
+				<element value="famma_child_home_why_mark"/>
+				<element value="famma_child_home_editorial_parts"/>
+				<element value="famma_child_home_show_band"/>
+				<element value="famma_child_home_cat_icon"/>
+				<element value="famma_child_enqueue_home_extras"/>
+				<element value="famma_child_new_look_mobile_account"/>
 				<element value="famma_child_enqueue_new_look"/>
 				<element value="famma_child_new_look_body_class"/>
 				<element value="famma_child_loop_alt_photo"/>

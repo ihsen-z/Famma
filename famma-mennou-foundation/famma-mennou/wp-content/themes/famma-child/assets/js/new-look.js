@@ -638,4 +638,56 @@
 			} );
 		} );
 	} );
+
+	/*
+	 * Chiffres de l'accueil : comptés à l'arrivée, de 0 (ou de 9 vers 0)
+	 * jusqu'à la valeur écrite par le serveur. Seul un nombre entier en tête
+	 * est compté (« 24 », « 0 DT ») ; le reste du texte ne bouge pas.
+	 */
+	guard( 'facts', function () {
+		if ( ! has( 'home-facts' ) || reduced || ! ( 'IntersectionObserver' in window ) ) {
+			return;
+		}
+
+		var count = function ( el ) {
+			var match = /^(\d{1,4})(.*)$/.exec( el.textContent.trim() );
+
+			if ( ! match ) {
+				return;
+			}
+
+			var to = parseInt( match[ 1 ], 10 );
+			var from = 0 === to ? 9 : 0;
+			var rest = match[ 2 ];
+			var start = null;
+
+			var step = function ( now ) {
+				if ( null === start ) {
+					start = now;
+				}
+				var t = Math.min( 1, ( now - start ) / 1000 );
+				var eased = 1 - Math.pow( 1 - t, 3 );
+				el.textContent = String( Math.round( from + ( to - from ) * eased ) ) + rest;
+				if ( t < 1 ) {
+					window.requestAnimationFrame( step );
+				}
+			};
+
+			el.textContent = String( from ) + rest;
+			window.requestAnimationFrame( step );
+		};
+
+		var io = new IntersectionObserver( function ( entries ) {
+			entries.forEach( function ( entry ) {
+				if ( entry.isIntersecting ) {
+					io.unobserve( entry.target );
+					count( entry.target );
+				}
+			} );
+		}, { threshold: 0.6 } );
+
+		Array.prototype.forEach.call( document.querySelectorAll( '.famma-nl-fact [data-famma-count]' ), function ( el ) {
+			io.observe( el );
+		} );
+	} );
 } )();
