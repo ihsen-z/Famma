@@ -189,6 +189,10 @@ final class New_Look {
 				'label' => __( 'Mon compte : adresses et informations de la maquette', 'famma-core' ),
 				'help'  => __( 'Dans « Mon compte », avec la case « présentation de la maquette » : « Mes adresses » montre l’adresse du client dans une carte (ou une carte « Ajouter une adresse ») ; « Modifier » ouvre une feuille qui glisse du bas sur téléphone, du côté sur ordinateur, avec le formulaire d’adresse de WooCommerce. « Mes informations » range le formulaire en deux boîtes, « Identité » et « Connexion » (mot de passe à déplier, puis « Me déconnecter »). Une seule adresse, celle de la commande : l’adresse de livraison séparée de WooCommerce n’est plus montrée dans la liste. Champs, contrôles et enregistrement inchangés. Textes réglables dans la section « Mon compte ».', 'famma-core' ),
 			),
+			'acct_favs'   => array(
+				'label' => __( 'Mon compte : « Ma sélection » gardée dans le compte', 'famma-core' ),
+				'help'  => __( 'Pour les clients connectés : les produits mis de côté avec le cœur sont aussi gardés dans leur compte, et se retrouvent sur un autre téléphone après connexion. Nouvel onglet « Ma sélection » dans « Mon compte » (avec la case « présentation de la maquette ») : une carte par produit, avec son prix, « Ajouter » et le cœur pour le retirer. Les visiteurs ne changent pas : leur sélection reste dans leur navigateur. Textes réglables dans la section « Mon compte ».', 'famma-core' ),
+			),
 			'journey'     => array(
 				'label' => __( 'Accueil : bloc « Vous payez à la livraison » en parcours animé', 'famma-core' ),
 				'help'  => __( 'Le bloc déjà présent dans la page d’accueil devient une bande marine : une route relie les étapes, qui se cochent au défilement. Ses textes se modifient toujours dans l’éditeur de la page d’accueil.', 'famma-core' ),

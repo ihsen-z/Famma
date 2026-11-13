@@ -1,5 +1,36 @@
 # Changelog — FAMMA Core
 
+## 0.3.23 — 2026-11-13 (« Ma sélection » gardée dans le compte, lot 5 de l'espace client) · thème famma-child 0.2.10
+
+Nouvelle case `acct_favs` (« Mon compte : « Ma sélection » gardée dans le
+compte »), **livrée décochée**. Case décochée : rien ne change, les favoris
+restent dans le navigateur seulement.
+
+- Client connecté : les produits mis de côté avec le cœur sont aussi gardés
+  dans son compte (méta `_famma_favs`, 100 produits au plus, seulement des
+  produits publiés). La première fois sur un navigateur, tout ce qui y est
+  rejoint le compte ; ensuite seuls les ajouts et retraits partent, donc un
+  produit retiré sur un téléphone ne revient pas par un autre.
+- Route `POST famma/v1/favs` : client connecté, jeton `wp_rest`, case cochée
+  pour lui ; identifiants nettoyés. Script `assets/js/favs-sync.js` chargé
+  seulement pour un client connecté : les pages des visiteurs ne changent pas
+  et restent en cache.
+- Onglet « Ma sélection » (`/mon-compte/ma-selection/`, point d'accès
+  WooCommerce déclaré par `woocommerce_get_query_vars`, règles de réécriture
+  rafraîchies une seule fois) entre « Mes adresses » et « Mes informations »,
+  avec la case « présentation de la maquette » : une carte par produit (photo,
+  nom, prix, « Ajouter » au panier sans quitter la page, ou « Choisir » vers
+  la fiche pour un produit à options), cœur pour retirer avec « Annuler »
+  pendant 5 secondes, mascotte quand la sélection est vide. Le compteur
+  « dans ma sélection » mène à l'onglet ; l'onglet porte le nombre.
+- Nouvelle classe `Famma\Core\Account_Favs` (`includes/account-favs.php`) :
+  8 textes dans FAMMA → Pages → « Mon compte », en français et en derja (à
+  relire ; « Choisir » / « اختار » n'est pas dans la maquette).
+
+Le thème porte l'affichage (`inc/new-look-account-favs.php`,
+`assets/css/new-look-account-favs.css`, `assets/js/new-look-account-favs.js`) ;
+`favourites.js` annonce chaque clic et suit la liste accordée.
+
 ## 0.3.22 — 2026-11-12 (« Mon compte » aligné sur la maquette, étape C : adresses et informations) · thème famma-child 0.2.9
 
 Nouvelle case `acct_forms` (« Mon compte : adresses et informations de la

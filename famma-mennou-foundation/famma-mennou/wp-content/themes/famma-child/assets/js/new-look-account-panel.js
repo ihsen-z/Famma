@@ -53,21 +53,48 @@
 
 	var favs = doc.querySelector( '[data-famma-favs]' );
 
-	if ( favs ) {
-		try {
-			var raw = window.localStorage.getItem( 'famma-favourites' );
-			var list = raw ? JSON.parse( raw ) : [];
-			var b = favs.querySelector( 'b' );
-
-			if ( Array.isArray( list ) && b ) {
-				b.setAttribute( 'data-roll', String( list.length ) );
-				b.textContent = String( list.length );
-				favs.hidden = false;
-			}
-		} catch ( e ) {
-			// Stockage indisponible (navigation privée) : le compteur reste caché.
+	// Compteur « dans ma sélection » et pastille de l'onglet « Ma sélection »
+	// (case acct_favs) : lus dans le navigateur, puis remis à jour quand
+	// famma-core a accordé la sélection avec le compte.
+	var paintFavs = function ( list ) {
+		if ( ! Array.isArray( list ) ) {
+			return;
 		}
+
+		var count = String( list.length );
+		var b = favs && favs.querySelector( 'b' );
+
+		if ( b ) {
+			b.setAttribute( 'data-roll', count );
+			b.textContent = count;
+			favs.hidden = false;
+		}
+
+		var tab = doc.querySelector( '.woocommerce-MyAccount-navigation-link--ma-selection a' );
+
+		if ( tab ) {
+			var n = tab.querySelector( '.famma-acct-n' );
+
+			if ( ! n ) {
+				n = doc.createElement( 'span' );
+				n.className = 'famma-acct-n';
+				tab.appendChild( n );
+			}
+
+			n.textContent = count;
+		}
+	};
+
+	try {
+		var raw = window.localStorage.getItem( 'famma-favourites' );
+		paintFavs( raw ? JSON.parse( raw ) : [] );
+	} catch ( e ) {
+		// Stockage indisponible (navigation privée) : le compteur reste caché.
 	}
+
+	doc.addEventListener( 'famma:favs-synced', function ( event ) {
+		paintFavs( event.detail && event.detail.favs );
+	} );
 
 	if ( html.classList.contains( 'famma-acct-intro' ) ) {
 		$$( '.famma-acct-stat:not([hidden]) b[data-roll]' ).forEach( function ( el ) {

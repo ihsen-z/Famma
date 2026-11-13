@@ -1,0 +1,295 @@
+/*
+ * Nouveau look — onglet « Ma sélection » comme la maquette (.favs, .fv,
+ * .heart, .empty, .toast). Case `acct_favs`, chargée seulement sur cet
+ * onglet, sous body.famma-nl-acct-favs. Propriétés logiques : le cœur passe
+ * à gauche en arabe.
+ */
+
+.famma-nl-acct-favs .famma-acct-p-h {
+	margin: 0;
+	font-size: 20px;
+	font-weight: 600;
+}
+
+/* ---------- Grille ---------- */
+
+.famma-acct-favs {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+}
+
+.famma-acct-favs:empty {
+	display: none;
+}
+
+@media (min-width: 700px) {
+	.famma-acct-favs {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 1050px) {
+	.famma-acct-favs {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
+.famma-acct-fv {
+	display: grid;
+	grid-template-rows: auto 1fr;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--acct-radius-lg, 20px);
+	background: var(--famma-white);
+	overflow: hidden;
+}
+
+.famma-acct-fv[hidden] {
+	display: none;
+}
+
+.famma-acct-fv__m {
+	position: relative;
+	aspect-ratio: 1;
+	background: var(--acct-surface-2, #F1F4F9);
+}
+
+.famma-acct-fv__m > a {
+	display: block;
+	height: 100%;
+}
+
+.famma-acct-fv__m img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	object-fit: cover;
+}
+
+body.famma-nl-acct-favs .famma-acct-heart {
+	position: absolute;
+	top: 6px;
+	inset-inline-end: 6px;
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	min-height: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: var(--famma-white);
+	color: var(--famma-orange);
+	box-shadow: var(--acct-shadow, 0 4px 14px rgba(11, 31, 58, .10));
+	cursor: pointer;
+}
+
+.famma-acct-heart .famma-icon,
+.famma-acct-heart svg {
+	width: 20px;
+	height: 20px;
+}
+
+.famma-acct-heart[aria-pressed="true"] svg {
+	fill: currentColor;
+}
+
+.famma-acct-heart:focus-visible {
+	outline: 2px solid var(--famma-ink);
+	outline-offset: 2px;
+}
+
+.famma-acct-fv__b {
+	display: grid;
+	gap: 8px;
+	align-content: space-between;
+	padding: 10px 12px 12px;
+}
+
+.famma-acct-fv__b p {
+	display: -webkit-box;
+	margin: 0;
+	overflow: hidden;
+	font-size: 13.5px;
+	font-weight: 500;
+	line-height: 1.35;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+body.famma-nl-acct-favs .woocommerce-MyAccount-content .famma-acct-fv__b p a {
+	color: var(--famma-ink);
+	text-decoration: none;
+}
+
+.famma-acct-fv__p {
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-acct-fv__p del {
+	margin-inline-end: 4px;
+	color: var(--famma-text-2);
+	font-weight: 500;
+}
+
+.famma-acct-fv__p ins {
+	text-decoration: none;
+}
+
+/* Bouton orange de la maquette (.btn.cta.btn-sm) */
+body.famma-nl-acct-favs .famma-acct-fv .famma-acct-fv__add {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	width: 100%;
+	min-height: 44px;
+	margin: 0;
+	padding: 0 10px;
+	border: 0;
+	border-radius: 9px;
+	background: var(--famma-orange);
+	color: var(--famma-on-orange);
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	box-shadow: none;
+}
+
+body.famma-nl-acct-favs .famma-acct-fv .famma-acct-fv__add.is-choose {
+	background: var(--famma-ink);
+	color: var(--famma-white);
+}
+
+.famma-acct-fv__add svg {
+	width: 18px;
+	height: 18px;
+}
+
+@media (hover: hover) {
+	body.famma-nl-acct-favs .famma-acct-fv .famma-acct-fv__add:hover {
+		background: var(--famma-orange-600);
+		color: var(--famma-on-orange);
+	}
+
+	body.famma-nl-acct-favs .famma-acct-fv .famma-acct-fv__add.is-choose:hover {
+		background: var(--famma-blue-600);
+		color: var(--famma-white);
+	}
+}
+
+/* Lien « Voir le panier » de WooCommerce après l'ajout */
+.famma-acct-fv .added_to_cart {
+	justify-self: center;
+	color: var(--famma-ink);
+	font-size: 13px;
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+/* ---------- Sélection vide (maquette : .empty) ---------- */
+
+.famma-acct-fempty {
+	display: grid;
+	justify-items: center;
+	gap: 10px;
+	padding: 28px 16px;
+	border: 1.5px dashed var(--famma-line-field);
+	border-radius: var(--acct-radius-lg, 20px);
+	color: var(--famma-text-2);
+	text-align: center;
+}
+
+.famma-acct-fempty[hidden] {
+	display: none;
+}
+
+.famma-acct-fempty p {
+	margin: 0;
+}
+
+.famma-acct-fempty .famma-acct-mascot {
+	width: 64px;
+	height: 64px;
+	color: var(--famma-ink);
+}
+
+body.famma-nl-acct-favs .famma-acct-fempty .famma-acct-fempty__go {
+	min-height: 48px;
+	padding: 0 20px;
+	border: 0;
+	border-radius: 9px;
+	background: var(--famma-ink);
+	color: var(--famma-white);
+	line-height: 48px;
+	text-decoration: none;
+}
+
+/* ---------- Message « Retiré » avec « Annuler » (maquette : .toast) ---------- */
+
+.famma-acct-toast {
+	position: fixed;
+	inset-inline: 16px;
+	inset-block-end: calc(84px + env(safe-area-inset-bottom, 0px));
+	z-index: var(--z-toast, 700);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	max-width: 440px;
+	margin-inline: auto;
+	padding: 10px 16px;
+	border-radius: 12px;
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	box-shadow: 0 12px 32px rgba(11, 31, 58, .22);
+	font-size: 14px;
+	opacity: 0;
+	transform: translateY(16px);
+	transition: transform .24s var(--acct-ease, ease-out), opacity .24s;
+}
+
+.famma-acct-toast[hidden] {
+	display: none;
+}
+
+.famma-acct-toast.is-on {
+	opacity: 1;
+	transform: none;
+}
+
+body.famma-nl-acct-favs .famma-acct-toast button {
+	min-height: 40px;
+	padding: 0 10px;
+	border: 0;
+	background: none;
+	color: var(--famma-orange);
+	font-weight: 700;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	box-shadow: none;
+	cursor: pointer;
+}
+
+/* ---------- Mouvement ---------- */
+
+/* Les cartes montent une à une : pas la grille elle-même. */
+body.famma-nl-acct-favs.famma-nl-acct .woocommerce-MyAccount-content > .famma-acct-favs.famma-acct-favs {
+	animation: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.famma-acct-favs > .famma-acct-fv {
+		animation: famma-acct-rise-box 460ms var(--acct-spring, cubic-bezier(.34, 1.56, .64, 1)) backwards;
+		animation-delay: calc(40ms + var(--i, 0) * 60ms);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-acct-toast {
+		transition: none;
+	}
+}

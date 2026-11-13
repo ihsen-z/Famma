@@ -88,6 +88,19 @@
 			document.querySelectorAll( '[data-famma-fav="' + id + '"]' ).forEach( function ( twin ) {
 				paint( twin, at === -1 );
 			} );
+
+			// Client connecté, case « Ma sélection gardée dans le compte » :
+			// famma-core envoie le changement à son compte.
+			document.dispatchEvent( new window.CustomEvent( 'famma:fav', { detail: { id: id, on: at === -1 } } ) );
+		} );
+	} );
+
+	// Liste accordée avec le compte : les cœurs suivent.
+	document.addEventListener( 'famma:favs-synced', function () {
+		var list = read();
+
+		Array.prototype.forEach.call( document.querySelectorAll( '[data-famma-fav]' ), function ( button ) {
+			paint( button, list.indexOf( button.getAttribute( 'data-famma-fav' ) ) !== -1 );
 		} );
 	} );
 }() );

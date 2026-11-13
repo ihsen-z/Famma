@@ -241,7 +241,9 @@ function famma_child_account_look_head(): void {
 	<div class="famma-acct-stats">
 		<a class="famma-acct-stat" href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>"><b data-roll="<?php echo esc_attr( (string) $data['orders'] ); ?>"><?php echo esc_html( (string) $data['orders'] ); ?></b><?php echo esc_html( \Famma\Core\Account_Profile::text( 'stat_orders' ) ); ?></a>
 		<a class="famma-acct-stat is-hot" href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>"><b data-roll="<?php echo esc_attr( (string) $data['open'] ); ?>"><?php echo esc_html( (string) $data['open'] ); ?></b><?php echo esc_html( \Famma\Core\Account_Profile::text( 'stat_open' ) ); ?></a>
-		<?php if ( '' !== $favs ) : ?>
+		<?php if ( '' !== $favs && function_exists( 'famma_child_account_favs_on' ) && famma_child_account_favs_on() ) : ?>
+			<a class="famma-acct-stat" href="<?php echo esc_url( wc_get_account_endpoint_url( \Famma\Core\Account_Favs::ENDPOINT ) ); ?>" data-famma-favs hidden><b data-roll="0">0</b><?php echo esc_html( $favs ); ?></a>
+		<?php elseif ( '' !== $favs ) : ?>
 			<span class="famma-acct-stat" data-famma-favs hidden><b data-roll="0">0</b><?php echo esc_html( $favs ); ?></span>
 		<?php endif; ?>
 	</div>
@@ -314,6 +316,11 @@ function famma_child_enqueue_account_panel(): void {
 		array( 'edit-account' ),
 	);
 	$map  = array();
+
+	// Onglet « Ma sélection » (case acct_favs) : avant « Mes informations ».
+	if ( function_exists( 'famma_child_account_favs_on' ) && famma_child_account_favs_on() ) {
+		array_splice( $tabs, 2, 0, array( array( \Famma\Core\Account_Favs::ENDPOINT ) ) );
+	}
 
 	foreach ( $tabs as $endpoints ) {
 		$paths = array();

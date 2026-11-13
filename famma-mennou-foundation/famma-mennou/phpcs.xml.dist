@@ -138,6 +138,16 @@
 				<element value="famma_child_account_forms_infos_title"/>
 				<element value="famma_child_account_forms_identity"/>
 				<element value="famma_child_account_forms_connection"/>
+				<element value="famma_child_account_favs_on"/>
+				<element value="famma_child_account_favs_page"/>
+				<element value="famma_child_account_favs_text"/>
+				<element value="famma_child_account_favs_menu"/>
+				<element value="famma_child_account_favs_setup"/>
+				<element value="famma_child_account_favs_title"/>
+				<element value="famma_child_account_favs_body_class"/>
+				<element value="famma_child_enqueue_account_favs"/>
+				<element value="famma_child_account_favs_button"/>
+				<element value="famma_child_account_favs_panel"/>
 				<element value="famma_child_account_track"/>
 				<element value="famma_child_account_track_setup"/>
 				<element value="famma_child_enqueue_account_track"/>
