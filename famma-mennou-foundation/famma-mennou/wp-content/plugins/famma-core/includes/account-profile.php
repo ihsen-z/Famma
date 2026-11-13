@@ -115,7 +115,7 @@ final class Account_Profile {
 
 		$has_addr = '' !== trim( (string) $customer->get_billing_address_1() ) || '' !== trim( (string) $customer->get_billing_state() );
 		$mail     = $customer->get_billing_email() ? $customer->get_billing_email() : (string) $user->user_email;
-		$has_mail = (bool) is_email( $mail );
+		$has_mail = is_email( $mail ) && ! Account_Phone::is_technical( $mail );
 
 		$since_tpl = self::text( 'head_since' );
 		$since     = '' !== $since_tpl ? str_replace( '{m}', wp_date( 'F Y', (int) strtotime( $user->user_registered . ' UTC' ) ), $since_tpl ) : '';

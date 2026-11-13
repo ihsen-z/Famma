@@ -1,5 +1,51 @@
 # Changelog — FAMMA Core
 
+## 0.3.24 — 2026-11-13 (inscription et connexion par numéro, lot 2 de l'espace client) · thème famma-child 0.2.11
+
+Nouvelle case `acct_phone` (« Mon compte : inscription et connexion par
+numéro »), **livrée décochée**, active seulement avec la case « présentation
+de la maquette ». Décision D1 du propriétaire : e-mail facultatif, le numéro
+sert d'identifiant.
+
+- « Créer mon compte » comme la maquette : Téléphone (+216, « XX XXX XXX »),
+  Nom et prénom, Mot de passe avec la jauge à 3 barres, puis « Ajouter mon
+  adresse maintenant (facultatif) » qui déplie gouvernorat et « Ville, cité,
+  rue ». Le champ e-mail de WooCommerce est masqué ; le mot de passe est
+  choisi à l'inscription (aucun lien envoyé par e-mail) et l'identifiant est
+  fabriqué par WooCommerce. Contrôles de la maquette dans le navigateur
+  (8 chiffres, numéro tunisien, deux mots, 8 caractères) avec coche verte,
+  résumé des erreurs en haut et secousse ; les mêmes contrôles sont refaits
+  par famma-core, plus le numéro déjà inscrit, un champ piège et 6 essais
+  par adresse IP en 10 minutes. La case « recevoir les nouveautés sur
+  WhatsApp » de la maquette n'est **pas** posée : son texte (D5) reste à
+  fournir par le propriétaire.
+- Compte créé sans e-mail : adresse **technique**
+  `216XXXXXXXX@tel.famma.invalid` (domaine `.invalid`, jamais joignable),
+  numéro dans la méta `_famma_phone`, nom, téléphone, pays TN et, s'ils sont
+  donnés, gouvernorat et adresse dans la facturation. Aucun événement de
+  mesure à l'inscription.
+- Protections de l'adresse technique (`Account_Phone_Guard`, actives même
+  case décochée) : aucun e-mail ne part vers elle (`pre_wp_mail`), champ
+  e-mail vide et facultatif au paiement, commande enregistrée sans e-mail,
+  « Mes informations » l'affiche vide et la garde si le client n'en donne
+  pas, pas d'encart « Confirmez votre adresse e-mail » de WooCommerce 11.
+  Meta (CAPI) ne reçoit jamais cette adresse ; l'anneau « profil complété »
+  ne la compte pas comme un e-mail.
+- Connexion (`Account_Phone_Login`, active même case décochée) : « Téléphone
+  ou e-mail » accepte le numéro sous toutes ses formes (espaces, +216,
+  00216, chiffres arabes), et aussi celui de la facturation d'un ancien
+  compte s'il est seul à l'avoir. Mauvais mot de passe : « Numéro ou mot de
+  passe incorrect. » ; 20 essais par numéro par adresse IP en 10 minutes.
+- 23 textes dans FAMMA → Pages → « Mon compte » (`Account_Phone_Texts`),
+  français et derja de la maquette ; `err_taken`, `err_later`, `err_login`
+  et `login_label` n'y sont pas : derja à relire en priorité.
+- Mot de passe oublié : par WhatsApp, à la main, pour le moment (D3).
+
+Le thème porte l'affichage (`inc/new-look-account-phone.php`,
+`assets/css/new-look-account-phone.css`, `assets/js/new-look-account-phone.js`),
+sans copie de modèle WooCommerce ; la jauge zxcvbn de WooCommerce cède la place
+à celle de la maquette sur cette page.
+
 ## 0.3.23 — 2026-11-13 (« Ma sélection » gardée dans le compte, lot 5 de l'espace client) · thème famma-child 0.2.10
 
 Nouvelle case `acct_favs` (« Mon compte : « Ma sélection » gardée dans le

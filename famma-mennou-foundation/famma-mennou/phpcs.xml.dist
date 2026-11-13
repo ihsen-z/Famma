@@ -133,6 +133,17 @@
 				<element value="famma_child_account_forms_body_class"/>
 				<element value="famma_child_account_forms_strings"/>
 				<element value="famma_child_enqueue_account_forms"/>
+				<element value="famma_child_account_phone"/>
+				<element value="famma_child_account_phone_text"/>
+				<element value="famma_child_account_phone_setup"/>
+				<element value="famma_child_account_phone_body_class"/>
+				<element value="famma_child_account_phone_strings"/>
+				<element value="famma_child_account_phone_form_tag"/>
+				<element value="famma_child_account_phone_okm"/>
+				<element value="famma_child_account_phone_posted"/>
+				<element value="famma_child_account_phone_fields"/>
+				<element value="famma_child_account_phone_address"/>
+				<element value="famma_child_enqueue_account_phone"/>
 				<element value="famma_child_account_forms_text"/>
 				<element value="famma_child_account_forms_addresses"/>
 				<element value="famma_child_account_forms_infos_title"/>

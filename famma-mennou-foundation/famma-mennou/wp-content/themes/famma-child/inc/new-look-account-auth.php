@@ -172,8 +172,9 @@ function famma_child_account_auth_close(): void {
 add_action( 'woocommerce_after_customer_login_form', 'famma_child_account_auth_close', 99 );
 
 /**
- * Phrase sous « Créer mon compte » (vide par défaut : la maquette parle d'une
- * inscription par téléphone, pas encore en place).
+ * Phrase sous « Créer mon compte » : celle de l'inscription par numéro quand
+ * la case `acct_phone` est cochée (« Trois champs… »), sinon celle de
+ * l'en-tête (vide par défaut).
  *
  * @return void
  */
@@ -182,7 +183,9 @@ function famma_child_account_auth_up_sub(): void {
 		return;
 	}
 
-	$sub = \Famma\Core\Account_Auth::text( 'up_sub' );
+	$sub = function_exists( 'famma_child_account_phone' ) && famma_child_account_phone()
+		? famma_child_account_phone_text( 'ph_sub' )
+		: \Famma\Core\Account_Auth::text( 'up_sub' );
 
 	if ( '' !== $sub ) {
 		echo '<p class="famma-acct-sub">' . esc_html( $sub ) . '</p>';

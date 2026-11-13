@@ -1,0 +1,282 @@
+/*
+ * Nouveau look — création de compte par numéro, comme la maquette (.f, .inp,
+ * .pre, .okm, .help, .err, .esum, .meter, .dbtn, .disc). Case `acct_phone`,
+ * chargée seulement sur la page de connexion, sous body.famma-nl-acct-phone.
+ * Propriétés logiques : le +216 et la coche changent de côté en arabe.
+ */
+
+/* Champ e-mail de WooCommerce : masqué (e-mail facultatif). Il suit
+   toujours le bloc téléphone + nom. */
+.famma-nl-acct-phone .woocommerce-form-register .famma-acct-ph + .woocommerce-form-row {
+	display: none;
+}
+
+/* ---------- Champs ---------- */
+
+.famma-nl-acct-phone .woocommerce form .famma-acct-f {
+	position: relative;
+	display: grid;
+	gap: 5px;
+}
+
+.famma-nl-acct-phone .woocommerce form .famma-acct-f label {
+	margin: 0;
+}
+
+.famma-acct-inp {
+	position: relative;
+	display: flex;
+	align-items: center;
+	min-height: 50px;
+	border: 1.5px solid var(--famma-line-field);
+	border-radius: var(--acct-radius, 10px);
+	background: var(--famma-surface-field);
+	transition: border-color .18s, box-shadow .18s, background-color .18s;
+}
+
+.famma-acct-inp:focus-within {
+	border-color: var(--famma-blue);
+	background: var(--famma-white);
+	box-shadow: 0 0 0 3px rgba(11, 31, 58, .14);
+}
+
+.famma-nl-acct-phone .woocommerce form .famma-acct-inp .input-text {
+	flex: 1;
+	min-width: 0;
+	min-height: 47px;
+	border: 0;
+	background: none;
+	box-shadow: none;
+}
+
+.famma-nl-acct-phone .woocommerce form .famma-acct-inp .input-text:focus {
+	box-shadow: none;
+}
+
+.famma-acct-pre {
+	display: flex;
+	align-items: center;
+	align-self: stretch;
+	padding-inline: 14px;
+	border-inline-end: 1px solid var(--famma-line-field);
+	color: var(--famma-text-2);
+	font-weight: 600;
+	direction: ltr;
+}
+
+/* Coche des champs valides : elle se dessine. */
+.famma-acct-okm {
+	flex: none;
+	width: 22px;
+	height: 22px;
+	margin-inline-end: 12px;
+	color: var(--acct-ok-text, var(--famma-success-700));
+	opacity: 0;
+}
+
+.famma-acct-okm path {
+	stroke-dasharray: 24;
+	stroke-dashoffset: 24;
+}
+
+.famma-acct-f.is-valid .famma-acct-okm {
+	opacity: 1;
+}
+
+.famma-acct-f.is-valid .famma-acct-okm path {
+	stroke-dashoffset: 0;
+	transition: stroke-dashoffset 420ms var(--acct-ease, ease-out);
+}
+
+.famma-nl-acct-phone .woocommerce form .famma-acct-f.is-bad .famma-acct-inp,
+.famma-nl-acct-phone .woocommerce form .is-bad .input-text {
+	border-color: var(--famma-danger);
+}
+
+.famma-nl-acct-phone .woocommerce form .famma-acct-f.is-bad .famma-acct-inp .input-text {
+	border: 0;
+}
+
+.famma-acct-help {
+	color: var(--acct-text-3, var(--famma-text-3));
+	font-size: 12.5px;
+}
+
+.famma-acct-err {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+	color: var(--famma-danger);
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.famma-acct-err[hidden] {
+	display: none;
+}
+
+.famma-acct-err svg {
+	flex: none;
+	width: 16px;
+	height: 16px;
+	margin-block-start: 2px;
+}
+
+/* ---------- Résumé des erreurs (maquette : .esum) ---------- */
+
+.famma-acct-esum {
+	display: grid;
+	gap: 6px;
+	margin-block-end: 14px;
+	padding: 12px 14px;
+	border: 1.5px solid var(--famma-danger);
+	border-radius: var(--acct-radius, 10px);
+	background: var(--famma-danger-soft);
+	font-size: 14px;
+}
+
+.famma-acct-esum[hidden] {
+	display: none;
+}
+
+.famma-acct-esum h3 {
+	margin: 0;
+	color: var(--famma-danger);
+	font-size: 14.5px;
+	font-weight: 700;
+}
+
+.famma-nl-acct-phone .famma-acct-esum a {
+	color: var(--famma-ink);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+/* ---------- Jauge du mot de passe (maquette : .meter) ---------- */
+
+.famma-acct-meter {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 4px;
+	margin-block-start: 6px;
+}
+
+.famma-acct-meter i {
+	position: relative;
+	height: 4px;
+	border-radius: 2px;
+	background: var(--famma-line);
+	overflow: hidden;
+}
+
+.famma-acct-meter i::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: var(--c, var(--famma-orange));
+	transform: scaleX(0);
+	transform-origin: left;
+	transition: transform .32s var(--acct-ease, ease-out);
+}
+
+[dir="rtl"] .famma-acct-meter i::after {
+	transform-origin: right;
+}
+
+.famma-acct-meter i.on::after {
+	transform: scaleX(1);
+}
+
+.famma-acct-meter-t {
+	display: block;
+	min-height: 19px;
+	margin-block-start: 4px;
+	color: var(--famma-text-2);
+	font-size: 12.5px;
+}
+
+/* ---------- Adresse à déplier (maquette : .dbtn, .disc) ---------- */
+
+.famma-nl-acct-phone .woocommerce form .famma-acct-dbtn {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	margin: 0 0 6px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--famma-accent-text, var(--famma-ink));
+	font-size: 14.5px;
+	font-weight: 600;
+	line-height: 1.4;
+	text-align: start;
+	white-space: normal;
+	box-shadow: none;
+	cursor: pointer;
+}
+
+.famma-acct-dbtn svg {
+	flex: none;
+	width: 18px;
+	height: 18px;
+	transition: transform .32s var(--acct-ease, ease-out);
+}
+
+.famma-acct-dbtn[aria-expanded="true"] svg {
+	transform: rotate(180deg);
+}
+
+.famma-acct-opt {
+	white-space: nowrap;
+	color: var(--acct-text-3, var(--famma-text-3));
+	font-weight: 400;
+}
+
+.famma-acct-disc {
+	display: grid;
+	grid-template-rows: 0fr;
+	transition: grid-template-rows .32s var(--acct-slide, ease-out);
+}
+
+.famma-acct-disc.is-open {
+	grid-template-rows: 1fr;
+}
+
+.famma-acct-disc > div {
+	min-height: 0;
+	overflow: hidden;
+	visibility: hidden;
+	transition: visibility .32s;
+}
+
+.famma-acct-disc.is-open > div {
+	visibility: visible;
+}
+
+.famma-acct-disc__in {
+	display: grid;
+	padding-block-start: 4px;
+}
+
+/* ---------- Champ piège ---------- */
+
+.famma-acct-hp {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-acct-disc,
+	.famma-acct-disc > div,
+	.famma-acct-dbtn svg,
+	.famma-acct-meter i::after,
+	.famma-acct-f.is-valid .famma-acct-okm path {
+		transition: none;
+	}
+}

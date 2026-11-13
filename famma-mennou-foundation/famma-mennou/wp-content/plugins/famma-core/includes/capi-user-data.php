@@ -140,13 +140,14 @@ final class Capi_User_Data {
 	}
 
 	/**
-	 * E-mail : espaces retirés, minuscules.
+	 * E-mail : espaces retirés, minuscules. L'adresse technique d'un compte
+	 * créé par numéro n'est pas un e-mail : rien n'est envoyé.
 	 *
 	 * @param string $email Valeur saisie.
 	 * @return string
 	 */
 	public static function email( string $email ): string {
-		return mb_strtolower( trim( $email ), 'UTF-8' );
+		return Account_Phone::is_technical( $email ) ? '' : mb_strtolower( trim( $email ), 'UTF-8' );
 	}
 
 	/**

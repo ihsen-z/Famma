@@ -193,6 +193,10 @@ final class New_Look {
 				'label' => __( 'Mon compte : « Ma sélection » gardée dans le compte', 'famma-core' ),
 				'help'  => __( 'Pour les clients connectés : les produits mis de côté avec le cœur sont aussi gardés dans leur compte, et se retrouvent sur un autre téléphone après connexion. Nouvel onglet « Ma sélection » dans « Mon compte » (avec la case « présentation de la maquette ») : une carte par produit, avec son prix, « Ajouter » et le cœur pour le retirer. Les visiteurs ne changent pas : leur sélection reste dans leur navigateur. Textes réglables dans la section « Mon compte ».', 'famma-core' ),
 			),
+			'acct_phone'  => array(
+				'label' => __( 'Mon compte : inscription et connexion par numéro', 'famma-core' ),
+				'help'  => __( 'Avec la case « présentation de la maquette » : la création de compte demande le téléphone, le nom et un mot de passe, comme la maquette ; l’e-mail devient facultatif et l’adresse peut être ajoutée tout de suite (gouvernorat, ville). Un numéro ne peut avoir qu’un compte. La connexion accepte le numéro (avec ou sans +216, avec espaces) ou l’e-mail. Un compte sans e-mail ne reçoit aucun e-mail. Mot de passe oublié : par WhatsApp, à la main, pour le moment. Une fois décochée, les comptes déjà créés par numéro peuvent toujours se connecter. Textes réglables dans la section « Mon compte ».', 'famma-core' ),
+			),
 			'journey'     => array(
 				'label' => __( 'Accueil : bloc « Vous payez à la livraison » en parcours animé', 'famma-core' ),
 				'help'  => __( 'Le bloc déjà présent dans la page d’accueil devient une bande marine : une route relie les étapes, qui se cochent au défilement. Ses textes se modifient toujours dans l’éditeur de la page d’accueil.', 'famma-core' ),
