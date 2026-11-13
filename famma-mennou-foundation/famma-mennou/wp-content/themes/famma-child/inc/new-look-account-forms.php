@@ -145,6 +145,11 @@ function famma_child_account_forms_addresses( $type ): void {
 		return;
 	}
 
+	if ( function_exists( 'famma_child_account_addrs' ) && famma_child_account_addrs() ) {
+		famma_child_account_addrs_panel();
+		return;
+	}
+
 	$customer = new WC_Customer( get_current_user_id() );
 	$state    = (string) $customer->get_billing_state();
 	$has      = '' !== trim( (string) $customer->get_billing_address_1() ) || '' !== trim( $state );

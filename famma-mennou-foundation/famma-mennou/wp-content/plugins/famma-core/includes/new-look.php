@@ -197,6 +197,10 @@ final class New_Look {
 				'label' => __( 'Mon compte : inscription et connexion par numéro', 'famma-core' ),
 				'help'  => __( 'Avec la case « présentation de la maquette » : la création de compte demande le téléphone, le nom et un mot de passe, comme la maquette ; l’e-mail devient facultatif et l’adresse peut être ajoutée tout de suite (gouvernorat, ville). Un numéro ne peut avoir qu’un compte. La connexion accepte le numéro (avec ou sans +216, avec espaces) ou l’e-mail. Un compte sans e-mail ne reçoit aucun e-mail. Mot de passe oublié : par WhatsApp, à la main, pour le moment. Une fois décochée, les comptes déjà créés par numéro peuvent toujours se connecter. Textes réglables dans la section « Mon compte ».', 'famma-core' ),
 			),
+			'acct_addrs'  => array(
+				'label' => __( 'Mon compte : plusieurs adresses (Maison, Travail, Famille)', 'famma-core' ),
+				'help'  => __( 'Avec les cases « présentation de la maquette » et « adresses et informations de la maquette » : « Mes adresses » montre une carte par adresse, avec son étiquette (Maison, Travail, Famille), « Modifier », « Utiliser par défaut » et « Supprimer » (avec « Annuler »), et une carte « Ajouter une adresse ». La feuille de la maquette demande l’étiquette, le gouvernorat, « Ville, cité, rue » et « Utiliser par défaut pour mes commandes ». L’adresse par défaut est celle que la commande préremplit, comme avant. Le téléphone se modifie dans « Mes informations ». Dix adresses au plus. Textes réglables dans la section « Mon compte ».', 'famma-core' ),
+			),
 			'journey'     => array(
 				'label' => __( 'Accueil : bloc « Vous payez à la livraison » en parcours animé', 'famma-core' ),
 				'help'  => __( 'Le bloc déjà présent dans la page d’accueil devient une bande marine : une route relie les étapes, qui se cochent au défilement. Ses textes se modifient toujours dans l’éditeur de la page d’accueil.', 'famma-core' ),

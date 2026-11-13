@@ -1,5 +1,43 @@
 # Changelog — FAMMA Core
 
+## 0.3.25 — 2026-11-13 (plusieurs adresses, lot 7 bis de l'espace client) · thème famma-child 0.2.12
+
+Nouvelle case `acct_addrs` (« Mon compte : plusieurs adresses (Maison,
+Travail, Famille) »), **livrée décochée**, active seulement avec les cases
+« présentation de la maquette » et « adresses et informations de la
+maquette ». Décision D4 du propriétaire : plusieurs adresses.
+
+- « Mes adresses » comme la maquette : une carte par adresse (étiquette avec
+  son icône, « Par défaut », nom, téléphone, gouvernorat et adresse),
+  « Modifier », « Utiliser par défaut », « Supprimer » en rouge, puis la
+  carte « Ajouter une adresse ». Dix adresses au plus.
+- Feuille de la maquette : « Nom de l'adresse » en trois pastilles (Maison,
+  Travail, Famille), Gouvernorat (obligatoire, contrôlé avant l'envoi avec
+  secousse), « Ville, cité, rue » avec le repère pour le livreur, « Utiliser
+  par défaut pour mes commandes », Enregistrer.
+- Messages « Adresse enregistrée. » et « Adresse supprimée. · Annuler »
+  (la dernière adresse supprimée revient à sa place). Cartes qui montent une
+  à une, halo orange sur la carte enregistrée, carte qui s'efface à la
+  suppression ; coupés si le visiteur demande moins d'animations.
+- L'adresse par défaut reste l'adresse de facturation de WooCommerce : la
+  commande la préremplit comme avant, rien ne change dans le tunnel. Les
+  autres adresses sont gardées dans la méta `_famma_addresses`, l'étiquette
+  de celle par défaut dans `_famma_addr_lbl`. Supprimer celle par défaut
+  fait passer la suivante par défaut.
+- Actions par formulaires (jeton `famma_addr`, client connecté, case
+  cochée), puis rechargement de la page : tout marche sans script.
+  Classes `Account_Addresses` et `Account_Addresses_Actions`.
+- Le téléphone quitte la feuille d'adresse et passe dans « Mes
+  informations » (+216, « XX XXX XXX »), comme la maquette : numéro
+  tunisien obligatoire, refusé s'il appartient à un autre compte ; la méta
+  `_famma_phone` d'un compte créé par numéro suit (`Account_Identity_Phone`).
+- 15 textes dans FAMMA → Pages → « Mon compte »
+  (`Account_Addresses_Texts`) ; `ad_full` et `id_tel_taken` ne sont pas dans
+  la maquette : derja à relire en priorité.
+
+Écart restant : la commande ne propose pas encore de choisir une autre
+adresse que celle par défaut.
+
 ## 0.3.24 — 2026-11-13 (inscription et connexion par numéro, lot 2 de l'espace client) · thème famma-child 0.2.11
 
 Nouvelle case `acct_phone` (« Mon compte : inscription et connexion par

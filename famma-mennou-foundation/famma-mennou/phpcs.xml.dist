@@ -144,6 +144,16 @@
 				<element value="famma_child_account_phone_fields"/>
 				<element value="famma_child_account_phone_address"/>
 				<element value="famma_child_enqueue_account_phone"/>
+				<element value="famma_child_account_addrs"/>
+				<element value="famma_child_account_addrs_text"/>
+				<element value="famma_child_account_addrs_setup"/>
+				<element value="famma_child_enqueue_account_addrs"/>
+				<element value="famma_child_account_addrs_group"/>
+				<element value="famma_child_account_addrs_tel_field"/>
+				<element value="famma_child_account_addrs_action"/>
+				<element value="famma_child_account_addrs_panel"/>
+				<element value="famma_child_account_addrs_card"/>
+				<element value="famma_child_account_addrs_sheet"/>
 				<element value="famma_child_account_forms_text"/>
 				<element value="famma_child_account_forms_addresses"/>
 				<element value="famma_child_account_forms_infos_title"/>

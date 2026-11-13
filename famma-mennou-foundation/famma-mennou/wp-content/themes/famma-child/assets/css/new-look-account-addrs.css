@@ -1,0 +1,266 @@
+/*
+ * Nouveau look — carnet d'adresses comme la maquette (.ad-a, .labels, .lbo,
+ * .chk, .toast) et téléphone de « Mes informations » (.inp, .pre). Case
+ * `acct_addrs`, chargée sur « Mes adresses » et « Mes informations ».
+ * Propriétés logiques : tout se retourne en arabe.
+ */
+
+/* ---------- Cartes : actions ---------- */
+
+.famma-acct-ad__a form {
+	display: contents;
+}
+
+body.famma-nl-acct-forms .woocommerce-MyAccount-content .famma-acct-ad__a button {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--famma-ink);
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	box-shadow: none;
+	cursor: pointer;
+}
+
+body.famma-nl-acct-forms .woocommerce-MyAccount-content .famma-acct-ad__a button.is-del {
+	color: var(--famma-danger);
+}
+
+/* Carte enregistrée : un halo orange, comme la maquette. */
+@media (prefers-reduced-motion: no-preference) {
+	.famma-acct-ads > .famma-acct-ad,
+	.famma-acct-ads > .famma-acct-add {
+		animation: famma-acct-rise-box 460ms var(--acct-spring, cubic-bezier(.34, 1.56, .64, 1)) backwards;
+		animation-delay: calc(40ms + var(--i, 0) * 60ms);
+	}
+
+	.famma-acct-ads > .famma-acct-ad.is-saved {
+		animation: famma-acct-ad-glow 900ms var(--acct-ease, ease-out) 120ms;
+	}
+
+	.famma-acct-ad.is-leaving {
+		opacity: 0;
+		transform: scale(.92);
+		transition: opacity .26s ease-in, transform .26s ease-in;
+	}
+}
+
+@keyframes famma-acct-ad-glow {
+	from {
+		box-shadow: 0 0 0 6px rgba(255, 122, 0, .35);
+	}
+
+	to {
+		box-shadow: 0 0 0 1px var(--famma-orange);
+	}
+}
+
+/* ---------- Feuille : étiquettes (maquette : .labels, .lbo) ---------- */
+
+.famma-acct-lbls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0 0 14px;
+	padding: 0;
+	border: 0;
+}
+
+.famma-acct-lbls legend {
+	width: 100%;
+	margin-block-end: 6px;
+	padding: 0;
+	color: var(--famma-ink);
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.famma-acct-lbo {
+	position: relative;
+}
+
+.famma-acct-lbo input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	opacity: 0;
+}
+
+.famma-acct-lbo span {
+	display: grid;
+	place-items: center;
+	min-width: 72px;
+	min-height: 44px;
+	padding-inline: 14px;
+	border: 1.5px solid var(--famma-line-field);
+	border-radius: 999px;
+	color: var(--famma-ink);
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: border-color .18s, background-color .18s, color .18s, transform .18s;
+}
+
+.famma-acct-lbo input:checked + span {
+	border-color: var(--famma-blue);
+	background: var(--famma-blue);
+	color: var(--famma-white);
+}
+
+.famma-acct-lbo input:focus-visible + span {
+	outline: 3px solid var(--famma-orange);
+	outline-offset: 2px;
+}
+
+.famma-acct-lbo:active span {
+	transform: scale(.95);
+}
+
+/* ---------- Feuille : champs ---------- */
+
+.famma-acct-adform .famma-acct-f {
+	display: grid;
+	gap: 5px;
+}
+
+.famma-nl-acct .woocommerce .famma-acct-adform .famma-acct-f label {
+	margin: 0;
+}
+
+.famma-acct-help {
+	color: var(--acct-text-3, var(--famma-text-3));
+	font-size: 12.5px;
+}
+
+.famma-acct-err {
+	color: var(--famma-danger);
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.famma-acct-err[hidden] {
+	display: none;
+}
+
+.famma-acct-adform .famma-acct-f.is-bad select {
+	border-color: var(--famma-danger);
+}
+
+.famma-nl-acct .woocommerce .famma-acct-defrow label {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	min-height: 44px;
+	padding-block: 8px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+body.famma-nl-acct .famma-acct-sheet .famma-acct-adsave {
+	width: 100%;
+}
+
+/* ---------- Message « Adresse supprimée · Annuler » ---------- */
+
+.famma-acct-adtoast {
+	position: fixed;
+	inset-inline: 16px;
+	inset-block-end: calc(84px + env(safe-area-inset-bottom, 0px));
+	z-index: var(--z-toast, 700);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	max-width: 440px;
+	margin-inline: auto;
+	padding: 10px 16px;
+	border-radius: 12px;
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	box-shadow: 0 12px 32px rgba(11, 31, 58, .22);
+	font-size: 14px;
+}
+
+.famma-acct-adtoast.is-out {
+	opacity: 0;
+	transform: translateY(16px);
+	transition: opacity .24s, transform .24s;
+	pointer-events: none;
+}
+
+.famma-acct-adtoast form {
+	display: contents;
+}
+
+body.famma-nl-acct .famma-acct-adtoast button {
+	min-height: 40px;
+	margin: 0;
+	padding: 0 10px;
+	border: 0;
+	background: none;
+	color: var(--famma-orange);
+	font-weight: 700;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	box-shadow: none;
+	cursor: pointer;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.famma-acct-adtoast {
+		animation: famma-acct-toast-in .3s var(--acct-ease, ease-out) backwards;
+	}
+}
+
+@keyframes famma-acct-toast-in {
+	from {
+		opacity: 0;
+		transform: translateY(16px);
+	}
+}
+
+/* ---------- « Mes informations » : téléphone avec +216 ---------- */
+
+.famma-nl-acct .woocommerce form .famma-acct-f .famma-acct-inp {
+	position: relative;
+	display: flex;
+	align-items: center;
+	min-height: 50px;
+	border: 1.5px solid var(--famma-line-field);
+	border-radius: var(--acct-radius, 10px);
+	background: var(--famma-surface-field);
+}
+
+.famma-nl-acct .woocommerce form .famma-acct-inp:focus-within {
+	border-color: var(--famma-blue);
+	background: var(--famma-white);
+	box-shadow: 0 0 0 3px rgba(11, 31, 58, .14);
+}
+
+.famma-nl-acct .woocommerce form .famma-acct-inp .input-text,
+.famma-nl-acct .woocommerce form .famma-acct-inp .input-text:focus {
+	flex: 1;
+	min-width: 0;
+	min-height: 47px;
+	border: 0;
+	background: none;
+	box-shadow: none;
+}
+
+.famma-acct-pre {
+	display: flex;
+	align-items: center;
+	align-self: stretch;
+	padding-inline: 14px;
+	border-inline-end: 1px solid var(--famma-line-field);
+	color: var(--famma-text-2);
+	font-weight: 600;
+	direction: ltr;
+}
