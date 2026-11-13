@@ -209,6 +209,10 @@ final class New_Look {
 				'label' => __( 'Mon compte : préférences (langue des messages, nouveautés WhatsApp)', 'famma-core' ),
 				'help'  => __( 'Avec les cases « présentation de la maquette » et « adresses et informations de la maquette » : « Mes informations » montre la boîte « Préférences » de la maquette, en tête de la colonne de droite. « Langue de mes messages » (FR / عربي) note la langue dans laquelle appeler et écrire au client, rappelée dans chaque commande sous l’adresse de facturation, et bascule la page dans cette langue. « Nouveautés sur WhatsApp » est refusé par défaut et n’apparaît qu’une fois son texte de consentement écrit (section « Mon compte ») ; la date et le texte accepté sont gardés sur le compte. Le site n’envoie aucun message : Comptes → « Nouveautés WhatsApp » liste les inscrits, avec une colonne « Préférences ».', 'famma-core' ),
 			),
+			'acct_welcome' => array(
+				'label' => __( 'Mon compte : écran « Bienvenue » après l’inscription', 'famma-core' ),
+				'help'  => __( 'Avec la case « présentation de la maquette » : juste après la création d’un compte depuis « Mon compte » (pas depuis la commande), la première page du compte montre l’écran de la maquette : la mascotte cligne avec des étincelles, « Bienvenue, {prénom} ! » et « Votre compte est prêt », puis le compte apparaît avec ses animations d’arrivée (2,3 secondes). Une seule fois par compte. Sans script, l’écran reste en haut du compte. La ligne « commandes rattachées » de la maquette attend le rattachement par code (lot 4). Textes réglables dans la section « Mon compte ».', 'famma-core' ),
+			),
 			'journey'      => array(
 				'label' => __( 'Accueil : bloc « Vous payez à la livraison » en parcours animé', 'famma-core' ),
 				'help'  => __( 'Le bloc déjà présent dans la page d’accueil devient une bande marine : une route relie les étapes, qui se cochent au défilement. Ses textes se modifient toujours dans l’éditeur de la page d’accueil.', 'famma-core' ),

@@ -1,5 +1,28 @@
 # Changelog — FAMMA Core
 
+## 0.3.28 — 2026-11-13 (écran « Bienvenue » après l'inscription) · thème famma-child 0.2.15
+
+Nouvelle case `acct_welcome` (« Mon compte : écran « Bienvenue » après
+l'inscription »), **livrée décochée**. Avec la case « présentation de la
+maquette », comme l'écran #welcome de la maquette espace client :
+
+- Un compte créé depuis le formulaire d'inscription de « Mon compte » (pas
+  depuis la commande) est marqué (méta `_famma_welcome`). La première page
+  du compte qui suit montre la mascotte, « Bienvenue, {prénom} ! » et « Votre
+  compte est prêt. On vous emmène dans votre espace. », puis le compte. La
+  marque est retirée dès l'affichage (une seule fois, valable 24 h).
+- Avec script : l'écran arrive (480 ms, ressort), la mascotte saute et
+  cligne avec des étincelles (260 ms), puis à 2,3 s l'écran s'efface et
+  l'en-tête, les onglets et le contenu apparaissent avec leurs animations
+  d'arrivée (compteurs relancés, soulignement replacé : événement
+  `famma:acct-welcomed`). Mouvement réduit : rien ne saute, le compte
+  apparaît à 0,9 s. Sans script : l'écran reste en haut du compte.
+- Sans prénom (inscription par e-mail), le titre devient « Bienvenue ! ».
+- La ligne « commandes rattachées » de la maquette attend le rattachement
+  par code (lot 4) : pas reprise.
+- Classe `Account_Welcome`, textes `wel_t`, `wel_p` dans FAMMA → Pages →
+  « Mon compte ».
+
 ## 0.3.27 — 2026-11-13 (boîte « Préférences », lot 6 de l'espace client) · thème famma-child 0.2.14
 
 Nouvelle case `acct_prefs` (« Mon compte : préférences (langue des messages,

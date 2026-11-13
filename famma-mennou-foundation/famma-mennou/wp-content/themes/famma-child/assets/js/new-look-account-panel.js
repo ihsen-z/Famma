@@ -96,11 +96,19 @@
 		paintFavs( event.detail && event.detail.favs );
 	} );
 
-	if ( html.classList.contains( 'famma-acct-intro' ) ) {
+	var intro = function () {
 		$$( '.famma-acct-stat:not([hidden]) b[data-roll]' ).forEach( function ( el ) {
 			roll( el, parseInt( el.getAttribute( 'data-roll' ), 10 ) || 0, 900 );
 		} );
+	};
+
+	// Écran « Bienvenue » (case acct_welcome) : les compteurs attendent qu'il
+	// laisse place au compte.
+	if ( html.classList.contains( 'famma-acct-intro' ) && ! doc.body.classList.contains( 'famma-acct-welcoming' ) ) {
+		intro();
 	}
+
+	doc.addEventListener( 'famma:acct-welcomed', intro );
 
 	/* ---------- Onglets ---------- */
 
@@ -164,6 +172,11 @@
 			}
 
 			window.addEventListener( 'resize', function () {
+				place( active, false );
+			} );
+
+			// Onglets cachés derrière l'écran « Bienvenue » : placés à son départ.
+			doc.addEventListener( 'famma:acct-welcomed', function () {
 				place( active, false );
 			} );
 		}

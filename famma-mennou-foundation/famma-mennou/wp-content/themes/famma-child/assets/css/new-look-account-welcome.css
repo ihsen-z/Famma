@@ -1,0 +1,100 @@
+/**
+ * Nouveau look — écran « Bienvenue » après l'inscription (case
+ * acct_welcome). Valeurs de la maquette espace client : .welcome, .mascot,
+ * hop, wink.
+ */
+
+.famma-acct-welcome {
+	display: grid;
+	justify-items: center;
+	gap: 10px;
+	max-width: 520px;
+	margin-block: 4px 24px;
+	margin-inline: auto;
+	padding: 22px;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--acct-radius-lg, 20px);
+	background: var(--famma-white);
+	text-align: center;
+}
+
+.famma-acct-welcome .famma-acct-mascot {
+	position: static;
+	width: 92px;
+	height: 92px;
+	color: var(--famma-ink);
+	opacity: 1;
+	overflow: visible;
+}
+
+body.famma-nl-acct .famma-acct-welcome h2 {
+	margin: 0;
+	color: var(--famma-ink);
+	font-size: 23px;
+	font-weight: 700;
+	line-height: 1.25;
+}
+
+body.famma-nl-acct .famma-acct-welcome p {
+	max-width: 34ch;
+	margin: 0;
+	color: var(--famma-text-2);
+	line-height: 1.5;
+}
+
+/* Avec script : l'écran occupe seul la page, le compte attend. */
+@media (scripting: enabled) {
+	body.famma-acct-welcoming .famma-acct-head,
+	body.famma-acct-welcoming .famma-acct-stats,
+	body.famma-acct-welcoming .woocommerce-MyAccount-navigation,
+	body.famma-acct-welcoming .woocommerce-MyAccount-content {
+		display: none;
+	}
+
+	body.famma-acct-welcoming .famma-acct-welcome {
+		margin-block: 6vh 10vh;
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.famma-acct-welcome {
+		animation: famma-acct-wel-in 480ms var(--acct-spring, ease-out) both;
+		transition: opacity 260ms ease-in, transform 260ms ease-in;
+	}
+
+	.famma-acct-welcome .famma-acct-mascot.is-wink {
+		animation: famma-acct-hop .6s var(--acct-spring, ease-out);
+	}
+
+	.famma-acct-welcome .famma-acct-mascot.is-wink .famma-acct-mascot__eye {
+		animation: famma-acct-wink .6s cubic-bezier(.2, .8, .2, 1);
+	}
+
+	.famma-acct-welcome.is-out {
+		opacity: 0;
+		transform: scale(.96);
+	}
+}
+
+@keyframes famma-acct-wel-in {
+	from {
+		opacity: 0;
+		transform: scale(.94);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes famma-acct-hop {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+
+	40% {
+		transform: translateY(-14%);
+	}
+}

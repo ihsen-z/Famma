@@ -171,6 +171,11 @@
 				<element value="famma_child_account_prefs_fields"/>
 				<element value="famma_child_account_prefs_box"/>
 				<element value="famma_child_enqueue_account_prefs"/>
+				<element value="famma_child_account_welcome_data"/>
+				<element value="famma_child_account_welcome_setup"/>
+				<element value="famma_child_account_welcome_body_class"/>
+				<element value="famma_child_account_welcome"/>
+				<element value="famma_child_enqueue_account_welcome"/>
 				<element value="famma_child_account_forms_text"/>
 				<element value="famma_child_account_forms_addresses"/>
 				<element value="famma_child_account_forms_infos_title"/>
