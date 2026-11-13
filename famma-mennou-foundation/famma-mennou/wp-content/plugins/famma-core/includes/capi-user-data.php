@@ -147,7 +147,11 @@ final class Capi_User_Data {
 	 * @return string
 	 */
 	public static function email( string $email ): string {
-		return Account_Phone::is_technical( $email ) ? '' : mb_strtolower( trim( $email ), 'UTF-8' );
+		if ( class_exists( Account_Phone::class, false ) && Account_Phone::is_technical( $email ) ) {
+			return '';
+		}
+
+		return mb_strtolower( trim( $email ), 'UTF-8' );
 	}
 
 	/**
