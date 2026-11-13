@@ -119,12 +119,20 @@
 		var orders = doc.querySelector( '.famma-acct-stat b[data-roll]' );
 		var tabOrders = row.querySelector( '.woocommerce-MyAccount-navigation-link--orders a' );
 
-		if ( orders && tabOrders && ! tabOrders.querySelector( '.famma-acct-n' ) ) {
-			var n = doc.createElement( 'span' );
-			n.className = 'famma-acct-n';
-			n.textContent = orders.getAttribute( 'data-roll' );
-			tabOrders.appendChild( n );
-		}
+		var tabCount = function ( a, value ) {
+			if ( a && null !== value && ! a.querySelector( '.famma-acct-n' ) ) {
+				var n = doc.createElement( 'span' );
+				n.className = 'famma-acct-n';
+				n.textContent = value;
+				a.appendChild( n );
+			}
+		};
+
+		tabCount( tabOrders, orders && orders.getAttribute( 'data-roll' ) );
+
+		// « Mes adresses » a son compteur, comme dans la maquette.
+		var stats = doc.querySelector( '.famma-acct-stats[data-famma-addrs]' );
+		tabCount( row.querySelector( '.woocommerce-MyAccount-navigation-link--edit-address a' ), stats && stats.getAttribute( 'data-famma-addrs' ) );
 
 		var ind = doc.createElement( 'span' );
 		ind.className = 'famma-acct-ind';

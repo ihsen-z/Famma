@@ -235,14 +235,16 @@ function famma_child_returns_faq(): array {
  * Même dessin que celui du tunnel de commande, et libellé traduit : un
  * `aria-label` en dur serait lu en français sur la version arabe.
  *
+ * @param string $current Dernier mot (vide : le titre de la page).
  * @return void
  */
-function famma_child_page_crumbs(): void {
+function famma_child_page_crumbs( string $current = '' ): void {
+	$current = '' !== $current ? $current : get_the_title();
 	?>
 	<nav class="famma-crumbs" aria-label="<?php esc_attr_e( 'Fil d’Ariane', 'famma-child' ); ?>">
 		<a class="famma-crumbs__link" href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Accueil', 'famma-child' ); ?></a>
 		<?php famma_child_the_icon( 'forward', 'famma-crumbs__sep' ); ?>
-		<span class="famma-crumbs__current" aria-current="page"><?php echo esc_html( get_the_title() ); ?></span>
+		<span class="famma-crumbs__current" aria-current="page"><?php echo esc_html( $current ); ?></span>
 	</nav>
 	<?php
 }

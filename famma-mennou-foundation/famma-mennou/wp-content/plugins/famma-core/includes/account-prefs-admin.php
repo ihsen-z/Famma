@@ -37,13 +37,27 @@ final class Account_Prefs_Admin {
 		}
 
 		add_action( 'woocommerce_admin_order_data_after_billing_address', array( self::class, 'order_line' ) );
+		add_action( 'admin_init', array( self::class, 'users_screen' ) );
+	}
 
-		if ( New_Look::part( 'acct_prefs' ) ) {
-			add_filter( 'manage_users_columns', array( self::class, 'columns' ) );
-			add_filter( 'manage_users_custom_column', array( self::class, 'column_value' ), 10, 3 );
-			add_filter( 'views_users', array( self::class, 'views' ) );
-			add_filter( 'users_list_table_query_args', array( self::class, 'filter_list' ), 20 );
+	/**
+	 * Colonne, vue et filtre de l'écran Comptes, case cochée.
+	 *
+	 * Lu sur `admin_init`, pas au chargement de l'extension : lire la case
+	 * plus tôt charge les traductions avant `init` (notice de WordPress à
+	 * chaque appel admin-ajax).
+	 *
+	 * @return void
+	 */
+	public static function users_screen(): void {
+		if ( ! New_Look::part( 'acct_prefs' ) ) {
+			return;
 		}
+
+		add_filter( 'manage_users_columns', array( self::class, 'columns' ) );
+		add_filter( 'manage_users_custom_column', array( self::class, 'column_value' ), 10, 3 );
+		add_filter( 'views_users', array( self::class, 'views' ) );
+		add_filter( 'users_list_table_query_args', array( self::class, 'filter_list' ), 20 );
 	}
 
 	/**

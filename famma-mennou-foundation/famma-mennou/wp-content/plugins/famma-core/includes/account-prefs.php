@@ -126,6 +126,14 @@ final class Account_Prefs {
 			$key  = '_famma_back_' . $value;
 			$url  = isset( $_POST[ $key ] ) ? esc_url_raw( wp_unslash( $_POST[ $key ] ) ) : '';
 			$back = '' !== $url ? wp_validate_redirect( $url, $back ) : $back;
+
+			/*
+			 * Sur une page arabe, TranslatePress glisse `trp-form-language=ar`
+			 * dans le formulaire, puis réécrit toute redirection vers cette
+			 * langue : le retour vers la version française repartait en /ar/.
+			 * Ici, c'est le choix du client qui décide de la langue.
+			 */
+			unset( $_REQUEST['trp-form-language'], $_POST['trp-form-language'] );
 		} elseif ( 'wa' === $action && self::wa_active() ) {
 			$ok = self::save_wa( $user_id, '1' === $value );
 		}

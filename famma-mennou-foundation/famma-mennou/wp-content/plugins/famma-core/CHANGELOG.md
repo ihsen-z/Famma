@@ -1,5 +1,30 @@
 # Changelog — FAMMA Core
 
+## 0.3.29 — 2026-11-13 (correctifs de l'espace client après le test en prod) · thème famma-child 0.2.16
+
+Lot 42, suite au test complet de l'espace client en prod comparé à la
+maquette. Aucune nouvelle case.
+
+- **Langue arabe → français** (case `acct_prefs`) : sur la page arabe de
+  « Mes informations », le bouton « FR » enregistrait le français mais
+  laissait la page en arabe. TranslatePress ajoute `trp-form-language=ar`
+  au formulaire et réécrit toute redirection vers cette langue ; ce champ
+  est désormais ignoré pour le seul changement de langue.
+- **Compteur de commandes** : la carte et l'onglet comptaient aussi les
+  brouillons de commande (`checkout-draft`) que la liste « Mes commandes »
+  ne montre pas (« 1 commande » au-dessus de « Aucune commande »). Le
+  compteur passe par le même filtre que la liste
+  (`woocommerce_my_account_my_orders_query`).
+- **Fil d'Ariane** : « Mon compte » restait en français sur la version
+  arabe. Nouveau texte « Fil d'Ariane — Mon compte » dans FAMMA → Pages →
+  « Mon compte » (« حسابي » en arabe).
+- **Onglet « Mes adresses »** : compteur à côté du nom, comme dans la
+  maquette (toutes les adresses avec la case `acct_addrs`, sinon 0 ou 1).
+- **Notice PHP** (vue sur le banc avec TranslatePress et `WP_DEBUG`) : la
+  colonne « Préférences » de l'écran Comptes lisait sa case au chargement
+  de l'extension, ce qui chargeait les traductions de famma-core avant
+  `init` à chaque appel admin-ajax. Lecture déplacée sur `admin_init`.
+
 ## 0.3.28 — 2026-11-13 (écran « Bienvenue » après l'inscription) · thème famma-child 0.2.15
 
 Nouvelle case `acct_welcome` (« Mon compte : écran « Bienvenue » après

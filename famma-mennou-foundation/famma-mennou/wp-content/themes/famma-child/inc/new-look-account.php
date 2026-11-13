@@ -173,11 +173,15 @@ add_action( 'template_redirect', 'famma_child_account_look_redirect', 20 );
 /**
  * Fil d'Ariane « Accueil › Mon compte », connecté ou non.
  *
+ * Le dernier mot vient de FAMMA → Pages (« حسابي » en arabe) : le titre de
+ * la page n'est pas traduit par TranslatePress.
+ *
  * @return void
  */
 function famma_child_account_look_crumbs(): void {
 	if ( famma_child_account_look() && function_exists( 'famma_child_page_crumbs' ) ) {
-		famma_child_page_crumbs();
+		$label = class_exists( '\Famma\Core\Account_Profile' ) ? \Famma\Core\Account_Profile::text( 'crumb' ) : '';
+		famma_child_page_crumbs( $label );
 	}
 }
 add_action( 'woocommerce_before_customer_login_form', 'famma_child_account_look_crumbs', 1 );
@@ -238,7 +242,7 @@ function famma_child_account_look_head(): void {
 			<?php endif; ?>
 		</div>
 	</section>
-	<div class="famma-acct-stats">
+	<div class="famma-acct-stats" data-famma-addrs="<?php echo esc_attr( (string) ( $data['addrs'] ?? 0 ) ); ?>">
 		<a class="famma-acct-stat" href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>"><b data-roll="<?php echo esc_attr( (string) $data['orders'] ); ?>"><?php echo esc_html( (string) $data['orders'] ); ?></b><?php echo esc_html( \Famma\Core\Account_Profile::text( 'stat_orders' ) ); ?></a>
 		<a class="famma-acct-stat is-hot" href="<?php echo esc_url( wc_get_account_endpoint_url( 'orders' ) ); ?>"><b data-roll="<?php echo esc_attr( (string) $data['open'] ); ?>"><?php echo esc_html( (string) $data['open'] ); ?></b><?php echo esc_html( \Famma\Core\Account_Profile::text( 'stat_open' ) ); ?></a>
 		<?php if ( '' !== $favs && function_exists( 'famma_child_account_favs_on' ) && famma_child_account_favs_on() ) : ?>

@@ -56,6 +56,7 @@ final class Account_Profile {
 	 */
 	public static function schema(): array {
 		return array(
+			self::field( 'crumb', __( 'Fil d’Ariane — Mon compte', 'famma-core' ), __( 'Mon compte', 'famma-core' ), 'حسابي', __( 'Dernier mot du fil d’Ariane « Accueil › Mon compte ». Vide : le titre de la page.', 'famma-core' ) ),
 			self::field( 'head_hello', __( 'En-tête — salutation', 'famma-core' ), __( 'Bonjour', 'famma-core' ), 'عسلامة', __( 'Carte marine en haut de « Mon compte », avec la case « Mon compte : présentation de la maquette ».', 'famma-core' ) ),
 			self::field( 'head_since', __( 'En-tête — ancienneté', 'famma-core' ), __( 'Membre depuis {m}', 'famma-core' ), 'عضو من {m}', __( '{m} est remplacé par le mois et l’année de création du compte. Vide : la ligne disparaît.', 'famma-core' ) ),
 			self::field( 'head_addr', __( 'En-tête — rappel adresse', 'famma-core' ), __( 'Ajoutez une adresse', 'famma-core' ), 'زيد عنوان', __( 'Affiché tant que le client n’a pas d’adresse (+30 %). Vide : le rappel disparaît.', 'famma-core' ) ),
@@ -147,6 +148,7 @@ final class Account_Profile {
 			'done'     => array() === $nudges ? self::text( 'head_done' ) : '',
 			'orders'   => self::count_orders( $user->ID, array() ),
 			'open'     => self::count_orders( $user->ID, Order_Track::open_statuses() ),
+			'addrs'    => self::count_addresses( $user->ID, $has_addr ),
 		);
 	}
 
@@ -162,15 +164,38 @@ final class Account_Profile {
 	private static function count_orders( int $user_id, array $statuses ): int {
 		$args = array(
 			'customer' => $user_id,
-			'return'   => 'ids',
-			'limit'    => 500,
 		);
 
 		if ( array() !== $statuses ) {
 			$args['status'] = $statuses;
+		} else {
+			// Même filtre que la liste « Mes commandes » : WooCommerce y retire
+			// les brouillons de commande (checkout-draft), le compteur aussi.
+			$args = (array) apply_filters( 'woocommerce_my_account_my_orders_query', $args ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+			unset( $args['page'], $args['paginate'] );
 		}
 
+		$args['customer'] = $user_id;
+		$args['return']   = 'ids';
+		$args['limit']    = 500;
+
 		return count( (array) wc_get_orders( $args ) );
+	}
+
+	/**
+	 * Nombre d'adresses d'un client : la liste « plusieurs adresses » quand
+	 * elle est servie, sinon l'adresse de commande (0 ou 1).
+	 *
+	 * @param int  $user_id  Client.
+	 * @param bool $has_addr Adresse de commande remplie.
+	 * @return int
+	 */
+	private static function count_addresses( int $user_id, bool $has_addr ): int {
+		if ( Account_Addresses::active() ) {
+			return count( Account_Addresses::all( $user_id ) );
+		}
+
+		return $has_addr ? 1 : 0;
 	}
 
 	/**
