@@ -164,6 +164,13 @@
 				<element value="famma_child_account_privacy_box"/>
 				<element value="famma_child_account_privacy_side"/>
 				<element value="famma_child_enqueue_account_privacy"/>
+				<element value="famma_child_account_prefs_text"/>
+				<element value="famma_child_account_prefs"/>
+				<element value="famma_child_account_prefs_setup"/>
+				<element value="famma_child_account_prefs_urls"/>
+				<element value="famma_child_account_prefs_fields"/>
+				<element value="famma_child_account_prefs_box"/>
+				<element value="famma_child_enqueue_account_prefs"/>
 				<element value="famma_child_account_forms_text"/>
 				<element value="famma_child_account_forms_addresses"/>
 				<element value="famma_child_account_forms_infos_title"/>

@@ -1,5 +1,32 @@
 # Changelog — FAMMA Core
 
+## 0.3.27 — 2026-11-13 (boîte « Préférences », lot 6 de l'espace client) · thème famma-child 0.2.14
+
+Nouvelle case `acct_prefs` (« Mon compte : préférences (langue des messages,
+nouveautés WhatsApp) »), **livrée décochée**. Avec les cases « présentation
+de la maquette » et « adresses et informations de la maquette », « Mes
+informations » ouvre la colonne de droite par la boîte « Préférences » de la
+maquette.
+
+- « Langue de mes messages » (FR / عربي, « Appels, SMS et WhatsApp. ») : la
+  pastille glisse, le choix est noté sur le compte (méta `_famma_msg_lang`)
+  et la page se recharge dans la langue choisie (adresse TranslatePress).
+  Sans choix enregistré, la langue de la page est montrée.
+- « Nouveautés sur WhatsApp » : refusé par défaut, enregistré sans recharger
+  la page (sans script : formulaire ordinaire). **Caché tant que son texte de
+  consentement est vide** : ce texte revient au propriétaire (décision D5).
+  À l'inscription, la date et le texte accepté sont gardés (méta
+  `_famma_wa_optin`) ; à la désinscription, ils sont effacés. Le site
+  n'envoie aucun message.
+- Jeton `famma_prefs`, compte connecté, cases cochées : sinon rien n'est
+  enregistré. Classes `Account_Prefs`, `Account_Prefs_Texts`.
+- Admin (`Account_Prefs_Admin`) : sous l'adresse de facturation d'une
+  commande, « Préférences du client » (langue, inscription et sa date) quand
+  le client en a choisi ; avec la case cochée, colonne « Préférences » et vue
+  « Nouveautés WhatsApp (n) » dans Comptes.
+- L'effaceur « FAMMA — compte client » (lot 8) efface aussi ces deux méta.
+- Textes dans FAMMA → Pages → « Mon compte » (`pf_*`).
+
 ## 0.3.26 — 2026-11-13 (mot de passe oublié et suppression du compte, lot 8 de l'espace client) · thème famma-child 0.2.13
 
 Nouvelle case `acct_privacy` (« Mon compte : mot de passe oublié et

@@ -6,7 +6,8 @@
  * - L'effaceur « FAMMA — compte client » s'ajoute à ceux de WordPress et de
  *   WooCommerce (Outils → Effacer les données personnelles) : adresses
  *   supplémentaires, étiquette, corbeille d'adresse, « Ma sélection »,
- *   numéro de connexion. Il n'agit que quand le propriétaire lance
+ *   numéro de connexion, langue des messages et inscription aux nouveautés
+ *   WhatsApp. Il n'agit que quand le propriétaire lance
  *   l'effacement d'une demande, case cochée ou non.
  * - Un rappel en haut de l'admin compte les demandes confirmées en attente.
  * - Comptes → Rechercher accepte un numéro tunisien (avec ou sans +216,
@@ -71,7 +72,7 @@ final class Account_Privacy_Admin {
 		$removed = false;
 
 		if ( $user instanceof \WP_User ) {
-			$keys = array( Account_Addresses::LIST, Account_Addresses::LBL, Account_Addresses::TRASH, Account_Favs::META, Account_Phone::META, Account_Privacy::META );
+			$keys = array( Account_Addresses::LIST, Account_Addresses::LBL, Account_Addresses::TRASH, Account_Favs::META, Account_Phone::META, Account_Privacy::META, Account_Prefs::LANG, Account_Prefs::WA );
 
 			foreach ( $keys as $key ) {
 				if ( '' !== get_user_meta( $user->ID, $key, true ) ) {

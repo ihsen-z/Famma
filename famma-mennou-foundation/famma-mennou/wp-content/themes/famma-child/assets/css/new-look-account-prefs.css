@@ -1,0 +1,154 @@
+/**
+ * Nouveau look — boîte « Préférences » de « Mes informations » (lot 6, case
+ * acct_prefs). Valeurs reprises de la maquette espace client : .row-sw,
+ * .lseg, .sw. Le segment réutilise .famma-acct-seg (onglets de connexion).
+ */
+
+.famma-acct-prefs__f {
+	display: grid;
+	margin: 0;
+}
+
+/* Une ligne : texte à gauche, commande à droite (.row-sw). */
+body.famma-nl-acct .famma-acct-prefs .famma-acct-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+	width: 100%;
+	min-height: 56px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	color: var(--famma-ink);
+	font: inherit;
+	line-height: 1.4;
+	text-align: start;
+	text-transform: none;
+	letter-spacing: normal;
+}
+
+body.famma-nl-acct .famma-acct-prefs button.famma-acct-row {
+	cursor: pointer;
+}
+
+body.famma-nl-acct .famma-acct-prefs button.famma-acct-row:hover,
+body.famma-nl-acct .famma-acct-prefs button.famma-acct-row:focus,
+body.famma-nl-acct .famma-acct-prefs button.famma-acct-row:active {
+	border: 0;
+	background: none;
+	box-shadow: none;
+	color: var(--famma-ink);
+}
+
+body.famma-nl-acct .famma-acct-prefs button.famma-acct-row:focus-visible {
+	border-radius: 12px;
+	outline: 3px solid var(--famma-blue-600);
+	outline-offset: 4px;
+}
+
+body.famma-nl-acct .famma-acct-prefs button.famma-acct-row[aria-busy="true"] {
+	cursor: progress;
+}
+
+.famma-acct-row__t {
+	display: grid;
+	min-width: 0;
+}
+
+/* Petit écran : le segment passe sous le texte plutôt que de l'écraser. */
+body.famma-nl-acct .famma-acct-prefs form.famma-acct-row {
+	flex-wrap: wrap;
+	row-gap: 10px;
+	padding-block: 6px;
+}
+
+form.famma-acct-row > .famma-acct-row__t {
+	flex: 1 1 170px;
+}
+
+.famma-acct-row__t b {
+	display: block;
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.famma-acct-row__t small {
+	display: block;
+	color: var(--acct-text-3, var(--famma-text-3));
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+/* Segment FR / عربي (.lseg). */
+.famma-acct-prefs .famma-acct-seg.is-inline {
+	display: inline-grid;
+	flex: none;
+	background: var(--acct-surface-2, var(--famma-surface-icon));
+}
+
+body.famma-nl-acct .famma-acct-prefs .famma-acct-seg__tab,
+body.famma-nl-acct .famma-acct-prefs .famma-acct-seg__tab:hover,
+body.famma-nl-acct .famma-acct-prefs .famma-acct-seg__tab:focus,
+body.famma-nl-acct .famma-acct-prefs .famma-acct-seg__tab:active {
+	min-width: 84px;
+	min-height: 42px;
+	margin: 0;
+	padding: 6px 12px;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+	color: var(--famma-ink);
+}
+
+/* Interrupteur (.sw). */
+.famma-acct-sw {
+	position: relative;
+	flex: none;
+	width: 46px;
+	height: 28px;
+	border-radius: 14px;
+	background: var(--famma-line-field);
+	transition: background-color .18s;
+}
+
+.famma-acct-sw::after {
+	position: absolute;
+	inset-block-start: 3px;
+	inset-inline-start: 3px;
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	background: var(--famma-white);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+	content: "";
+	transition: transform .18s var(--acct-spring, ease-out);
+}
+
+.famma-acct-row[aria-checked="true"] > .famma-acct-sw {
+	background: var(--famma-orange);
+}
+
+.famma-acct-row[aria-checked="true"] > .famma-acct-sw::after {
+	transform: translateX(18px);
+}
+
+[dir="rtl"] .famma-acct-row[aria-checked="true"] > .famma-acct-sw::after {
+	transform: translateX(-18px);
+}
+
+body.famma-nl-acct .woocommerce-MyAccount-content .famma-acct-prefs__err {
+	margin: 0;
+	color: var(--famma-danger-700);
+	font-size: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-acct-sw,
+	.famma-acct-sw::after {
+		transition: none;
+	}
+}

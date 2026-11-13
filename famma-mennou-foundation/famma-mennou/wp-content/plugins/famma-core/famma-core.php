@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.3.26
+ * Version:           0.3.27
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.3.26' );
+define( 'FAMMA_CORE_VERSION', '0.3.27' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -56,6 +56,9 @@ require_once __DIR__ . '/includes/account-addresses.php';
 require_once __DIR__ . '/includes/account-privacy-texts.php';
 require_once __DIR__ . '/includes/account-privacy-admin.php';
 require_once __DIR__ . '/includes/account-privacy.php';
+require_once __DIR__ . '/includes/account-prefs-texts.php';
+require_once __DIR__ . '/includes/account-prefs-admin.php';
+require_once __DIR__ . '/includes/account-prefs.php';
 require_once __DIR__ . '/includes/newsletter.php';
 require_once __DIR__ . '/includes/topbar-content.php';
 require_once __DIR__ . '/includes/tracking-settings.php';
@@ -3619,6 +3622,7 @@ function boot(): void {
 	Account_Phone::hooks();
 	Account_Addresses::hooks();
 	Account_Privacy::hooks();
+	Account_Prefs::hooks();
 	Hardening::instance();
 	Performance::instance();
 	Cache_Warmup::instance();

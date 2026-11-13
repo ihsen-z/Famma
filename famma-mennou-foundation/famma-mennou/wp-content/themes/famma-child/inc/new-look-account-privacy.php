@@ -60,21 +60,22 @@ function famma_child_account_privacy_delete(): bool {
 function famma_child_account_privacy_setup(): void {
 	$help   = famma_child_account_privacy_help() && ! is_wc_endpoint_url();
 	$delete = famma_child_account_privacy_delete() && is_wc_endpoint_url( 'edit-account' );
+	$prefs  = function_exists( 'famma_child_account_prefs' ) && famma_child_account_prefs();
 
 	if ( $help ) {
 		add_filter( 'body_class', 'famma_child_account_privacy_body_class' );
 		add_action( 'woocommerce_login_form_end', 'famma_child_account_privacy_forgot' );
 	}
 
-	// « Connexion » et « Supprimer mon compte » partagent la colonne de
-	// droite sur ordinateur, comme la maquette : la boîte de déconnexion est
-	// reprise dans une colonne commune.
-	if ( $delete && false !== has_action( 'woocommerce_after_edit_account_form', 'famma_child_account_look_logout' ) ) {
+	// « Préférences » (lot 6), « Connexion » et « Supprimer mon compte »
+	// partagent la colonne de droite sur ordinateur, comme la maquette : la
+	// boîte de déconnexion est reprise dans une colonne commune.
+	if ( ( $delete || $prefs ) && false !== has_action( 'woocommerce_after_edit_account_form', 'famma_child_account_look_logout' ) ) {
 		remove_action( 'woocommerce_after_edit_account_form', 'famma_child_account_look_logout' );
 		add_action( 'woocommerce_after_edit_account_form', 'famma_child_account_privacy_side' );
 	}
 
-	if ( $help || $delete ) {
+	if ( $help || $delete || $prefs ) {
 		add_action( 'wp_enqueue_scripts', 'famma_child_enqueue_account_privacy', 29 );
 	}
 }
@@ -127,14 +128,23 @@ function famma_child_account_privacy_forgot(): void {
 }
 
 /**
- * Colonne « Connexion » puis « Supprimer mon compte ».
+ * Colonne « Préférences », « Connexion » puis « Supprimer mon compte ».
  *
  * @return void
  */
 function famma_child_account_privacy_side(): void {
 	echo '<div class="famma-acct-side">';
+
+	if ( function_exists( 'famma_child_account_prefs' ) && famma_child_account_prefs() ) {
+		famma_child_account_prefs_box();
+	}
+
 	famma_child_account_look_logout();
-	famma_child_account_privacy_box();
+
+	if ( famma_child_account_privacy_delete() ) {
+		famma_child_account_privacy_box();
+	}
+
 	echo '</div>';
 }
 
