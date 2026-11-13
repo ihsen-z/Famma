@@ -17,7 +17,8 @@
  *
  * Aucun modèle WooCommerce n'est copié : la requête des commandes et sa
  * pagination restent celles de WooCommerce, et sans commande la page affiche
- * le message de WooCommerce. Case décochée ou plugin absent : aucun crochet
+ * le message de WooCommerce (ou, case `acct_finish` cochée, l'écran vide de
+ * la maquette, inc/new-look-account-finish.php). Case décochée ou plugin absent : aucun crochet
  * n'est posé, la page reste celle de WooCommerce.
  *
  * @package famma-child
@@ -99,6 +100,14 @@ function famma_child_account_track_orders( $current_page ): void {
 	$orders = wc_get_orders( $query );
 
 	if ( ! is_object( $orders ) || empty( $orders->total ) ) {
+		// Case « finitions » : écran vide de la maquette, sinon celui de WooCommerce.
+		if ( 1 === $current_page && function_exists( 'famma_child_account_finish_orders_ready' ) && famma_child_account_finish_orders_ready() ) {
+			// Crochet de WooCommerce gardé (encart « Confirmez votre adresse e-mail »…).
+			do_action( 'woocommerce_before_account_orders', false ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+			famma_child_account_finish_orders_empty();
+			return;
+		}
+
 		woocommerce_account_orders( $current_page );
 		return;
 	}

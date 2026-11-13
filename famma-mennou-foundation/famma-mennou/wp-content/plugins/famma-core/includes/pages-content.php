@@ -377,7 +377,7 @@ final class Pages_Content {
 			'delivery' => Delivery_Content::schema(),
 			'returns'  => Returns_Content::schema(),
 			'shop'     => Shop_Content::schema(),
-			'account'  => array_merge( Account_Profile::schema(), Account_Auth::schema(), Account_Panels::schema(), Account_Favs::schema(), Account_Phone_Texts::schema(), Account_Addresses_Texts::schema(), Account_Privacy_Texts::schema(), Account_Prefs_Texts::schema(), Account_Welcome::schema(), Order_Track::schema() ),
+			'account'  => array_merge( Account_Profile::schema(), Account_Auth::schema(), Account_Panels::schema(), Account_Favs::schema(), Account_Phone_Texts::schema(), Account_Addresses_Texts::schema(), Account_Privacy_Texts::schema(), Account_Prefs_Texts::schema(), Account_Welcome::schema(), Account_Finish::schema(), Order_Track::schema() ),
 			default    => self::contact_schema(),
 		};
 	}

@@ -23,7 +23,7 @@ const FAMMA_CHILD_VERSION = '0.2.1';
  * Chaque fichier est testé avant d'être inclus : un thème dont un fichier
  * manque doit dégrader, pas produire une erreur fatale sur toutes les pages.
  */
-foreach ( array( 'i18n', 'icons', 'catalog', 'header-parts', 'footer-parts', 'shop', 'shop-widgets', 'product', 'product-video', 'home', 'home-hero', 'home-social', 'pages', 'tunnel', 'cart', 'checkout', 'checkout-layout', 'editorial-guards', 'assets', 'scrollbar', 'gallery-lazy', 'new-look', 'new-look-tools', 'new-look-how', 'new-look-ledger', 'new-look-home', 'new-look-home-extras', 'new-look-account', 'new-look-account-auth', 'new-look-account-phone', 'new-look-account-forms', 'new-look-account-addrs', 'new-look-account-addrs-sheet', 'new-look-account-favs', 'new-look-account-track', 'new-look-account-privacy', 'new-look-account-prefs', 'new-look-account-welcome' ) as $famma_child_part ) {
+foreach ( array( 'i18n', 'icons', 'catalog', 'header-parts', 'footer-parts', 'shop', 'shop-widgets', 'product', 'product-video', 'home', 'home-hero', 'home-social', 'pages', 'tunnel', 'cart', 'checkout', 'checkout-layout', 'editorial-guards', 'assets', 'scrollbar', 'gallery-lazy', 'new-look', 'new-look-tools', 'new-look-how', 'new-look-ledger', 'new-look-home', 'new-look-home-extras', 'new-look-account', 'new-look-account-auth', 'new-look-account-phone', 'new-look-account-forms', 'new-look-account-addrs', 'new-look-account-addrs-sheet', 'new-look-account-favs', 'new-look-account-track', 'new-look-account-privacy', 'new-look-account-prefs', 'new-look-account-welcome', 'new-look-account-finish' ) as $famma_child_part ) {
 	$famma_child_file = get_stylesheet_directory() . '/inc/' . $famma_child_part . '.php';
 
 	if ( file_exists( $famma_child_file ) ) {

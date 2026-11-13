@@ -511,6 +511,11 @@ function famma_child_header_actions(): void {
 		<?php if ( $account_url ) : ?>
 			<a class="famma-header__action famma-header__action--account" href="<?php echo esc_url( $account_url ); ?>">
 				<?php famma_child_the_icon( 'user' ); ?>
+				<?php
+				if ( function_exists( 'famma_child_account_finish_initial' ) ) {
+					famma_child_account_finish_initial();
+				}
+				?>
 				<span class="screen-reader-text"><?php esc_html_e( 'Mon compte', 'famma-child' ); ?></span>
 			</a>
 		<?php endif; ?>
@@ -567,7 +572,14 @@ function famma_child_panel_account(): void {
 	}
 	?>
 	<a class="famma-header__panel-account" href="<?php echo esc_url( $account_url ); ?>">
-		<?php famma_child_the_icon( 'user' ); ?>
+		<span class="famma-header__panel-account-ic">
+			<?php famma_child_the_icon( 'user' ); ?>
+			<?php
+			if ( function_exists( 'famma_child_account_finish_initial' ) ) {
+				famma_child_account_finish_initial();
+			}
+			?>
+		</span>
 		<span><?php esc_html_e( 'Mon compte', 'famma-child' ); ?></span>
 	</a>
 	<?php

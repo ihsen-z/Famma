@@ -1,0 +1,192 @@
+/**
+ * Nouveau look — finitions de l'espace client (case acct_finish, lot 43).
+ * Valeurs de la maquette espace client : .ini, .empty, .opt, .help, .toast.
+ */
+
+/* ---------- Pastille de l'initiale sur l'icône compte (maquette : .ini) ---------- */
+
+.famma-header__action--account,
+.famma-header__panel-account-ic {
+	position: relative;
+}
+
+.famma-header__panel-account-ic {
+	display: inline-flex;
+}
+
+/* Placée depuis le centre de l'icône, comme dans la maquette (bouton de
+   44 px, icône de 21 px) : centre de la pastille à +13 px / +11 px. */
+.famma-acct-ini {
+	position: absolute;
+	inset-block-start: calc(50% + 2px);
+	inset-inline-start: calc(50% + 4px);
+	display: grid;
+	place-items: center;
+	min-width: 18px;
+	height: 18px;
+	padding-inline: 3px;
+	border-radius: 9px;
+	background: var(--famma-orange);
+	color: var(--famma-on-orange, var(--famma-ink));
+	font-size: 10.5px;
+	font-weight: 700;
+	line-height: 1;
+	pointer-events: none;
+}
+
+/* ---------- « Mes informations » : un seul « Nom et prénom » ---------- */
+
+body.famma-acct-fin--name .woocommerce-EditAccountForm .woocommerce-form-row--first,
+body.famma-acct-fin--name .woocommerce-EditAccountForm .woocommerce-form-row--last,
+body.famma-acct-fin--name .woocommerce-EditAccountForm .woocommerce-form-row:has(> #account_display_name),
+body.famma-acct-fin--name .woocommerce-EditAccountForm > .clear {
+	display: none;
+}
+
+/* E-mail facultatif (compte créé par numéro) : pas d'astérisque. */
+body.famma-acct-fin--mail-opt .woocommerce-EditAccountForm label[for="account_email"] .required {
+	display: none;
+}
+
+.famma-acct-fin .famma-acct-opt {
+	white-space: nowrap;
+	color: var(--acct-text-3, var(--famma-text-3));
+	font-weight: 400;
+}
+
+.famma-acct-fin-help {
+	margin: -6px 0 14px;
+	color: var(--acct-text-3, var(--famma-text-3));
+	font-size: 13px;
+	line-height: 1.45;
+}
+
+.famma-acct-fin-help[hidden] {
+	display: none;
+}
+
+/* ---------- Accès : « Mot de passe » sans astérisque ---------- */
+
+body.famma-acct-fin .woocommerce-form-register label[for="reg_password"] .required,
+body.famma-acct-fin .woocommerce-form-login label[for="password"] .required {
+	display: none;
+}
+
+/* Le libellé « Obligatoire » est lu à voix haute, jamais montré. */
+body.famma-acct-fin .woocommerce-form-register label .screen-reader-text,
+body.famma-acct-fin .woocommerce-form-login label .screen-reader-text {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* ---------- « Mes commandes » sans commande (maquette : .empty) ---------- */
+
+.famma-acct-oempty {
+	display: grid;
+	justify-items: center;
+	gap: 10px;
+	padding: 28px 16px;
+	border: 1.5px dashed var(--famma-line-field);
+	border-radius: var(--acct-radius-lg, 20px);
+	color: var(--famma-text-2);
+	text-align: center;
+}
+
+.famma-acct-oempty p {
+	max-width: 36ch;
+	margin: 0;
+}
+
+.famma-acct-oempty .famma-acct-mascot {
+	position: static;
+	width: 64px;
+	height: 64px;
+	color: var(--famma-ink);
+	opacity: 1;
+}
+
+.famma-acct-fin .famma-acct-oempty .famma-acct-oempty__go {
+	display: inline-flex;
+	align-items: center;
+	min-height: 48px;
+	padding: 0 20px;
+	border: 0;
+	border-radius: 9px;
+	background: var(--famma-ink);
+	color: var(--famma-white);
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.famma-acct-fin .famma-acct-oempty .famma-acct-oempty__go:focus-visible {
+	outline: 3px solid var(--famma-orange);
+	outline-offset: 2px;
+}
+
+/* ---------- « Vous êtes déconnecté. » (maquette : .toast) ---------- */
+
+.famma-acct-out {
+	position: fixed;
+	inset-inline: 16px;
+	inset-block-end: calc(84px + env(safe-area-inset-bottom, 0px));
+	z-index: var(--z-toast, 700);
+	max-width: 440px;
+	margin-inline: auto;
+	padding: 10px 16px;
+	border-radius: 12px;
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	box-shadow: 0 12px 32px rgba(11, 31, 58, .22);
+	font-size: 14px;
+	text-align: center;
+	animation: famma-acct-out 2.6s var(--acct-ease, ease-out) forwards;
+}
+
+@keyframes famma-acct-out {
+	0% {
+		opacity: 0;
+		transform: translateY(16px);
+	}
+
+	9%,
+	88% {
+		opacity: 1;
+		transform: none;
+	}
+
+	100% {
+		opacity: 0;
+		visibility: hidden;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-acct-out {
+		animation: famma-acct-out-rm 2.6s linear forwards;
+	}
+
+	@keyframes famma-acct-out-rm {
+		0%,
+		90% {
+			opacity: 1;
+		}
+
+		100% {
+			opacity: 0;
+			visibility: hidden;
+		}
+	}
+}
+
+/* ---------- Téléphone : le bas du compte laisse la place du bouton WhatsApp ---------- */
+
+@media (max-width: 759px) {
+	/* Plus précis que la remise à zéro de new-look-account.css. */
+	body.famma-nl-acct.famma-acct-fin.woocommerce-account .woocommerce-MyAccount-content {
+		padding-block-end: 80px;
+	}
+}

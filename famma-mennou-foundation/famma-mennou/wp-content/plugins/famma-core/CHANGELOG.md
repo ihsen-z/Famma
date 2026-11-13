@@ -1,5 +1,38 @@
 # Changelog — FAMMA Core
 
+## 0.3.30 — 2026-11-13 (finitions de l'espace client) · thème famma-child 0.2.17
+
+Lot 43, écarts 3, 4, 5, 8 (initiale), 11, 13 et 14 du rapport « Espace
+client en prod vs maquette ». Nouvelle case `acct_finish` (« Mon compte :
+finitions de la maquette »), livrée décochée, avec `acct_look`. Classe
+`Account_Finish` (logique et textes) ; le thème dessine
+(`inc/new-look-account-finish.php`).
+
+- **« Mes informations »** : un seul champ « Nom et prénom » (« الاسم
+  واللقب ») à la place de Prénom, Nom et Nom affiché de WooCommerce, qui
+  restent dans la page mais cachés. Le nom saisi est découpé avant
+  l'enregistrement de WooCommerce (premier mot = prénom, le reste = nom, le
+  tout = nom affiché) ; un nom d'un seul mot est accepté. Ordre de la
+  maquette : nom, téléphone, e-mail. Libellé « E-mail » (« الإيميل ») ; pour
+  un compte créé par numéro, sans astérisque, avec « (facultatif) » et
+  l'aide « Pour recevoir le récapitulatif de vos commandes. ».
+- **« Mes commandes » sans commande** (case `acct_track`) : titre, mascotte,
+  phrase et bouton « Voir la boutique », dans le style de la sélection vide,
+  au lieu de l'encadré de WooCommerce. L'encart « Confirmez votre adresse
+  e-mail » de WooCommerce reste au-dessus quand il s'applique.
+- **Inscription et connexion** : « Mot de passe » (« كلمة السر ») sans
+  astérisque ; « Obligatoire » reste lu à voix haute, jamais montré.
+- **Déconnexion** : retour sur « Mon compte » avec « Vous êtes
+  déconnecté. » (« خرجت من حسابك. ») pendant 2,6 s ; la marque `famma_out`
+  quitte l'adresse.
+- **Icône compte** : pastille orange avec l'initiale du client (en-tête à
+  partir de 1 000 px, lien du panneau mobile en dessous). Aucune pastille
+  pour un compte sans nom.
+- **Téléphone** : le bas du compte garde 80 px libres, pour que la fin de
+  chaque onglet passe au-dessus du bouton WhatsApp.
+- 8 nouveaux textes dans FAMMA → Pages → « Mon compte » (la derja reste à
+  relire, décision D6).
+
 ## 0.3.29 — 2026-11-13 (correctifs de l'espace client après le test en prod) · thème famma-child 0.2.16
 
 Lot 42, suite au test complet de l'espace client en prod comparé à la
