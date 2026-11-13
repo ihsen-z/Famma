@@ -1,5 +1,42 @@
 # Changelog — FAMMA Core
 
+## 0.3.26 — 2026-11-13 (mot de passe oublié et suppression du compte, lot 8 de l'espace client) · thème famma-child 0.2.13
+
+Nouvelle case `acct_privacy` (« Mon compte : mot de passe oublié et
+suppression du compte »), **livrée décochée**. Décision D3 du propriétaire :
+mot de passe oublié par WhatsApp, traité à la main, en attendant un code SMS.
+
+- Sous « Me connecter » (avec la case « présentation de la maquette ») : le
+  lien « Mot de passe perdu ? » de WooCommerce laisse la place au bouton
+  « Mot de passe oublié ? » de la maquette, qui se déplie : explication,
+  « Demander sur WhatsApp » (message préparé, avec le numéro tapé dans
+  « Téléphone » s'il en est un), puis « Recevoir plutôt un lien par e-mail »
+  (page WooCommerce, pour les comptes qui ont une adresse). Sans numéro
+  WhatsApp réglé, seul le lien e-mail reste. Sans script, le dépliant est
+  ouvert. Le propriétaire change le mot de passe à la main (Comptes →
+  Modifier).
+- « Mes informations » (avec la case « adresses et informations de la
+  maquette ») se termine par la boîte rouge « Supprimer mon compte » de la
+  maquette, avec la confirmation dans la page (« Oui, supprimer » /
+  « Garder mon compte ») ; sur ordinateur elle suit « Connexion » dans la
+  colonne de droite. **Elle reste cachée tant que son explication est
+  vide** : ce texte revient au propriétaire.
+- « Oui, supprimer » crée une demande WordPress « Effacer les données
+  personnelles », déjà confirmée (client connecté, jeton `famma_del`) :
+  aucun e-mail, rien n'est effacé avant la validation du propriétaire. En
+  attendant, la boîte montre la date de la demande et « Annuler ma
+  demande ». Les commandes suivent les réglages de confidentialité de
+  WooCommerce. Classe `Account_Privacy`, méta `_famma_del_request`.
+- Admin (`Account_Privacy_Admin`, actif même case décochée, n'agit que sur
+  action du propriétaire) : effaceur « FAMMA — compte client » ajouté à
+  ceux de WordPress et WooCommerce (adresses supplémentaires, étiquette,
+  corbeille d'adresse, « Ma sélection », numéro de connexion) ; rappel en
+  haut de l'admin tant qu'une demande attend ; Comptes → Rechercher accepte
+  un numéro tunisien (avec ou sans +216, avec espaces).
+- 15 textes dans FAMMA → Pages → « Mon compte » (`Account_Privacy_Texts`) ;
+  ceux qui ne sont pas dans la maquette sont marqués : derja à relire en
+  priorité. `del_s` (explication de la suppression) est vide.
+
 ## 0.3.25 — 2026-11-13 (plusieurs adresses, lot 7 bis de l'espace client) · thème famma-child 0.2.12
 
 Nouvelle case `acct_addrs` (« Mon compte : plusieurs adresses (Maison,

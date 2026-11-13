@@ -154,6 +154,16 @@
 				<element value="famma_child_account_addrs_panel"/>
 				<element value="famma_child_account_addrs_card"/>
 				<element value="famma_child_account_addrs_sheet"/>
+				<element value="famma_child_account_privacy_text"/>
+				<element value="famma_child_account_privacy_help"/>
+				<element value="famma_child_account_privacy_delete"/>
+				<element value="famma_child_account_privacy_setup"/>
+				<element value="famma_child_account_privacy_body_class"/>
+				<element value="famma_child_account_privacy_forgot"/>
+				<element value="famma_child_account_privacy_fields"/>
+				<element value="famma_child_account_privacy_box"/>
+				<element value="famma_child_account_privacy_side"/>
+				<element value="famma_child_enqueue_account_privacy"/>
 				<element value="famma_child_account_forms_text"/>
 				<element value="famma_child_account_forms_addresses"/>
 				<element value="famma_child_account_forms_infos_title"/>

@@ -1,0 +1,226 @@
+/**
+ * Nouveau look — « Mot de passe oublié ? » et « Supprimer mon compte »
+ * (lot 8, case acct_privacy). Valeurs reprises de la maquette espace
+ * client : .dbtn, .disc, .help, .btn-line, .btn-danger, .box.danger, .confirm.
+ */
+
+/* ---------- Mot de passe oublié (sous « Me connecter ») ---------- */
+
+.famma-nl-acct-forgot .woocommerce-form-login .lost_password {
+	display: none;
+}
+
+.famma-acct-forgot {
+	display: grid;
+	margin-block-start: 6px;
+}
+
+.famma-nl-acct .woocommerce form .famma-acct-forgot .famma-acct-dbtn {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--famma-accent-text, var(--famma-ink));
+	font-size: 14.5px;
+	font-weight: 600;
+	line-height: 1.4;
+	text-align: start;
+	white-space: normal;
+	box-shadow: none;
+	cursor: pointer;
+}
+
+.famma-nl-acct .woocommerce form .famma-acct-forgot .famma-acct-dbtn[hidden] {
+	display: none;
+}
+
+.famma-acct-forgot .famma-acct-dbtn svg {
+	flex: none;
+	width: 18px;
+	height: 18px;
+	transition: transform .32s var(--acct-ease, ease-out);
+}
+
+.famma-acct-forgot .famma-acct-dbtn[aria-expanded="true"] svg {
+	transform: rotate(180deg);
+}
+
+.famma-acct-forgot .famma-acct-disc {
+	display: grid;
+	grid-template-rows: 0fr;
+	transition: grid-template-rows .32s var(--acct-ease, ease-out);
+}
+
+.famma-acct-forgot .famma-acct-disc.is-open {
+	grid-template-rows: 1fr;
+}
+
+.famma-acct-forgot .famma-acct-disc > div {
+	min-height: 0;
+	overflow: hidden;
+	visibility: hidden;
+	transition: visibility .32s;
+}
+
+.famma-acct-forgot .famma-acct-disc.is-open > div {
+	visibility: visible;
+}
+
+.famma-acct-forgot .famma-acct-disc__in {
+	display: grid;
+	gap: 14px;
+	padding-block: 4px 2px;
+}
+
+.famma-nl-acct .woocommerce form .famma-acct-forgot .famma-acct-help {
+	margin: 0;
+	color: var(--famma-text-3);
+	font-size: 12.5px;
+	line-height: 1.5;
+}
+
+.famma-acct-fg-mail {
+	justify-self: start;
+	color: var(--famma-text-2);
+	font-size: 13px;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+/* ---------- Boutons de la maquette ---------- */
+
+body.famma-nl-acct .famma-acct-bline,
+body.famma-nl-acct .famma-acct-bdanger {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	min-height: 48px;
+	margin: 0;
+	padding: 12px 22px;
+	border: 1.5px solid var(--famma-line-field);
+	border-radius: 9px;
+	background: var(--famma-white);
+	color: var(--famma-ink);
+	font-size: 15.5px;
+	font-weight: 600;
+	line-height: 1.3;
+	text-align: center;
+	text-decoration: none;
+	box-shadow: none;
+	cursor: pointer;
+	transition: background-color .2s, border-color .2s, transform .12s var(--acct-ease, ease-out);
+}
+
+body.famma-nl-acct .famma-acct-bdanger {
+	border-color: var(--famma-danger-700);
+	background: transparent;
+	color: var(--famma-danger-700);
+}
+
+body.famma-nl-acct .famma-acct-bline:active,
+body.famma-nl-acct .famma-acct-bdanger:active {
+	transform: scale(.97);
+}
+
+body.famma-nl-acct .famma-acct-bline.is-sm,
+body.famma-nl-acct .famma-acct-bdanger.is-sm {
+	min-height: 44px;
+	padding: 8px 14px;
+	font-size: 14px;
+}
+
+body.famma-nl-acct .famma-acct-bline[hidden],
+body.famma-nl-acct .famma-acct-bdanger[hidden] {
+	display: none;
+}
+
+@media (hover: hover) {
+	body.famma-nl-acct .famma-acct-bline:hover {
+		border-color: var(--famma-ink);
+		background: var(--famma-white);
+		color: var(--famma-ink);
+	}
+
+	body.famma-nl-acct .famma-acct-bdanger:hover {
+		background: var(--famma-danger-soft);
+		color: var(--famma-danger-700);
+	}
+}
+
+/* ---------- Supprimer mon compte (fin de « Mes informations ») ---------- */
+
+.famma-acct-side {
+	display: grid;
+	gap: 16px;
+	align-content: start;
+	min-width: 0;
+}
+
+@media (min-width: 900px) {
+	body.famma-nl-acct-infos .woocommerce-MyAccount-content > .famma-acct-side {
+		grid-column: 2;
+	}
+}
+
+body.famma-nl-acct .woocommerce-MyAccount-content .famma-acct-del {
+	display: grid;
+	gap: 14px;
+	border-color: var(--famma-danger-700);
+}
+
+body.famma-nl-acct .woocommerce-MyAccount-content .famma-acct-del .famma-acct-box__h {
+	margin: 0;
+	color: var(--famma-danger-700);
+}
+
+body.famma-nl-acct .woocommerce-MyAccount-content .famma-acct-del__p {
+	margin: 0;
+	color: var(--famma-text-2);
+	font-size: 14px;
+	line-height: 1.55;
+}
+
+.famma-acct-del__f {
+	display: grid;
+	margin: 0;
+}
+
+.famma-acct-confirm {
+	display: grid;
+	gap: 10px;
+	margin: 0;
+	padding: 12px;
+	border-radius: 12px;
+	background: var(--famma-danger-soft);
+	background: color-mix(in srgb, var(--famma-danger) 10%, var(--famma-white));
+}
+
+.famma-acct-confirm[hidden] {
+	display: none;
+}
+
+body.famma-nl-acct .woocommerce-MyAccount-content .famma-acct-confirm p {
+	margin: 0;
+	font-size: 14px;
+}
+
+.famma-acct-confirm__acts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.famma-acct-forgot .famma-acct-disc,
+	.famma-acct-forgot .famma-acct-disc > div,
+	.famma-acct-forgot .famma-acct-dbtn svg,
+	body.famma-nl-acct .famma-acct-bline,
+	body.famma-nl-acct .famma-acct-bdanger {
+		transition: none;
+	}
+}
