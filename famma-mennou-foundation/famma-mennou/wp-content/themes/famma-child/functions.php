@@ -701,10 +701,11 @@ function famma_child_sticky_cta(): void {
 
 	printf(
 		$dock
-			? '<button type="button" class="famma-sticky-cta__button"><span class="famma-sticky-cta__label" data-order="%1$s">%1$s</span><span class="famma-sticky-cta__ar" lang="ar" dir="rtl">%2$s</span></button>'
+			? '<button type="button" class="famma-sticky-cta__button"><span class="famma-sticky-cta__label" data-order="%3$s">%1$s</span><span class="famma-sticky-cta__ar" lang="ar" dir="rtl">%2$s</span></button>'
 			: '<button type="button" class="famma-sticky-cta__button">%1$s<span class="famma-sticky-cta__ar" lang="ar" dir="rtl">%2$s</span></button>',
 		esc_html( $label ),
-		esc_html( famma_child_product_copy_derja( 'cta_order' ) )
+		esc_html( famma_child_product_copy_derja( 'cta_order' ) ),
+		esc_attr( $label )
 	);
 	echo '</div>';
 }

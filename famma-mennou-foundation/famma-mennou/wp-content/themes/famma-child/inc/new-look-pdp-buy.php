@@ -36,12 +36,31 @@ function famma_child_pdp_buy_setup(): void {
 		add_action( 'woocommerce_single_product_summary', 'famma_child_pdp_buy', 25 );
 	}
 
-	if ( famma_child_pdp_part( 'pdp_points' ) && function_exists( 'famma_child_product_excerpt' ) ) {
+	// Sous la boîte d'achat express seulement : sans elle (produit variable, rupture), l'accroche reste à sa place.
+	if ( famma_child_pdp_part( 'pdp_points' ) && function_exists( 'famma_child_product_excerpt' ) && famma_child_pdp_buy_express() ) {
 		remove_action( 'woocommerce_single_product_summary', 'famma_child_product_excerpt', 20 );
 		add_action( 'woocommerce_single_product_summary', 'famma_child_pdp_points', 27 );
 	}
 }
 add_action( 'wp', 'famma_child_pdp_buy_setup', 20 );
+
+/**
+ * La fiche porte-t-elle le formulaire express ?
+ *
+ * Mêmes conditions que famma-core (`Express_Order::eligible_product()`, privée) :
+ * produit simple, achetable, en stock. Produit déjà chargé, aucune requête de plus.
+ *
+ * @return bool
+ */
+function famma_child_pdp_buy_express(): bool {
+	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return false;
+	}
+
+	$product = wc_get_product( get_queried_object_id() );
+
+	return $product instanceof WC_Product && ! $product->is_type( 'variable' ) && $product->is_purchasable() && $product->is_in_stock();
+}
 
 /**
  * Libellé et texte d'une taille pour la barre d'avancement, ou rien.

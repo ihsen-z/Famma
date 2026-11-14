@@ -127,43 +127,53 @@
 	function tick() {
 		ticking = false;
 
+		// Toutes les mesures d'abord, les écritures ensuite : un seul calcul de mise en page.
 		var vh = window.innerHeight;
+		var n = -1;
+		var on = -1;
 
 		if ( words.length ) {
 			var r = txt.getBoundingClientRect();
 
 			if ( r.bottom > -50 && r.top < vh ) {
 				var p = Math.max( 0, Math.min( 1, ( vh * 0.82 - r.top ) / ( r.height + vh * 0.3 ) ) );
-				var n = Math.round( p * words.length );
 
-				words.forEach( function ( w, k ) {
-					w.classList.toggle( 'is-on', k < n );
-				} );
+				n = Math.round( p * words.length );
 			}
 		}
 
 		if ( items.length ) {
-			var on = 0;
-			var line = vh * 0.55;
-			var photo = sticky ? sticky.getBoundingClientRect() : null;
 			var list = items[ 0 ].parentNode.getBoundingClientRect();
 
-			// Téléphone : la photo collante couvre le haut de l'écran, la ligne
-			// de lecture descend au milieu de ce qui reste visible sous elle.
-			if ( photo && photo.left < list.right && photo.right > list.left ) {
-				line = Math.max( line, photo.bottom + ( vh - photo.bottom ) * 0.5 );
-			}
+			// Bloc hors de l'écran : rien à mesurer de plus.
+			if ( list.bottom > 0 && list.top < vh ) {
+				var line = vh * 0.55;
+				var photo = sticky ? sticky.getBoundingClientRect() : null;
 
-			// La pièce lue est la dernière dont le haut a passé cette ligne.
-			items.forEach( function ( item, k ) {
-				if ( item.getBoundingClientRect().top < line ) {
-					on = k;
+				// Téléphone : la photo collante couvre le haut de l'écran, la ligne
+				// de lecture descend au milieu de ce qui reste visible sous elle.
+				if ( photo && photo.left < list.right && photo.right > list.left ) {
+					line = Math.max( line, photo.bottom + ( vh - photo.bottom ) * 0.5 );
 				}
-			} );
 
-			if ( on !== current ) {
-				setAna( on );
+				// La pièce lue est la dernière dont le haut a passé cette ligne.
+				on = 0;
+				items.forEach( function ( item, k ) {
+					if ( item.getBoundingClientRect().top < line ) {
+						on = k;
+					}
+				} );
 			}
+		}
+
+		if ( n >= 0 ) {
+			words.forEach( function ( w, k ) {
+				w.classList.toggle( 'is-on', k < n );
+			} );
+		}
+
+		if ( on >= 0 && on !== current ) {
+			setAna( on );
 		}
 	}
 

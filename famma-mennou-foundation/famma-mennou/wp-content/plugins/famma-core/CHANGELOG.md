@@ -32,7 +32,7 @@ d'abord ») a sa case à part (`pdp_buy`), à trancher à la revue du 18/11.
   rangés autrement par le thème ; contrôles, envoi et offre après achat
   inchangés. Les règles du script ne servent qu'à l'affichage.
 - Thème 0.2.21 : `inc/new-look-pdp-buy.php`, `assets/js/new-look-pdp-buy.js`
-  (3,1 Ko compressés, chargé seulement si `pdp_buy`, `pdp_form` ou
+  (3,6 Ko compressés, chargé seulement si `pdp_buy`, `pdp_form` ou
   `pdp_dock` est servie), feuille `new-look-pdp.css` complétée (7,6 Ko
   compressés au total), `famma_child_sticky_cta()` enrichie quand `pdp_dock`
   est servie (sinon identique). Aucune requête de plus. Moins d'animations
@@ -42,6 +42,16 @@ d'abord ») a sa case à part (`pdp_buy`), à trancher à la revue du 18/11.
   arabe (sens, indicateur, textes) ; `pdp_buy` décochée avec les
   autres cochées. Cases décochées : fiches identiques octet pour octet à la
   0.3.37.
+- Relecture indépendante des lots 46 et 47, corrigée : boîte fermée, la touche
+  Entrée ou « OK » du clavier ouvre au lieu d'envoyer vers des champs cachés ;
+  commande en suspens reprise après rechargement : le formulaire reste ouvert
+  (« Vérifier ma commande en cours » visible) ; « Commander » et la barre du
+  bas ouvrent dans le geste même, pour que le clavier s'ouvre sur iPhone ;
+  ligne derja de la barre cachée tant qu'elle dit « Choisir ma taille » ;
+  `aria-expanded` sur « Commander » ; points forts déplacés seulement sous un
+  formulaire express (pas sur un produit variable) ; défilement du récit et de
+  l'anatomie : mesures groupées, anatomie ignorée hors de l'écran. Banc :
+  commande 734 payée seulement à « livrée », annulée + test.
 
 ## 0.3.37 — 2026-11-14 (fiche produit de la maquette, lot 46) · thème famma-child 0.2.20
 

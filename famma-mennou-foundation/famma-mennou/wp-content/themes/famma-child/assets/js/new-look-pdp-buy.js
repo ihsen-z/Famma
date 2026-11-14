@@ -114,7 +114,7 @@
 			msg = buy.getAttribute( 'data-pg1' );
 		} else {
 			pct = 0.5 + ( 0.5 * n ) / ( fields.length || 1 );
-			msg = n === fields.length ? buy.getAttribute( 'data-pg3' ) : buy.getAttribute( 'data-pg2' );
+			msg = fields.length && n === fields.length ? buy.getAttribute( 'data-pg3' ) : buy.getAttribute( 'data-pg2' );
 		}
 
 		msg = String( msg || '' ).split( '{choix}' ).join( choice() ).split( '{n}' ).join( String( fields.length - n ) );
@@ -135,6 +135,7 @@
 
 		var info = dock.querySelector( '.famma-sticky-cta__line' );
 		var label = dock.querySelector( '.famma-sticky-cta__label' );
+		var derja = dock.querySelector( '.famma-sticky-cta__ar' );
 		var price = dock.querySelector( '.famma-sticky-cta__price' );
 		var chosen = size();
 		var pick = info ? info.getAttribute( 'data-pick' ) : '';
@@ -143,7 +144,13 @@
 			info.textContent = ( ( info.getAttribute( 'data-size-label' ) || '' ) + ' ' + chosen ).trim();
 		}
 		if ( label ) {
-			label.textContent = sizes && ! chosen && pick ? pick : label.getAttribute( 'data-order' );
+			var picking = !! ( sizes && ! chosen && pick );
+
+			label.textContent = picking ? pick : label.getAttribute( 'data-order' );
+			// La ligne derja dit « Commander » : cachée tant que le bouton dit « Choisir ma taille ».
+			if ( derja ) {
+				derja.hidden = picking;
+			}
 		}
 		if ( price && total ) {
 			price.textContent = total.textContent;
@@ -182,12 +189,12 @@
 		open = true;
 		form.classList.remove( 'is-closed' );
 		form.classList.add( 'is-open' );
+		opener.setAttribute( 'aria-expanded', 'true' );
 		progress();
 
-		if ( focus && phone ) {
-			window.setTimeout( function () {
-				phone.focus( { preventScroll: true } );
-			}, calm ? 0 : 380 );
+		// Tout de suite, dans le geste : iOS n'ouvre le clavier qu'à cette condition.
+		if ( focus && phone && ! phone.disabled ) {
+			phone.focus( { preventScroll: true } );
 		}
 	}
 
@@ -199,7 +206,20 @@
 		}
 	}
 
-	if ( buy && order && details && opener ) {
+	/*
+	 * Formulaire verrouillé par le formulaire express (commande en suspens
+	 * reprise après rechargement : champs désactivés, « Réessayer ») : il
+	 * reste ouvert, sinon la reprise serait impossible.
+	 */
+	function locked() {
+		return !! ( ( phone && phone.disabled ) || form.querySelector( '[name="famma_quantity"]:disabled' ) );
+	}
+
+	if ( buy && order && details && opener && locked() ) {
+		open = true;
+		buy.remove();
+		buy = null;
+	} else if ( buy && order && details && opener ) {
 		var pg = buy.querySelector( '.famma-buy__pg' );
 		var cta = buy.querySelector( '.famma-buy__cta' );
 		var after = buy.querySelector( '.famma-buy__after' );
@@ -213,6 +233,7 @@
 		}
 		buy.remove();
 		form.classList.add( 'is-closed' );
+		opener.setAttribute( 'aria-expanded', 'false' );
 
 		// Taille choisie : indicateur qui glisse sous la pastille.
 		var options = sizes ? sizes.querySelector( '.famma-express__size-options' ) : null;
@@ -268,14 +289,37 @@
 			}, 10000 );
 		}
 
-		// Barre du bas et bouton « Commander » de « Quand payez-vous ? » : même geste.
+		/*
+		 * Barre du bas et bouton « Commander » de « Quand payez-vous ? » : même
+		 * geste. En capture, avant `sticky-cta.js` : le formulaire est déjà
+		 * ouvert quand celui-ci pose le curseur dans le champ Nom (clavier iOS).
+		 * Taille manquante : les tailles tremblent une fois le défilement fait.
+		 */
 		document.addEventListener( 'click', function ( e ) {
 			var t = e.target && e.target.closest ? e.target.closest( '.famma-sticky-cta__button, .famma-pay__btn' ) : null;
 
-			if ( t ) {
-				window.setTimeout( goBuy, calm ? 0 : 450 );
+			if ( ! t || open ) {
+				return;
 			}
-		} );
+			if ( sizes && ! size() ) {
+				window.setTimeout( nudge, calm ? 0 : 450 );
+			} else {
+				openForm( true );
+			}
+		}, true );
+
+		/*
+		 * Envoi pendant que la boîte est fermée (Entrée ou « OK » du clavier
+		 * dans la quantité) : jamais d'envoi vers des champs cachés, on ouvre.
+		 * En capture sur le document, avant l'écouteur du formulaire express.
+		 */
+		document.addEventListener( 'submit', function ( e ) {
+			if ( e.target === form && ! open ) {
+				e.preventDefault();
+				e.stopPropagation();
+				goBuy();
+			}
+		}, true );
 
 		progress();
 	}
