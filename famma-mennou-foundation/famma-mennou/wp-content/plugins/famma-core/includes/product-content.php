@@ -229,6 +229,38 @@ final class Product_Content {
 				'default_fr' => 'À payer au livreur, à la réception',
 				'default_ar' => 'تخلّص لليفرور كي يوصلك',
 			),
+			array(
+				'key'        => 'pay_title',
+				'type'       => 'text',
+				'label'      => __( '« Quand payez-vous ? » — titre', 'famma-core' ),
+				'help'       => __( 'Nouveau look, brique « Fiche produit : Quand payez-vous ? ». Les étapes viennent de « Comment commander » (section Boutique). Vide : la bande disparaît.', 'famma-core' ),
+				'default_fr' => 'Quand payez-vous ?',
+				'default_ar' => 'وقتاش تخلّص؟',
+			),
+			array(
+				'key'        => 'pay_meter',
+				'type'       => 'text',
+				'label'      => __( '« Quand payez-vous ? » — compteur', 'famma-core' ),
+				'help'       => __( 'Libellé du compteur, qui reste à 0 jusqu’à la dernière étape puis passe au prix du produit.', 'famma-core' ),
+				'default_fr' => 'Déjà payé',
+				'default_ar' => 'خلّصت لتوّا',
+			),
+			array(
+				'key'        => 'pay_paid',
+				'type'       => 'text',
+				'label'      => __( '« Quand payez-vous ? » — montant sous chaque étape', 'famma-core' ),
+				'help'       => __( '{montant} est remplacé par 0 DT, puis par le prix à la dernière étape. Vide : rien sous les étapes.', 'famma-core' ),
+				'default_fr' => '{montant} payé',
+				'default_ar' => 'خلّصت {montant}',
+			),
+			array(
+				'key'        => 'det_title',
+				'type'       => 'text',
+				'label'      => __( '« Tout savoir avant de commander » — titre', 'famma-core' ),
+				'help'       => __( 'Nouveau look, brique « Fiche produit : volets ». Titre au-dessus des volets (description, FAQ, livraison). Vide : pas de titre.', 'famma-core' ),
+				'default_fr' => 'Tout savoir avant de commander',
+				'default_ar' => 'كل شي قبل ما تطلب',
+			),
 		);
 	}
 

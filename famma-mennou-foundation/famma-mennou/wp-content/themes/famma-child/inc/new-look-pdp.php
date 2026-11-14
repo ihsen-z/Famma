@@ -1,6 +1,11 @@
 <?php
 /**
- * Nouveau look — fiche produit, lot 44 : galerie et cadre de la maquette.
+ * Nouveau look — fiche produit, lots 44 et 45 : socle commun.
+ *
+ * Lot 44 : galerie et cadre de la maquette (ce fichier). Lot 45 : « Quand
+ * payez-vous ? » (`inc/new-look-pdp-pay.php`) et volets « Tout savoir avant
+ * de commander » (`inc/new-look-pdp-details.php`), qui s'appuient sur
+ * `famma_child_pdp_part()` et sur la feuille chargée ici.
  *
  * Deux briques, valables pour TOUTES les fiches (aucun produit n'est nommé) :
  * - `pdp_gallery` : la galerie WooCommerce reste (glisser, loupe plein écran,
@@ -29,15 +34,19 @@ function famma_child_pdp_part( string $part ): bool {
 }
 
 /**
- * Charge la feuille et le script du lot 44.
+ * Charge la feuille et les scripts des lots 44 et 45.
  *
- * Feuille derrière `famma-product` (elle l'ajuste), script différé en pied de
- * page, sans jQuery : il ne fait que lire la galerie déjà construite.
+ * Une seule feuille pour toutes les briques de la fiche, derrière
+ * `famma-product` (elle l'ajuste). Scripts différés en pied de page, sans
+ * jQuery, chacun seulement avec sa brique : la galerie (lot 44), la bande
+ * « Quand payez-vous ? » et l'ouverture des volets par ancre (lot 45).
  *
  * @return void
  */
 function famma_child_pdp_enqueue(): void {
-	if ( ! famma_child_pdp_part( 'pdp_gallery' ) && ! famma_child_pdp_part( 'pdp_frame' ) ) {
+	$parts = array_filter( array( 'pdp_gallery', 'pdp_frame', 'pdp_pay', 'pdp_details' ), 'famma_child_pdp_part' );
+
+	if ( array() === $parts ) {
 		return;
 	}
 
@@ -53,12 +62,21 @@ function famma_child_pdp_enqueue(): void {
 		);
 	}
 
-	if ( famma_child_pdp_part( 'pdp_gallery' ) && file_exists( $dir . '/assets/js/new-look-pdp.js' ) ) {
+	$scripts = array(
+		'new-look-pdp'          => in_array( 'pdp_gallery', $parts, true ),
+		'new-look-pdp-sections' => (bool) array_intersect( array( 'pdp_pay', 'pdp_details' ), $parts ),
+	);
+
+	foreach ( $scripts as $name => $wanted ) {
+		if ( ! $wanted || ! file_exists( $dir . '/assets/js/' . $name . '.js' ) ) {
+			continue;
+		}
+
 		wp_enqueue_script(
-			'famma-new-look-pdp',
-			$uri . '/assets/js/new-look-pdp.js',
+			'famma-' . $name,
+			$uri . '/assets/js/' . $name . '.js',
 			array(),
-			(string) filemtime( $dir . '/assets/js/new-look-pdp.js' ),
+			(string) filemtime( $dir . '/assets/js/' . $name . '.js' ),
 			array(
 				'in_footer' => true,
 				'strategy'  => 'defer',

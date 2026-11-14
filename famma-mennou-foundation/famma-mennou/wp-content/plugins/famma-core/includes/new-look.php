@@ -147,7 +147,7 @@ final class New_Look {
 			),
 
 			/*
-			 * Fiche produit, lot 44 (14/11/2026). Entrées provisoires : le
+			 * Fiche produit, lots 44 et 45 (14/11/2026). Entrées provisoires : le
 			 * registre par page (`New_Look_Bricks_Product`, session « admin
 			 * nouveau look », lot 48) les reprendra avec summary = la première
 			 * phrase de l'aide, needs, texts et wait vides.
@@ -159,6 +159,14 @@ final class New_Look {
 			'pdp_frame'    => array(
 				'label' => __( 'Fiche produit : cadre de la maquette', 'famma-core' ),
 				'help'  => __( 'Sur toutes les fiches : barre orange d’avancement de la lecture en haut de l’écran, logo qui cligne de l’œil, fil d’Ariane sans le nom du produit sur téléphone, titres de section entre deux traits orange, carte WhatsApp verte sans flèche, et trois produits similaires (le premier en grand sur téléphone, trois colonnes sur ordinateur) qui apparaissent au défilement. Aucun texte ne change.', 'famma-core' ),
+			),
+			'pdp_pay'      => array(
+				'label' => __( 'Fiche produit : « Quand payez-vous ? » et zéros animés', 'famma-core' ),
+				'help'  => __( 'Sur toutes les fiches, sous le formulaire : une bande marine avec un compteur « Déjà payé 0 DT », un colis qui roule sur une route, les étapes « Comment commander » (textes de la section Boutique) qui se cochent au défilement, et le compteur qui passe au prix du produit à l’arrivée chez le livreur, puis un bouton « Commander » qui ramène au formulaire. Elle remplace le bandeau des quatre bénéfices. Avec la bande « 0 DT » cochée : ses deux zéros s’impriment à l’arrivée, et l’encadré de réassurance ne garde que le délai de livraison. Titres dans la section « Fiche produit ». Désactivé d’office si le visiteur a demandé moins d’animations (tout est alors affiché d’un coup).', 'famma-core' ),
+			),
+			'pdp_details'  => array(
+				'label' => __( 'Fiche produit : « Tout savoir avant de commander » en volets', 'famma-core' ),
+				'help'  => __( 'Sur toutes les fiches, les onglets Description, FAQ et Livraison & Retours deviennent des volets qui s’ouvrent l’un sous l’autre, comme la maquette. La description est découpée à chacun de ses intertitres (niveau 3) : un volet par intertitre, le début de la description reste visible au-dessus. Puis une question de la FAQ par volet, puis « Livraison & Retours ». Rien n’est réécrit : c’est le contenu de chaque produit. Titre dans la section « Fiche produit ».', 'famma-core' ),
 			),
 			'home_polish'  => array(
 				'label' => __( 'Accueil : mise en page de la maquette', 'famma-core' ),

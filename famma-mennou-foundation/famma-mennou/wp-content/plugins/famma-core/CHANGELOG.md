@@ -1,5 +1,36 @@
 # Changelog — FAMMA Core
 
+## 0.3.32 — 2026-11-14 (fiche produit : « Quand payez-vous ? » et volets) · thème famma-child 0.2.19
+
+Lot 45 du rapport « Fiche produit en prod vs maquette » (14/11). Deux
+nouvelles cases, livrées décochées, valables pour toutes les fiches.
+Entrées provisoires dans `New_Look::parts()` (registre par page : lot 48).
+Le thème dessine (`inc/new-look-pdp-pay.php`, `inc/new-look-pdp-details.php`,
+`assets/js/new-look-pdp-sections.js`, feuille `new-look-pdp.css` du lot 44).
+
+- **`pdp_pay` — « Quand payez-vous ? » et zéros animés** : sous la boîte
+  d'achat, une bande marine avec le compteur « Déjà payé 0 DT », un colis qui
+  roule sur une route le long des étapes « Comment commander » (textes de la
+  section Boutique), les étapes qui se cochent au défilement, et le compteur
+  qui passe au prix du produit à la dernière étape. Bouton « Commander » qui
+  ramène au formulaire. Remplace les quatre bénéfices (décision n° 16).
+  Cachée si le paiement à la livraison n'est pas activé, ou si son titre est
+  vidé. Avec la bande « 0 DT » cochée : ses zéros s'impriment à l'arrivée, et
+  l'encadré de réassurance de la fiche ne garde que le délai de livraison
+  (décision n° 6) ; panier et commande inchangés. Produit variable à prix
+  différents : la fourchette s'affiche, sans compteur animé. Sans script ou
+  avec moins d'animations : tout est affiché d'un coup.
+- **`pdp_details` — « Tout savoir avant de commander » en volets** : les
+  onglets deviennent des volets `<details>`. La description est découpée à
+  ses intertitres de niveau 3 (un volet chacun, le début reste visible
+  au-dessus) ; sans intertitre, ou si les intertitres sont dans un bloc
+  imbriqué, elle forme un seul volet ouvert. Une question de la FAQ par
+  volet, puis les autres onglets avec leur titre. Rien n'est réécrit. Les
+  volets gardent l'ancre `#tab-<clé>` ; une ancre ouvre son volet.
+- 4 nouveaux textes dans FAMMA → Pages → « Fiche produit » : `pay_title`,
+  `pay_meter`, `pay_paid` (« {montant} payé »), `det_title` (la derja reste
+  à relire).
+
 ## 0.3.31 — 2026-11-14 (fiche produit : galerie et cadre de la maquette) · thème famma-child 0.2.18
 
 Lot 44 du rapport « Fiche produit en prod vs maquette » (14/11). Deux

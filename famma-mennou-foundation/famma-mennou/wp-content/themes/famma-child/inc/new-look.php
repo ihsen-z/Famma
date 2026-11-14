@@ -110,7 +110,7 @@ function famma_child_new_look_parts(): array {
  * @return array<int, string>
  */
 function famma_child_new_look_product_parts(): array {
-	return array( 'ledger', 'pdp_gallery', 'pdp_frame' );
+	return array( 'ledger', 'pdp_gallery', 'pdp_frame', 'pdp_pay', 'pdp_details' );
 }
 
 /**
