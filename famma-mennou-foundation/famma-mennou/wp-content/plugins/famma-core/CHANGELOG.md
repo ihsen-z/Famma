@@ -1,5 +1,34 @@
 # Changelog — FAMMA Core
 
+## 0.3.44 — 2026-11-14 (panier de la maquette, étape 3 du lot « Panier ») · thème famma-child 0.2.27
+
+Étape 3 sur 4 du plan « Panier » : garder sans perdre. Deux nouvelles cases,
+livrées décochées. Pas mis en ligne.
+
+- **`cart_promo` — code promo replié** : le cadre « Code promo » devient un
+  bouton « Vous avez un code promo ? » (chevron, `aria-expanded`) ; un toucher
+  l'ouvre et place le curseur dans le champ ; ouvert, il le reste après les
+  mises à jour du panier. Sans script, le champ reste ouvert. Rappel : le
+  champ n'existe que si un code promo est publié (`Checkout_Lite`, audit du
+  25/09) ; sans code publié, la case n'a aucun effet.
+- **`cart_save` — « Mettre de côté »** sous le nom de chaque article : ajoute
+  le produit (le parent pour une variante) à « Ma sélection »
+  (`famma-favourites`, même stockage et même événement `famma:fav` que le
+  cœur de la boutique, donc gardé dans le compte si `acct_favs` est cochée),
+  puis clique la corbeille de la ligne : retrait, jetons et « Annuler ? » de
+  WooCommerce. Le message est précédé de « Gardé dans « Ma sélection » ». Le
+  bouton n'apparaît qu'avec script et stockage du navigateur disponibles.
+- Textes `promo_label`, `save_label`, `save_done` (FR + derja à relire) ;
+  `save_label` vidé : le bouton disparaît.
+- Thème 0.2.27 : `inc/new-look-cart-keep.php` ; `assets/js/new-look-cart.js`
+  sert maintenant les trois cases `cart_dock`, `cart_promo`, `cart_save` ;
+  styles ajoutés à `assets/css/new-look-cart.css`.
+- Banc `famma-qa-admin` (code d'essai « testbanc », 1 DT) : cases décochées,
+  aucune trace ; cochées à 375 px en français et en arabe sans défilement
+  horizontal ; cadre replié puis ouvert, code appliqué et cadre resté ouvert ;
+  « Mettre de côté » → produit dans la sélection, ligne retirée, total et
+  barre du bas à jour, message en tête ; dernier article → panier vide.
+
 ## 0.3.43 — 2026-11-14 (panier de la maquette, étape 2 du lot « Panier ») · thème famma-child 0.2.26
 
 Étape 2 sur 4 du plan « Panier » : les montants. Deux nouvelles cases,

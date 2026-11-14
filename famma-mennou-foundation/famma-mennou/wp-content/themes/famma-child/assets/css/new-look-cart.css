@@ -501,3 +501,120 @@ body.famma-cart-dock-on {
 		transition: none;
 	}
 }
+
+/* ------------------------------------------------------------
+   Case `cart_promo` : code promo replié
+   ------------------------------------------------------------ */
+
+.famma-cart-promo {
+	order: -2;
+	display: flex;
+	flex-basis: 100%;
+	align-items: center;
+	gap: 10px;
+	min-block-size: 44px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--famma-ink);
+	font: inherit;
+	font-size: 0.90625rem;
+	font-weight: var(--fw-semibold);
+	text-align: start;
+	cursor: pointer;
+}
+
+.famma-cart-promo[hidden] {
+	display: none;
+}
+
+.famma-cart-promo .famma-icon {
+	inline-size: 18px;
+	block-size: 18px;
+	color: var(--famma-orange-700);
+}
+
+.famma-cart-promo .famma-cart-promo__chev {
+	margin-inline-start: auto;
+	color: var(--famma-text-3);
+	transition: transform var(--dur-base) var(--ease-out);
+}
+
+.famma-cart-promo[aria-expanded="true"] .famma-cart-promo__chev {
+	transform: rotate(180deg);
+}
+
+.famma-cart-promo:focus-visible {
+	outline: 3px solid var(--famma-orange);
+	outline-offset: 3px;
+	border-radius: 6px;
+}
+
+/* Le bouton remplace le titre « Code promo » de inc/cart.php. */
+.famma-cart-promo-box .famma-cart__coupon-title {
+	display: none;
+}
+
+/* Sélecteur long : il doit passer devant `display: flex` posé par cart.css. */
+.woocommerce-cart table.shop_table.cart td.actions .coupon.famma-cart-promo-box.is-folded {
+	padding-block: 6px;
+}
+
+.woocommerce-cart table.shop_table.cart td.actions .coupon.is-folded > :not(.famma-cart-promo) {
+	display: none;
+}
+
+/* ------------------------------------------------------------
+   Case `cart_save` : « Mettre de côté »
+   ------------------------------------------------------------ */
+
+.famma-cart-save {
+	display: inline-flex;
+	align-items: center;
+	align-self: flex-start;
+	gap: 6px;
+	min-block-size: 44px;
+	margin-block: -6px -10px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--famma-text-2);
+	font: inherit;
+	font-size: var(--fs-chrome-body);
+	font-weight: var(--fw-semibold);
+	cursor: pointer;
+	transition: color var(--dur-base) var(--ease-out);
+}
+
+.famma-cart-save[hidden] {
+	display: none;
+}
+
+.famma-cart-save .famma-icon {
+	inline-size: 16px;
+	block-size: 16px;
+}
+
+.famma-cart-save:hover,
+.famma-cart-save:focus-visible {
+	color: var(--famma-orange-700);
+}
+
+.famma-cart-save:focus-visible {
+	outline: 3px solid var(--famma-orange);
+	outline-offset: 2px;
+	border-radius: 6px;
+}
+
+.famma-cart-save:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+/* « Gardé dans Ma sélection », devant le message de retrait. Kadence range
+   le message en colonne inversée : `order` le garde en tête. */
+.famma-cart-saved {
+	order: 2;
+	margin-inline-end: 6px;
+	font-weight: var(--fw-semibold);
+}

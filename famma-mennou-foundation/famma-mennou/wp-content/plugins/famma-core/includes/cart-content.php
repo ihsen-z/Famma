@@ -12,7 +12,8 @@
  * vide reprennent mot pour mot les textes actuels du thème. La version derja
  * est celle de la maquette du 14/11, à relire.
  *
- * Servis par les briques `cart_look`, `cart_split` et `cart_dock` (thème,
+ * Servis par les briques `cart_look`, `cart_split`, `cart_dock`, `cart_promo` et
+ * `cart_save` (thème,
  * inc/new-look-cart.php). Phrase vidée : elle disparaît. Titre du panier vide
  * vidé : le texte du thème reste. Les titres des tuiles servent aussi à la
  * barre du bas.
@@ -104,6 +105,30 @@ final class Cart_Content {
 				'help'       => __( 'Mène à la page de commande. Vide : « Commander ».', 'famma-core' ),
 				'default_fr' => __( 'Commander', 'famma-core' ),
 				'default_ar' => 'أطلب توا',
+			),
+			array(
+				'key'        => 'promo_label',
+				'type'       => 'text',
+				'label'      => __( 'Code promo replié — bouton', 'famma-core' ),
+				'help'       => __( 'Un toucher ouvre le champ du code. Vide : « Code promo ».', 'famma-core' ),
+				'default_fr' => __( 'Vous avez un code promo ?', 'famma-core' ),
+				'default_ar' => 'عندك كود برومو؟',
+			),
+			array(
+				'key'        => 'save_label',
+				'type'       => 'text',
+				'label'      => __( 'Mettre de côté — bouton', 'famma-core' ),
+				'help'       => __( 'Sous le nom de chaque article. Vide : le bouton disparaît.', 'famma-core' ),
+				'default_fr' => __( 'Mettre de côté', 'famma-core' ),
+				'default_ar' => 'خليه على جنب',
+			),
+			array(
+				'key'        => 'save_done',
+				'type'       => 'text',
+				'label'      => __( 'Mettre de côté — message', 'famma-core' ),
+				'help'       => __( 'En tête du message « … retiré. Annuler ? » de WooCommerce. Vide : pas de phrase en plus.', 'famma-core' ),
+				'default_fr' => __( 'Gardé dans « Ma sélection ».', 'famma-core' ),
+				'default_ar' => 'تحفظ في « اختياراتي ».',
 			),
 		);
 	}

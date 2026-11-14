@@ -2,7 +2,8 @@
 /**
  * Nouveau look — panier, lot « Panier » (maquette panier du 14/11) : socle
  * commun et étape 1, case `cart_look`. Étape 2 (`cart_split`, `cart_dock`) :
- * inc/new-look-cart-totals.php.
+ * inc/new-look-cart-totals.php ; étape 3 (`cart_promo`, `cart_save`) :
+ * inc/new-look-cart-keep.php.
  *
  * Présentation seulement, par-dessus `inc/cart.php` et `cart.css` qui restent
  * en place : la feuille `new-look-cart.css` réarrange le tableau de
@@ -126,7 +127,7 @@ add_action( 'wp', 'famma_child_cart_swap_empty_look', 11 );
 
 /**
  * Charge la feuille du panier (une pour toutes les cases, derrière celle
- * d'aujourd'hui) et le script de la barre du bas.
+ * d'aujourd'hui) et son script (barre du bas, code promo, mise de côté).
  *
  * @return void
  */
@@ -149,7 +150,7 @@ function famma_child_cart_enqueue_look(): void {
 		);
 	}
 
-	if ( famma_child_cart_part( 'cart_dock' ) && file_exists( $dir . $js ) ) {
+	if ( array_filter( array( 'cart_dock', 'cart_promo', 'cart_save' ), 'famma_child_cart_part' ) && file_exists( $dir . $js ) ) {
 		wp_enqueue_script(
 			'famma-new-look-cart',
 			$uri . $js,
