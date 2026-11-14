@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.3.32
+ * Version:           0.3.36
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.3.32' );
+define( 'FAMMA_CORE_VERSION', '0.3.36' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -35,6 +35,17 @@ require_once __DIR__ . '/includes/product-content.php';
 require_once __DIR__ . '/includes/home-content.php';
 require_once __DIR__ . '/includes/home-hero-style.php';
 require_once __DIR__ . '/includes/new-look.php';
+require_once __DIR__ . '/includes/new-look-registry.php';
+require_once __DIR__ . '/includes/new-look-bricks-site.php';
+require_once __DIR__ . '/includes/new-look-bricks-home.php';
+require_once __DIR__ . '/includes/new-look-bricks-shop.php';
+require_once __DIR__ . '/includes/new-look-bricks-product.php';
+require_once __DIR__ . '/includes/new-look-bricks-account.php';
+require_once __DIR__ . '/includes/new-look-admin.php';
+require_once __DIR__ . '/includes/new-look-admin-state.php';
+require_once __DIR__ . '/includes/new-look-admin-view.php';
+require_once __DIR__ . '/includes/new-look-admin-fields.php';
+require_once __DIR__ . '/includes/new-look-admin-save.php';
 require_once __DIR__ . '/includes/cat-icons.php';
 require_once __DIR__ . '/includes/delivery-content.php';
 require_once __DIR__ . '/includes/returns-content.php';
@@ -3647,6 +3658,7 @@ function boot(): void {
 		Pages_Content::instance();
 		Home_Hero_Style::instance();
 		New_Look::instance();
+		New_Look_Admin::instance();
 		Cat_Icons::instance();
 		Topbar_Content::instance();
 		Tracking_Settings::instance();

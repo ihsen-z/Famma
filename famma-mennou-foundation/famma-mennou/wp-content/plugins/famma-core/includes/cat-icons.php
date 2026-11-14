@@ -220,7 +220,7 @@ final class Cat_Icons {
 	 * @return string
 	 */
 	private function help(): string {
-		return __( 'Sur l’accueil, la carte du rayon montre d’abord la miniature de la catégorie (champ « Miniature » ci-dessous ou ci-dessus). Sans miniature : cette icône, dessinée à l’arrivée, si la case « Accueil : icônes des rayons » est cochée dans FAMMA → Pages → Nouveau look. Sinon : l’étoile orange.', 'famma-core' );
+		return __( 'Sur l’accueil, la carte du rayon montre d’abord la miniature de la catégorie (champ « Miniature » ci-dessous ou ci-dessus). Sans miniature : cette icône, dessinée à l’arrivée, si la case « Accueil : icônes des rayons » est cochée dans FAMMA → Nouveau look (onglet Accueil). Sinon : l’étoile orange.', 'famma-core' );
 	}
 
 	/**

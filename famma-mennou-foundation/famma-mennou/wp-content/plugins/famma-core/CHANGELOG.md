@@ -1,17 +1,23 @@
 # Changelog — FAMMA Core
 
-## 0.3.32 — 2026-11-14 (fiche produit : « Quand payez-vous ? » et volets) · thème famma-child 0.2.19
+## 0.3.36 — 2026-11-14 (fiche produit de la maquette, lots 44 et 45) · thème famma-child 0.2.19
+
+Prévus en 0.3.31 (lot 44, thème 0.2.18) et 0.3.32 (lot 45), jamais mis en
+ligne : regroupés en 0.3.36 après le lot 48 (0.3.35). Les quatre cases sont
+déclarées dans `New_Look_Bricks_Product` (registre du lot 48), après
+`ledger` ; leurs textes sont dans FAMMA → Nouveau look → « Fiche produit ».
+
+### Lot 45 — « Quand payez-vous ? » et volets
 
 Lot 45 du rapport « Fiche produit en prod vs maquette » (14/11). Deux
 nouvelles cases, livrées décochées, valables pour toutes les fiches.
-Entrées provisoires dans `New_Look::parts()` (registre par page : lot 48).
 Le thème dessine (`inc/new-look-pdp-pay.php`, `inc/new-look-pdp-details.php`,
 `assets/js/new-look-pdp-sections.js`, feuille `new-look-pdp.css` du lot 44).
 
 - **`pdp_pay` — « Quand payez-vous ? » et zéros animés** : sous la boîte
   d'achat, une bande marine avec le compteur « Déjà payé 0 DT », un colis qui
   roule sur une route le long des étapes « Comment commander » (textes de la
-  section Boutique), les étapes qui se cochent au défilement, et le compteur
+  onglet Boutique), les étapes qui se cochent au défilement, et le compteur
   qui passe au prix du produit à la dernière étape. Bouton « Commander » qui
   ramène au formulaire. Remplace les quatre bénéfices (décision n° 16).
   Cachée si le paiement à la livraison n'est pas activé, ou si son titre est
@@ -27,7 +33,7 @@ Le thème dessine (`inc/new-look-pdp-pay.php`, `inc/new-look-pdp-details.php`,
   imbriqué, elle forme un seul volet ouvert. Une question de la FAQ par
   volet, puis les autres onglets avec leur titre. Rien n'est réécrit. Les
   volets gardent l'ancre `#tab-<clé>` ; une ancre ouvre son volet.
-- 4 nouveaux textes dans FAMMA → Pages → « Fiche produit » : `pay_title`,
+- 4 nouveaux textes dans FAMMA → Nouveau look → « Fiche produit » : `pay_title`,
   `pay_meter`, `pay_paid` (« {montant} payé »), `det_title` (la derja reste
   à relire).
 - Après relecture et banc (14/11), avant toute mise en ligne :
@@ -48,23 +54,22 @@ Le thème dessine (`inc/new-look-pdp-pay.php`, `inc/new-look-pdp-details.php`,
     observateur de la galerie arrêté au chargement, survols et pression des
     flèches sous « moins d'animations » ; tampons rognés dans leur cadre.
 
-## 0.3.31 — 2026-11-14 (fiche produit : galerie et cadre de la maquette) · thème famma-child 0.2.18
+### Lot 44 — galerie et cadre
 
 Lot 44 du rapport « Fiche produit en prod vs maquette » (14/11). Deux
 nouvelles cases, livrées décochées, valables pour TOUTES les fiches (aucun
-produit n'est nommé). Entrées provisoires dans `New_Look::parts()` en
-attendant le registre de briques par page (lot 48). Le thème dessine
+produit n'est nommé). Le thème dessine
 (`inc/new-look-pdp.php`, `assets/css/new-look-pdp.css`,
 `assets/js/new-look-pdp.js`) ; aucun texte nouveau, aucune requête de plus.
 
-- **`pdp_gallery` — « Fiche produit : galerie de la maquette »** : cadre
+- **`pdp_gallery` — « Galerie de la maquette »** : cadre
   arrondi qui s'ouvre à l'arrivée, compteur « 2 / 5 » sur la photo, cadre
   orange qui glisse d'une vignette à l'autre, et avec une souris des flèches
   posées sur la photo et un zoom ×1,7 qui suit le pointeur. Les infos de
   droite montent l'une après l'autre. La galerie reste celle de WooCommerce
   (glisser, loupe plein écran, variantes). Une seule photo : ni compteur ni
   cadre. Moins d'animations demandé : tout est immobile, pas de zoom.
-- **`pdp_frame` — « Fiche produit : cadre de la maquette »** : barre orange
+- **`pdp_frame` — « Cadre de la maquette »** : barre orange
   d'avancement de la lecture, logo qui cligne de l'œil, fil d'Ariane sans le
   nom du produit sur téléphone (chaque étape dans sa balise, via les
   arguments de WooCommerce), titres de section entre deux traits orange,
@@ -74,6 +79,40 @@ attendant le registre de briques par page (lot 48). Le thème dessine
 - La grande feuille de l'accueil et de la boutique (`new-look.css`) n'est
   plus chargée sur la fiche quand seules des cases de la fiche y sont
   actives.
+
+## 0.3.35 — 2026-11-14 (écran FAMMA → Nouveau look) · thème famma-child inchangé
+
+Lot 48. Un seul écran rassemble tout le paramétrage du nouveau look, rangé
+par page du site. Aucune nouvelle case, aucun changement côté visiteur :
+le mode, chaque case et chaque texte gardent leur valeur à l'envoi.
+
+- **Menu FAMMA → Nouveau look** (capacité `manage_woocommerce`), juste sous
+  le tableau de bord. Onglets Partout, Accueil, Boutique, Fiche produit, Mon
+  compte. Pour chaque brique : interrupteur, titre court, une phrase, « En
+  savoir plus » (le détail complet d'avant), cases requises avec un lien, état
+  réel (Visible par tous, Seulement les administrateurs, Prête mais personne
+  ne la voit, Sans effet : il manque une case, Cachée tant que le texte est
+  vide, Désactivée) recalculé en direct, et ses textes FR + derja juste en
+  dessous. « Autres textes de la page » pour ceux qui s'affichent toujours.
+  Recherche sur tous les onglets (réglages et textes), lien « Voir » par
+  page, barre « Enregistrer » avec les modifications non enregistrées.
+- **Modes renommés** : « Personne », « Seulement les administrateurs »,
+  « Tout le monde » (valeurs `off` / `admins` / `all` inchangées).
+- **Registre** (`new-look-registry.php` + un fichier de briques par page,
+  `new-look-bricks-*.php`) : une brique = une entrée (`title`, `summary`,
+  `help`, `needs`, `texts`, `wait`). `New_Look::parts()` en est tiré ;
+  `New_Look::part()`, l'option `famma_new_look` et `famma_child_new_look()`
+  ne changent pas.
+- **Enregistrement** par `admin-post.php` (jeton + capacité), qui fusionne
+  dans les options existantes : seuls les textes modifiés sont envoyés, un
+  texte absent de la requête garde sa valeur ; une requête sans mode ne
+  touche pas aux cases. Cache LiteSpeed vidé après un changement.
+- **FAMMA → Pages** garde À propos, Contact, Livraison, Retours,
+  coordonnées, bandeau du haut et style du héros, avec un renvoi vers le
+  nouvel écran. Les options `famma_new_look`, `famma_page_home`,
+  `famma_page_shop`, `famma_page_product` et `famma_page_account` changent de
+  groupe de réglages : enregistrer FAMMA → Pages ne peut plus les vider.
+- Feuille et script chargés sur ce seul écran ; rien côté visiteur.
 
 ## 0.3.30 — 2026-11-13 (finitions de l'espace client) · thème famma-child 0.2.17
 

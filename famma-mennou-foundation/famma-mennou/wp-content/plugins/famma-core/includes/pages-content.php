@@ -76,6 +76,17 @@ final class Pages_Content {
 	private const PAGES = array( 'home', 'shop', 'account', 'about', 'contact', 'delivery', 'returns', 'product' );
 
 	/**
+	 * Pages dont les textes se modifient dans FAMMA → Nouveau look.
+	 *
+	 * Leurs options restent enregistrées ici (même nom, même assainissement),
+	 * mais dans le groupe de l'autre écran : celui-ci ne les envoie plus, et ne
+	 * peut donc plus les vider en enregistrant.
+	 *
+	 * @var array<int, string>
+	 */
+	public const MOVED = array( 'home', 'shop', 'account', 'product' );
+
+	/**
 	 * Groupe de réglages, au sens de la Settings API.
 	 *
 	 * Public : les autres blocs de contenu éditable s'enregistrent dans le même
@@ -388,6 +399,16 @@ final class Pages_Content {
 	 * @param string $page `about`, `contact` ou `product`.
 	 * @return string
 	 */
+	public static function option_for( string $page ): string {
+		return self::option_name( $page );
+	}
+
+	/**
+	 * Nom de l'option abritant une page.
+	 *
+	 * @param string $page `about`, `contact` ou `product`.
+	 * @return string
+	 */
 	private static function option_name( string $page ): string {
 		return match ( $page ) {
 			'about'    => self::OPTION_ABOUT,
@@ -560,9 +581,10 @@ final class Pages_Content {
 	public function register_settings(): void {
 		foreach ( self::PAGES as $page ) {
 			$option = self::option_name( $page );
+			$moved  = in_array( $page, self::MOVED, true );
 
 			register_setting(
-				self::GROUP,
+				$moved ? New_Look::GROUP : self::GROUP,
 				$option,
 				array(
 					'type'              => 'array',
@@ -572,6 +594,10 @@ final class Pages_Content {
 					'default'           => array(),
 				)
 			);
+
+			if ( $moved ) {
+				continue;
+			}
 
 			add_settings_section(
 				'famma_section_' . $page,
@@ -819,8 +845,14 @@ final class Pages_Content {
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+			<div class="notice notice-info inline">
+				<p>
+					<?php esc_html_e( 'Le nouveau look et les textes de l’accueil, de la boutique, de la fiche produit et de « Mon compte » se règlent maintenant dans FAMMA → Nouveau look.', 'famma-core' ); ?>
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . New_Look_Admin::SLUG ) ); ?>"><?php esc_html_e( 'Ouvrir FAMMA → Nouveau look', 'famma-core' ); ?></a>
+				</p>
+			</div>
 			<p>
-				<?php esc_html_e( 'Textes de l’accueil, contenu des pages À propos et Contact, et textes de la fiche produit. Rien n’est codé en dur : ce que vous écrivez ici est ce que le client lit.', 'famma-core' ); ?>
+				<?php esc_html_e( 'Contenu des pages À propos, Contact, Livraison et Retours, coordonnées, bandeau du haut et style du héros de l’accueil. Rien n’est codé en dur : ce que vous écrivez ici est ce que le client lit.', 'famma-core' ); ?>
 			</p>
 			<form action="options.php" method="post">
 				<?php
