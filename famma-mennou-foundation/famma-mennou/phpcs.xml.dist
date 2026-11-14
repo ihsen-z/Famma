@@ -532,6 +532,10 @@
 				<element value="famma_child_pdp_sizes_panel"/>
 				<element value="famma_child_pdp_sizes_html"/>
 				<element value="famma_child_pdp_sizes_table"/>
+				<element value="famma_child_thanks_on"/>
+				<element value="famma_child_thanks_setup"/>
+				<element value="famma_child_thanks_enqueue"/>
+				<element value="famma_child_thanks_plan"/>
 				<element value="famma_child_pdp_buy"/>
 				<element value="famma_child_pdp_points"/>
 				<element value="famma_child_pdp_dock_head"/>

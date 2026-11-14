@@ -141,6 +141,15 @@ final class New_Look_Bricks_Product {
 				'texts'   => array( 'size_tab', 'size_avail' ),
 				'wait'    => array(),
 			),
+			// Lot 51 (14/11/2026).
+			'pdp_thanks'  => array(
+				'title'   => __( 'Page merci : plan en 3 étapes', 'famma-core' ),
+				'summary' => __( 'Après une commande payée à la livraison : « Payé aujourd’hui 0 DT » et trois étapes numérotées qui montent l’une après l’autre.', 'famma-core' ),
+				'help'    => __( 'Lot 51. Sur la page merci d’une commande payée à la livraison, le bloc « Et maintenant ? » prend la forme de la fenêtre de la maquette : « Payé aujourd’hui 0 DT », puis trois étapes numérotées, dans la langue de la page seulement. Le numéro à appeler, la correction par WhatsApp et l’offre après achat restent. Textes juste en dessous, à faire correspondre à votre façon de travailler (aucun délai n’est annoncé d’office).', 'famma-core' ),
+				'needs'   => array(),
+				'texts'   => array( 'thx_title', 'thx_today', 'thx_step1', 'thx_step2', 'thx_step3' ),
+				'wait'    => array(),
+			),
 		);
 	}
 }

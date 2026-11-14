@@ -1,5 +1,32 @@
 # Changelog — FAMMA Core
 
+## 0.3.41 — 2026-11-14 (fiche produit de la maquette, lot 51) · thème famma-child 0.2.24
+
+Lot 51 : la fenêtre « après la commande » de la maquette, sur la page merci
+(le rapport la gardait pour plus tard, l'offre après achat occupant la
+fenêtre elle-même). Une nouvelle case, livrée décochée. Pas mis en ligne.
+
+- **`pdp_thanks` — plan en 3 étapes** : après une commande payée à la
+  livraison, le bloc « Et maintenant ? » (`famma_child_cod_next_steps()`)
+  est remplacé par celui de la maquette : « Payé aujourd'hui 0 DT » sur une
+  bande marine, puis trois étapes numérotées dans des pastilles orange qui
+  montent l'une après l'autre (rien avec moins d'animations demandé), dans la
+  langue de la page seulement. Le numéro à appeler, la correction par
+  WhatsApp et l'offre après achat restent ; le montant n'est plus répété
+  quand une étape le donne déjà (`{montant}`).
+- Textes `thx_title`, `thx_today`, `thx_step1` à `thx_step3` dans FAMMA →
+  Nouveau look → Fiche produit ; une étape vidée est retirée. Les textes par
+  défaut reprennent ceux du bloc actuel : aucun délai de livraison annoncé
+  (§60), à ajouter par le propriétaire s'il est tenu.
+- Thème 0.2.24 : `inc/new-look-thanks.php`, feuille
+  `assets/css/new-look-thanks.css` (chargée seulement sur la page merci,
+  avec la case).
+- Banc `famma-qa-fiche` : commande COD 738 (ville « Msaken » → Sousse
+  proposé par l'adresse, comme avant), page merci en français et en arabe à
+  360 px sans défilement de la page, payée seulement à « livrée », annulée +
+  test ; case décochée : ancien bloc inchangé, feuille non chargée, fiches
+  identiques octet pour octet au lot 50.
+
 ## 0.3.40 — 2026-11-14 (fiche produit de la maquette, lot 50) · thème famma-child 0.2.23
 
 Lot 50 : volet « Les tailles » de la maquette. Une nouvelle case, livrée
@@ -65,9 +92,10 @@ livrées décochées. Pas mis en ligne.
   (avec `pdp_buy`), éclair orange sur le gouvernorat choisi (avec
   `pdp_form`). Rien avec moins d'animations demandé.
 - Le bouton « Confirmer » tournait déjà pendant l'envoi : rien à faire.
-- Non fait, à valider : la détection du gouvernorat à partir de l'adresse
-  (la maquette reconnaît la ville), qui demanderait une liste de villes par
-  gouvernorat à vérifier et changerait la valeur envoyée.
+- La reconnaissance du gouvernorat à partir de l'adresse existait déjà
+  (`Governorate_Places`, délégations officielles, commit cda6983 du 11/11) :
+  l'éclair orange de `pdp_form` s'ajoute à celui d'`express-order.js` quand
+  la ville tapée remplit le gouvernorat.
 - Thème 0.2.22 : `famma_child_pdp_altsize()`, script de la boîte d'achat et
   feuille complétés ; script de la boîte d'achat chargé aussi avec
   `pdp_altsize` ou `pdp_labels`. Poids, dix cases et ces deux cochées :

@@ -357,6 +357,46 @@ final class Product_Content {
 				'default_fr' => 'Disponible en {tailles}.',
 				'default_ar' => 'موجود في {tailles}.',
 			),
+			array(
+				'key'        => 'thx_title',
+				'type'       => 'text',
+				'label'      => __( 'Page merci — titre du plan', 'famma-core' ),
+				'help'       => __( 'Titre du bloc qui suit une commande payée à la livraison. Vide : pas de titre.', 'famma-core' ),
+				'default_fr' => 'Et maintenant ?',
+				'default_ar' => 'شنوّة الجاي؟',
+			),
+			array(
+				'key'        => 'thx_today',
+				'type'       => 'text',
+				'label'      => __( 'Page merci — « Payé aujourd’hui »', 'famma-core' ),
+				'help'       => __( 'Suivi de « 0 DT » : le client ne paie rien avant le livreur. Vide : la ligne n’est pas affichée.', 'famma-core' ),
+				'default_fr' => 'Payé aujourd’hui',
+				'default_ar' => 'خلّصت اليوم',
+			),
+			array(
+				'key'        => 'thx_step1',
+				'type'       => 'text',
+				'label'      => __( 'Page merci — étape 1', 'famma-core' ),
+				'help'       => __( 'Ce qui se passe juste après la commande. Vide : étape retirée.', 'famma-core' ),
+				'default_fr' => 'Nous vous appelons pour confirmer la commande.',
+				'default_ar' => 'نتصلو بيك باش نأكدو الطلب.',
+			),
+			array(
+				'key'        => 'thx_step2',
+				'type'       => 'text',
+				'label'      => __( 'Page merci — étape 2', 'famma-core' ),
+				'help'       => __( 'L’envoi. N’annoncez un délai que s’il est tenu. Vide : étape retirée.', 'famma-core' ),
+				'default_fr' => 'Le colis part une fois la commande confirmée.',
+				'default_ar' => 'الكولي يخرج كي يتأكد الطلب.',
+			),
+			array(
+				'key'        => 'thx_step3',
+				'type'       => 'text',
+				'label'      => __( 'Page merci — étape 3', 'famma-core' ),
+				'help'       => __( '{montant} devient le total de la commande. Vide : étape retirée.', 'famma-core' ),
+				'default_fr' => 'Préparez {montant} en espèces pour le livreur.',
+				'default_ar' => 'حضّر {montant} كاش لليفرور.',
+			),
 		);
 	}
 
