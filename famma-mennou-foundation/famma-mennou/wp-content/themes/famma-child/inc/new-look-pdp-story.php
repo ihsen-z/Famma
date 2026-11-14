@@ -69,7 +69,7 @@ function famma_child_pdp_story_wanted(): bool {
  * @return string Attributs déjà échappés.
  */
 function famma_child_pdp_story_lang( string $lang ): string {
-	return sprintf( 'lang="%1$s" dir="%2$s" data-no-translation', esc_attr( $lang ), 'ar' === $lang ? 'rtl' : 'ltr' );
+	return sprintf( 'lang="%1$s" dir="%2$s" data-no-translation=""', esc_attr( $lang ), 'ar' === $lang ? 'rtl' : 'ltr' );
 }
 
 /**

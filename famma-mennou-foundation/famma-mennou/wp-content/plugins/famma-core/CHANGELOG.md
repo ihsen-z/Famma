@@ -42,6 +42,18 @@ livrées décochées. Pas mis en ligne.
   inexistant refusés, phrase assainie) ; commande COD 736 payée seulement à
   « livrée », annulée + test ; cases décochées : fiches identiques octet pour
   octet à la 0.3.38.
+- Corrections de la relecture :
+  - produit proposé en rupture : pas de lien, et un avertissement dans
+    l'onglet « Fiche FAMMA » (`Product_Alt_Size::usable()` : publié,
+    visible, en stock) ; la phrase est lue avant de charger le produit lié ;
+  - champs vidés : méta supprimées au lieu de lignes vides ;
+  - lien traduit par TranslatePress (vers /ar/) : l'exclusion de traduction
+    ne porte plus que sur la phrase, et toujours avec une valeur
+    (`data-no-translation=""`, aussi pour le récit du lot 46) ;
+  - `pdp_labels` côté serveur (filtre `gettext_famma-core` du thème) : plus
+    de saut à l'affichage, messages d'erreur compris ; le script ne traite
+    plus que le titre et un intitulé de taille saisi à la main, et seulement
+    un vrai couple « français / derja ».
 
 ## 0.3.38 — 2026-11-14 (fiche produit de la maquette, lot 47) · thème famma-child 0.2.21
 

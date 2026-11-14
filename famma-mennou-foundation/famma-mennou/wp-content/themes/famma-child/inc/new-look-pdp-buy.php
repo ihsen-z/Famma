@@ -45,6 +45,11 @@ function famma_child_pdp_buy_setup(): void {
 		add_action( 'woocommerce_single_product_summary', 'famma_child_pdp_altsize', 25 );
 	}
 
+	// Avant le gabarit et les textes du script : pas de saut de mise en page.
+	if ( famma_child_pdp_part( 'pdp_labels' ) ) {
+		add_filter( 'gettext_famma-core', 'famma_child_pdp_labels_gettext' );
+	}
+
 	// Sous la boîte d'achat express seulement : sans elle (produit variable, rupture), l'accroche reste à sa place.
 	if ( famma_child_pdp_part( 'pdp_points' ) && function_exists( 'famma_child_product_excerpt' ) && famma_child_pdp_buy_express() ) {
 		remove_action( 'woocommerce_single_product_summary', 'famma_child_product_excerpt', 20 );
@@ -69,6 +74,31 @@ function famma_child_pdp_buy_express(): bool {
 	$product = wc_get_product( get_queried_object_id() );
 
 	return $product instanceof WC_Product && ! $product->is_type( 'variable' ) && $product->is_purchasable() && $product->is_in_stock();
+}
+
+/**
+ * `pdp_labels` (n° 9) : un texte « français / derja » de famma-core réduit à
+ * la langue de la page (intitulés, messages d'erreur et d'envoi du
+ * formulaire express). Seulement un vrai couple : un seul « / », de l'arabe à
+ * droite et pas à gauche ; tout autre texte passe tel quel.
+ *
+ * @param string $translation Texte traduit.
+ * @return string
+ */
+function famma_child_pdp_labels_gettext( $translation ) {
+	$translation = (string) $translation;
+
+	if ( 1 !== substr_count( $translation, ' / ' ) ) {
+		return $translation;
+	}
+
+	list( $fr, $ar ) = explode( ' / ', $translation );
+
+	if ( '' === trim( $fr ) || ! preg_match( '/\p{Arabic}/u', $ar ) || preg_match( '/\p{Arabic}/u', $fr ) ) {
+		return $translation;
+	}
+
+	return is_rtl() ? trim( $ar ) : trim( $fr );
 }
 
 /**
@@ -143,8 +173,13 @@ function famma_child_pdp_altsize(): void {
 		return;
 	}
 
+	/*
+	 * L'exclusion de traduction est sur le texte seulement : TranslatePress
+	 * doit pouvoir réécrire le lien vers /ar/. Toujours avec une valeur (un
+	 * attribut nu casse son analyseur, voir inc/header-parts.php).
+	 */
 	printf(
-		'<p class="famma-altsize" lang="%1$s" dir="%2$s" data-no-translation><a href="%3$s">%4$s</a></p>',
+		'<p class="famma-altsize"><a href="%3$s"><span lang="%1$s" dir="%2$s" data-no-translation="">%4$s</span></a></p>',
 		esc_attr( $link['lang'] ),
 		'ar' === $link['lang'] ? 'rtl' : 'ltr',
 		esc_url( $link['url'] ),

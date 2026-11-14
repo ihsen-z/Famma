@@ -67,6 +67,11 @@ final class Product_Alt_Size_Admin {
 		}
 
 		echo '</select></p>';
+
+		if ( $target instanceof \WC_Product && ! Product_Alt_Size::usable( $target ) ) {
+			echo '<p class="form-field famma-story-warn"><span class="description">' . esc_html__( 'Ce produit n’est pas affiché : il doit être publié, visible dans la boutique et en stock.', 'famma-core' ) . '</span></p>';
+		}
+
 		// Témoin : les champs étaient bien dans le formulaire (sinon rien n'est touché à l'enregistrement).
 		echo '<input type="hidden" name="famma_alt_size_shown" value="1" />';
 
@@ -108,13 +113,22 @@ final class Product_Alt_Size_Admin {
 		$id     = isset( $_POST[ Product_Alt_Size::META_PRODUCT ] ) ? absint( wp_unslash( $_POST[ Product_Alt_Size::META_PRODUCT ] ) ) : 0;
 		$target = $id > 0 && $id !== $product->get_id() ? wc_get_product( $id ) : null;
 
-		$product->update_meta_data( Product_Alt_Size::META_PRODUCT, $target instanceof \WC_Product ? (string) $target->get_id() : '' );
+		$values = array( Product_Alt_Size::META_PRODUCT => $target instanceof \WC_Product ? (string) $target->get_id() : '' );
 
 		foreach ( array( 'fr', 'ar' ) as $lang ) {
 			$key = Product_Alt_Size::META_TEXT . $lang;
 
 			if ( isset( $_POST[ $key ] ) ) {
-				$product->update_meta_data( $key, sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) );
+				$values[ $key ] = sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
+			}
+		}
+
+		// Valeur vide : méta retirée, pour ne pas écrire de lignes vides sur chaque produit.
+		foreach ( $values as $key => $value ) {
+			if ( '' === $value ) {
+				$product->delete_meta_data( $key );
+			} else {
+				$product->update_meta_data( $key, $value );
 			}
 		}
 	}

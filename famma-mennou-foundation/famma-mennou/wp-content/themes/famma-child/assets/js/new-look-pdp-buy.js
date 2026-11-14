@@ -128,18 +128,24 @@
 		}
 	}
 
-	// Intitulés bilingues « Téléphone / الهاتف » : seulement la langue de la page.
+	/*
+	 * Intitulés bilingues « Téléphone / الهاتف » : seulement la langue de la
+	 * page. Les textes de famma-core le sont déjà côté serveur ; restent le
+	 * titre (« Commander / أطلب توا ») et un intitulé de taille saisi à la main.
+	 * Un vrai couple seulement : de l'arabe à droite, pas à gauche.
+	 */
 	if ( document.body.classList.contains( 'famma-nl-pdp-labels' ) ) {
-		Array.prototype.forEach.call( form.querySelectorAll( 'label, legend, .famma-express__total-label' ), function ( el ) {
+		var arabic = /[\u0600-\u06ff]/;
+
+		Array.prototype.forEach.call( ( form.closest( '.famma-express' ) || form ).querySelectorAll( '.famma-express__title, .famma-express__legend, label, legend' ), function ( el ) {
 			Array.prototype.forEach.call( el.childNodes, function ( node ) {
-				if ( 3 !== node.nodeType || -1 === node.textContent.indexOf( ' / ' ) ) {
+				var parts = 3 === node.nodeType ? node.textContent.split( ' / ' ) : [];
+
+				if ( 2 !== parts.length || ! arabic.test( parts[ 1 ] ) || arabic.test( parts[ 0 ] ) || ! parts[ 0 ].trim() ) {
 					return;
 				}
 
-				var parts = node.textContent.split( ' / ' );
-				var keep = ( rtl && parts[ 1 ] && parts[ 1 ].trim() ) || parts[ 0 ];
-
-				node.textContent = keep.trim() + ' ';
+				node.textContent = ( rtl ? parts[ 1 ] : parts[ 0 ] ).trim() + ' ';
 			} );
 		} );
 	}
