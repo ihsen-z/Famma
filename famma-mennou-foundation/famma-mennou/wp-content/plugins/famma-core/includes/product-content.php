@@ -261,6 +261,22 @@ final class Product_Content {
 				'default_fr' => 'Tout savoir avant de commander',
 				'default_ar' => 'كل شي قبل ما تطلب',
 			),
+			array(
+				'key'        => 'story_chips',
+				'type'       => 'text',
+				'label'      => __( 'Récit — nom du groupe de boutons', 'famma-core' ),
+				'help'       => __( 'Lu par les lecteurs d’écran devant les boutons de situation (récit de chaque produit, onglet « Fiche FAMMA »). Pas affiché.', 'famma-core' ),
+				'default_fr' => 'Votre situation',
+				'default_ar' => 'وقتاش تستعملو؟',
+			),
+			array(
+				'key'        => 'ana_title',
+				'type'       => 'text',
+				'label'      => __( '« Ce qu’il y a dedans » — titre', 'famma-core' ),
+				'help'       => __( 'Titre au-dessus de la photo à repères. Les pièces se saisissent produit par produit (onglet « Fiche FAMMA »). Vide : le bloc disparaît.', 'famma-core' ),
+				'default_fr' => 'Ce qu’il y a dedans',
+				'default_ar' => 'شنوّة فيه',
+			),
 		);
 	}
 

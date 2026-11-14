@@ -66,6 +66,23 @@ final class New_Look_Bricks_Product {
 				'texts'   => array( 'det_title' ),
 				'wait'    => array(),
 			),
+			// Lot 46 (14/11/2026).
+			'pdp_story'   => array(
+				'title'   => __( 'Récit en bande marine', 'famma-core' ),
+				'summary' => __( 'Le récit du produit en grand, mots qui s’allument au défilement, et des boutons de situation à toucher.', 'famma-core' ),
+				'help'    => __( 'Sur les fiches dont le récit est rempli (Produits → Modifier → onglet « Fiche FAMMA ») : une bande marine sous la boîte d’achat, le récit en grand dont les mots s’allument au défilement (la phrase entre deux * passe en orange), puis les boutons de situation (écran, téléphone, voiture…) ; toucher un bouton écrit sa phrase en dessous. Un produit sans récit n’a pas de bande. Désactivé d’office si le visiteur a demandé moins d’animations (texte affiché d’un coup).', 'famma-core' ),
+				'needs'   => array(),
+				'texts'   => array( 'story_chips' ),
+				'wait'    => array(),
+			),
+			'pdp_anatomy' => array(
+				'title'   => __( '« Ce qu’il y a dedans » avec repères', 'famma-core' ),
+				'summary' => __( 'Une photo à repères numérotés qui reste en place et zoome sur la pièce dont parle la liste.', 'famma-core' ),
+				'help'    => __( 'Sur les fiches dont la photo, les repères et les pièces sont remplis (onglet « Fiche FAMMA », au moins deux pièces) : la photo reste en place pendant qu’on fait défiler la liste des pièces, et zoome sur le repère de la pièce lue. Un produit non rempli n’a pas de bloc. Sans zoom si le visiteur a demandé moins d’animations. Titre juste en dessous.', 'famma-core' ),
+				'needs'   => array(),
+				'texts'   => array( 'ana_title' ),
+				'wait'    => array( 'ana_title' ),
+			),
 		);
 	}
 }

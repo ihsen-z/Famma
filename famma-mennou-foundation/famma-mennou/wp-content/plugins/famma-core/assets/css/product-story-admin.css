@@ -1,0 +1,69 @@
+/* Onglet « Fiche FAMMA » (lot 46) : photo cliquable et repères numérotés. */
+
+#famma_story_panel .famma-story-intro {
+	margin: 12px;
+	padding-inline: 150px 12px;
+	color: #50575e;
+}
+
+#famma_story_panel .famma-story-h {
+	margin: 14px 12px 4px;
+	padding-inline-start: 150px;
+	font-size: 14px;
+}
+
+#famma_story_panel .famma-story-stage {
+	position: relative;
+	inline-size: min(100% - 174px, 420px);
+	margin-block: 8px;
+	margin-inline: 162px 12px;
+	cursor: crosshair;
+}
+
+#famma_story_panel .famma-story-stage[hidden] {
+	display: none;
+}
+
+#famma_story_panel .famma-story-stage img {
+	display: block;
+	inline-size: 100%;
+	block-size: auto;
+	border-radius: 8px;
+}
+
+#famma_story_panel .famma-story-dots {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	pointer-events: none;
+}
+
+/* La photo n'est jamais retournée : gauche/haut physiques, posés par le script. */
+#famma_story_panel .famma-story-dots li {
+	position: absolute;
+	display: grid;
+	place-items: center;
+	inline-size: 24px;
+	block-size: 24px;
+	margin: -12px 0 0 -12px;
+	border-radius: 50%;
+	background: #ff6a1a;
+	color: #0b1f3a;
+	font-size: 11px;
+	font-weight: 700;
+	box-shadow: 0 0 0 2px #fff;
+}
+
+@media (max-width: 782px) {
+	#famma_story_panel .famma-story-intro,
+	#famma_story_panel .famma-story-h {
+		padding-inline-start: 0;
+	}
+
+	#famma_story_panel .famma-story-stage {
+		inline-size: auto;
+		margin-inline: 12px;
+	}
+}

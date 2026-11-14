@@ -519,6 +519,11 @@
 				<element value="famma_child_pdp_details"/>
 				<element value="famma_child_pdp_details_capture"/>
 				<element value="famma_child_pdp_details_item"/>
+				<element value="famma_child_pdp_story_product"/>
+				<element value="famma_child_pdp_story_lang"/>
+				<element value="famma_child_pdp_story_wanted"/>
+				<element value="famma_child_pdp_story"/>
+				<element value="famma_child_pdp_anatomy"/>
 				<element value="famma_child_pdp_details_setup"/>
 				<element value="famma_child_pdp_details_split"/>
 				<element value="famma_child_pdp_pay"/>

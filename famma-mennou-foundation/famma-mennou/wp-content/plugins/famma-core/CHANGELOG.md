@@ -1,5 +1,43 @@
 # Changelog — FAMMA Core
 
+## 0.3.37 — 2026-11-14 (fiche produit de la maquette, lot 46) · thème famma-child 0.2.20
+
+Lot 46 du rapport « Fiche produit en prod vs maquette » (14/11) : récit et
+« Ce qu'il y a dedans ». Deux nouvelles cases, livrées décochées, valables
+pour toutes les fiches, qui ne s'affichent que sur les produits remplis.
+Pas mis en ligne.
+
+- **Onglet « Fiche FAMMA »** dans Produits → Modifier (`Product_Story_Admin`,
+  chargé seulement dans l'administration) : récit, boutons de situation
+  (« icône | bouton | phrase », 6 au plus, icônes écran, téléphone, voiture,
+  lecture, maison), phrase sous les boutons et phrase après un choix
+  (`{situation}`), en français et en derja ; photo choisie parmi celles du
+  produit, repères posés en cliquant sur la photo, pièces une par ligne.
+  Nonce, capacité `edit_product`, champs assainis ; photo étrangère au
+  produit refusée ; repères bornés à 0-100 %. Méta `_famma_story_*`.
+- **Lecture** (`Product_Story`) : la langue de la page si elle est remplie,
+  sinon l'autre, avec sa langue et son sens (comme la maquette, qui montre le
+  récit en derja sur la page française). Le passage entre deux * passe en
+  orange. Au moins deux pièces placées pour l'anatomie.
+- **`pdp_story` — récit en bande marine** : sous la boîte d'achat, le récit
+  en grand, mots qui s'allument au défilement (mot par mot, jamais lettre par
+  lettre : ligatures arabes), boutons de situation (48 px) ; toucher un
+  bouton écrit sa phrase dessous, en orange, par du texte seul.
+- **`pdp_anatomy` — « Ce qu'il y a dedans »** : photo à repères numérotés qui
+  reste en place (au-dessus de la liste sur téléphone, à côté sur
+  ordinateur) et zoome sur la pièce que l'on lit. Repères en coordonnées de la
+  photo, identiques en arabe.
+- 2 nouveaux textes dans FAMMA → Nouveau look → « Fiche produit » :
+  `story_chips` (nom du groupe de boutons, lu par les lecteurs d'écran) et
+  `ana_title` (titre ; vide, le bloc disparaît). Derja à relire.
+- Thème 0.2.20 : `inc/new-look-pdp-story.php`, `assets/js/new-look-pdp-story.js`
+  (2,1 Ko compressés, chargé seulement sur une fiche remplie), feuille
+  `new-look-pdp.css` complétée (+1,1 Ko compressés), icônes `monitor`,
+  `mobile`, `car`, `book`. Aucune requête de plus : méta et photos du produit
+  déjà chargées. Moins d'animations demandé : texte entier, sans zoom.
+- Cases décochées : fiches identiques octet pour octet à la 0.3.36 (banc
+  `famma-qa-fiche`).
+
 ## 0.3.36 — 2026-11-14 (fiche produit de la maquette, lots 44 et 45) · thème famma-child 0.2.19
 
 Prévus en 0.3.31 (lot 44, thème 0.2.18) et 0.3.32 (lot 45), jamais mis en

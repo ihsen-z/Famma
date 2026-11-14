@@ -57,6 +57,11 @@ function famma_child_icon_paths(): array {
 		// Suivi de commande dans « Mon compte » : reçue, puis livrée.
 		'box'       => '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
 		'home'      => '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>',
+		// Lot 46 : situations du récit (maquette fiche, 11/11).
+		'monitor'   => '<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M9 20h6M12 16.5V20"/>',
+		'mobile'    => '<rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/>',
+		'car'       => '<path d="M4 16v-3.5l2-5.5a2 2 0 0 1 1.9-1.3h8.2A2 2 0 0 1 18 7l2 5.5V16"/><path d="M3 12.5h18v4H3z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>',
+		'book'      => '<path d="M12 6.5C10 5 7.5 4.5 3.5 4.5v14c4 0 6.5.5 8.5 2 2-1.5 4.5-2 8.5-2v-14c-4 0-6.5.5-8.5 2zM12 6.5v14"/>',
 		// Carte « Votre espace FAMMA » : « Retrouvez votre sélection ».
 		'heart'     => '<path d="M12 20.5s-7.5-4.6-9.3-9.2A5.2 5.2 0 0 1 12 7a5.2 5.2 0 0 1 9.3 4.3C19.5 15.9 12 20.5 12 20.5z"/>',
 		// « Me déconnecter », en bas de « Mes informations ».
