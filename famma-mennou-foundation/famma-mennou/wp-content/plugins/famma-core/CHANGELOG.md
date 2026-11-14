@@ -1,5 +1,32 @@
 # Changelog — FAMMA Core
 
+## 0.3.31 — 2026-11-14 (fiche produit : galerie et cadre de la maquette) · thème famma-child 0.2.18
+
+Lot 44 du rapport « Fiche produit en prod vs maquette » (14/11). Deux
+nouvelles cases, livrées décochées, valables pour TOUTES les fiches (aucun
+produit n'est nommé). Entrées provisoires dans `New_Look::parts()` en
+attendant le registre de briques par page (lot 48). Le thème dessine
+(`inc/new-look-pdp.php`, `assets/css/new-look-pdp.css`,
+`assets/js/new-look-pdp.js`) ; aucun texte nouveau, aucune requête de plus.
+
+- **`pdp_gallery` — « Fiche produit : galerie de la maquette »** : cadre
+  arrondi qui s'ouvre à l'arrivée, compteur « 2 / 5 » sur la photo, cadre
+  orange qui glisse d'une vignette à l'autre, et avec une souris des flèches
+  posées sur la photo et un zoom ×1,7 qui suit le pointeur. Les infos de
+  droite montent l'une après l'autre. La galerie reste celle de WooCommerce
+  (glisser, loupe plein écran, variantes). Une seule photo : ni compteur ni
+  cadre. Moins d'animations demandé : tout est immobile, pas de zoom.
+- **`pdp_frame` — « Fiche produit : cadre de la maquette »** : barre orange
+  d'avancement de la lecture, logo qui cligne de l'œil, fil d'Ariane sans le
+  nom du produit sur téléphone (chaque étape dans sa balise, via les
+  arguments de WooCommerce), titres de section entre deux traits orange,
+  carte WhatsApp verte sans flèche, trois produits similaires (le premier en
+  grand sur téléphone, trois colonnes à partir de 760 px) qui apparaissent
+  au défilement.
+- La grande feuille de l'accueil et de la boutique (`new-look.css`) n'est
+  plus chargée sur la fiche quand seules des cases de la fiche y sont
+  actives.
+
 ## 0.3.30 — 2026-11-13 (finitions de l'espace client) · thème famma-child 0.2.17
 
 Lot 43, écarts 3, 4, 5, 8 (initiale), 11, 13 et 14 du rapport « Espace

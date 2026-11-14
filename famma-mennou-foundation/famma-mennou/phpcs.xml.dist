@@ -510,6 +510,11 @@
 				<element value="famma_legacy_urls_redirect"/>
 				<element value="famma_local_mail_from"/>
 				<element value="famma_local_mail_use_mailpit"/>
+				<element value="famma_child_new_look_product_parts"/>
+				<element value="famma_child_pdp_breadcrumb"/>
+				<element value="famma_child_pdp_enqueue"/>
+				<element value="famma_child_pdp_part"/>
+				<element value="famma_child_pdp_related_args"/>
 			</property>
 		</properties>
 	</rule>

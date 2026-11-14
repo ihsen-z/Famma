@@ -1,0 +1,345 @@
+/* ============================================================
+   Nouveau look — fiche produit, lot 44 (maquette fiche, v3 du 11/11).
+   Briques `pdp_gallery` (galerie) et `pdp_frame` (cadre). Valable pour
+   toutes les fiches : rien ne dépend d'un produit.
+   Les mouvements sont tous dans `prefers-reduced-motion: no-preference`.
+   ============================================================ */
+
+/* ---------- pdp_gallery : la galerie de la maquette ---------- */
+
+body.famma-nl-pdp-gallery .famma-product .woocommerce-product-gallery > .flex-viewport,
+body.famma-nl-pdp-gallery .famma-product .woocommerce-product-gallery > .woocommerce-product-gallery__wrapper {
+	border-radius: 20px;
+	overflow: hidden;
+	background: var(--famma-surface-media);
+}
+
+body.famma-nl-pdp-gallery .famma-product div.product .famma-media-heading {
+	border-start-start-radius: 20px;
+	border-start-end-radius: 20px;
+}
+
+/* Compteur « 2 / 5 », posé par le script, en bas de la photo. */
+body.famma-nl-pdp-gallery .famma-pdp-count {
+	grid-area: 1 / 1;
+	align-self: end;
+	justify-self: start;
+	z-index: 2;
+	margin: 12px;
+	padding: 3px 10px;
+	border-radius: var(--famma-radius-pill);
+	background: rgba(11, 31, 58, 0.78);
+	color: var(--famma-white);
+	font-size: 12.5px;
+	font-variant-numeric: tabular-nums;
+	line-height: 1.5;
+	pointer-events: none;
+}
+
+/* Flèches sur la photo, seulement avec une souris (le doigt glisse). */
+body.famma-nl-pdp-gallery .famma-product .flex-direction-nav {
+	display: none;
+	grid-area: 1 / 1;
+	align-self: center;
+	margin: 0;
+	padding-inline: 12px;
+}
+
+body.famma-nl-pdp-gallery .famma-product .flex-direction-nav a {
+	border: 0;
+	background: rgba(255, 255, 255, 0.92);
+	color: var(--famma-blue);
+	box-shadow: 0 4px 14px rgba(11, 31, 58, 0.1);
+	transition: transform 120ms var(--ease-out, ease);
+}
+
+body.famma-nl-pdp-gallery .famma-product .flex-direction-nav a:active {
+	transform: scale(0.92);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	body.famma-nl-pdp-gallery .famma-product .flex-direction-nav {
+		display: flex;
+	}
+}
+
+@media (min-width: 1000px) {
+	body.famma-nl-pdp-gallery .famma-product div.product div.images .flex-control-thumbs,
+	body.famma-nl-pdp-gallery.rtl .famma-product div.product div.images .flex-control-thumbs {
+		padding-inline: 0;
+	}
+}
+
+/* Vignettes : les autres en retrait, un cadre orange qui glisse (script). */
+body.famma-nl-pdp-gallery .famma-product div.product div.images .flex-control-thumbs {
+	position: relative;
+}
+
+body.famma-nl-pdp-gallery .famma-product div.product div.images .flex-control-thumbs li img {
+	border-radius: 10px;
+	opacity: 0.68;
+	transition: opacity 180ms var(--ease-out, ease);
+}
+
+body.famma-nl-pdp-gallery .famma-product div.product div.images .flex-control-thumbs li img.flex-active {
+	opacity: 1;
+}
+
+body.famma-nl-pdp-gallery .famma-product div.product div.images .flex-control-thumbs.famma-pdp-ind-on li img.flex-active {
+	border-color: transparent;
+}
+
+/* Coordonnées physiques voulues : le script le déplace d'autant que la
+   vignette active, mesurée depuis le coin haut gauche, en arabe aussi. */
+body.famma-nl-pdp-gallery .famma-pdp-ind {
+	position: absolute;
+	top: 0;
+	left: 0;
+	border: 2.5px solid var(--famma-orange);
+	border-radius: 10px;
+	pointer-events: none;
+}
+
+/* Zoom qui suit la souris (script, souris seulement). */
+body.famma-nl-pdp-gallery .famma-product .woocommerce-product-gallery__image {
+	overflow: hidden;
+}
+
+body.famma-nl-pdp-gallery .famma-product .woocommerce-product-gallery__image img {
+	transform-origin: var(--famma-ox, 50%) var(--famma-oy, 50%);
+	transform: scale(var(--famma-z, 1));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	body.famma-nl-pdp-gallery .famma-pdp-ind {
+		transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+		transition-timing-function: linear(0, 0.06 3%, 0.22 7%, 0.55 14%, 0.86 22%, 1.04 30%, 1.09 36%, 1.07 44%, 1.01 58%, 0.99 72%, 1);
+	}
+
+	body.famma-nl-pdp-gallery .famma-product .woocommerce-product-gallery__image img {
+		transition: transform 420ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+
+	/* Arrivée : la photo s'ouvre, puis les infos montent l'une après l'autre. */
+	body.famma-nl-pdp-gallery .famma-product div.product .famma-media-stage {
+		animation: famma-pdp-gal 900ms cubic-bezier(0.23, 1, 0.32, 1) backwards;
+	}
+
+	body.famma-nl-pdp-gallery .famma-product div.product .summary > * {
+		animation: famma-pdp-lift 560ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+		animation-delay: 180ms;
+	}
+
+	body.famma-nl-pdp-gallery .famma-product div.product .summary > :nth-child(2) { animation-delay: 250ms; }
+	body.famma-nl-pdp-gallery .famma-product div.product .summary > :nth-child(3) { animation-delay: 320ms; }
+	body.famma-nl-pdp-gallery .famma-product div.product .summary > :nth-child(4) { animation-delay: 390ms; }
+	body.famma-nl-pdp-gallery .famma-product div.product .summary > :nth-child(5) { animation-delay: 460ms; }
+	body.famma-nl-pdp-gallery .famma-product div.product .summary > :nth-child(n+6) { animation-delay: 530ms; }
+}
+
+@keyframes famma-pdp-gal {
+	from { clip-path: inset(8% 8% 8% 8% round 40px); transform: scale(0.97); opacity: 0.4; }
+	to { clip-path: inset(0 round 20px); transform: none; opacity: 1; }
+}
+
+@keyframes famma-pdp-lift {
+	from { opacity: 0; transform: translateY(14px); }
+}
+
+/* ---------- pdp_frame : le cadre de la maquette ---------- */
+
+/* Fil d'Ariane : séparateurs aérés ; sur téléphone, sans le nom du produit. */
+body.famma-nl-pdp-frame .famma-product .woocommerce-breadcrumb {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 8px;
+	font-size: 12.5px;
+}
+
+body.famma-nl-pdp-frame .famma-crumb-sep {
+	opacity: 0.5;
+}
+
+@media (max-width: 639px) {
+	body.famma-nl-pdp-frame .famma-product .woocommerce-breadcrumb > .famma-crumb:last-child,
+	body.famma-nl-pdp-frame .famma-product .woocommerce-breadcrumb > .famma-crumb-sep:nth-last-child(2) {
+		display: none;
+	}
+}
+
+/* Titres de section entre deux traits orange. */
+body.famma-nl-pdp-frame .famma-product .related > h2,
+body.famma-nl-pdp-frame .famma-product .upsells > h2,
+body.famma-nl-pdp-frame .famma-pdp-title {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: clamp(10px, 2vw, 18px);
+	margin-block: clamp(44px, 7vw, 72px) 26px;
+	color: var(--famma-blue);
+	font-size: clamp(21px, 2.4vw, 26px);
+	font-weight: var(--fw-semibold, 600);
+	line-height: 1.3;
+	text-align: center;
+	text-wrap: balance;
+}
+
+body.famma-nl-pdp-frame .famma-product .related > h2::before,
+body.famma-nl-pdp-frame .famma-product .related > h2::after,
+body.famma-nl-pdp-frame .famma-product .upsells > h2::before,
+body.famma-nl-pdp-frame .famma-product .upsells > h2::after,
+body.famma-nl-pdp-frame .famma-pdp-title::before,
+body.famma-nl-pdp-frame .famma-pdp-title::after {
+	content: "";
+	flex: none;
+	inline-size: clamp(22px, 4vw, 44px);
+	block-size: 3px;
+	background: var(--famma-orange);
+}
+
+/* Carte WhatsApp : verte, l'icône seule, sans flèche. */
+body.famma-nl-pdp-frame .famma-product .famma-wa-card {
+	gap: 12px;
+	padding: 12px 14px;
+	border-color: #D8EFDF;
+	border-radius: 12px;
+	background: #F3FBF5;
+	color: #0B1F3A;
+}
+
+body.famma-nl-pdp-frame .famma-product .famma-wa-card__mark {
+	inline-size: 24px;
+	block-size: 24px;
+	background: none;
+	color: #157A45;
+}
+
+body.famma-nl-pdp-frame .famma-product .famma-wa-card__mark svg {
+	inline-size: 24px;
+	block-size: 24px;
+}
+
+body.famma-nl-pdp-frame .famma-product .famma-wa-card__title {
+	font-weight: var(--fw-semibold, 600);
+}
+
+body.famma-nl-pdp-frame .famma-product .famma-wa-card__chevron {
+	display: none;
+}
+
+/* Trois produits similaires : le premier en grand sur téléphone. */
+body.famma-nl-pdp-frame .famma-product .related ul.products {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+	max-inline-size: 960px;
+	margin-inline: auto;
+}
+
+@media (max-width: 759px) {
+	body.famma-nl-pdp-frame .famma-product .related ul.products > li:first-child {
+		display: grid;
+		grid-column: 1 / -1;
+		grid-template-columns: minmax(0, 44%) minmax(0, 1fr);
+		align-items: stretch;
+	}
+
+	body.famma-nl-pdp-frame .famma-product .related ul.products > li:first-child > a:first-of-type img {
+		block-size: 100%;
+		aspect-ratio: auto;
+		object-fit: cover;
+	}
+}
+
+@media (min-width: 760px) {
+	body.famma-nl-pdp-frame .famma-product .related ul.products {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 16px;
+	}
+}
+
+@media (hover: hover) {
+	body.famma-nl-pdp-frame .famma-product .related ul.products > li {
+		transition: transform 420ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 420ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+
+	body.famma-nl-pdp-frame .famma-product .related ul.products > li:hover {
+		transform: translateY(-5px);
+		box-shadow: 0 8px 24px rgba(11, 31, 58, 0.14);
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+
+	/* Logo : clignement, antenne, étincelles (mêmes gestes que l'accueil). */
+	body.famma-nl-pdp-frame .famma-lockup__mark rect {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: famma-pdp-blink 7s infinite;
+	}
+
+	body.famma-nl-pdp-frame .famma-lockup__mark > path:nth-of-type(2),
+	body.famma-nl-pdp-frame .famma-lockup__mark > circle {
+		transform-box: view-box;
+		transform-origin: 54px 28px;
+		animation: famma-pdp-antenna 7s infinite;
+	}
+
+	body.famma-nl-pdp-frame .famma-lockup__mark g path {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: famma-pdp-twinkle 3.4s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+	}
+
+	body.famma-nl-pdp-frame .famma-lockup__mark g path:nth-child(2) { animation-delay: 0.25s; }
+	body.famma-nl-pdp-frame .famma-lockup__mark g path:nth-child(3) { animation-delay: 0.5s; }
+}
+
+/* Liés au défilement : CSS seul, navigateurs récents ; les autres voient tout. */
+@supports (animation-timeline: scroll()) {
+	@media (prefers-reduced-motion: no-preference) {
+		body.famma-nl-pdp-frame::before {
+			content: "";
+			position: fixed;
+			inset-block-start: var(--wp-admin--admin-bar--height, 0px);
+			inset-inline: 0;
+			z-index: calc(var(--z-header, 400) + 1);
+			block-size: 3px;
+			background: var(--famma-orange);
+			transform: scaleX(0);
+			transform-origin: left center;
+			pointer-events: none;
+			animation: famma-pdp-progress linear both;
+			animation-timeline: scroll(root);
+		}
+
+		[dir="rtl"] body.famma-nl-pdp-frame::before {
+			transform-origin: right center;
+		}
+	}
+}
+
+@supports (animation-timeline: view()) {
+	@media (prefers-reduced-motion: no-preference) {
+		body.famma-nl-pdp-frame .famma-product .related > h2::before,
+		body.famma-nl-pdp-frame .famma-product .related > h2::after,
+		body.famma-nl-pdp-frame .famma-pdp-title::before,
+		body.famma-nl-pdp-frame .famma-pdp-title::after {
+			animation: famma-pdp-stretch linear both;
+			animation-timeline: view();
+			animation-range: entry 0% entry 90%;
+		}
+
+		body.famma-nl-pdp-frame .famma-product .related ul.products > li {
+			animation: famma-pdp-pop linear both;
+			animation-timeline: view();
+			animation-range: entry 0% entry 70%;
+		}
+	}
+}
+
+@keyframes famma-pdp-progress { to { transform: scaleX(1); } }
+@keyframes famma-pdp-stretch { from { transform: scaleX(0); } }
+@keyframes famma-pdp-pop { from { opacity: 0; transform: translateY(16px) scale(0.94); } }
+@keyframes famma-pdp-blink { 0%, 91%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.12); } }
+@keyframes famma-pdp-antenna { 0%, 88%, 100% { transform: rotate(0); } 91% { transform: rotate(-9deg); } 94% { transform: rotate(7deg); } 97% { transform: rotate(-3deg); } }
+@keyframes famma-pdp-twinkle { 0%, 70%, 100% { opacity: 1; transform: scale(1); } 82% { opacity: 0.25; transform: scale(0.55); } }

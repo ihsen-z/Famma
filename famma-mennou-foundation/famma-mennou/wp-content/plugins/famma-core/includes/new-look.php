@@ -145,6 +145,21 @@ final class New_Look {
 				'label' => __( 'Fiche produit : bande « Livraison 0 DT · Avant réception 0 DT »', 'famma-core' ),
 				'help'  => __( 'Sous le prix, un petit tableau : prix du produit, livraison 0 DT, 0 DT avant de recevoir, montant à payer au livreur. Les zéros ne s’affichent que s’ils sont vrais (livraison gratuite et paiement à la livraison activés dans WooCommerce). Textes dans « Fiche produit ».', 'famma-core' ),
 			),
+
+			/*
+			 * Fiche produit, lot 44 (14/11/2026). Entrées provisoires : le
+			 * registre par page (`New_Look_Bricks_Product`, session « admin
+			 * nouveau look », lot 48) les reprendra avec summary = la première
+			 * phrase de l'aide, needs, texts et wait vides.
+			 */
+			'pdp_gallery'  => array(
+				'label' => __( 'Fiche produit : galerie de la maquette', 'famma-core' ),
+				'help'  => __( 'Sur toutes les fiches : photo dans un cadre arrondi qui s’ouvre à l’arrivée, compteur « 2 / 5 » sur la photo, cadre orange qui glisse d’une vignette à l’autre, et sur ordinateur des flèches posées sur la photo et un zoom qui suit la souris. Les infos à droite montent l’une après l’autre. Un produit à une seule photo n’a ni compteur ni vignettes. La loupe plein écran de WooCommerce reste. Désactivé d’office si le visiteur a demandé moins d’animations.', 'famma-core' ),
+			),
+			'pdp_frame'    => array(
+				'label' => __( 'Fiche produit : cadre de la maquette', 'famma-core' ),
+				'help'  => __( 'Sur toutes les fiches : barre orange d’avancement de la lecture en haut de l’écran, logo qui cligne de l’œil, fil d’Ariane sans le nom du produit sur téléphone, titres de section entre deux traits orange, carte WhatsApp verte sans flèche, et trois produits similaires (le premier en grand sur téléphone, trois colonnes sur ordinateur) qui apparaissent au défilement. Aucun texte ne change.', 'famma-core' ),
+			),
 			'home_polish'  => array(
 				'label' => __( 'Accueil : mise en page de la maquette', 'famma-core' ),
 				'help'  => __( 'Sur la page d’accueil : bouton « Commander » juste sous le nom sur téléphone, rayons en grille, nouveautés sur deux colonnes, questions fréquentes avec chevrons, carte WhatsApp verte, cartes « Pourquoi FAMMA » et infolettre claire. Seuls l’ordre et le dessin changent : les textes restent ceux de l’éditeur.', 'famma-core' ),
