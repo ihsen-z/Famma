@@ -34,7 +34,7 @@ function famma_child_pdp_part( string $part ): bool {
 }
 
 /**
- * Charge la feuille et les scripts des lots 44 et 45.
+ * Charge la feuille et les scripts des lots 44 à 47.
  *
  * Une seule feuille pour toutes les briques de la fiche, derrière
  * `famma-product` (elle l'ajuste). Scripts différés en pied de page, sans
@@ -70,16 +70,21 @@ function famma_child_pdp_enqueue(): void {
 		'new-look-pdp-buy'      => (bool) array_intersect( array( 'pdp_buy', 'pdp_form', 'pdp_dock' ), $parts ),
 	);
 
+	// Copies allégées (`assets/js/min/`, scripts/build-pdp-min.py), sources commentées avec SCRIPT_DEBUG.
+	$light = ! ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG );
+
 	foreach ( $scripts as $name => $wanted ) {
-		if ( ! $wanted || ! file_exists( $dir . '/assets/js/' . $name . '.js' ) ) {
+		$file = '/assets/js/' . ( $light && file_exists( $dir . '/assets/js/min/' . $name . '.js' ) ? 'min/' : '' ) . $name . '.js';
+
+		if ( ! $wanted || ! file_exists( $dir . $file ) ) {
 			continue;
 		}
 
 		wp_enqueue_script(
 			'famma-' . $name,
-			$uri . '/assets/js/' . $name . '.js',
+			$uri . $file,
 			array(),
-			(string) filemtime( $dir . '/assets/js/' . $name . '.js' ),
+			(string) filemtime( $dir . $file ),
 			array(
 				'in_footer' => true,
 				'strategy'  => 'defer',

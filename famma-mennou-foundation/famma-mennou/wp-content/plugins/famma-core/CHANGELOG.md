@@ -52,6 +52,11 @@ d'abord ») a sa case à part (`pdp_buy`), à trancher à la revue du 18/11.
   formulaire express (pas sur un produit variable) ; défilement du récit et de
   l'anatomie : mesures groupées, anatomie ignorée hors de l'écran. Banc :
   commande 734 payée seulement à « livrée », annulée + test.
+- Poids : le thème sert des copies allégées des 4 scripts de la fiche
+  (`assets/js/min/`, sans commentaires, générées par
+  `scripts/build-pdp-min.py`, sources commentées servies avec `SCRIPT_DEBUG`).
+  Les 10 cases cochées : 7,2 Ko de scripts compressés au lieu de 10,4 Ko,
+  dans le budget de +8 Ko. Banc : commande 735 payée seulement à « livrée ».
 
 ## 0.3.37 — 2026-11-14 (fiche produit de la maquette, lot 46) · thème famma-child 0.2.20
 
