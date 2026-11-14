@@ -1,0 +1,305 @@
+/*
+ * FAMMA — panier, nouveau look, case `cart_look` (maquette panier du 14/11).
+ *
+ * Chargée après `cart.css`, seulement sur le panier et case cochée
+ * (inc/new-look-cart.php). Chaque règle est préfixée par la classe du corps
+ * `famma-nl-cart-look` : elle passe devant `cart.css` sans `!important`, et la
+ * case décochée rend le panier d'avant.
+ *
+ * Ce qui change :
+ * - la carte d'article : corbeille ronde dans le coin, nom sur toute la
+ *   largeur, quantité et total en bas ;
+ * - la mise en page : `.cart-collaterals` passe en `display: contents`, ses
+ *   deux enfants (récapitulatif, aide WhatsApp) se rangent dans la grille de
+ *   Kadence. Sur ordinateur, le récapitulatif occupe seul la colonne de
+ *   droite et reste à l'écran, l'aide passe sous les articles ;
+ * - les ventes croisées, que Kadence sort de `.cart-collaterals` pour les
+ *   poser sous la grille : rangée qui défile sur téléphone ;
+ * - le panier vide avec la mascotte.
+ *
+ * Les blocs que WooCommerce remplace à chaque mise à jour (formulaire et
+ * `.cart_totals`) gardent leurs classes : rien ici ne dépend d'un script.
+ * Propriétés logiques seulement (arabe).
+ */
+
+/* ------------------------------------------------------------
+   Phrase sous l'en-tête
+   ------------------------------------------------------------ */
+
+.famma-nl-cart-look .famma-cart-lead {
+	margin: 0 0 var(--sp-4);
+	color: var(--famma-text-2);
+	font-size: 0.9375rem;
+	line-height: 1.5;
+	text-wrap: pretty;
+}
+
+/* ------------------------------------------------------------
+   Grille de la page
+   ------------------------------------------------------------ */
+
+.famma-nl-cart-look.woocommerce-cart .kadence-woo-cart-form-wrap {
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-areas:
+		"form"
+		"tot"
+		"help";
+	row-gap: var(--sp-6);
+}
+
+.famma-nl-cart-look.woocommerce-cart .kadence-woo-cart-form-wrap > form {
+	grid-area: form;
+}
+
+.famma-nl-cart-look.woocommerce-cart .kadence-woo-cart-form-wrap > .cart-collaterals {
+	display: contents;
+}
+
+.famma-nl-cart-look.woocommerce-cart .cart-collaterals .cart_totals {
+	grid-area: tot;
+	border-radius: var(--famma-radius-lg);
+	box-shadow: var(--elev-1);
+}
+
+.famma-nl-cart-look.woocommerce-cart .cart-collaterals > .famma-tunnel-help {
+	grid-area: help;
+	margin: 0;
+	border-radius: var(--famma-radius-lg);
+}
+
+@media (min-width: 1000px) {
+	.famma-nl-cart-look.woocommerce-cart .kadence-woo-cart-form-wrap {
+		grid-template-columns: minmax(0, 1fr) 360px;
+		grid-template-rows: auto 1fr;
+		grid-template-areas:
+			"form tot"
+			"help tot";
+		column-gap: var(--sp-8);
+	}
+
+	/* Collant sur le récapitulatif seul : `.cart-collaterals` n'a plus de boîte. */
+	.famma-nl-cart-look.woocommerce-cart .kadence-woo-cart-form-wrap > .cart-collaterals {
+		position: static;
+	}
+
+	.famma-nl-cart-look.woocommerce-cart .cart-collaterals .cart_totals {
+		position: sticky;
+		inset-block-start: calc(var(--header-h) + var(--sp-6));
+		align-self: start;
+	}
+}
+
+/* ------------------------------------------------------------
+   Carte d'article
+   ------------------------------------------------------------ */
+
+.famma-nl-cart-look.woocommerce-cart table.shop_table.cart tr.cart_item {
+	position: relative;
+	grid-template-columns: 84px minmax(0, 1fr) auto;
+	grid-template-rows: auto auto 1fr auto;
+	grid-template-areas:
+		"thumb name  name"
+		"thumb price price"
+		"thumb .     ."
+		"qty   qty   total";
+	gap: 4px 14px;
+	padding: 14px;
+	border-radius: var(--famma-radius-lg);
+	box-shadow: var(--elev-1);
+}
+
+/* Place pour la corbeille, dans le coin de la carte. */
+.famma-nl-cart-look.woocommerce-cart table.shop_table.cart tr.cart_item td.product-name {
+	gap: 4px;
+	padding-inline-end: 36px;
+}
+
+.famma-nl-cart-look.woocommerce-cart table.shop_table.cart td.product-name > a {
+	font-weight: var(--fw-semibold);
+	line-height: 1.35;
+	unicode-bidi: plaintext;
+	text-wrap: pretty;
+}
+
+.famma-nl-cart-look.woocommerce-cart table.shop_table.cart tr.cart_item td.product-quantity,
+.famma-nl-cart-look.woocommerce-cart table.shop_table.cart tr.cart_item td.product-subtotal {
+	align-self: end;
+	margin-block-start: var(--sp-3);
+}
+
+.famma-nl-cart-look.woocommerce-cart table.shop_table.cart tr.cart_item td.product-quantity {
+	justify-self: start;
+}
+
+.famma-nl-cart-look.woocommerce-cart table.shop_table.cart tr.cart_item td.product-subtotal {
+	justify-self: end;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Prix barré sous le total de la ligne, pas à côté : il poussait le total
+   contre le sélecteur sur téléphone. */
+.famma-nl-cart-look.woocommerce-cart table.shop_table.cart td.product-subtotal .famma-cart__old {
+	display: block;
+	margin-inline-start: 0;
+	text-align: end;
+}
+
+/* Bouton rond (corbeille) dans le coin : le libellé « Supprimer » reste lu par les
+   lecteurs d'écran (et le lien garde l'`aria-label` de WooCommerce). */
+.famma-nl-cart-look.woocommerce-cart table.shop_table.cart tr.cart_item td.product-remove {
+	position: absolute;
+	inset-block-start: 6px;
+	inset-inline-end: 6px;
+	z-index: 1;
+}
+
+.famma-nl-cart-look.woocommerce-cart table.shop_table.cart td.product-remove a.remove {
+	justify-content: center;
+	inline-size: 44px;
+	block-size: 44px;
+	min-block-size: 0;
+	border-radius: 50%;
+	transition: background-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out);
+}
+
+.famma-nl-cart-look.woocommerce-cart table.shop_table.cart td.product-remove a.remove:hover,
+.famma-nl-cart-look.woocommerce-cart table.shop_table.cart td.product-remove a.remove:focus-visible {
+	background: var(--famma-danger-soft) !important; /* `!important` : contre celui de cart.css (et de WooCommerce). */
+}
+
+.famma-nl-cart-look.woocommerce-cart table.shop_table.cart td.product-remove a.remove span {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.famma-nl-cart-look.woocommerce-cart table.shop_table.cart td.product-remove .famma-icon {
+	inline-size: 18px;
+	block-size: 18px;
+}
+
+@media (min-width: 600px) {
+	.famma-nl-cart-look.woocommerce-cart table.shop_table.cart tr.cart_item {
+		grid-template-columns: 112px minmax(0, 1fr) auto;
+		grid-template-rows: auto auto 1fr;
+		grid-template-areas:
+			"thumb name  name"
+			"thumb price price"
+			"thumb qty   total";
+		column-gap: 18px;
+		padding: var(--sp-4);
+	}
+
+	.famma-nl-cart-look.woocommerce-cart table.shop_table.cart tr.cart_item td.product-price {
+		justify-self: start;
+	}
+}
+
+/* ------------------------------------------------------------
+   « Complétez votre commande » : rangée qui défile sur téléphone
+   ------------------------------------------------------------ */
+
+.famma-nl-cart-look.woocommerce-cart .cross-sells > h2 {
+	margin-block-end: var(--sp-3);
+}
+
+.famma-nl-cart-look.woocommerce-cart .cross-sells ul.products {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: minmax(160px, 58%);
+	grid-template-columns: none;
+	gap: var(--sp-3);
+	margin: 0;
+	padding-block-end: 6px;
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+	scroll-snap-type: x mandatory;
+	scrollbar-width: thin;
+}
+
+.famma-nl-cart-look.woocommerce-cart .cross-sells ul.products > li.product {
+	inline-size: auto;
+	margin: 0;
+	scroll-snap-align: start;
+}
+
+@media (min-width: 640px) {
+	.famma-nl-cart-look.woocommerce-cart .cross-sells ul.products {
+		grid-auto-flow: row;
+		grid-auto-columns: auto;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		overflow: visible;
+	}
+}
+
+@media (min-width: 1000px) {
+	.famma-nl-cart-look.woocommerce-cart .cross-sells ul.products {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+
+/* ------------------------------------------------------------
+   Panier vide : la mascotte à la place de l'icône
+   ------------------------------------------------------------ */
+
+.famma-cart-empty--look .famma-acct-mascot {
+	inline-size: 96px;
+	block-size: 96px;
+	color: var(--famma-ink);
+}
+
+.famma-cart-empty--look .famma-acct-mascot__eye {
+	transform-box: fill-box;
+	transform-origin: center;
+}
+
+.famma-cart-empty--look .famma-acct-mascot__ant {
+	transform-box: view-box;
+	transform-origin: 54px 28px;
+}
+
+.famma-cart-empty--look .famma-cart-empty__title {
+	font-size: 1.375rem;
+	font-weight: var(--fw-bold);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.famma-cart-empty--look .famma-acct-mascot__eye {
+		animation: famma-cart-blink 7s infinite;
+	}
+
+	.famma-cart-empty--look .famma-acct-mascot__ant {
+		animation: famma-cart-antenna 7s infinite;
+	}
+}
+
+@keyframes famma-cart-blink {
+	0%,
+	91%,
+	100% {
+		transform: scaleY(1);
+	}
+
+	95% {
+		transform: scaleY(0.12);
+	}
+}
+
+@keyframes famma-cart-antenna {
+	0%,
+	88%,
+	100% {
+		transform: rotate(0);
+	}
+
+	91% {
+		transform: rotate(-9deg);
+	}
+
+	94% {
+		transform: rotate(7deg);
+	}
+}

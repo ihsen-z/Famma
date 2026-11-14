@@ -3,7 +3,7 @@
  * Registre des briques du nouveau look.
  *
  * Une brique = une entrée dans le fichier de sa page
- * (`new-look-bricks-{site,home,shop,product,account}.php`). Chaque entrée
+ * (`new-look-bricks-{site,home,shop,product,cart,account}.php`). Chaque entrée
  * déclare :
  * - `title`   : titre court, affiché à côté de l'interrupteur ;
  * - `summary` : une phrase, ce que le client voit ;
@@ -43,6 +43,7 @@ final class New_Look_Registry {
 		'home'    => New_Look_Bricks_Home::class,
 		'shop'    => New_Look_Bricks_Shop::class,
 		'product' => New_Look_Bricks_Product::class,
+		'cart'    => New_Look_Bricks_Cart::class,
 		'account' => New_Look_Bricks_Account::class,
 	);
 

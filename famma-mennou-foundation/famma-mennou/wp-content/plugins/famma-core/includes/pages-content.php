@@ -69,11 +69,16 @@ final class Pages_Content {
 	public const OPTION_ACCOUNT = 'famma_page_account';
 
 	/**
+	 * Option abritant les textes du panier (schéma : `Cart_Content`).
+	 */
+	public const OPTION_CART = 'famma_page_cart';
+
+	/**
 	 * Pages gérées par cet écran, dans leur ordre d'affichage.
 	 *
 	 * @var array<int, string>
 	 */
-	private const PAGES = array( 'home', 'shop', 'account', 'about', 'contact', 'delivery', 'returns', 'product' );
+	private const PAGES = array( 'home', 'shop', 'account', 'about', 'contact', 'delivery', 'returns', 'product', 'cart' );
 
 	/**
 	 * Pages dont les textes se modifient dans FAMMA → Nouveau look.
@@ -84,7 +89,7 @@ final class Pages_Content {
 	 *
 	 * @var array<int, string>
 	 */
-	public const MOVED = array( 'home', 'shop', 'account', 'product' );
+	public const MOVED = array( 'home', 'shop', 'account', 'product', 'cart' );
 
 	/**
 	 * Groupe de réglages, au sens de la Settings API.
@@ -388,6 +393,7 @@ final class Pages_Content {
 			'delivery' => Delivery_Content::schema(),
 			'returns'  => Returns_Content::schema(),
 			'shop'     => Shop_Content::schema(),
+			'cart'     => Cart_Content::schema(),
 			'account'  => array_merge( Account_Profile::schema(), Account_Auth::schema(), Account_Panels::schema(), Account_Favs::schema(), Account_Phone_Texts::schema(), Account_Addresses_Texts::schema(), Account_Privacy_Texts::schema(), Account_Prefs_Texts::schema(), Account_Welcome::schema(), Account_Finish::schema(), Order_Track::schema() ),
 			default    => self::contact_schema(),
 		};
@@ -418,6 +424,7 @@ final class Pages_Content {
 			'returns'  => self::OPTION_RETURNS,
 			'shop'     => self::OPTION_SHOP,
 			'account'  => self::OPTION_ACCOUNT,
+			'cart'     => self::OPTION_CART,
 			default    => self::OPTION_CONTACT,
 		};
 	}
@@ -437,6 +444,7 @@ final class Pages_Content {
 			'returns'  => __( 'Page Retours', 'famma-core' ),
 			'shop'     => __( 'Boutique — bloc « Comment commander » (nouveau look)', 'famma-core' ),
 			'account'  => __( 'Mon compte — en-tête, onglets et suivi de commande (nouveau look)', 'famma-core' ),
+			'cart'     => __( 'Panier (nouveau look)', 'famma-core' ),
 			default    => __( 'Page Contact', 'famma-core' ),
 		};
 	}

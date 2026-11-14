@@ -1,5 +1,39 @@
 # Changelog — FAMMA Core
 
+## 0.3.42 — 2026-11-14 (panier de la maquette, étape 1 du lot « Panier ») · thème famma-child 0.2.25
+
+Étape 1 sur 4 du plan « Panier » (Docs BtcJ19SXmKQ96q9UkgoYeJ) : la
+présentation de la maquette panier du 14/11. Une nouvelle case, livrée
+décochée. Pas mis en ligne.
+
+- **Onglet « Panier »** dans FAMMA → Nouveau look (`New_Look_Bricks_Cart`,
+  clé de page `cart`, lien « Voir le panier ») ; ses textes vivent dans
+  l'option `famma_page_cart` (`Cart_Content`), enregistrée par
+  `Pages_Content` comme les autres pages déplacées.
+- **`cart_look` — présentation de la maquette** : cartes d'article plus
+  compactes (corbeille ronde dans le coin, quantité et total en bas, prix
+  barré sous le total), phrase « Aujourd'hui, vous payez 0 DT » sous
+  « Mon panier » seulement si le paiement à la livraison est activé, sur
+  ordinateur récapitulatif qui reste à l'écran et aide WhatsApp sous les
+  articles, ventes croisées en rangée qui défile sur téléphone, panier vide
+  avec la mascotte. Le tableau, les mises à jour AJAX, la suppression avec
+  « Annuler », les prix et la commande restent ceux de WooCommerce ; aucun
+  gabarit copié.
+- Textes `lead`, `empty_title`, `empty_text` (FR + derja à relire) ; phrase
+  vidée : elle disparaît ; titres du panier vide vidés : ceux du thème.
+- Thème 0.2.25 : `inc/new-look-cart.php`, feuille
+  `assets/css/new-look-cart.css` (chargée seulement sur le panier, case
+  cochée) ; le panier a sa propre liste de briques
+  (`famma_child_new_look_cart_parts()`), comme la fiche : ni `new-look.css`
+  ni `new-look.js` n'y sont chargés.
+- Banc `famma-qa-admin` : case décochée, panier identique à avant (seuls
+  messages et identifiants aléatoires diffèrent) ; case cochée à 375 px et
+  1280 px, en français et en arabe, sans défilement horizontal ; + / −,
+  retrait, « Annuler », dernier article retiré → panier vide avec la
+  mascotte ; phrase absente quand le paiement à la livraison est coupé ;
+  texte modifié et enregistré depuis l'onglet ; commande COD 757 :
+  livraison 0, payée seulement à « livrée ».
+
 ## 0.3.41 — 2026-11-14 (fiche produit de la maquette, lot 51) · thème famma-child 0.2.24
 
 Lot 51 : la fenêtre « après la commande » de la maquette, sur la page merci

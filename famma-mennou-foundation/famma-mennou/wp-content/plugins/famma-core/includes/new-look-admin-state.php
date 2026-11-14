@@ -111,6 +111,11 @@ final class New_Look_Admin_State {
 				'intro' => __( 'Les mêmes réglages et les mêmes textes valent pour toutes les fiches produit.', 'famma-core' ),
 				'view'  => __( 'Voir une fiche', 'famma-core' ),
 			),
+			'cart'    => array(
+				'title' => __( 'Panier', 'famma-core' ),
+				'intro' => __( 'La page panier. Ajouter un article au panier pour la voir.', 'famma-core' ),
+				'view'  => __( 'Voir le panier', 'famma-core' ),
+			),
 			'account' => array(
 				'title' => __( 'Mon compte', 'famma-core' ),
 				'intro' => __( 'L’espace client. « Présentation de la maquette » porte la plupart des autres réglages.', 'famma-core' ),
@@ -148,7 +153,9 @@ final class New_Look_Admin_State {
 				)
 			);
 			$url = is_array( $ids ) && ! empty( $ids ) ? (string) get_permalink( (int) $ids[0] ) : '';
-		} elseif ( 'shop' !== $page && 'account' !== $page && 'product' !== $page ) {
+		} elseif ( 'cart' === $page && function_exists( 'wc_get_cart_url' ) ) {
+			$url = wc_get_cart_url();
+		} elseif ( ! in_array( $page, array( 'shop', 'account', 'product', 'cart' ), true ) ) {
 			$url = home_url( '/' );
 		}
 

@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.3.41
+ * Version:           0.3.42
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.3.41' );
+define( 'FAMMA_CORE_VERSION', '0.3.42' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -47,6 +47,7 @@ require_once __DIR__ . '/includes/new-look-bricks-home.php';
 require_once __DIR__ . '/includes/new-look-bricks-shop.php';
 require_once __DIR__ . '/includes/new-look-bricks-product.php';
 require_once __DIR__ . '/includes/new-look-bricks-account.php';
+require_once __DIR__ . '/includes/new-look-bricks-cart.php';
 require_once __DIR__ . '/includes/new-look-admin.php';
 require_once __DIR__ . '/includes/new-look-admin-state.php';
 require_once __DIR__ . '/includes/new-look-admin-view.php';
@@ -56,6 +57,7 @@ require_once __DIR__ . '/includes/cat-icons.php';
 require_once __DIR__ . '/includes/delivery-content.php';
 require_once __DIR__ . '/includes/returns-content.php';
 require_once __DIR__ . '/includes/shop-content.php';
+require_once __DIR__ . '/includes/cart-content.php';
 require_once __DIR__ . '/includes/order-track.php';
 require_once __DIR__ . '/includes/account-profile.php';
 require_once __DIR__ . '/includes/account-auth.php';

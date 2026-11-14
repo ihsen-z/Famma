@@ -77,6 +77,11 @@ function famma_child_new_look_parts(): array {
 		return array_values( array_filter( famma_child_new_look_product_parts(), 'famma_child_new_look' ) );
 	}
 
+	if ( function_exists( 'is_cart' ) && is_cart() ) {
+		// Le panier aussi a les siennes (lot Panier) : jamais celles de la boutique ni new-look.css.
+		return array_values( array_filter( famma_child_new_look_cart_parts(), 'famma_child_new_look' ) );
+	}
+
 	if ( ! famma_child_new_look_page() ) {
 		return array();
 	}
@@ -111,6 +116,18 @@ function famma_child_new_look_parts(): array {
  */
 function famma_child_new_look_product_parts(): array {
 	return array( 'ledger', 'pdp_gallery', 'pdp_frame', 'pdp_pay', 'pdp_details', 'pdp_story', 'pdp_anatomy', 'pdp_buy', 'pdp_form', 'pdp_points', 'pdp_dock', 'pdp_altsize', 'pdp_labels', 'pdp_sizes' );
+}
+
+/**
+ * Briques propres au panier.
+ *
+ * Comme celles de la fiche, aucune n'entraîne `new-look.css` ni
+ * `new-look.js` : voir `inc/new-look-cart.php`.
+ *
+ * @return array<int, string>
+ */
+function famma_child_new_look_cart_parts(): array {
+	return array( 'cart_look' );
 }
 
 /**
@@ -194,7 +211,7 @@ function famma_child_enqueue_new_look(): void {
 		);
 	}
 
-	if ( array_diff( $parts, famma_child_new_look_product_parts() ) && file_exists( $dir . '/assets/css/new-look.css' ) ) {
+	if ( array_diff( $parts, famma_child_new_look_product_parts(), famma_child_new_look_cart_parts() ) && file_exists( $dir . '/assets/css/new-look.css' ) ) {
 		wp_enqueue_style(
 			'famma-new-look',
 			$uri . '/assets/css/new-look.css',

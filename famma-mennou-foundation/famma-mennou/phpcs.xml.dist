@@ -515,6 +515,13 @@
 				<element value="famma_child_pdp_breadcrumb"/>
 				<element value="famma_child_pdp_enqueue"/>
 				<element value="famma_child_pdp_part"/>
+				<element value="famma_child_cart_part"/>
+				<element value="famma_child_cart_text"/>
+				<element value="famma_child_cart_lead"/>
+				<element value="famma_child_cart_empty_look"/>
+				<element value="famma_child_cart_swap_empty_look"/>
+				<element value="famma_child_cart_enqueue_look"/>
+				<element value="famma_child_new_look_cart_parts"/>
 				<element value="famma_child_pdp_related_args"/>
 				<element value="famma_child_pdp_details"/>
 				<element value="famma_child_pdp_details_capture"/>
