@@ -26,6 +26,17 @@ fenêtre elle-même). Une nouvelle case, livrée décochée. Pas mis en ligne.
   360 px sans défilement de la page, payée seulement à « livrée », annulée +
   test ; case décochée : ancien bloc inchangé, feuille non chargée, fiches
   identiques octet pour octet au lot 50.
+- Corrections de la relecture des lots 50 et 51 :
+  - titres du tableau des mesures illisibles (blanc sur fond transparent :
+    `--famma-band` n'existe que dans deux bandes) : marine par défaut ;
+  - volet « Les tailles » juste après la description (priorité 12 ; la 15
+    est celle des caractéristiques) ;
+  - saisie encadrée de barres (« | Taille | Tour | ») : plus de colonne vide ;
+  - langue du tableau posée sur le tableau, pas sur la région nommée dans la
+    langue de la page ;
+  - page merci : numéro isolé (`<bdi>`) et aligné comme le reste en arabe,
+    liste annoncée comme telle (`role="list"`), pas de cadre vide sans
+    téléphone.
 
 ## 0.3.40 — 2026-11-14 (fiche produit de la maquette, lot 50) · thème famma-child 0.2.23
 

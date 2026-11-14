@@ -84,6 +84,11 @@ final class Product_Size_Chart {
 				continue;
 			}
 
+			// Une barre en début et en fin de ligne (forme des tableaux en texte) ne compte pas.
+			$line = trim( $line );
+			$line = '|' === substr( $line, 0, 1 ) ? substr( $line, 1 ) : $line;
+			$line = '|' === substr( $line, -1 ) ? substr( $line, 0, -1 ) : $line;
+
 			$cells = array_map(
 				static function ( string $cell ): string {
 					return trim( sanitize_text_field( $cell ) );

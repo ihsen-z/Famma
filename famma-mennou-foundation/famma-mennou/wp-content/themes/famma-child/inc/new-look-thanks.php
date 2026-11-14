@@ -110,19 +110,21 @@ function famma_child_thanks_plan( $order_id ): void {
 	}
 
 	if ( array() !== $steps ) {
-		echo '<ol class="famma-thx__plan">';
+		// role="list" : Safari retire la liste aux lecteurs d'écran quand list-style vaut none.
+		echo '<ol class="famma-thx__plan" role="list">';
 		foreach ( $steps as $index => $step ) {
 			printf( '<li><i aria-hidden="true">%1$d</i><span>%2$s</span></li>', (int) $index + 1, esc_html( $step ) );
 		}
 		echo '</ol>';
 	}
 
-	echo '<dl class="famma-confirm__facts">';
-
+	$facts = '';
 	$phone = $order->get_billing_phone();
+
+	// Le numéro garde son sens de lecture, aligné comme le reste de la page.
 	if ( '' !== $phone ) {
-		printf(
-			'<dt>%1$s</dt><dd dir="ltr">%2$s</dd>',
+		$facts .= sprintf(
+			'<dt>%1$s</dt><dd><bdi dir="ltr">%2$s</bdi></dd>',
 			esc_html__( 'Numéro à appeler', 'famma-child' ),
 			esc_html( $phone )
 		);
@@ -130,14 +132,16 @@ function famma_child_thanks_plan( $order_id ): void {
 
 	// Le montant n'est rappelé ici que si aucune étape ne le donne déjà.
 	if ( ! $said ) {
-		printf(
+		$facts .= sprintf(
 			'<dt>%1$s</dt><dd>%2$s</dd>',
 			esc_html__( 'À préparer en espèces', 'famma-child' ),
 			wp_kses_post( wc_price( $order->get_total(), $price ) )
 		);
 	}
 
-	echo '</dl>';
+	if ( '' !== $facts ) {
+		echo '<dl class="famma-confirm__facts">' . $facts . '</dl>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- chaque morceau est échappé ci-dessus.
+	}
 
 	printf(
 		'<p class="famma-confirm__fix">%s</p>',

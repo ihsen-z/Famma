@@ -42,7 +42,8 @@ function famma_child_pdp_sizes_tab( $tabs ) {
 
 	$tabs['famma_sizes'] = array(
 		'title'    => $title,
-		'priority' => 15,
+		// Entre la description et les caractéristiques, voir l'ordre des onglets dans inc/product.php.
+		'priority' => 12,
 		'callback' => 'famma_child_pdp_sizes_panel',
 	);
 
@@ -137,7 +138,7 @@ function famma_child_pdp_sizes_table( array $chart ): string {
 
 	// Cadre atteignable au clavier : on peut le faire défiler avec les flèches.
 	return sprintf(
-		'<div class="famma-sizes__wrap" tabindex="0" role="region" aria-label="%1$s" %2$s><table class="famma-sizes__table"><thead><tr>%3$s</tr></thead><tbody>%4$s</tbody></table></div>',
+		'<div class="famma-sizes__wrap" tabindex="0" role="region" aria-label="%1$s"><table class="famma-sizes__table" %2$s><thead><tr>%3$s</tr></thead><tbody>%4$s</tbody></table></div>',
 		esc_attr( class_exists( '\Famma\Core\Product_Content' ) ? \Famma\Core\Product_Content::text( 'size_tab' ) : '' ),
 		famma_child_pdp_story_lang( $chart['lang'] ),
 		$head,

@@ -1439,8 +1439,9 @@ html:not([dir="rtl"]) body.famma-nl-pdp-labels .famma-sticky-cta__ar {
 	border-block-end: 0;
 }
 
+/* --famma-band n'est posée que dans les bandes « Quand payez-vous ? » et récit. */
 .famma-sizes__table thead th {
-	background: var(--famma-band);
+	background: var(--famma-band, #0B1F3A);
 	color: var(--famma-white);
 	font-weight: var(--fw-semibold);
 }
