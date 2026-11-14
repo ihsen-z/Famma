@@ -14,6 +14,11 @@
  * - `pdp_points` (n° 7) : description courte en entier sous la boîte d'achat ;
  * - `pdp_dock` (n° 18) : barre du bas enrichie (voir `famma_child_sticky_cta()`).
  *
+ * Lot 49, deux briques de plus :
+ * - `pdp_altsize` : lien « autre taille » sous les tailles (données du produit) ;
+ * - `pdp_labels` (n° 9) : intitulés du formulaire dans la langue de la page,
+ *   sans astérisques (feuille et script, rien ici).
+ *
  * Le formulaire express (famma-core, `express-order.js`) n'est pas modifié :
  * ses contrôles, son envoi et l'offre après achat restent les mêmes.
  *
@@ -34,6 +39,10 @@ function famma_child_pdp_buy_setup(): void {
 
 	if ( famma_child_pdp_part( 'pdp_buy' ) ) {
 		add_action( 'woocommerce_single_product_summary', 'famma_child_pdp_buy', 25 );
+	}
+
+	if ( famma_child_pdp_part( 'pdp_altsize' ) ) {
+		add_action( 'woocommerce_single_product_summary', 'famma_child_pdp_altsize', 25 );
 	}
 
 	// Sous la boîte d'achat express seulement : sans elle (produit variable, rupture), l'accroche reste à sa place.
@@ -117,6 +126,30 @@ function famma_child_pdp_buy(): void {
 		<?php endif; ?>
 	</div>
 	<?php
+}
+
+/**
+ * Lien « autre taille » (`pdp_altsize`, lot 49), saisi dans l'onglet produit
+ * « Fiche FAMMA ». Posé juste avant le formulaire express ; le script le
+ * range sous les tailles. Sans script, il reste lisible au-dessus du formulaire.
+ *
+ * @return void
+ */
+function famma_child_pdp_altsize(): void {
+	$product = wc_get_product();
+	$link    = $product instanceof WC_Product && class_exists( '\Famma\Core\Product_Alt_Size' ) ? \Famma\Core\Product_Alt_Size::link( $product ) : array();
+
+	if ( array() === $link ) {
+		return;
+	}
+
+	printf(
+		'<p class="famma-altsize" lang="%1$s" dir="%2$s" data-no-translation><a href="%3$s">%4$s</a></p>',
+		esc_attr( $link['lang'] ),
+		'ar' === $link['lang'] ? 'rtl' : 'ltr',
+		esc_url( $link['url'] ),
+		esc_html( $link['text'] )
+	);
 }
 
 /**

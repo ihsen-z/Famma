@@ -110,7 +110,7 @@ function famma_child_new_look_parts(): array {
  * @return array<int, string>
  */
 function famma_child_new_look_product_parts(): array {
-	return array( 'ledger', 'pdp_gallery', 'pdp_frame', 'pdp_pay', 'pdp_details', 'pdp_story', 'pdp_anatomy', 'pdp_buy', 'pdp_form', 'pdp_points', 'pdp_dock' );
+	return array( 'ledger', 'pdp_gallery', 'pdp_frame', 'pdp_pay', 'pdp_details', 'pdp_story', 'pdp_anatomy', 'pdp_buy', 'pdp_form', 'pdp_points', 'pdp_dock', 'pdp_altsize', 'pdp_labels' );
 }
 
 /**

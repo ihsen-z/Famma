@@ -1,5 +1,48 @@
 # Changelog — FAMMA Core
 
+## 0.3.39 — 2026-11-14 (fiche produit de la maquette, lot 49) · thème famma-child 0.2.22
+
+Lot 49 : finitions de la boîte d'achat, ce qui restait du rapport « Fiche
+produit en prod vs maquette » après les lots 44 à 47. Deux nouvelles cases,
+livrées décochées. Pas mis en ligne.
+
+- **`pdp_altsize` — lien « autre taille »** sous les tailles (exemple de la
+  maquette : « Vous portez S ou M ? Voir la Ceinture dorsale Pro »). Produit
+  proposé (recherche de produits WooCommerce) et phrase en français et en
+  derja, saisis dans l'onglet « Fiche FAMMA », bloc « Autre taille »
+  (`Product_Alt_Size_Admin`, branché sur la nouvelle action
+  `famma_story_panel_end`). Lecture `Product_Alt_Size` : le produit proposé
+  doit exister, être publié et visible, et ne pas être le produit lui-même ;
+  sinon, ou sans phrase, pas de lien. Méta `_famma_alt_size_*`. Nonce,
+  capacité `edit_product`, champs assainis, témoin de présence des champs
+  (rien n'est effacé si le bloc n'était pas dans le formulaire). Lien de
+  48 px, rangé sous les tailles par le script ; sans script, au-dessus du
+  formulaire.
+- **`pdp_labels` — formulaire dans la langue de la page (n° 9)** :
+  « Téléphone / الهاتف » devient « Téléphone » (ou « الهاتف » en arabe) pour
+  la taille, la quantité, le total, le téléphone, le nom et l'adresse ;
+  astérisques masqués (les champs restent obligatoires) ; sur la page
+  française, la ligne en derja de « Confirmer » et de la barre du bas est
+  masquée. À cocher seulement après le bilan du lot 23.
+- **Animations de la maquette** : étincelles quand une taille est choisie
+  (avec `pdp_buy`), éclair orange sur le gouvernorat choisi (avec
+  `pdp_form`). Rien avec moins d'animations demandé.
+- Le bouton « Confirmer » tournait déjà pendant l'envoi : rien à faire.
+- Non fait, à valider : la détection du gouvernorat à partir de l'adresse
+  (la maquette reconnaît la ville), qui demanderait une liste de villes par
+  gouvernorat à vérifier et changerait la valeur envoyée.
+- Thème 0.2.22 : `famma_child_pdp_altsize()`, script de la boîte d'achat et
+  feuille complétés ; script de la boîte d'achat chargé aussi avec
+  `pdp_altsize` ou `pdp_labels`. Poids, dix cases et ces deux cochées :
+  scripts 7,9 Ko compressés (copies allégées), feuille 8,0 Ko (l'ancienne
+  feuille de 7,5 Ko n'est plus chargée sur la fiche).
+- Banc `famma-qa-fiche` : lien rangé sous les tailles, en derja sur la page
+  arabe ; intitulés réduits en français et en arabe ; écran d'administration
+  (affichage, sans nonce, sans témoin, sans droit, produit lui-même ou
+  inexistant refusés, phrase assainie) ; commande COD 736 payée seulement à
+  « livrée », annulée + test ; cases décochées : fiches identiques octet pour
+  octet à la 0.3.38.
+
 ## 0.3.38 — 2026-11-14 (fiche produit de la maquette, lot 47) · thème famma-child 0.2.21
 
 Lot 47 du rapport « Fiche produit en prod vs maquette » (14/11) : boîte

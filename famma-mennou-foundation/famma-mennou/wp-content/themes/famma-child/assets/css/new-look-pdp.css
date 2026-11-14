@@ -1327,3 +1327,62 @@ body.famma-nl-pdp-form .famma-express__total {
 		display: inline-flex;
 	}
 }
+
+/* ==========================================================================
+   Lot 49 — finitions de la boîte d'achat
+   ========================================================================== */
+
+/* pdp_altsize : lien « autre taille », sous les tailles (cible tactile 48 px). */
+.famma-altsize {
+	margin: 0;
+}
+
+.famma-altsize a {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: 48px;
+	color: var(--famma-text-2);
+	font-size: 13px;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+/* pdp_labels : une seule langue (le script réduit le texte), sans astérisques ;
+   les champs restent `required`. */
+body.famma-nl-pdp-labels .famma-express__form abbr.required {
+	display: none;
+}
+
+/* Page française : la ligne en derja des boutons « Confirmer » et de la barre du bas. */
+html:not([dir="rtl"]) body.famma-nl-pdp-labels .famma-express__submit-ar,
+html:not([dir="rtl"]) body.famma-nl-pdp-labels .famma-sticky-cta__ar {
+	display: none;
+}
+
+/* Étincelles (taille choisie) : placées par le script en coordonnées d'écran. */
+.famma-spk {
+	position: fixed;
+	inset-block-start: 0;
+	left: 0;
+	z-index: 100;
+	inline-size: 3px;
+	block-size: 11px;
+	margin: -5px 0 0 -1px;
+	border-radius: 3px;
+	background: var(--famma-orange);
+	pointer-events: none;
+}
+
+/* pdp_form : gouvernorat choisi, éclair orange. */
+@media (prefers-reduced-motion: no-preference) {
+	body.famma-nl-pdp-form .is-found {
+		animation: famma-gov-found 900ms var(--ease-out);
+	}
+}
+
+/* Sans image 100 % : le champ revient à son propre fond. */
+@keyframes famma-gov-found {
+	0% {
+		background-color: rgba(255, 122, 0, 0.42);
+	}
+}

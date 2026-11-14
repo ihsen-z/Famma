@@ -116,6 +116,22 @@ final class New_Look_Bricks_Product {
 				'texts'   => array( 'buy_pick' ),
 				'wait'    => array(),
 			),
+			'pdp_altsize' => array(
+				'title'   => __( 'Lien « autre taille » sous les tailles', 'famma-core' ),
+				'summary' => __( 'Sous les tailles, un lien vers le produit à proposer quand la taille ne convient pas, saisi produit par produit.', 'famma-core' ),
+				'help'    => __( 'Lot 49. Exemple de la maquette : « Vous portez S ou M ? Voir la Ceinture dorsale Pro ». Le produit proposé et la phrase se saisissent dans Produits → Modifier → onglet « Fiche FAMMA », bloc « Autre taille ». Un produit sans lien n’affiche rien.', 'famma-core' ),
+				'needs'   => array(),
+				'texts'   => array(),
+				'wait'    => array(),
+			),
+			'pdp_labels'  => array(
+				'title'   => __( 'Formulaire dans la langue de la page', 'famma-core' ),
+				'summary' => __( 'Les intitulés du formulaire express dans une seule langue, celle de la page, et sans astérisques.', 'famma-core' ),
+				'help'    => __( 'Décision n° 9. « Téléphone / الهاتف » devient « Téléphone » sur la page française et « الهاتف » sur la page arabe ; même chose pour la taille, la quantité, l’adresse et le total. Les astérisques disparaissent (tous les champs restent obligatoires). Sur la page française, la ligne en derja des boutons « Confirmer » et de la barre du bas est masquée. À cocher seulement après le bilan du formulaire express (lot 23).', 'famma-core' ),
+				'needs'   => array(),
+				'texts'   => array(),
+				'wait'    => array(),
+			),
 		);
 	}
 }

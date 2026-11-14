@@ -174,7 +174,16 @@ final class Product_Story_Admin {
 			);
 		}
 
-		echo '</div></div>';
+		echo '</div>';
+
+		/**
+		 * Fin de l'onglet « Fiche FAMMA » : d'autres champs du produit s'y ajoutent (lien « autre taille », lot 49).
+		 *
+		 * @param \WC_Product|null $product Produit édité.
+		 */
+		do_action( 'famma_story_panel_end', $product );
+
+		echo '</div>';
 	}
 
 	/**
