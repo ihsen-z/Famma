@@ -522,6 +522,11 @@
 				<element value="famma_child_pdp_story_product"/>
 				<element value="famma_child_pdp_story_lang"/>
 				<element value="famma_child_pdp_story_wanted"/>
+				<element value="famma_child_pdp_buy_setup"/>
+				<element value="famma_child_pdp_buy_size_label"/>
+				<element value="famma_child_pdp_buy"/>
+				<element value="famma_child_pdp_points"/>
+				<element value="famma_child_pdp_dock_head"/>
 				<element value="famma_child_pdp_story"/>
 				<element value="famma_child_pdp_anatomy"/>
 				<element value="famma_child_pdp_details_setup"/>

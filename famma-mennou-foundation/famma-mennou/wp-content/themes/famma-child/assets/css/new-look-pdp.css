@@ -1071,3 +1071,259 @@ body.famma-nl-pdp-pay .famma-ledger {
 }
 
 @keyframes famma-pdp-ring { from { transform: scale(1); opacity: 0.8; } to { transform: scale(1.6); opacity: 0; } }
+
+/* ---------- pdp_buy : boîte d'achat « taille d'abord » (lot 47) ---------- */
+
+/* Les pièces ne servent qu'une fois rangées par le script : sans lui, le
+   formulaire reste ouvert comme avant. `is-closed` / `is-open` sont posés
+   par le script, jamais par le serveur. */
+.famma-express__form.is-closed > fieldset.famma-express__group,
+.famma-express__form.is-closed > .famma-express__notices,
+.famma-express__form.is-closed > .famma-express__actions,
+.famma-express__form.is-closed > .famma-express__legal,
+.famma-express__form.is-open > .famma-buy__cta,
+.famma-express__form.is-open > .famma-buy__after {
+	display: none;
+}
+
+.famma-buy__pg {
+	display: grid;
+	gap: 8px;
+	margin-block-end: 14px;
+}
+
+.famma-product .famma-buy__pg-t {
+	margin: 0;
+	color: var(--famma-blue);
+	font-size: 14px;
+	font-weight: var(--fw-semibold, 600);
+	line-height: 1.4;
+}
+
+.famma-buy__pg-b {
+	display: block;
+	overflow: hidden;
+	block-size: 6px;
+	border-radius: var(--famma-radius-pill);
+	background: var(--famma-line);
+}
+
+.famma-buy__pg-b i {
+	display: block;
+	block-size: 100%;
+	background: var(--famma-orange);
+	transform: scaleX(0.25);
+	transform-origin: left center;
+}
+
+[dir="rtl"] .famma-buy__pg-b i {
+	transform-origin: right center;
+}
+
+.famma-product .famma-buy__cta {
+	margin: 16px 0 0;
+}
+
+.famma-product .famma-buy__open {
+	position: relative;
+	overflow: hidden;
+	inline-size: 100%;
+	min-block-size: 56px;
+}
+
+.famma-product .famma-buy__after {
+	margin: 10px 0 0;
+	color: var(--famma-text-2);
+	font-size: 13.5px;
+	line-height: 1.5;
+	text-align: center;
+}
+
+/* Taille choisie : pastille orange qui glisse sous le choix (posée par le script). */
+.famma-express__form:is(.is-closed, .is-open) .famma-express__size-options {
+	position: relative;
+}
+
+.famma-buy__ind {
+	position: absolute;
+	inset-block-start: 0;
+	left: 0; /* Translation physique, mesurée par le script : pas de propriété logique ici. */
+	z-index: 0;
+	border-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-orange);
+	opacity: 0;
+	pointer-events: none;
+}
+
+.famma-express__form:is(.is-closed, .is-open) .famma-express__size {
+	z-index: 1;
+}
+
+.famma-express__form:is(.is-closed, .is-open) .famma-express__size input:checked + .famma-express__size-text {
+	border-color: var(--famma-orange);
+	background: transparent;
+	box-shadow: none;
+	color: var(--famma-on-orange);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.famma-buy__pg-b i {
+		transition: transform 520ms cubic-bezier(0.34, 1.56, 0.64, 1);
+	}
+
+	.famma-buy__ind {
+		transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1), width 420ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms;
+	}
+
+	.famma-buy__pg-t.is-pop {
+		animation: famma-pdp-echo 280ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+
+	.famma-express__size-options.is-nudge {
+		animation: famma-pdp-shake 360ms;
+	}
+
+	/* Un seul reflet, jamais en boucle. */
+	.famma-buy__open.is-shine::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%);
+		transform: translateX(-120%);
+		animation: famma-pdp-shine 900ms ease-out 1 forwards;
+		pointer-events: none;
+	}
+
+	.famma-express__form.is-open > fieldset.famma-express__group {
+		animation: famma-pdp-reveal 420ms cubic-bezier(0.23, 1, 0.32, 1);
+	}
+
+	.famma-express__form.is-open .famma-express__grid > * {
+		animation: famma-pdp-reveal 420ms cubic-bezier(0.23, 1, 0.32, 1) backwards;
+	}
+
+	.famma-express__form.is-open .famma-express__grid > :nth-child(2) {
+		animation-delay: 70ms;
+	}
+
+	.famma-express__form.is-open .famma-express__grid > :nth-child(3) {
+		animation-delay: 140ms;
+	}
+}
+
+@keyframes famma-pdp-shake { 25% { transform: translateX(-7px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-3px); } }
+@keyframes famma-pdp-shine { to { transform: translateX(120%); } }
+@keyframes famma-pdp-reveal { from { opacity: 0; transform: translateY(12px); } }
+
+/* ---------- pdp_form : coches vertes, sans bouton panier (lot 47) ---------- */
+
+body.famma-nl-pdp-form .famma-express__cart {
+	display: none;
+}
+
+body.famma-nl-pdp-form .famma-express__field.is-good > label::after {
+	content: "";
+	display: inline-block;
+	inline-size: 18px;
+	block-size: 18px;
+	margin-inline-start: 6px;
+	vertical-align: -3px;
+	border-radius: 50%;
+	background: var(--famma-success) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 12px no-repeat;
+}
+
+body.famma-nl-pdp-form .famma-express__total {
+	display: inline-block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	body.famma-nl-pdp-form .famma-express__field.is-good > label::after {
+		animation: famma-pdp-tick 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+	}
+
+	body.famma-nl-pdp-form .famma-express__total.is-pop {
+		animation: famma-pdp-bounce 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+	}
+}
+
+@keyframes famma-pdp-tick { from { transform: scale(0); } }
+@keyframes famma-pdp-bounce { 50% { transform: scale(1.14); } }
+
+/* ---------- pdp_points : points forts sous la boîte d'achat (lot 47) ---------- */
+
+.famma-product .famma-points {
+	margin-block: 18px 0;
+	color: var(--famma-text-1);
+	font-size: 15px;
+	line-height: 1.7;
+}
+
+.famma-product .famma-points > :first-child {
+	margin-block-start: 0;
+}
+
+.famma-product .famma-points > :last-child {
+	margin-block-end: 0;
+}
+
+.famma-product .famma-points ul {
+	display: grid;
+	gap: 8px;
+	margin: 0 0 10px;
+	padding: 0;
+	list-style: none;
+}
+
+.famma-product .famma-points li {
+	position: relative;
+	padding-inline-start: 20px;
+}
+
+.famma-product .famma-points li::before {
+	content: "";
+	position: absolute;
+	inset-block-start: 0.7em;
+	inset-inline-start: 2px;
+	inline-size: 8px;
+	block-size: 8px;
+	border-radius: 50%;
+	background: var(--famma-orange);
+}
+
+/* ---------- pdp_dock : barre du bas de la maquette (lot 47) ---------- */
+
+@media (max-width: 767px) {
+	.famma-sticky-cta--dock .famma-sticky-cta__info {
+		display: grid;
+		grid-template-columns: 44px minmax(0, 1fr);
+		align-items: center;
+		column-gap: 10px;
+		min-inline-size: 0;
+	}
+
+	.famma-sticky-cta--dock .famma-sticky-cta__img {
+		grid-row: span 2;
+		inline-size: 44px;
+		block-size: 44px;
+		border-radius: 10px;
+		object-fit: cover;
+	}
+
+	.famma-sticky-cta--dock .famma-sticky-cta__line {
+		overflow: hidden;
+		color: var(--famma-text-2);
+		font-size: 12px;
+		line-height: 1.3;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.famma-sticky-cta--dock .famma-sticky-cta__price {
+		line-height: 1.2;
+	}
+
+	/* Le WhatsApp flottant revient quand la barre s'efface (boîte d'achat à l'écran). */
+	body.famma-nl-pdp-dock:has(.famma-sticky-cta--dock.is-hidden) .famma-wa {
+		display: inline-flex;
+	}
+}

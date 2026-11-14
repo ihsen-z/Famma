@@ -23,7 +23,7 @@ const FAMMA_CHILD_VERSION = '0.2.1';
  * Chaque fichier est testé avant d'être inclus : un thème dont un fichier
  * manque doit dégrader, pas produire une erreur fatale sur toutes les pages.
  */
-foreach ( array( 'i18n', 'icons', 'catalog', 'header-parts', 'footer-parts', 'shop', 'shop-widgets', 'product', 'product-video', 'home', 'home-hero', 'home-social', 'pages', 'tunnel', 'cart', 'checkout', 'checkout-layout', 'editorial-guards', 'assets', 'scrollbar', 'gallery-lazy', 'new-look', 'new-look-tools', 'new-look-how', 'new-look-ledger', 'new-look-pdp', 'new-look-pdp-pay', 'new-look-pdp-details', 'new-look-pdp-story', 'new-look-home', 'new-look-home-extras', 'new-look-account', 'new-look-account-auth', 'new-look-account-phone', 'new-look-account-forms', 'new-look-account-addrs', 'new-look-account-addrs-sheet', 'new-look-account-favs', 'new-look-account-track', 'new-look-account-privacy', 'new-look-account-prefs', 'new-look-account-welcome', 'new-look-account-finish' ) as $famma_child_part ) {
+foreach ( array( 'i18n', 'icons', 'catalog', 'header-parts', 'footer-parts', 'shop', 'shop-widgets', 'product', 'product-video', 'home', 'home-hero', 'home-social', 'pages', 'tunnel', 'cart', 'checkout', 'checkout-layout', 'editorial-guards', 'assets', 'scrollbar', 'gallery-lazy', 'new-look', 'new-look-tools', 'new-look-how', 'new-look-ledger', 'new-look-pdp', 'new-look-pdp-pay', 'new-look-pdp-details', 'new-look-pdp-story', 'new-look-pdp-buy', 'new-look-home', 'new-look-home-extras', 'new-look-account', 'new-look-account-auth', 'new-look-account-phone', 'new-look-account-forms', 'new-look-account-addrs', 'new-look-account-addrs-sheet', 'new-look-account-favs', 'new-look-account-track', 'new-look-account-privacy', 'new-look-account-prefs', 'new-look-account-welcome', 'new-look-account-finish' ) as $famma_child_part ) {
 	$famma_child_file = get_stylesheet_directory() . '/inc/' . $famma_child_part . '.php';
 
 	if ( file_exists( $famma_child_file ) ) {
@@ -670,8 +670,21 @@ function famma_child_sticky_cta(): void {
 		$whatsapp = \Famma\Core\WhatsApp::link( $message );
 	}
 
-	echo '<div class="famma-sticky-cta">';
+	// Barre du bas de la maquette (lot 47, `pdp_dock`) : photo et ligne au-dessus du prix.
+	$dock = function_exists( 'famma_child_pdp_part' ) && famma_child_pdp_part( 'pdp_dock' ) && function_exists( 'famma_child_pdp_dock_head' );
+
+	echo $dock ? '<div class="famma-sticky-cta famma-sticky-cta--dock">' : '<div class="famma-sticky-cta">';
+
+	if ( $dock ) {
+		echo '<span class="famma-sticky-cta__info">';
+		famma_child_pdp_dock_head( $product );
+	}
+
 	printf( '<span class="famma-sticky-cta__price">%s</span>', wp_kses_post( $product->get_price_html() ) );
+
+	if ( $dock ) {
+		echo '</span>';
+	}
 
 	if ( '' !== $whatsapp ) {
 		printf(
@@ -687,7 +700,9 @@ function famma_child_sticky_cta(): void {
 	$label = '' !== $label ? $label : __( 'Commander', 'famma-child' );
 
 	printf(
-		'<button type="button" class="famma-sticky-cta__button">%1$s<span class="famma-sticky-cta__ar" lang="ar" dir="rtl">%2$s</span></button>',
+		$dock
+			? '<button type="button" class="famma-sticky-cta__button"><span class="famma-sticky-cta__label" data-order="%1$s">%1$s</span><span class="famma-sticky-cta__ar" lang="ar" dir="rtl">%2$s</span></button>'
+			: '<button type="button" class="famma-sticky-cta__button">%1$s<span class="famma-sticky-cta__ar" lang="ar" dir="rtl">%2$s</span></button>',
 		esc_html( $label ),
 		esc_html( famma_child_product_copy_derja( 'cta_order' ) )
 	);

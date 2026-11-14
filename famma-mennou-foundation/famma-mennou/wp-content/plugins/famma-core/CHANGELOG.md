@@ -1,5 +1,48 @@
 # Changelog — FAMMA Core
 
+## 0.3.38 — 2026-11-14 (fiche produit de la maquette, lot 47) · thème famma-child 0.2.21
+
+Lot 47 du rapport « Fiche produit en prod vs maquette » (14/11) : boîte
+d'achat de la maquette. Quatre nouvelles cases, livrées décochées, valables
+pour toutes les fiches. Pas mis en ligne. La décision n° 8 (« taille
+d'abord ») a sa case à part (`pdp_buy`), à trancher à la revue du 18/11.
+
+- **`pdp_buy` — taille d'abord (n° 8)** : taille, quantité et total en
+  premier, barre d'avancement (« Produit choisi. Il reste votre taille. » →
+  « Taille L. Il reste vos coordonnées. » → « Encore 2 à remplir. » → « Tout
+  est prêt. »), bouton « Commander » qui déplie téléphone, nom et adresse.
+  Taille oubliée : message sous les tailles, les pastilles tremblent, le
+  curseur va sur la première. Pastille choisie soulignée par un indicateur
+  qui glisse. Un seul reflet sur le bouton après 10 s sans action. Les
+  boutons « Commander » de la barre du bas et de « Quand payez-vous ? » font
+  le même geste. Sans script, le formulaire reste ouvert comme aujourd'hui.
+- **`pdp_form` — formulaire (n° 9 et 10)** : coche verte sur chaque champ bien
+  rempli (téléphone, chiffres arabes compris ; nom ; gouvernorat), total qui
+  rebondit quand la quantité change, bouton panier retiré (le cœur reste).
+- **`pdp_points` — points forts (n° 7)** : la description courte en entier
+  sous la boîte d'achat, puces orange, sans « Lire la suite ». Rien n'est
+  réécrit : c'est l'accroche du produit.
+- **`pdp_dock` — barre du bas (n° 18)** : photo du produit, « Choisir ma
+  taille » tant que la taille manque, puis « Taille L » et le total à jour.
+- 8 nouveaux textes dans FAMMA → Nouveau look → « Fiche produit » :
+  `buy_pg0` à `buy_pg3` (barre d'avancement, `{choix}` et `{n}`),
+  `buy_chosen`, `buy_after`, `buy_size_err`, `buy_pick`. Derja à relire.
+- Le formulaire express (`express-order.js`) et la passerelle Upsell One
+  Click (`uoc-bridge.php`) ne sont pas touchés : ses nœuds sont seulement
+  rangés autrement par le thème ; contrôles, envoi et offre après achat
+  inchangés. Les règles du script ne servent qu'à l'affichage.
+- Thème 0.2.21 : `inc/new-look-pdp-buy.php`, `assets/js/new-look-pdp-buy.js`
+  (3,1 Ko compressés, chargé seulement si `pdp_buy`, `pdp_form` ou
+  `pdp_dock` est servie), feuille `new-look-pdp.css` complétée (7,6 Ko
+  compressés au total), `famma_child_sticky_cta()` enrichie quand `pdp_dock`
+  est servie (sinon identique). Aucune requête de plus. Moins d'animations
+  demandé : ni tremblement, ni reflet, ni rebond.
+- Banc `famma-qa-fiche` : commande COD 733 (quantité 2, taille L, 44 DT,
+  offre après achat affichée), payée seulement à « livrée » ;
+  arabe (sens, indicateur, textes) ; `pdp_buy` décochée avec les
+  autres cochées. Cases décochées : fiches identiques octet pour octet à la
+  0.3.37.
+
 ## 0.3.37 — 2026-11-14 (fiche produit de la maquette, lot 46) · thème famma-child 0.2.20
 
 Lot 46 du rapport « Fiche produit en prod vs maquette » (14/11) : récit et

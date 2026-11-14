@@ -40,12 +40,12 @@ function famma_child_pdp_part( string $part ): bool {
  * `famma-product` (elle l'ajuste). Scripts différés en pied de page, sans
  * jQuery, chacun seulement avec sa brique : la galerie (lot 44), la bande
  * « Quand payez-vous ? » et l'ouverture des volets par ancre (lot 45), le
- * récit et « Ce qu'il y a dedans » (lot 46).
+ * récit et « Ce qu'il y a dedans » (lot 46), la boîte d'achat (lot 47).
  *
  * @return void
  */
 function famma_child_pdp_enqueue(): void {
-	$parts = array_filter( array( 'pdp_gallery', 'pdp_frame', 'pdp_pay', 'pdp_details', 'pdp_story', 'pdp_anatomy' ), 'famma_child_pdp_part' );
+	$parts = array_filter( array( 'pdp_gallery', 'pdp_frame', 'pdp_pay', 'pdp_details', 'pdp_story', 'pdp_anatomy', 'pdp_buy', 'pdp_form', 'pdp_points', 'pdp_dock' ), 'famma_child_pdp_part' );
 
 	if ( array() === $parts ) {
 		return;
@@ -67,6 +67,7 @@ function famma_child_pdp_enqueue(): void {
 		'new-look-pdp'          => in_array( 'pdp_gallery', $parts, true ),
 		'new-look-pdp-sections' => (bool) array_intersect( array( 'pdp_pay', 'pdp_details' ), $parts ),
 		'new-look-pdp-story'    => function_exists( 'famma_child_pdp_story_wanted' ) && famma_child_pdp_story_wanted(),
+		'new-look-pdp-buy'      => (bool) array_intersect( array( 'pdp_buy', 'pdp_form', 'pdp_dock' ), $parts ),
 	);
 
 	foreach ( $scripts as $name => $wanted ) {

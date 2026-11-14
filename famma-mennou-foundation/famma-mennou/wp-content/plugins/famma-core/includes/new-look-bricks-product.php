@@ -83,6 +83,39 @@ final class New_Look_Bricks_Product {
 				'texts'   => array( 'ana_title' ),
 				'wait'    => array( 'ana_title' ),
 			),
+			// Lot 47 (14/11/2026).
+			'pdp_buy'     => array(
+				'title'   => __( 'Boîte d’achat « taille d’abord »', 'famma-core' ),
+				'summary' => __( 'Taille, quantité et total d’abord ; « Commander » déplie ensuite le formulaire. Barre d’avancement au-dessus.', 'famma-core' ),
+				'help'    => __( 'Décision n° 8, à prendre avec le bilan du formulaire express du 18/11. Sur toutes les fiches à formulaire express : la taille, la quantité et le total viennent d’abord, avec une barre d’avancement (25 % produit choisi, 50 % taille, puis chaque champ) ; le bouton « Commander » déplie ensuite téléphone, nom et adresse. Taille oubliée : les tailles tremblent et un message s’affiche. Le bouton reçoit un seul reflet après 10 s sans action. Produit sans taille : la barre part de 50 %. Sans script, le formulaire reste ouvert comme aujourd’hui. Textes juste en dessous.', 'famma-core' ),
+				'needs'   => array(),
+				'texts'   => array( 'buy_pg0', 'buy_pg1', 'buy_pg2', 'buy_pg3', 'buy_chosen', 'buy_after', 'buy_size_err' ),
+				'wait'    => array(),
+			),
+			'pdp_form'    => array(
+				'title'   => __( 'Formulaire : coches vertes, sans bouton panier', 'famma-core' ),
+				'summary' => __( 'Une coche verte sur chaque champ bien rempli, le total qui rebondit, et plus de bouton panier à côté de « Confirmer ».', 'famma-core' ),
+				'help'    => __( 'Décisions n° 9 et 10. Sur toutes les fiches à formulaire express : une coche verte apparaît à côté de chaque champ bien rempli (téléphone à 8 chiffres, nom, gouvernorat), le total rebondit quand la quantité change, et le bouton « Ajouter au panier » qui doublait « Confirmer ma commande » disparaît (le cœur des favoris reste). Les contrôles d’envoi ne changent pas.', 'famma-core' ),
+				'needs'   => array(),
+				'texts'   => array(),
+				'wait'    => array(),
+			),
+			'pdp_points'  => array(
+				'title'   => __( 'Points forts sous la boîte d’achat', 'famma-core' ),
+				'summary' => __( 'La description courte quitte le « Lire la suite » et s’affiche en entier sous le formulaire, en puces orange.', 'famma-core' ),
+				'help'    => __( 'Décision n° 7 (à montrer après le 18/11). Sur toutes les fiches : la description courte du produit n’est plus repliée au-dessus du formulaire ; elle s’affiche en entier juste sous la boîte d’achat, ses listes en puces orange. Rien n’est réécrit : c’est la description courte de chaque produit.', 'famma-core' ),
+				'needs'   => array(),
+				'texts'   => array(),
+				'wait'    => array(),
+			),
+			'pdp_dock'    => array(
+				'title'   => __( 'Barre du bas de la maquette', 'famma-core' ),
+				'summary' => __( 'Photo, taille ou nom, total, WhatsApp et « Choisir ma taille » puis « Commander », seulement quand la boîte d’achat est hors de l’écran.', 'famma-core' ),
+				'help'    => __( 'Décision n° 18. Sur téléphone, la barre du bas de la fiche montre la photo, la taille choisie (ou le nom), le total, WhatsApp et un bouton « Choisir ma taille » tant qu’aucune taille n’est choisie, puis « Commander ». Elle n’apparaît que quand la boîte d’achat est hors de l’écran ; le bouton WhatsApp flottant revient quand elle s’efface. Texte juste en dessous.', 'famma-core' ),
+				'needs'   => array(),
+				'texts'   => array( 'buy_pick' ),
+				'wait'    => array(),
+			),
 		);
 	}
 }
