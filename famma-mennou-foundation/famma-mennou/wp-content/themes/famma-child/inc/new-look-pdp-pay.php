@@ -31,14 +31,15 @@ defined( 'ABSPATH' ) || exit;
  * @return void
  */
 function famma_child_pdp_pay_setup(): void {
-	if ( ! famma_child_pdp_part( 'pdp_pay' ) ) {
+	// Un paquet incomplet ne doit pas casser tout le site.
+	if ( ! function_exists( 'famma_child_pdp_part' ) || ! famma_child_pdp_part( 'pdp_pay' ) ) {
 		return;
 	}
 
 	remove_action( 'woocommerce_after_single_product_summary', 'famma_child_product_benefits', 6 );
 	add_action( 'woocommerce_after_single_product_summary', 'famma_child_pdp_pay', 6 );
 
-	if ( famma_child_pdp_part( 'ledger' ) ) {
+	if ( famma_child_pdp_part( 'ledger' ) && function_exists( 'famma_child_ledger_shown_rows' ) ) {
 		remove_action( 'woocommerce_single_product_summary', 'famma_child_product_reassurance', 8 );
 		add_action( 'woocommerce_single_product_summary', 'famma_child_pdp_pay_reassurance', 8 );
 	}
@@ -46,11 +47,20 @@ function famma_child_pdp_pay_setup(): void {
 add_action( 'wp', 'famma_child_pdp_pay_setup', 20 );
 
 /**
- * Réassurance réduite au délai de livraison (la bande « 0 DT » dit le reste).
+ * Réassurance de la fiche : réduite au délai quand la bande « 0 DT » est à
+ * l'écran (elle dit déjà le paiement et la livraison), complète sinon
+ * (produit en rupture, aucun zéro vrai…).
  *
  * @return void
  */
 function famma_child_pdp_pay_reassurance(): void {
+	$product = wc_get_product();
+
+	if ( ! $product instanceof WC_Product || array() === famma_child_ledger_shown_rows( $product ) ) {
+		famma_child_product_reassurance();
+		return;
+	}
+
 	$delay = famma_child_delivery_delay();
 
 	if ( '' === $delay ) {
@@ -124,15 +134,20 @@ function famma_child_pdp_pay_total( WC_Product $product ): array {
  * @return void
  */
 function famma_child_pdp_pay(): void {
-	if ( ! class_exists( '\Famma\Core\Product_Content' ) || ! class_exists( '\Famma\Core\Shop_Content' ) ) {
-		return;
-	}
-
 	$product = wc_get_product();
-	$title   = \Famma\Core\Product_Content::text( 'pay_title' );
-	$steps   = \Famma\Core\Shop_Content::steps();
+	$ready   = $product instanceof WC_Product
+		&& $product->is_purchasable()
+		&& $product->is_in_stock()
+		&& famma_child_cod_is_enabled()
+		&& class_exists( '\Famma\Core\Product_Content' )
+		&& class_exists( '\Famma\Core\Shop_Content' );
+	$title   = $ready ? \Famma\Core\Product_Content::text( 'pay_title' ) : '';
+	$steps   = $ready ? \Famma\Core\Shop_Content::steps() : array();
 
-	if ( ! $product instanceof WC_Product || '' === $title || count( $steps ) < 2 || ! famma_child_cod_is_enabled() ) {
+	// Bande impossible (rupture, produit non commandable, paiement à la
+	// livraison coupé, titre vidé) : les quatre bénéfices reprennent leur place.
+	if ( '' === $title || count( $steps ) < 2 ) {
+		famma_child_product_benefits();
 		return;
 	}
 
@@ -148,11 +163,13 @@ function famma_child_pdp_pay(): void {
 			<h2 class="famma-pay__title" id="famma-pay-title"><?php echo esc_html( $title ); ?></h2>
 			<div class="famma-pay__meter">
 				<small><?php echo esc_html( \Famma\Core\Product_Content::text( 'pay_meter' ) ); ?></small>
-				<b class="famma-pay__sum" dir="ltr"
-					data-zero="<?php echo esc_attr( wp_strip_all_tags( $zero ) ); ?>"
+				<b class="famma-pay__sum" dir="ltr" data-no-translation
+					data-zero="<?php echo esc_attr( html_entity_decode( wp_strip_all_tags( $zero ), ENT_QUOTES, 'UTF-8' ) ); ?>"
 					data-total="<?php echo esc_attr( html_entity_decode( wp_strip_all_tags( $total['html'] ), ENT_QUOTES, 'UTF-8' ) ); ?>"
 					<?php if ( null !== $total['value'] ) : ?>
 						data-value="<?php echo esc_attr( (string) $total['value'] ); ?>"
+						data-decimals="<?php echo esc_attr( (string) wc_get_price_decimals() ); ?>"
+						data-sep="<?php echo esc_attr( wc_get_price_decimal_separator() ); ?>"
 					<?php endif; ?>
 				><?php echo wp_kses_post( $zero ); ?></b>
 			</div>

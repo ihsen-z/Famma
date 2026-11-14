@@ -50,11 +50,16 @@ body.famma-nl-pdp-gallery .famma-product .flex-direction-nav a {
 	background: rgba(255, 255, 255, 0.92);
 	color: var(--famma-blue);
 	box-shadow: 0 4px 14px rgba(11, 31, 58, 0.1);
-	transition: transform 120ms var(--ease-out, ease);
 }
 
-body.famma-nl-pdp-gallery .famma-product .flex-direction-nav a:active {
-	transform: scale(0.92);
+@media (prefers-reduced-motion: no-preference) {
+	body.famma-nl-pdp-gallery .famma-product .flex-direction-nav a {
+		transition: transform 120ms var(--ease-out, ease);
+	}
+
+	body.famma-nl-pdp-gallery .famma-product .flex-direction-nav a:active {
+		transform: scale(0.92);
+	}
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -151,12 +156,22 @@ body.famma-nl-pdp-gallery .famma-product .woocommerce-product-gallery__image img
 /* Fil d'Ariane : séparateurs aérés ; sur téléphone, sans le nom du produit. */
 body.famma-nl-pdp-frame .famma-product .woocommerce-breadcrumb {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 4px 8px;
+	flex-wrap: nowrap;
+	gap: 8px;
+	min-inline-size: 0;
 	font-size: 12.5px;
 }
 
+/* Une seule ligne : une étape trop longue se termine par des points. */
+body.famma-nl-pdp-frame .famma-crumb {
+	overflow: hidden;
+	min-inline-size: 0;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
 body.famma-nl-pdp-frame .famma-crumb-sep {
+	flex: none;
 	opacity: 0.5;
 }
 
@@ -257,7 +272,7 @@ body.famma-nl-pdp-frame .famma-product .related ul.products {
 	}
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
 	body.famma-nl-pdp-frame .famma-product .related ul.products > li {
 		transition: transform 420ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 420ms cubic-bezier(0.23, 1, 0.32, 1);
 	}
@@ -393,6 +408,12 @@ body.famma-nl-pdp-frame .famma-product .related ul.products {
 	border: 1px solid var(--famma-overlay-line);
 	border-radius: var(--famma-radius);
 	background: #12315C;
+	/* Le tampon du montant (×1,6) reste dans le compteur, jamais hors page. */
+	overflow: clip;
+}
+
+body.famma-nl-pdp-pay .famma-ledger {
+	overflow: clip;
 }
 
 .famma-pay__meter small {
@@ -701,7 +722,7 @@ body.famma-nl-pdp-frame .famma-product .related ul.products {
 }
 
 /* Le titre de l'onglet est déjà sur le volet : pas de second titre dessous. */
-.famma-product .famma-dts__body > :first-child:is(h2, h3) {
+.famma-product .famma-dts__item[id^="tab-"]:not(#tab-description, #tab-famma_faq) .famma-dts__body > :first-child:is(h2, h3) {
 	display: none;
 }
 

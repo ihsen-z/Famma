@@ -28,7 +28,8 @@ defined( 'ABSPATH' ) || exit;
  * @return void
  */
 function famma_child_pdp_details_setup(): void {
-	if ( ! famma_child_pdp_part( 'pdp_details' ) ) {
+	// Un paquet incomplet ne doit pas casser tout le site.
+	if ( ! function_exists( 'famma_child_pdp_part' ) || ! famma_child_pdp_part( 'pdp_details' ) ) {
 		return;
 	}
 
@@ -138,7 +139,8 @@ function famma_child_pdp_details_split( string $html ): array {
  * @return void
  */
 function famma_child_pdp_details_item( string $title, string $body, string $id = '', bool $open = false ): void {
-	if ( '' === trim( wp_strip_all_tags( $body, true ) ) && false === stripos( $body, '<img' ) && false === stripos( $body, '<form' ) ) {
+	// Vide = ni texte ni média (image, vidéo, intégration, tableau, formulaire).
+	if ( '' === trim( wp_strip_all_tags( $body, true ) ) && ! preg_match( '/<(img|picture|svg|video|audio|iframe|embed|object|table|form)\b/i', $body ) ) {
 		return;
 	}
 
@@ -181,9 +183,10 @@ function famma_child_pdp_details(): void {
 			continue;
 		}
 
+		// Une question par volet ; le premier garde l'ancre de l'onglet.
 		if ( 'famma_faq' === $key ) {
-			foreach ( famma_child_product_faq_items( $product ) as $pair ) {
-				$items[] = array( $pair['q'], '<p>' . esc_html( $pair['a'] ) . '</p>', '' );
+			foreach ( famma_child_product_faq_items( $product ) as $index => $pair ) {
+				$items[] = array( $pair['q'], '<p>' . esc_html( $pair['a'] ) . '</p>', 0 === $index ? 'tab-famma_faq' : '' );
 			}
 			continue;
 		}
@@ -201,8 +204,9 @@ function famma_child_pdp_details(): void {
 
 			$intro = $split['intro'];
 
-			foreach ( $split['parts'] as $part ) {
-				$items[] = array( $part['title'], $part['body'], '' );
+			// Sans début avant le premier intertitre, son volet porte l'ancre.
+			foreach ( $split['parts'] as $index => $part ) {
+				$items[] = array( $part['title'], $part['body'], ( '' === $intro && 0 === $index ) ? 'tab-description' : '' );
 			}
 			continue;
 		}
@@ -232,4 +236,6 @@ function famma_child_pdp_details(): void {
 		</div>
 	</section>
 	<?php
+	// Même crochet que le gabarit des onglets de WooCommerce.
+	do_action( 'woocommerce_product_after_tabs' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- action de WooCommerce.
 }

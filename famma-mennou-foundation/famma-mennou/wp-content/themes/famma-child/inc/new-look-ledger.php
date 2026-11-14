@@ -140,25 +140,48 @@ function famma_child_ledger_rows( WC_Product $product ): array {
 }
 
 /**
- * Affiche la bande sous le prix.
+ * Lignes de la bande si elle s'affiche pour ce produit, sinon rien.
  *
- * @return void
+ * Seule source de la décision : la fiche (lot 45) ne réduit sa réassurance
+ * que si la bande est réellement à l'écran.
+ *
+ * @param WC_Product $product Produit.
+ * @return array<int, array{label: string, amount: string, zero: bool}>
  */
-function famma_child_new_look_ledger(): void {
+function famma_child_ledger_shown_rows( WC_Product $product ): array {
 	if ( ! in_array( 'ledger', famma_child_new_look_parts(), true ) || ! class_exists( '\Famma\Core\Product_Content' ) ) {
-		return;
+		return array();
 	}
 
-	$product = wc_get_product();
-
-	if ( ! $product instanceof WC_Product || ! $product->is_purchasable() || ! $product->is_in_stock() ) {
-		return;
+	if ( ! $product->is_purchasable() || ! $product->is_in_stock() ) {
+		return array();
 	}
 
 	$rows = famma_child_ledger_rows( $product );
 
 	// Sans aucun zéro vrai, la bande ne dit rien de plus que le prix.
 	if ( array() === array_filter( array_column( $rows, 'zero' ) ) ) {
+		return array();
+	}
+
+	return $rows;
+}
+
+/**
+ * Affiche la bande sous le prix.
+ *
+ * @return void
+ */
+function famma_child_new_look_ledger(): void {
+	$product = wc_get_product();
+
+	if ( ! $product instanceof WC_Product ) {
+		return;
+	}
+
+	$rows = famma_child_ledger_shown_rows( $product );
+
+	if ( array() === $rows ) {
 		return;
 	}
 	?>

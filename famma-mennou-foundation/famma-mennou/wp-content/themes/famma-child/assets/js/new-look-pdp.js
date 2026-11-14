@@ -36,6 +36,8 @@
 		count.className = 'famma-pdp-count';
 		count.setAttribute( 'dir', 'ltr' );
 		count.setAttribute( 'aria-hidden', 'true' );
+		// Ni chaîne à traduire pour TranslatePress à chaque photo.
+		count.setAttribute( 'data-no-translation', '' );
 		gallery.appendChild( count );
 
 		var ind = document.createElement( 'span' );
@@ -147,11 +149,9 @@
 	wait.observe( gallery, { childList: true, subtree: true } );
 	start();
 
+	// Après le chargement, flexslider a démarré ou ne démarrera plus.
 	window.addEventListener( 'load', function () {
 		start();
-
-		if ( ready ) {
-			wait.disconnect();
-		}
+		wait.disconnect();
 	} );
 }() );

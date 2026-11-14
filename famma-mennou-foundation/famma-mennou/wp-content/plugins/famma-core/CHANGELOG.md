@@ -30,6 +30,23 @@ Le thème dessine (`inc/new-look-pdp-pay.php`, `inc/new-look-pdp-details.php`,
 - 4 nouveaux textes dans FAMMA → Pages → « Fiche produit » : `pay_title`,
   `pay_meter`, `pay_paid` (« {montant} payé »), `det_title` (la derja reste
   à relire).
+- Après relecture et banc (14/11), avant toute mise en ligne :
+  - bande impossible (rupture, produit non commandable, paiement à la
+    livraison coupé, titre vidé) : les quatre bénéfices reviennent ;
+  - réassurance réduite au délai seulement si la bande « 0 DT » est
+    réellement affichée pour ce produit (`famma_child_ledger_shown_rows()`,
+    même règle que la bande elle-même), sinon complète ;
+  - compteur au format de prix de la boutique (décimales, séparateur) ; écoute
+    du défilement sans observateur de visibilité ; `data-no-translation` sur
+    les compteurs (TranslatePress) ;
+  - ancres : le volet visé s'ouvre et défile à l'écran (Safari, second clic) ;
+    `#tab-famma_faq` sur la première question, `#tab-description` toujours
+    présent ; un volet avec seulement une vidéo, un tableau ou une
+    intégration est gardé ; action `woocommerce_product_after_tabs`
+    conservée ;
+  - lot 44 : fil d'Ariane sur une ligne avec points de suspension,
+    observateur de la galerie arrêté au chargement, survols et pression des
+    flèches sous « moins d'animations » ; tampons rognés dans leur cadre.
 
 ## 0.3.31 — 2026-11-14 (fiche produit : galerie et cadre de la maquette) · thème famma-child 0.2.18
 

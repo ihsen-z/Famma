@@ -32,15 +32,29 @@
 
 		var item = target && target.closest ? target.closest( '.famma-dts__item' ) : null;
 
-		if ( item && ! item.open ) {
-			item.open = true;
+		if ( ! item ) {
+			return;
 		}
+
+		// Safari n'ouvre pas seul un volet visé par une ancre, et le
+		// navigateur a déjà défilé avant l'ouverture : on ouvre puis on montre.
+		item.open = true;
+		target.scrollIntoView( { behavior: calm ? 'auto' : 'smooth', block: 'start' } );
 	}
 
 	if ( document.querySelector( '.famma-dts' ) ) {
 		openFor( window.location.hash );
 		window.addEventListener( 'hashchange', function () {
 			openFor( window.location.hash );
+		} );
+
+		// Un second clic sur le même lien ne déclenche plus `hashchange`.
+		document.addEventListener( 'click', function ( e ) {
+			var link = e.target && e.target.closest ? e.target.closest( 'a[href^="#"]' ) : null;
+
+			if ( link && link.hash && link.hash === window.location.hash ) {
+				openFor( link.hash );
+			}
 		} );
 	}
 
@@ -78,6 +92,8 @@
 	var totalText = sum ? sum.getAttribute( 'data-total' ) || '' : '';
 	var zeroText = sum ? sum.getAttribute( 'data-zero' ) || '' : '';
 	var value = sum ? parseFloat( sum.getAttribute( 'data-value' ) ) : NaN;
+	var decimals = sum ? parseInt( sum.getAttribute( 'data-decimals' ), 10 ) || 0 : 0;
+	var sep = sum ? sum.getAttribute( 'data-sep' ) || '.' : '.';
 
 	function write( v, done ) {
 		if ( ! sum ) {
@@ -89,8 +105,9 @@
 			return;
 		}
 
-		// Montants intermédiaires : le prix final, dont le nombre défile.
-		sum.textContent = totalText.replace( /\d[\d\s.,  ]*\d|\d/, String( Math.round( v ) ) );
+		// Montants intermédiaires : le prix final, dont le nombre défile avec
+		// les décimales et le séparateur de la boutique.
+		sum.textContent = totalText.replace( /\d[\d\s.,\u00a0\u202f]*\d|\d/, ( Math.round( v ) ).toFixed( decimals ).replace( '.', sep ) );
 	}
 
 	if ( calm || stops.length < 2 || ! road || ! base || ! fill || ! parcel ) {
@@ -210,23 +227,12 @@
 		tick();
 	}
 
-	// N'écoute le défilement que lorsque la bande est à l'écran.
-	if ( window.IntersectionObserver ) {
-		new IntersectionObserver( function ( entries ) {
-			if ( entries[ 0 ].isIntersecting ) {
-				window.addEventListener( 'scroll', onScroll, { passive: true } );
-				start();
-			} else {
-				window.removeEventListener( 'scroll', onScroll );
-			}
-		} ).observe( pay );
-	} else {
-		window.addEventListener( 'scroll', onScroll, { passive: true } );
-	}
-
-	window.addEventListener( 'resize', function () {
-		start();
-	} );
+	// Une mesure par image au plus ; passée la bande, l'état reste « arrivé »
+	// (p vaut 1), avant elle « au départ » : un défilement rapide ne laisse
+	// jamais le compteur à mi-chemin.
+	window.addEventListener( 'scroll', onScroll, { passive: true } );
+	window.addEventListener( 'resize', start );
+	window.addEventListener( 'load', start );
 
 	start();
 }() );
