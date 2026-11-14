@@ -1,0 +1,485 @@
+/**
+ * FAMMA → Nouveau look — écran d'administration.
+ *
+ * Propriétés logiques partout (inline/block) : l'écran se retourne seul quand
+ * l'administration est en arabe. Cibles tactiles de 44 px au moins.
+ */
+
+.fnl {
+	--fnl-navy: #0f2a5c;
+	--fnl-line: #dcdcde;
+	--fnl-card: #fff;
+	--fnl-muted: #50575e;
+	--fnl-ok: #0a6b33;
+	--fnl-ok-bg: #e3f4e9;
+	--fnl-adm: #1d4ed8;
+	--fnl-adm-bg: #e6edfd;
+	--fnl-warn: #7a4a00;
+	--fnl-warn-bg: #fdf1dc;
+	--fnl-off: #50575e;
+	--fnl-off-bg: #eceef0;
+	max-inline-size: 1180px;
+}
+
+.fnl-lead {
+	max-inline-size: 75ch;
+	color: var(--fnl-muted);
+	font-size: 14px;
+}
+
+/* ---------- Mode ---------- */
+
+.fnl-mode {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 12px 24px;
+	background: var(--fnl-card);
+	border: 1px solid var(--fnl-line);
+	border-radius: 6px;
+	padding: 14px 16px;
+	margin-block: 12px;
+}
+
+.fnl-mode h2 {
+	margin-block: 0 8px;
+	font-size: 15px;
+}
+
+.fnl-seg {
+	display: inline-flex;
+	flex-wrap: wrap;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	overflow: hidden;
+	margin: 0;
+	padding: 0;
+}
+
+.fnl-seg__opt {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-block-size: 44px;
+	padding-inline: 14px;
+	background: #fff;
+	border-inline-end: 1px solid #c3c4c7;
+	cursor: pointer;
+}
+
+.fnl-seg__opt:last-child {
+	border-inline-end: 0;
+}
+
+.fnl-seg__opt:has(input:checked) {
+	background: var(--fnl-navy);
+	color: #fff;
+}
+
+.fnl-seg__opt input[type="radio"] {
+	margin: 0;
+}
+
+.fnl-mode__help {
+	max-inline-size: 75ch;
+	margin-block: 8px 0;
+}
+
+.fnl-summary {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	align-content: flex-start;
+	margin: 0;
+}
+
+.fnl-summary li {
+	margin: 0;
+}
+
+/* ---------- Pastilles d'état ---------- */
+
+.fnl-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	border-radius: 20px;
+	padding-block: 3px;
+	padding-inline: 9px;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+.fnl-pill::before {
+	content: "";
+	inline-size: 7px;
+	block-size: 7px;
+	border-radius: 50%;
+	background: currentColor;
+}
+
+.fnl-pill--all {
+	background: var(--fnl-ok-bg);
+	color: var(--fnl-ok);
+}
+
+.fnl-pill--admins {
+	background: var(--fnl-adm-bg);
+	color: var(--fnl-adm);
+}
+
+.fnl-pill--missing,
+.fnl-pill--wait,
+.fnl-pill--warn {
+	background: var(--fnl-warn-bg);
+	color: var(--fnl-warn);
+}
+
+.fnl-pill--off,
+.fnl-pill--nobody {
+	background: var(--fnl-off-bg);
+	color: var(--fnl-off);
+}
+
+/* ---------- Recherche et onglets ---------- */
+
+.fnl-search {
+	inline-size: 100%;
+	max-inline-size: 460px;
+	min-block-size: 40px;
+}
+
+.fnl-tabs {
+	display: flex;
+	gap: 2px;
+	overflow-x: auto;
+	border-block-end: 1px solid #c3c4c7;
+	margin-block-start: 12px;
+}
+
+.fnl-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-block-size: 44px;
+	padding-inline: 14px;
+	background: transparent;
+	border: 1px solid transparent;
+	border-block-end: 0;
+	border-radius: 4px 4px 0 0;
+	color: #2c3338;
+	font-size: 14px;
+	font-weight: 600;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.fnl-tab[aria-selected="true"] {
+	background: var(--fnl-card);
+	border-color: #c3c4c7;
+	margin-block-end: -1px;
+	color: var(--fnl-navy);
+}
+
+.fnl-tab__n {
+	font-weight: 400;
+	color: var(--fnl-muted);
+}
+
+.fnl-tab__hit {
+	background: #f28c28;
+	color: var(--fnl-navy);
+	border-radius: 9px;
+	padding-inline: 6px;
+	font-size: 11px;
+}
+
+/* ---------- Panneaux ---------- */
+
+.fnl-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	background: var(--fnl-card);
+	border: 1px solid #c3c4c7;
+	padding: 14px;
+	margin-block-end: 16px;
+}
+
+.fnl--js .fnl-panel {
+	border-block-start: 0;
+}
+
+.fnl-panel__top {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.fnl-panel__title {
+	margin: 0;
+	font-size: 18px;
+}
+
+.fnl--js .fnl-panel__title {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+}
+
+.fnl-panel__intro {
+	margin: 2px 0 0;
+	max-inline-size: 75ch;
+	color: var(--fnl-muted);
+}
+
+.fnl-nomatch {
+	color: var(--fnl-muted);
+}
+
+/* ---------- Briques ---------- */
+
+.fnl-brick {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: 4px 14px;
+	border: 1px solid var(--fnl-line);
+	border-radius: 6px;
+	padding: 12px 14px;
+}
+
+.fnl-switch[type="checkbox"] {
+	appearance: none;
+	position: relative;
+	inline-size: 46px;
+	block-size: 26px;
+	margin: 2px 0 0;
+	border: 0;
+	border-radius: 13px;
+	background: #8c8f94;
+	box-shadow: none;
+	cursor: pointer;
+	transition: background-color 0.15s;
+}
+
+.fnl-switch[type="checkbox"]::before,
+.fnl-switch[type="checkbox"]:checked::before {
+	content: none;
+	display: none;
+}
+
+.fnl-switch[type="checkbox"]::after {
+	content: "";
+	position: absolute;
+	inset-block-start: 3px;
+	inset-inline-start: 3px;
+	inline-size: 20px;
+	block-size: 20px;
+	border-radius: 50%;
+	background: #fff;
+	transition: inset-inline-start 0.15s;
+}
+
+.fnl-switch[type="checkbox"]:checked {
+	background: var(--fnl-navy);
+}
+
+.fnl-switch[type="checkbox"]:checked::after {
+	inset-inline-start: 23px;
+}
+
+.fnl-switch[type="checkbox"]:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+
+.fnl-brick__body {
+	min-inline-size: 0;
+}
+
+.fnl-brick__head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 10px;
+}
+
+.fnl-brick__head label {
+	font-size: 14px;
+	cursor: pointer;
+}
+
+.fnl-brick__key {
+	font-size: 11px;
+	color: var(--fnl-muted);
+	background: transparent;
+	padding: 0;
+}
+
+.fnl-brick__summary {
+	margin-block: 4px 0;
+}
+
+.fnl-brick__needs {
+	margin-block: 4px 0;
+	font-size: 12px;
+	color: var(--fnl-muted);
+}
+
+.fnl-brick__needs a:not([hidden]) ~ a:not([hidden])::before {
+	content: " · ";
+	color: var(--fnl-muted);
+}
+
+.fnl-brick__needs.is-missing {
+	color: var(--fnl-warn);
+	font-weight: 600;
+}
+
+.fnl-more,
+.fnl-texts {
+	margin-block-start: 6px;
+}
+
+.fnl-more summary,
+.fnl-texts summary,
+.fnl-other summary {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: 32px;
+	color: #2271b1;
+	cursor: pointer;
+}
+
+.fnl-more p {
+	max-inline-size: 80ch;
+	margin-block: 4px 0;
+	color: var(--fnl-muted);
+}
+
+/* ---------- Textes ---------- */
+
+.fnl-other {
+	border-block-start: 1px solid var(--fnl-line);
+	padding-block-start: 10px;
+}
+
+.fnl-other summary {
+	font-weight: 600;
+	font-size: 14px;
+}
+
+.fnl-texts__rows {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-block-start: 8px;
+	padding-block-start: 10px;
+	border-block-start: 1px solid var(--fnl-line);
+}
+
+.fnl-text.is-hit {
+	outline: 2px solid #f28c28;
+	outline-offset: 4px;
+	border-radius: 2px;
+}
+
+.fnl-text__label {
+	margin: 0;
+	font-weight: 600;
+}
+
+.fnl-text__langs {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 6px 12px;
+}
+
+.fnl-text__lang {
+	margin: 4px 0 0;
+}
+
+.fnl-text__lang label {
+	display: block;
+	font-size: 12px;
+	color: var(--fnl-muted);
+}
+
+.fnl-text__lang input,
+.fnl-text__lang textarea {
+	min-block-size: 36px;
+}
+
+.fnl-text__lang [dir="rtl"] {
+	font-family: "Noto Kufi Arabic", Tahoma, sans-serif;
+}
+
+.fnl-text .description {
+	margin-block: 4px 0;
+}
+
+/* ---------- Barre d'enregistrement ---------- */
+
+.fnl-save {
+	position: sticky;
+	inset-block-end: 0;
+	z-index: 5;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	background: #fff;
+	border-block-start: 1px solid #c3c4c7;
+	padding-block: 10px;
+	padding-inline: 14px;
+	box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.fnl-save__state {
+	flex: 1 1 8em;
+	min-inline-size: 0;
+	color: var(--fnl-muted);
+}
+
+.fnl-save__state.is-dirty {
+	color: var(--fnl-warn);
+	font-weight: 600;
+}
+
+.fnl-save .button {
+	min-block-size: 40px;
+}
+
+@media (min-width: 783px) {
+
+	.fnl-mode {
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+	}
+
+	.fnl-summary {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.fnl-text__langs {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.fnl-switch[type="checkbox"],
+	.fnl-switch[type="checkbox"]::after {
+		transition: none;
+	}
+}
+
+/* L'attribut hidden l'emporte sur les display posés plus haut. */
+.fnl [hidden] {
+	display: none !important;
+}

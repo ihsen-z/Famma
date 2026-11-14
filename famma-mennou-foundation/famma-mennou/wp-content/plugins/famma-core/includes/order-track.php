@@ -8,7 +8,7 @@
  * quand chaque étape a été atteinte, et quelles commandes peuvent être
  * recommandées. Le thème ne fait que dessiner (inc/new-look-account-track.php).
  *
- * Les libellés sont éditables dans FAMMA → Pages (section « Mon compte »),
+ * Les libellés sont éditables dans FAMMA → Nouveau look (onglet « Mon compte »),
  * par le même mécanisme que `Shop_Content`. La version derja par défaut est
  * celle de la maquette espace client du 12/11, à relire.
  *

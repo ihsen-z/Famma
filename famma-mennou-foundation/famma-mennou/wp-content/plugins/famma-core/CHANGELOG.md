@@ -1,5 +1,39 @@
 # Changelog — FAMMA Core
 
+## 0.3.35 — 2026-11-14 (écran FAMMA → Nouveau look) · thème famma-child inchangé
+
+Lot 48. Un seul écran rassemble tout le paramétrage du nouveau look, rangé
+par page du site. Aucune nouvelle case, aucun changement côté visiteur :
+le mode, chaque case et chaque texte gardent leur valeur à l'envoi.
+
+- **Menu FAMMA → Nouveau look** (capacité `manage_woocommerce`), juste sous
+  le tableau de bord. Onglets Partout, Accueil, Boutique, Fiche produit, Mon
+  compte. Pour chaque brique : interrupteur, titre court, une phrase, « En
+  savoir plus » (le détail complet d'avant), cases requises avec un lien, état
+  réel (Visible par tous, Seulement les administrateurs, Prête mais personne
+  ne la voit, Sans effet : il manque une case, Cachée tant que le texte est
+  vide, Désactivée) recalculé en direct, et ses textes FR + derja juste en
+  dessous. « Autres textes de la page » pour ceux qui s'affichent toujours.
+  Recherche sur tous les onglets (réglages et textes), lien « Voir » par
+  page, barre « Enregistrer » avec les modifications non enregistrées.
+- **Modes renommés** : « Personne », « Seulement les administrateurs »,
+  « Tout le monde » (valeurs `off` / `admins` / `all` inchangées).
+- **Registre** (`new-look-registry.php` + un fichier de briques par page,
+  `new-look-bricks-*.php`) : une brique = une entrée (`title`, `summary`,
+  `help`, `needs`, `texts`, `wait`). `New_Look::parts()` en est tiré ;
+  `New_Look::part()`, l'option `famma_new_look` et `famma_child_new_look()`
+  ne changent pas.
+- **Enregistrement** par `admin-post.php` (jeton + capacité), qui fusionne
+  dans les options existantes : seuls les textes modifiés sont envoyés, un
+  texte absent de la requête garde sa valeur ; une requête sans mode ne
+  touche pas aux cases. Cache LiteSpeed vidé après un changement.
+- **FAMMA → Pages** garde À propos, Contact, Livraison, Retours,
+  coordonnées, bandeau du haut et style du héros, avec un renvoi vers le
+  nouvel écran. Les options `famma_new_look`, `famma_page_home`,
+  `famma_page_shop`, `famma_page_product` et `famma_page_account` changent de
+  groupe de réglages : enregistrer FAMMA → Pages ne peut plus les vider.
+- Feuille et script chargés sur ce seul écran ; rien côté visiteur.
+
 ## 0.3.30 — 2026-11-13 (finitions de l'espace client) · thème famma-child 0.2.17
 
 Lot 43, écarts 3, 4, 5, 8 (initiale), 11, 13 et 14 du rapport « Espace
