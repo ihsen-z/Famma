@@ -3,8 +3,8 @@
  * Nouveau look — briques du panier (onglet « Panier »).
  *
  * Forme d'une entrée : voir `New_Look_Registry`. Plan du lot : 6 briques en
- * 4 étapes (Docs « Plan du lot Panier », 14/11) ; l'étape 1 n'apporte que
- * `cart_look`.
+ * 4 étapes (Docs « Plan du lot Panier », 14/11) : étape 1 `cart_look`,
+ * étape 2 `cart_split` et `cart_dock`.
  *
  * @package famma-core
  */
@@ -25,11 +25,23 @@ final class New_Look_Bricks_Cart {
 	 */
 	public static function bricks(): array {
 		return array(
-			'cart_look' => array(
+			'cart_look'  => array(
 				'title'   => __( 'Présentation de la maquette', 'famma-core' ),
 				'summary' => __( 'Cartes plus compactes, phrase « Aujourd’hui, vous payez 0 DT », récapitulatif qui suit l’écran, panier vide avec la mascotte.', 'famma-core' ),
 				'help'    => __( 'Sur la page panier : chaque article dans une carte compacte (photo, nom, prix à l’unité, corbeille de retrait dans le coin, sélecteur − / + et total de la ligne) ; sous « Mon panier », la phrase « Aujourd’hui, vous payez 0 DT », seulement si le paiement à la livraison est activé ; sur ordinateur, le récapitulatif reste à l’écran pendant qu’on fait défiler les articles, et l’aide WhatsApp passe sous les articles ; sur téléphone, les produits proposés défilent en rangée. Panier vide : la mascotte FAMMA, un titre et une phrase. Les mises à jour du panier, la suppression avec « Annuler », les prix et la commande restent ceux de WooCommerce.', 'famma-core' ),
-				'texts'   => array( Cart_Content::class ),
+				'texts'   => array( 'lead', 'empty_title', 'empty_text' ),
+			),
+			'cart_split' => array(
+				'title'   => __( 'Tuiles « Aujourd’hui 0 DT » et « À la réception »', 'famma-core' ),
+				'summary' => __( 'Dans le récapitulatif, juste avant le bouton : ce qu’on paie aujourd’hui (0 DT) et ce qu’on paiera au livreur.', 'famma-core' ),
+				'help'    => __( 'Dans le récapitulatif du panier, juste au-dessus de « Passer la commande » : une tuile verte « Aujourd’hui 0 DT, rien à payer en ligne » et une tuile marine avec le total à payer au livreur. Le total est celui de WooCommerce et se met à jour avec les quantités. Les tuiles n’apparaissent que si le paiement à la livraison est le seul moyen de paiement proposé : sinon « 0 DT aujourd’hui » serait faux.', 'famma-core' ),
+				'texts'   => array( 'split_now', 'split_now_note', 'split_rec', 'split_rec_note' ),
+			),
+			'cart_dock'  => array(
+				'title'   => __( 'Barre du bas « Aujourd’hui 0 DT · Commander »', 'famma-core' ),
+				'summary' => __( 'Sur téléphone, une barre en bas d’écran : 0 DT aujourd’hui, le total au livreur, et le bouton Commander.', 'famma-core' ),
+				'help'    => __( 'Sur téléphone et tablette, tant que le bouton « Passer la commande » n’est pas à l’écran, une barre marine reste en bas : « Aujourd’hui 0 DT », le total à la réception (mis à jour avec les quantités) et un bouton vers la page de commande. Elle s’efface quand le vrai bouton est visible, et n’existe pas sur ordinateur, où le récapitulatif reste déjà à l’écran. Si le paiement à la livraison n’est pas le seul moyen de paiement, elle montre seulement le total. Elle reprend les titres des tuiles de la case précédente.', 'famma-core' ),
+				'texts'   => array( 'dock_go' ),
 			),
 		);
 	}

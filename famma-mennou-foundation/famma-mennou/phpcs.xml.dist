@@ -522,6 +522,10 @@
 				<element value="famma_child_cart_swap_empty_look"/>
 				<element value="famma_child_cart_enqueue_look"/>
 				<element value="famma_child_new_look_cart_parts"/>
+				<element value="famma_child_cart_cod_only"/>
+				<element value="famma_child_cart_label"/>
+				<element value="famma_child_cart_split"/>
+				<element value="famma_child_cart_dock"/>
 				<element value="famma_child_pdp_related_args"/>
 				<element value="famma_child_pdp_details"/>
 				<element value="famma_child_pdp_details_capture"/>

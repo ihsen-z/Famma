@@ -1,5 +1,36 @@
 # Changelog — FAMMA Core
 
+## 0.3.43 — 2026-11-14 (panier de la maquette, étape 2 du lot « Panier ») · thème famma-child 0.2.26
+
+Étape 2 sur 4 du plan « Panier » : les montants. Deux nouvelles cases,
+livrées décochées. Pas mis en ligne.
+
+- **`cart_split` — tuiles « Aujourd'hui 0 DT » / « À la réception »** :
+  dans le récapitulatif, juste avant « Passer la commande ». Posées dans
+  `.cart_totals` (`woocommerce_proceed_to_checkout`, priorité 5) : WooCommerce
+  les redessine avec le total à chaque changement de quantité.
+- **`cart_dock` — barre du bas sur téléphone** : « Aujourd'hui 0 DT », total à
+  la réception et bouton vers la commande ; rendue en pied de page avec le
+  panier courant, `new-look-cart.js` (sans jQuery requis, différé) recopie le
+  total après chaque mise à jour, la fait descendre quand le vrai bouton est à
+  l'écran (inert + aria-hidden) et la masque panier vide. Cachée à partir de
+  1000 px, où le récapitulatif reste à l'écran.
+- « 0 DT aujourd'hui » n'est plus affiché que si le paiement à la livraison
+  est le **seul** moyen de paiement proposé (`famma_child_cart_cod_only()`) ;
+  la phrase de `cart_look` suit la même règle. Sinon : pas de tuiles, pas de
+  phrase, la barre montre seulement « Total ».
+- Textes `split_now`, `split_now_note`, `split_rec`, `split_rec_note`,
+  `dock_go` (FR + derja à relire) ; chaque case de l'onglet « Panier » ne
+  montre plus que ses propres textes.
+- Thème 0.2.26 : `inc/new-look-cart-totals.php`, `assets/js/new-look-cart.js`,
+  styles ajoutés à `assets/css/new-look-cart.css` (chargée dès qu'une case du
+  panier est cochée).
+- Banc `famma-qa-admin` : 3 cases décochées, aucune trace dans la page ; cochées
+  à 375 px (FR et AR) et 1280 px sans défilement horizontal ; « + » → tuile,
+  barre et total identiques (73 DT) ; barre effacée quand le bouton est visible ;
+  dernier article retiré → barre masquée, marge du bas retirée ; virement
+  bancaire activé → phrase, tuiles et zéro absents.
+
 ## 0.3.42 — 2026-11-14 (panier de la maquette, étape 1 du lot « Panier ») · thème famma-child 0.2.25
 
 Étape 1 sur 4 du plan « Panier » (Docs BtcJ19SXmKQ96q9UkgoYeJ) : la

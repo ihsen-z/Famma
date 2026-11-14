@@ -12,9 +12,10 @@
  * vide reprennent mot pour mot les textes actuels du thème. La version derja
  * est celle de la maquette du 14/11, à relire.
  *
- * Servis par la brique `cart_look` (thème, inc/new-look-cart.php). Phrase
- * vidée : elle disparaît. Titre du panier vide vidé : le texte du thème
- * reste.
+ * Servis par les briques `cart_look`, `cart_split` et `cart_dock` (thème,
+ * inc/new-look-cart.php). Phrase vidée : elle disparaît. Titre du panier vide
+ * vidé : le texte du thème reste. Les titres des tuiles servent aussi à la
+ * barre du bas.
  *
  * @package famma-core
  */
@@ -63,6 +64,46 @@ final class Cart_Content {
 				'help'       => __( 'Sous le titre. Vide : la phrase habituelle du thème.', 'famma-core' ),
 				'default_fr' => __( 'Parcourez la boutique et ajoutez vos premiers produits.', 'famma-core' ),
 				'default_ar' => 'دور في البوتيك وزيد أول حوايجك.',
+			),
+			array(
+				'key'        => 'split_now',
+				'type'       => 'text',
+				'label'      => __( 'Tuile verte — titre', 'famma-core' ),
+				'help'       => __( 'Au-dessus de « 0 DT », dans le récapitulatif et la barre du bas. Vide avec l’autre titre : les tuiles disparaissent.', 'famma-core' ),
+				'default_fr' => __( 'Aujourd’hui', 'famma-core' ),
+				'default_ar' => 'اليوم',
+			),
+			array(
+				'key'        => 'split_now_note',
+				'type'       => 'text',
+				'label'      => __( 'Tuile verte — phrase', 'famma-core' ),
+				'help'       => __( 'Sous « 0 DT ». Vide : pas de phrase.', 'famma-core' ),
+				'default_fr' => __( 'Rien à payer en ligne', 'famma-core' ),
+				'default_ar' => 'ما تخلّص شي أونلاين',
+			),
+			array(
+				'key'        => 'split_rec',
+				'type'       => 'text',
+				'label'      => __( 'Tuile marine — titre', 'famma-core' ),
+				'help'       => __( 'Au-dessus du total, dans le récapitulatif et la barre du bas.', 'famma-core' ),
+				'default_fr' => __( 'À la réception', 'famma-core' ),
+				'default_ar' => 'كي توصلك',
+			),
+			array(
+				'key'        => 'split_rec_note',
+				'type'       => 'text',
+				'label'      => __( 'Tuile marine — phrase', 'famma-core' ),
+				'help'       => __( 'Sous le total. Vide : pas de phrase.', 'famma-core' ),
+				'default_fr' => __( 'En espèces, au livreur', 'famma-core' ),
+				'default_ar' => 'كاش، لليفرور',
+			),
+			array(
+				'key'        => 'dock_go',
+				'type'       => 'text',
+				'label'      => __( 'Barre du bas — bouton', 'famma-core' ),
+				'help'       => __( 'Mène à la page de commande. Vide : « Commander ».', 'famma-core' ),
+				'default_fr' => __( 'Commander', 'famma-core' ),
+				'default_ar' => 'أطلب توا',
 			),
 		);
 	}

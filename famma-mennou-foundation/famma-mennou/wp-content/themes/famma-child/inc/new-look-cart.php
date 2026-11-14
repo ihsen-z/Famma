@@ -1,7 +1,8 @@
 <?php
 /**
- * Nouveau look — panier, étape 1 du lot « Panier » : case `cart_look`
- * (maquette panier du 14/11).
+ * Nouveau look — panier, lot « Panier » (maquette panier du 14/11) : socle
+ * commun et étape 1, case `cart_look`. Étape 2 (`cart_split`, `cart_dock`) :
+ * inc/new-look-cart-totals.php.
  *
  * Présentation seulement, par-dessus `inc/cart.php` et `cart.css` qui restent
  * en place : la feuille `new-look-cart.css` réarrange le tableau de
@@ -40,6 +41,31 @@ function famma_child_cart_text( string $key ): string {
 }
 
 /**
+ * « 0 DT aujourd'hui » est-il vrai pour ce panier ?
+ *
+ * Oui seulement si le paiement à la livraison est le seul moyen de paiement
+ * proposé : avec un paiement en ligne possible, la phrase serait fausse pour
+ * une partie des clients. Lu une fois par requête.
+ *
+ * @return bool
+ */
+function famma_child_cart_cod_only(): bool {
+	static $only = null;
+
+	if ( null !== $only ) {
+		return $only;
+	}
+
+	$only = false;
+
+	if ( function_exists( 'famma_child_cod_is_enabled' ) && famma_child_cod_is_enabled() && function_exists( 'WC' ) && WC()->payment_gateways() ) {
+		$only = array( 'cod' ) === array_keys( WC()->payment_gateways()->get_available_payment_gateways() );
+	}
+
+	return $only;
+}
+
+/**
  * Phrase « Aujourd'hui, vous payez 0 DT » en tête du panier.
  *
  * Priorité 5 : avant les messages de WooCommerce (10). Le panier vide ne
@@ -48,7 +74,7 @@ function famma_child_cart_text( string $key ): string {
  * @return void
  */
 function famma_child_cart_lead(): void {
-	if ( ! famma_child_cart_part( 'cart_look' ) || ! function_exists( 'famma_child_cod_is_enabled' ) || ! famma_child_cod_is_enabled() ) {
+	if ( ! famma_child_cart_part( 'cart_look' ) || ! famma_child_cart_cod_only() ) {
 		return;
 	}
 
@@ -99,27 +125,41 @@ function famma_child_cart_swap_empty_look(): void {
 add_action( 'wp', 'famma_child_cart_swap_empty_look', 11 );
 
 /**
- * Charge la feuille du panier, derrière celle d'aujourd'hui.
+ * Charge la feuille du panier (une pour toutes les cases, derrière celle
+ * d'aujourd'hui) et le script de la barre du bas.
  *
  * @return void
  */
 function famma_child_cart_enqueue_look(): void {
-	if ( ! famma_child_cart_part( 'cart_look' ) ) {
+	if ( ! array_filter( famma_child_new_look_cart_parts(), 'famma_child_cart_part' ) ) {
 		return;
 	}
 
-	$dir  = get_stylesheet_directory();
-	$file = '/assets/css/new-look-cart.css';
+	$dir = get_stylesheet_directory();
+	$uri = get_stylesheet_directory_uri();
+	$css = '/assets/css/new-look-cart.css';
+	$js  = '/assets/js/new-look-cart.js';
 
-	if ( ! file_exists( $dir . $file ) ) {
-		return;
+	if ( file_exists( $dir . $css ) ) {
+		wp_enqueue_style(
+			'famma-new-look-cart',
+			$uri . $css,
+			wp_style_is( 'famma-cart', 'registered' ) ? array( 'famma-cart' ) : array( 'famma-layout' ),
+			(string) filemtime( $dir . $css )
+		);
 	}
 
-	wp_enqueue_style(
-		'famma-new-look-cart',
-		get_stylesheet_directory_uri() . $file,
-		wp_style_is( 'famma-cart', 'registered' ) ? array( 'famma-cart' ) : array( 'famma-layout' ),
-		(string) filemtime( $dir . $file )
-	);
+	if ( famma_child_cart_part( 'cart_dock' ) && file_exists( $dir . $js ) ) {
+		wp_enqueue_script(
+			'famma-new-look-cart',
+			$uri . $js,
+			array(),
+			(string) filemtime( $dir . $js ),
+			array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			)
+		);
+	}
 }
 add_action( 'wp_enqueue_scripts', 'famma_child_cart_enqueue_look', 24 );

@@ -127,7 +127,7 @@ function famma_child_new_look_product_parts(): array {
  * @return array<int, string>
  */
 function famma_child_new_look_cart_parts(): array {
-	return array( 'cart_look' );
+	return array( 'cart_look', 'cart_split', 'cart_dock' );
 }
 
 /**
