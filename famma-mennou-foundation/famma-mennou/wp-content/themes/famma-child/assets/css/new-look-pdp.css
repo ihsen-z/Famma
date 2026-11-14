@@ -656,7 +656,9 @@ body.famma-nl-pdp-pay .famma-ledger {
 
 /* ---------- pdp_details : « Tout savoir avant de commander » (lot 45) ---------- */
 
+/* Toute la largeur, 860 px au plus : marges auto dans une grille = largeur du contenu sinon. */
 .famma-product .famma-dts {
+	inline-size: 100%;
 	max-inline-size: 860px;
 	margin-inline: auto;
 }
@@ -1297,8 +1299,15 @@ body.famma-nl-pdp-form .famma-express__total {
 		display: grid;
 		grid-template-columns: 44px minmax(0, 1fr);
 		align-items: center;
+		flex: 1 1 auto;
 		column-gap: 10px;
 		min-inline-size: 0;
+	}
+
+	/* Le bouton garde sa largeur, sur une ligne ; c'est le nom qui se coupe (« … »). */
+	.famma-sticky-cta--dock .famma-sticky-cta__button {
+		flex: 0 0 auto;
+		white-space: nowrap;
 	}
 
 	.famma-sticky-cta--dock .famma-sticky-cta__img {
@@ -1385,4 +1394,58 @@ html:not([dir="rtl"]) body.famma-nl-pdp-labels .famma-sticky-cta__ar {
 	0% {
 		background-color: rgba(255, 122, 0, 0.42);
 	}
+}
+
+/* ==========================================================================
+   Lot 50 — volet « Les tailles » (pdp_sizes)
+   ========================================================================== */
+
+.famma-sizes__alt a {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: 48px;
+	color: var(--famma-blue);
+	font-weight: var(--fw-semibold);
+}
+
+/* Tableau large : il défile dans son cadre, jamais la page. */
+.famma-sizes__wrap {
+	max-inline-size: 100%;
+	overflow-x: auto;
+	border: 1px solid var(--famma-line);
+	border-radius: var(--famma-radius);
+}
+
+.famma-sizes__wrap:focus-visible {
+	outline: 2px solid var(--famma-orange);
+	outline-offset: 2px;
+}
+
+.famma-sizes__table {
+	inline-size: 100%;
+	border-collapse: collapse;
+	font-size: 14px;
+}
+
+.famma-sizes__table :is(th, td) {
+	padding-block: 10px;
+	padding-inline: 12px;
+	border-block-end: 1px solid var(--famma-line);
+	text-align: start;
+	white-space: nowrap;
+}
+
+.famma-sizes__table tr:last-child > * {
+	border-block-end: 0;
+}
+
+.famma-sizes__table thead th {
+	background: var(--famma-band);
+	color: var(--famma-white);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-sizes__table tbody th {
+	color: var(--famma-blue);
+	font-weight: var(--fw-bold);
 }

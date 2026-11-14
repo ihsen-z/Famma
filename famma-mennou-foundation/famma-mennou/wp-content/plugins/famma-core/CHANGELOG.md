@@ -1,5 +1,42 @@
 # Changelog — FAMMA Core
 
+## 0.3.40 — 2026-11-14 (fiche produit de la maquette, lot 50) · thème famma-child 0.2.23
+
+Lot 50 : volet « Les tailles » de la maquette. Une nouvelle case, livrée
+décochée. Pas mis en ligne.
+
+- **`pdp_sizes` — volet « Les tailles »** : un onglet WooCommerce de plus
+  (`famma_sizes`, juste après la description) qui devient un volet avec
+  `pdp_details`, sinon un onglet comme les autres. Contenu tiré du produit :
+  tailles disponibles (texte `size_avail`, « Disponible en {tailles}. »),
+  lien « autre taille » du lot 49 si `pdp_altsize` est cochée, tableau des
+  mesures. Un produit sans taille ni tableau n'a pas d'onglet. Textes
+  `size_tab` et `size_avail` dans FAMMA → Nouveau look → Fiche produit.
+- **Tableau des mesures** saisi produit par produit, en français et en
+  derja, dans l'onglet « Fiche FAMMA », bloc « Tableau des mesures »
+  (`Product_Size_Chart_Admin`, sur `famma_story_panel_end` après « Autre
+  taille ») : une ligne par rangée, colonnes séparées par « | », première
+  ligne = titres ; 14 lignes et 6 colonnes au plus ; langue de la page, sinon
+  l'autre. Lecture `Product_Size_Chart`, méta `_famma_size_chart_<fr|ar>`.
+  Nonce, capacité `edit_product`, témoin de présence, saisie assainie, champ
+  vidé = méta supprimée. Rien d'inventé : sans saisie, pas de tableau.
+- Thème 0.2.23 : `inc/new-look-pdp-sizes.php` ; tableau large qui défile
+  dans son cadre (atteignable au clavier), jamais la page.
+- Corrections trouvées au banc sur les lots précédents (non en prod) :
+  - volets « Tout savoir » (lot 45) : toute la largeur (860 px au plus) ;
+    centrés par des marges auto dans une grille, ils prenaient la largeur de
+    leur contenu (238 px sur 328 en arabe) ;
+  - barre du bas (lot 47) : à 360 px, « Choisir ma taille » était écrasé
+    sur 48 px et 3 lignes ; le bouton garde sa largeur, le nom se coupe.
+- Poids : feuille 8,2 Ko compressés (l'ancienne de 7,5 Ko n'est plus
+  chargée sur la fiche) ; aucun script de plus.
+- Banc `famma-qa-fiche` : volet en français et en arabe (« القياسات »,
+  tailles séparées par « ، ») à 360 et 1 280 px, sans défilement de la page ;
+  écran d'administration (sans nonce, sans témoin, abonné : refusés ;
+  balises retirées ; champ vidé supprimé) ; commande COD 737 (taille L,
+  offre après achat affichée) payée seulement à « livrée », annulée + test ;
+  cases décochées : fiches identiques octet pour octet au lot 49.
+
 ## 0.3.39 — 2026-11-14 (fiche produit de la maquette, lot 49) · thème famma-child 0.2.22
 
 Lot 49 : finitions de la boîte d'achat, ce qui restait du rapport « Fiche

@@ -341,6 +341,22 @@ final class Product_Content {
 				'default_fr' => 'Choisir ma taille',
 				'default_ar' => 'إختار المقاس',
 			),
+			array(
+				'key'        => 'size_tab',
+				'type'       => 'text',
+				'label'      => __( 'Volet « Les tailles » — titre', 'famma-core' ),
+				'help'       => __( 'Titre du volet (ou de l’onglet) des tailles. Vide : pas de volet.', 'famma-core' ),
+				'default_fr' => 'Les tailles',
+				'default_ar' => 'القياسات',
+			),
+			array(
+				'key'        => 'size_avail',
+				'type'       => 'text',
+				'label'      => __( 'Volet « Les tailles » — tailles disponibles', 'famma-core' ),
+				'help'       => __( '{tailles} devient la liste des tailles du produit (« L, XL, XXL »). Vide : la ligne n’est pas affichée.', 'famma-core' ),
+				'default_fr' => 'Disponible en {tailles}.',
+				'default_ar' => 'موجود في {tailles}.',
+			),
 		);
 	}
 

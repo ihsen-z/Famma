@@ -132,6 +132,15 @@ final class New_Look_Bricks_Product {
 				'texts'   => array(),
 				'wait'    => array(),
 			),
+			// Lot 50 (14/11/2026).
+			'pdp_sizes'   => array(
+				'title'   => __( 'Volet « Les tailles »', 'famma-core' ),
+				'summary' => __( 'Un volet avec les tailles disponibles, le lien « autre taille » et le tableau des mesures du produit.', 'famma-core' ),
+				'help'    => __( 'Lot 50. Sur les fiches à tailles ou à tableau des mesures : un volet « Les tailles » (un onglet si les volets ne sont pas cochés) avec les tailles disponibles, le lien « autre taille » si sa brique est cochée, et le tableau des mesures saisi dans Produits → Modifier → onglet « Fiche FAMMA », bloc « Tableau des mesures ». Un produit sans taille ni tableau n’a pas de volet. Textes juste en dessous.', 'famma-core' ),
+				'needs'   => array(),
+				'texts'   => array( 'size_tab', 'size_avail' ),
+				'wait'    => array(),
+			),
 		);
 	}
 }

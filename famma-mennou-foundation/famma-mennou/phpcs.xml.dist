@@ -527,6 +527,11 @@
 				<element value="famma_child_pdp_buy_express"/>
 				<element value="famma_child_pdp_altsize"/>
 				<element value="famma_child_pdp_labels_gettext"/>
+				<element value="famma_child_pdp_sizes_setup"/>
+				<element value="famma_child_pdp_sizes_tab"/>
+				<element value="famma_child_pdp_sizes_panel"/>
+				<element value="famma_child_pdp_sizes_html"/>
+				<element value="famma_child_pdp_sizes_table"/>
 				<element value="famma_child_pdp_buy"/>
 				<element value="famma_child_pdp_points"/>
 				<element value="famma_child_pdp_dock_head"/>

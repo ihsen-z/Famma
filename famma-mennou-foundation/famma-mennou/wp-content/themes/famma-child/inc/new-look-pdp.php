@@ -45,7 +45,7 @@ function famma_child_pdp_part( string $part ): bool {
  * @return void
  */
 function famma_child_pdp_enqueue(): void {
-	$parts = array_filter( array( 'pdp_gallery', 'pdp_frame', 'pdp_pay', 'pdp_details', 'pdp_story', 'pdp_anatomy', 'pdp_buy', 'pdp_form', 'pdp_points', 'pdp_dock', 'pdp_altsize', 'pdp_labels' ), 'famma_child_pdp_part' );
+	$parts = array_filter( array( 'pdp_gallery', 'pdp_frame', 'pdp_pay', 'pdp_details', 'pdp_story', 'pdp_anatomy', 'pdp_buy', 'pdp_form', 'pdp_points', 'pdp_dock', 'pdp_altsize', 'pdp_labels', 'pdp_sizes' ), 'famma_child_pdp_part' );
 
 	if ( array() === $parts ) {
 		return;
