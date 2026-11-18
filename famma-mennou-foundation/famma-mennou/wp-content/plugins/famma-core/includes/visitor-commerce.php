@@ -163,6 +163,10 @@ final class Visitor_Commerce {
 	 */
 	public function add_to_cart( $key, $product_id, $quantity, $variation ): void {
 		unset( $key );
+		// Faux : ajout qui n'en est pas un (échange contre un lot, `Cart_Lot`).
+		if ( ! apply_filters( 'famma_cart_add_counts', true ) ) {
+			return;
+		}
 		$this->record(
 			'add_to_cart',
 			array(

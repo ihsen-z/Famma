@@ -528,6 +528,8 @@
 				<element value="famma_child_cart_dock"/>
 				<element value="famma_child_cart_promo_toggle"/>
 				<element value="famma_child_cart_save_button"/>
+				<element value="famma_child_cart_lot"/>
+				<element value="famma_child_cart_lot_fill"/>
 				<element value="famma_child_pdp_related_args"/>
 				<element value="famma_child_pdp_details"/>
 				<element value="famma_child_pdp_details_capture"/>

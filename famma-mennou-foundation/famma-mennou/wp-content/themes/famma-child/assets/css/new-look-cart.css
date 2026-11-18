@@ -618,3 +618,121 @@ body.famma-cart-dock-on {
 	margin-inline-end: 6px;
 	font-weight: var(--fw-semibold);
 }
+
+/* ------------------------------------------------------------
+   Case `cart_lot` : « Passer au lot »
+   Sélecteurs renforcés : Kadence et WooCommerce donnent une marge aux
+   paragraphes et une couleur aux liens de la cellule du nom.
+   ------------------------------------------------------------ */
+
+.famma-cart-lot {
+	display: grid;
+	gap: 8px;
+	margin-block-start: var(--sp-2);
+	padding: 10px 12px;
+	border: 1.5px dashed var(--famma-orange);
+	border-radius: var(--famma-radius);
+	background: color-mix(in srgb, var(--famma-orange) 7%, var(--famma-white));
+}
+
+.woocommerce-cart table.shop_table.cart .famma-cart-lot__q {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	margin: 0;
+	font-size: var(--fs-chrome-body);
+	line-height: 1.4;
+}
+
+.famma-cart-lot__q .famma-icon {
+	flex: none;
+	inline-size: 20px;
+	block-size: 20px;
+	margin-block-start: 1px;
+	color: var(--famma-orange-700);
+}
+
+.famma-cart-lot__q b {
+	font-weight: var(--fw-bold);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+/* Étroit (cellule du nom sur téléphone) : le gain passe sous le libellé. */
+.woocommerce-cart table.shop_table.cart a.famma-cart-lot__go {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 6px 10px;
+	min-block-size: 48px;
+	padding: 7px 12px;
+	border-radius: var(--famma-radius);
+	background: var(--famma-blue);
+	color: var(--famma-white);
+	font-size: var(--fs-chrome-body);
+	font-weight: var(--fw-semibold);
+	text-align: center;
+	text-decoration: none;
+	transition: transform var(--dur-fast, 120ms) var(--ease-out);
+}
+
+.woocommerce-cart table.shop_table.cart a.famma-cart-lot__go:hover,
+.woocommerce-cart table.shop_table.cart a.famma-cart-lot__go:focus-visible {
+	color: var(--famma-white);
+	text-decoration: none;
+}
+
+.woocommerce-cart table.shop_table.cart a.famma-cart-lot__go:active {
+	transform: scale(0.97);
+}
+
+.woocommerce-cart table.shop_table.cart a.famma-cart-lot__go:focus-visible {
+	outline: 3px solid var(--famma-orange);
+	outline-offset: 2px;
+}
+
+/* Très étroit : « Vous gardez » et le montant peuvent passer sur deux lignes,
+   le montant jamais coupé. */
+.famma-cart-lot > * {
+	min-inline-size: 0;
+}
+
+.famma-cart-lot__keep {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 0 0.25em;
+	max-inline-size: 100%;
+	min-block-size: 32px;
+	padding: 4px 10px;
+	border-radius: 16px;
+	background: #6FDB9C;
+	color: #0B1F3A;
+	font-size: 0.8125rem;
+	font-weight: var(--fw-bold);
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-cart-lot__keep .woocommerce-Price-amount {
+	color: inherit;
+	white-space: nowrap;
+}
+
+/* Plus large : la pilule de la maquette, calée au début de la ligne. */
+@media (min-width: 600px) {
+	.woocommerce-cart table.shop_table.cart a.famma-cart-lot__go {
+		justify-self: start;
+		justify-content: space-between;
+		padding-block: 6px;
+		padding-inline: 16px 6px;
+		border-radius: 999px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.woocommerce-cart table.shop_table.cart a.famma-cart-lot__go {
+		transition: none;
+	}
+}

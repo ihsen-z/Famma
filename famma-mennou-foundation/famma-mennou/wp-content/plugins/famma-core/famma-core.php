@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       FAMMA Core
  * Description:       Core business logic for FAMMA MENNOU — custom COD order workflow, cost×3 pricing with margin tracking, Tunisia checkout rules, WhatsApp, and env-driven tracking (Meta/TikTok/GA4). Keeps customisation out of WP/WooCommerce core and the theme.
- * Version:           0.3.44
+ * Version:           0.3.45
  * Requires at least: 6.9
  * Requires PHP:      8.1
  * Author:            FAMMA
@@ -27,7 +27,7 @@ namespace Famma\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FAMMA_CORE_VERSION', '0.3.44' );
+define( 'FAMMA_CORE_VERSION', '0.3.45' );
 define( 'FAMMA_CORE_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/pages-content.php';
@@ -58,6 +58,8 @@ require_once __DIR__ . '/includes/delivery-content.php';
 require_once __DIR__ . '/includes/returns-content.php';
 require_once __DIR__ . '/includes/shop-content.php';
 require_once __DIR__ . '/includes/cart-content.php';
+require_once __DIR__ . '/includes/cart-lot.php';
+require_once __DIR__ . '/includes/cart-lot-admin.php';
 require_once __DIR__ . '/includes/order-track.php';
 require_once __DIR__ . '/includes/account-profile.php';
 require_once __DIR__ . '/includes/account-auth.php';
@@ -3646,6 +3648,7 @@ function boot(): void {
 	Account_Prefs::hooks();
 	Account_Welcome::hooks();
 	Account_Finish::hooks();
+	Cart_Lot::hooks();
 	Hardening::instance();
 	Performance::instance();
 	Cache_Warmup::instance();
@@ -3664,6 +3667,7 @@ function boot(): void {
 		Product_Faq::instance();
 		Product_Story_Admin::instance();
 		Product_Alt_Size_Admin::instance();
+		Cart_Lot_Admin::instance();
 		Product_Size_Chart_Admin::instance();
 		Dashboard::instance();
 		Pages_Content::instance();

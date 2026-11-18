@@ -237,7 +237,8 @@ final class Tracking_Events {
 	 * @phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter
 	 */
 	public function remember_add_to_cart( $key, $id, $quantity, $variation, $data, $items ): void {
-		if ( ! self::pixel_active() || ! WC()->session ) {
+		// Faux : ajout qui n'en est pas un (échange contre un lot, `Cart_Lot`).
+		if ( ! self::pixel_active() || ! WC()->session || ! apply_filters( 'famma_cart_add_counts', true ) ) {
 			return;
 		}
 

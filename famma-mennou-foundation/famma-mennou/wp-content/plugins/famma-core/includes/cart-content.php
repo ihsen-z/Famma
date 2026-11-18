@@ -12,9 +12,8 @@
  * vide reprennent mot pour mot les textes actuels du thème. La version derja
  * est celle de la maquette du 14/11, à relire.
  *
- * Servis par les briques `cart_look`, `cart_split`, `cart_dock`, `cart_promo` et
- * `cart_save` (thème,
- * inc/new-look-cart.php). Phrase vidée : elle disparaît. Titre du panier vide
+ * Servis par les briques `cart_look`, `cart_split`, `cart_dock`, `cart_promo`,
+ * `cart_save` et `cart_lot` (thème, inc/new-look-cart*.php). Phrase vidée : elle disparaît. Titre du panier vide
  * vidé : le texte du thème reste. Les titres des tuiles servent aussi à la
  * barre du bas.
  *
@@ -129,6 +128,38 @@ final class Cart_Content {
 				'help'       => __( 'En tête du message « … retiré. Annuler ? » de WooCommerce. Vide : pas de phrase en plus.', 'famma-core' ),
 				'default_fr' => __( 'Gardé dans « Ma sélection ».', 'famma-core' ),
 				'default_ar' => 'تحفظ في « اختياراتي ».',
+			),
+			array(
+				'key'        => 'lot_q',
+				'type'       => 'text',
+				'label'      => __( 'Lot — phrase', 'famma-core' ),
+				'help'       => __( 'Sous l’article. {n} = articles du lot, {a} = prix du lot, {b} = prix des articles seuls. Une phrase propre au produit, dans l’onglet « Fiche FAMMA », passe avant celle-ci. Vide : pas de phrase.', 'famma-core' ),
+				'default_fr' => __( '{n} articles ? Le lot de {n} coûte {a} au lieu de {b}.', 'famma-core' ),
+				'default_ar' => '{n} حوايج؟ اللوط متاع {n} بـ {a} عوض {b}.',
+			),
+			array(
+				'key'        => 'lot_go',
+				'type'       => 'text',
+				'label'      => __( 'Lot — bouton', 'famma-core' ),
+				'help'       => __( 'Remplace les articles par le lot. Vide : « Passer au lot ».', 'famma-core' ),
+				'default_fr' => __( 'Passer au lot', 'famma-core' ),
+				'default_ar' => 'بدّل باللوط',
+			),
+			array(
+				'key'        => 'lot_keep',
+				'type'       => 'text',
+				'label'      => __( 'Lot — gain sur le bouton', 'famma-core' ),
+				'help'       => __( '{m} = ce que le client garde en passant au lot. Vide : pas de pastille.', 'famma-core' ),
+				'default_fr' => __( 'Vous gardez {m}', 'famma-core' ),
+				'default_ar' => 'تربح {m}',
+			),
+			array(
+				'key'        => 'lot_done',
+				'type'       => 'text',
+				'label'      => __( 'Lot — message après l’échange', 'famma-core' ),
+				'help'       => __( 'En tête du panier, après l’échange. {m} = ce que le client garde. Vide : pas de message.', 'famma-core' ),
+				'default_fr' => __( 'Lot appliqué : vous gardez {m}.', 'famma-core' ),
+				'default_ar' => 'اللوط تحطّ: ربحت {m}.',
 			),
 		);
 	}

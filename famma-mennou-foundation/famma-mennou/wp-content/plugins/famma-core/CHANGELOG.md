@@ -1,5 +1,41 @@
 # Changelog — FAMMA Core
 
+## 0.3.45 — 2026-11-15 (panier de la maquette, étape 4 du lot « Panier ») · thème famma-child 0.2.28
+
+Étape 4 sur 4 du plan « Panier » : « Passer au lot ». Une nouvelle case,
+livrée décochée. Pas mis en ligne.
+
+- **Couple produit → lot**, réglé produit par produit dans l'onglet
+  « Fiche FAMMA » (`Cart_Lot_Admin`, en bas, après « Autre taille ») : produit
+  lot (recherche de produits WooCommerce), nombre d'articles qu'il contient
+  (2 ou plus, c'est aussi le seuil) et phrase facultative en français et en
+  derja. Méta `_famma_lot_product`, `_famma_lot_size`, `_famma_lot_text_fr|ar`,
+  retirées quand le champ est vidé. Avertissement si le lot n'est pas un
+  produit simple publié, achetable et en stock, ou s'il ne coûte pas moins
+  cher. Aucun couple n'est saisi : sans couple, rien ne s'affiche.
+- **`cart_lot` — proposition sous l'article** (`Cart_Lot::offer()`) : dès que
+  la ligne atteint le nombre d'articles du lot, phrase « {n} articles ? Le lot
+  de {n} coûte {a} au lieu de {b}. » et lien « Passer au lot » avec la pastille
+  « Vous gardez {m} ». Calcul de la maquette : nombre de lots = multiples du
+  lot dans la ligne, le reste reste en articles seuls ; prix du catalogue
+  (`wc_get_price_to_display`), gain nul ou négatif, lot en rupture ou stock
+  insuffisant : pas de proposition.
+- **Échange** (`Cart_Lot::handle()`, `wp_loaded` 15) : lien avec le jeton du
+  panier de WooCommerce (`woocommerce-cart`, comme la corbeille), brique
+  vérifiée côté serveur, ligne et quantité affichée vérifiées (un lien rejoué
+  après l'échange ne fait rien), ajout du lot puis baisse de la ligne, message
+  « Lot appliqué : vous gardez {m}. », retour au panier sans le paramètre.
+  Marche sans script ; un lien plutôt qu'un bouton d'envoi pour que la touche
+  Entrée d'un champ du panier ne puisse pas le déclencher.
+- **Pas d'AddToCart** pour cet ajout (décision D2 du plan, recommandée) :
+  nouveau filtre `famma_cart_add_counts` (vrai par défaut) lu par
+  `Tracking_Events::remember_add_to_cart()` et `Visitor_Commerce::add_to_cart()`,
+  mis à faux pendant l'échange seulement.
+- **Textes** de l'onglet « Panier » : `lot_q`, `lot_go`, `lot_keep`,
+  `lot_done` (derja de la maquette, à relire).
+- Thème 0.2.28 : `inc/new-look-cart-lot.php` (affichage, crochet
+  `woocommerce_after_cart_item_name` 25) et styles dans `new-look-cart.css`.
+
 ## 0.3.44 — 2026-11-14 (panier de la maquette, étape 3 du lot « Panier ») · thème famma-child 0.2.27
 
 Étape 3 sur 4 du plan « Panier » : garder sans perdre. Deux nouvelles cases,

@@ -4,7 +4,8 @@
  *
  * Forme d'une entrée : voir `New_Look_Registry`. Plan du lot : 6 briques en
  * 4 étapes (Docs « Plan du lot Panier », 14/11) : étape 1 `cart_look`,
- * étape 2 `cart_split` et `cart_dock`, étape 3 `cart_promo` et `cart_save`.
+ * étape 2 `cart_split` et `cart_dock`, étape 3 `cart_promo` et `cart_save`,
+ * étape 4 `cart_lot`.
  *
  * @package famma-core
  */
@@ -54,6 +55,12 @@ final class New_Look_Bricks_Cart {
 				'summary' => __( 'Un bouton sous chaque article : il part dans « Ma sélection » et quitte le panier, avec « Annuler ».', 'famma-core' ),
 				'help'    => __( 'Sous le nom de chaque article du panier, un bouton « Mettre de côté » : le produit est ajouté à « Ma sélection » (le cœur de la boutique), puis retiré du panier exactement comme avec la corbeille, avec le message « … retiré. Annuler ? » de WooCommerce, précédé de « Gardé dans « Ma sélection » ». La sélection reste dans le navigateur du client (et dans son compte si la case « Ma sélection gardée dans le compte » est cochée et qu’il est connecté). Le bouton n’apparaît que si le navigateur exécute les scripts.', 'famma-core' ),
 				'texts'   => array( 'save_label', 'save_done' ),
+			),
+			'cart_lot'   => array(
+				'title'   => __( '« Passer au lot »', 'famma-core' ),
+				'summary' => __( 'Sous un article, quand le panier en contient assez : le lot moins cher, avec ce qu’on garde, et un bouton pour l’échanger.', 'famma-core' ),
+				'help'    => __( 'Pour chaque produit qui a un lot (onglet « Fiche FAMMA » du produit : produit lot et nombre d’articles qu’il contient) : dès que la ligne du panier atteint ce nombre, une phrase propose le lot avec son prix et celui des articles seuls, et un bouton « Passer au lot » indique ce que le client garde. Le bouton remplace les articles par le lot (ce qui dépasse reste en articles seuls) et un message confirme le gain. Tous les prix sont ceux du catalogue ; un lot qui ne coûte pas moins cher, en rupture ou non publié n’est jamais proposé. L’échange n’envoie pas d’ajout au panier à Meta. Marche aussi sans script.', 'famma-core' ),
+				'texts'   => array( 'lot_q', 'lot_go', 'lot_keep', 'lot_done' ),
 			),
 		);
 	}
