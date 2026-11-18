@@ -1549,7 +1549,31 @@
 			// Sans effet sur la commande.
 		}
 		orderPlaced( result );
+		if ( offerTakesOver( result ) ) {
+			return;
+		}
 		window.location.href = result.redirect;
+	}
+
+	/**
+	 * Offre après achat (extension Upsell One Click) : quand la réponse de la
+	 * commande porte une offre, l'extension l'affiche aussitôt et ouvre
+	 * elle-même la page de confirmation. Sans l'extension, ou au moindre
+	 * souci, la redirection habituelle a lieu.
+	 *
+	 * @param {Object} result Réponse de succès du checkout.
+	 * @return {boolean} Vrai si l'extension a pris la main.
+	 */
+	function offerTakesOver( result ) {
+		var offer = window.upsellOneClick;
+		if ( ! offer || 'function' !== typeof offer.takeOver ) {
+			return false;
+		}
+		try {
+			return true === offer.takeOver( result );
+		} catch ( error ) {
+			return false;
+		}
 	}
 
 	/**
