@@ -168,7 +168,7 @@ function famma_child_pdp_pay(): void {
 					data-total="<?php echo esc_attr( html_entity_decode( wp_strip_all_tags( $total['html'] ), ENT_QUOTES, 'UTF-8' ) ); ?>"
 					<?php if ( null !== $total['value'] ) : ?>
 						data-value="<?php echo esc_attr( (string) $total['value'] ); ?>"
-						data-decimals="<?php echo esc_attr( (string) wc_get_price_decimals() ); ?>"
+						data-decimals="<?php echo esc_attr( (string) ( class_exists( '\Famma\Core\Price_Display' ) && \Famma\Core\Price_Display::trim() ? 0 : wc_get_price_decimals() ) ); ?>"
 						data-sep="<?php echo esc_attr( wc_get_price_decimal_separator() ); ?>"
 					<?php endif; ?>
 				><?php echo wp_kses_post( $zero ); ?></b>

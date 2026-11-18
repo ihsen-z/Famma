@@ -34,6 +34,138 @@
 	text-wrap: pretty;
 }
 
+/* « 0 DT » en vert, comme les tuiles. */
+.famma-nl-cart-look .famma-cart-lead__zero {
+	color: var(--famma-success-700);
+	font-weight: var(--fw-bold);
+}
+
+/* ------------------------------------------------------------
+   En-tête : mascotte, « Mon panier », pastille du nombre
+   d'articles, étapes nommées sur téléphone
+   ------------------------------------------------------------ */
+
+.famma-nl-cart-look .famma-tunnel-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	column-gap: 12px;
+}
+
+.famma-nl-cart-look .famma-tunnel-head > .famma-tunnel-head__crumbs,
+.famma-nl-cart-look .famma-tunnel-head > .famma-steps {
+	flex-basis: 100%;
+}
+
+.famma-nl-cart-look .famma-cart-mascot {
+	display: inline-flex;
+	margin-block-start: 18px;
+	color: var(--famma-ink);
+}
+
+.famma-nl-cart-look .famma-cart-mascot .famma-acct-mascot {
+	inline-size: 44px;
+	block-size: 44px;
+}
+
+.famma-nl-cart-look .famma-tunnel-head > .famma-tunnel-head__sub {
+	margin-block-start: 18px;
+	padding: 4px 12px;
+	border-radius: 999px;
+	background: var(--famma-surface-icon);
+	color: var(--famma-text-2);
+	font-size: var(--fs-card-meta);
+	font-weight: var(--fw-semibold);
+	white-space: nowrap;
+}
+
+.famma-nl-cart-look .famma-tunnel-head > .famma-tunnel-head__sub:empty {
+	display: none;
+}
+
+/*
+ * Téléphone : les noms des trois étapes restent lisibles, en plus petit,
+ * à partir de 360 px (en dessous, le thème ne garde que l'étape en cours).
+ */
+@media (min-width: 360px) and (max-width: 479px) {
+	.famma-nl-cart-look .famma-steps {
+		gap: 6px;
+	}
+
+	.famma-nl-cart-look .famma-steps__item {
+		gap: 6px;
+		font-size: 0.8125rem;
+	}
+
+	.famma-nl-cart-look .famma-steps__item + .famma-steps__item::before {
+		inline-size: 10px;
+	}
+
+	.famma-nl-cart-look .famma-steps__dot {
+		inline-size: 24px;
+		block-size: 24px;
+	}
+
+	.famma-nl-cart-look .famma-steps__item:not(.is-current) .famma-steps__label {
+		position: static;
+		inline-size: auto;
+		block-size: auto;
+		overflow: visible;
+		clip-path: none;
+	}
+}
+
+/* ------------------------------------------------------------
+   Promesses du récapitulatif, avec leur icône
+   ------------------------------------------------------------ */
+
+.famma-nl-cart-look .famma-reassure--look .famma-reassure__item {
+	grid-template-columns: 18px minmax(0, 1fr);
+	align-items: center;
+}
+
+.famma-nl-cart-look .famma-reassure--look .famma-reassure__item::before {
+	content: none;
+}
+
+.famma-nl-cart-look .famma-reassure--look .famma-reassure__icon {
+	inline-size: 18px;
+	block-size: 18px;
+	color: var(--famma-orange);
+}
+
+/* ------------------------------------------------------------
+   Encart WhatsApp : bouton « Écrire sur WhatsApp »
+   ------------------------------------------------------------ */
+
+.famma-nl-cart-look .famma-tunnel-help {
+	flex-wrap: wrap;
+}
+
+.famma-nl-cart-look .famma-tunnel-help__body {
+	flex: 1 1 0;
+	min-inline-size: 0;
+}
+
+.famma-tunnel-help__cta {
+	display: flex;
+	flex-basis: 100%;
+	align-items: center;
+	justify-content: center;
+	min-block-size: 48px;
+	padding: 10px 16px;
+	border: 1.5px solid var(--famma-whatsapp);
+	border-radius: var(--famma-radius);
+	color: var(--famma-success-700);
+	font-size: var(--fs-small);
+	font-weight: var(--fw-semibold);
+}
+
+.famma-tunnel-help:hover .famma-tunnel-help__cta,
+.famma-tunnel-help:focus-visible .famma-tunnel-help__cta {
+	background: var(--famma-success-soft);
+}
+
 /* ------------------------------------------------------------
    Grille de la page
    ------------------------------------------------------------ */
@@ -264,6 +396,23 @@
 .famma-cart-empty--look .famma-cart-empty__title {
 	font-size: 1.375rem;
 	font-weight: var(--fw-bold);
+}
+
+/* « Aller à la boutique » fléché, la flèche suit le sens de lecture. */
+.famma-nl-cart-look .return-to-shop .button::after {
+	content: "";
+	display: inline-block;
+	inline-size: 18px;
+	block-size: 18px;
+	margin-inline-start: 10px;
+	vertical-align: -3px;
+	background: currentColor;
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+[dir="rtl"] .famma-nl-cart-look .return-to-shop .button::after {
+	transform: scaleX(-1);
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -105,11 +105,37 @@ add_filter( 'famma_whatsapp_show_float', 'famma_child_tunnel_whatsapp_float' );
  */
 function famma_child_cart_count_label( int $count ): string {
 	if ( 0 === $count ) {
-		return __( 'Votre panier est vide', 'famma-child' );
+		$label = __( 'Votre panier est vide', 'famma-child' );
+	} else {
+		/* translators: %d: nombre d'articles dans le panier. */
+		$label = sprintf( _n( '%d article dans votre panier', '%d articles dans votre panier', $count, 'famma-child' ), $count );
 	}
 
-	/* translators: %d: nombre d'articles dans le panier. */
-	return sprintf( _n( '%d article dans votre panier', '%d articles dans votre panier', $count, 'famma-child' ), $count );
+	/**
+	 * Libellé du nombre d'articles, sous « Mon panier ». Le nouveau look du
+	 * panier le raccourcit en pastille (`inc/new-look-cart.php`).
+	 *
+	 * @param string $label Libellé.
+	 * @param int    $count Nombre d'articles.
+	 */
+	return (string) apply_filters( 'famma_child_cart_count_label', $label, $count );
+}
+
+/**
+ * Modèle « plusieurs articles » que le script du panier remplit (`%d`).
+ *
+ * @return string
+ */
+function famma_child_cart_count_many(): string {
+	/* translators: garder %d : le script y place le nombre d'articles. */
+	$many = _n( '%d article dans votre panier', '%d articles dans votre panier', 3, 'famma-child' );
+
+	/**
+	 * Même filtre que le libellé, avec `%d` à la place du nombre.
+	 *
+	 * @param string $many Modèle.
+	 */
+	return (string) apply_filters( 'famma_child_cart_count_many', $many );
 }
 
 /**
@@ -161,6 +187,7 @@ function famma_child_tunnel_header(): void {
 
 		<?php famma_child_tunnel_steps( $step ); ?>
 
+		<?php do_action( 'famma_child_tunnel_before_title', $step ); ?>
 		<h1 class="famma-tunnel-head__title"><?php echo esc_html( $title ); ?></h1>
 
 		<?php if ( 1 === $step ) : ?>
@@ -170,8 +197,7 @@ function famma_child_tunnel_header(): void {
 				data-famma-cart-count
 				data-empty="<?php echo esc_attr( famma_child_cart_count_label( 0 ) ); ?>"
 				data-one="<?php echo esc_attr( famma_child_cart_count_label( 1 ) ); ?>"
-				<?php /* translators: garder %d : le script y place le nombre d'articles. */ ?>
-				data-many="<?php echo esc_attr( _n( '%d article dans votre panier', '%d articles dans votre panier', 3, 'famma-child' ) ); ?>"
+				data-many="<?php echo esc_attr( famma_child_cart_count_many() ); ?>"
 			><?php echo esc_html( famma_child_cart_count_label( $count ) ); ?></p>
 		<?php elseif ( 2 === $step ) : ?>
 			<p class="famma-tunnel-head__sub"><?php esc_html_e( 'Remplissez vos coordonnées : nous vous appelons pour confirmer la commande avant l’expédition.', 'famma-child' ); ?></p>
@@ -262,6 +288,7 @@ function famma_child_tunnel_help( string $title ): void {
 			<span class="famma-tunnel-help__title"><?php echo esc_html( $title ); ?></span>
 			<span class="famma-tunnel-help__sub"><?php esc_html_e( 'Écrivez-nous sur WhatsApp.', 'famma-child' ); ?></span>
 		</span>
+		<?php do_action( 'famma_child_tunnel_help_end' ); ?>
 	</a>
 	<?php
 }

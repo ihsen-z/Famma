@@ -53,6 +53,11 @@ final class New_Look_Bricks_Site {
 				'summary' => __( 'L’icône du compte s’affiche à côté du panier au lieu d’être rangée dans le menu.', 'famma-core' ),
 				'help'    => __( 'Sur téléphone, l’icône du compte s’affiche à côté du panier, comme sur ordinateur, au lieu d’être rangée dans le menu.', 'famma-core' ),
 			),
+			'price_whole' => array(
+				'title'   => __( 'Prix sans décimales inutiles', 'famma-core' ),
+				'summary' => __( '« 29 DT » au lieu de « 29,000 DT », partout sur le site.', 'famma-core' ),
+				'help'    => __( 'Les prix ronds s’affichent sans les zéros après la virgule : « 29 DT », « 0 DT », « 29 دينار » au lieu de « 29,000 DT ». Un prix avec des millimes garde ses décimales (« 29,500 DT »). Fiche, boutique, panier, commande et e-mails envoyés pendant la commande. Les montants enregistrés ne changent pas : seul l’affichage change. Le réglage des décimales de WooCommerce reste tel quel.', 'famma-core' ),
+			),
 		);
 	}
 }

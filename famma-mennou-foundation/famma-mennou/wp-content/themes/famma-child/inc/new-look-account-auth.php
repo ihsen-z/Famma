@@ -67,15 +67,20 @@ function famma_child_account_auth_strings( $translation, $text ) {
 /**
  * La mascotte FAMMA de la maquette (même dessin que le logo), qui cligne.
  *
+ * Humeur `sad` : la bouche tombe (panier vide de la maquette du 14/11).
+ *
+ * @param string $mood `''` (sourire) ou `sad`.
  * @return string
  */
-function famma_child_account_mascot(): string {
+function famma_child_account_mascot( string $mood = '' ): string {
+	$mouth = 'sad' === $mood ? 'M44 84Q54 73 64 84' : 'M44 76Q54 87 64 76';
+
 	$svg = '<svg class="famma-acct-mascot" viewBox="0 0 124 122" aria-hidden="true" focusable="false">'
 		. '<path d="M34 28H74A20 20 0 0 1 94 48V76A20 20 0 0 1 74 96H60L50 114L42 96H34A20 20 0 0 1 14 76V48A20 20 0 0 1 34 28Z" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>'
 		. '<g class="famma-acct-mascot__ant"><path d="M54 28V17" stroke="#FF7A00" stroke-width="7" stroke-linecap="round"/><circle cx="54" cy="10" r="8" fill="#FF7A00"/></g>'
 		. '<rect class="famma-acct-mascot__eye" x="36" y="50" width="10" height="20" rx="5" fill="#FF7A00"/>'
 		. '<path d="M74 52L64 61L74 70" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>'
-		. '<path d="M44 76Q54 87 64 76" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>'
+		. '<path d="' . $mouth . '" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>'
 		. '<g stroke="#FF7A00" stroke-width="6.5" stroke-linecap="round"><path d="M104 22L114 12"/><path d="M110 36L122 32"/><path d="M100 11L104 2"/></g>'
 		. '</svg>';
 

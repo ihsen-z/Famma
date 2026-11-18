@@ -205,7 +205,7 @@
 	} );
 
 	/**
-	 * Ajoute « Gardé dans Ma sélection » au message de retrait.
+	 * Remplace le message de retrait par « Gardé dans Ma sélection. Annuler ? ».
 	 *
 	 * @return {void}
 	 */
@@ -221,12 +221,25 @@
 			return;
 		}
 
+		/*
+		 * Le message ne garde que « Gardé dans Ma sélection. Annuler ? »,
+		 * comme la maquette : la phrase « … supprimé. » de WooCommerce disait
+		 * le contraire juste après. Le lien « Annuler ? » (et son jeton) reste
+		 * celui de WooCommerce.
+		 */
 		if ( ! message.querySelector( '.famma-cart-saved' ) ) {
 			var note = document.createElement( 'strong' );
+			var undo = message.querySelector( 'a.restore-item' );
 
 			note.className = 'famma-cart-saved';
 			note.textContent = pendingDone;
-			message.insertBefore( note, message.firstChild );
+			message.textContent = '';
+			message.appendChild( note );
+
+			if ( undo ) {
+				message.appendChild( document.createTextNode( ' ' ) );
+				message.appendChild( undo );
+			}
 		}
 
 		pendingDone = '';

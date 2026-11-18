@@ -1,7 +1,8 @@
 <?php
 /**
  * Nouveau look — panier, lot « Panier » (maquette panier du 14/11) : socle
- * commun et étape 1, case `cart_look`. Étape 2 (`cart_split`, `cart_dock`) :
+ * commun et étape 1, case `cart_look` (suite dans inc/new-look-cart-head.php :
+ * titre, promesses, aide WhatsApp). Étape 2 (`cart_split`, `cart_dock`) :
  * inc/new-look-cart-totals.php ; étape 3 (`cart_promo`, `cart_save`) :
  * inc/new-look-cart-keep.php.
  *
@@ -9,8 +10,8 @@
  * en place : la feuille `new-look-cart.css` réarrange le tableau de
  * WooCommerce (aucun gabarit copié), ce fichier n'ajoute que :
  * - la phrase « Aujourd'hui, vous payez 0 DT » sous l'en-tête, seulement si le
- *   paiement à la livraison est activé ;
- * - le panier vide avec la mascotte, à la place de l'icône.
+ *   paiement à la livraison est activé, « 0 DT » en vert ;
+ * - le panier vide avec la mascotte triste, à la place de l'icône.
  *
  * Les textes sont ceux de FAMMA → Nouveau look → Panier
  * (`Famma\Core\Cart_Content`). Case décochée : le panier est celui d'avant,
@@ -85,12 +86,25 @@ function famma_child_cart_lead(): void {
 		return;
 	}
 
-	printf( '<p class="famma-cart-lead">%s</p>', esc_html( $lead ) );
+	/*
+	 * « 0 DT » en vert gras, comme la maquette : le premier montant nul de la
+	 * phrase réglée dans l'administration, en français ou en derja. Le texte
+	 * est échappé avant ; seule la balise <strong> est ajoutée.
+	 */
+	$html = preg_replace( '/(?<![\d.,])0(?:[.,]0+)?\s?(?:DT|دينار|د\.ت)/u', '<strong class="famma-cart-lead__zero">$0</strong>', esc_html( $lead ), 1 );
+
+	printf(
+		'<p class="famma-cart-lead">%s</p>',
+		wp_kses(
+			is_string( $html ) ? $html : esc_html( $lead ),
+			array( 'strong' => array( 'class' => true ) )
+		)
+	);
 }
 add_action( 'woocommerce_before_cart', 'famma_child_cart_lead', 5 );
 
 /**
- * Panier vide de la maquette : mascotte, titre, phrase.
+ * Panier vide de la maquette : mascotte triste, titre, phrase.
  *
  * Garde la classe `wc-empty-cart-message` (voir `famma_child_cart_empty()`).
  *
@@ -101,7 +115,7 @@ function famma_child_cart_empty_look(): void {
 	$sub   = famma_child_cart_text( 'empty_text' );
 	?>
 	<div class="wc-empty-cart-message famma-cart-empty famma-cart-empty--look" role="status">
-		<?php echo famma_child_account_mascot(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- passé par wp_kses() dans famma_child_account_mascot(). ?>
+		<?php echo famma_child_account_mascot( 'sad' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- passé par wp_kses() dans famma_child_account_mascot(). ?>
 		<p class="famma-cart-empty__title"><?php echo esc_html( '' !== $title ? $title : __( 'Votre panier est vide', 'famma-child' ) ); ?></p>
 		<p class="famma-cart-empty__sub"><?php echo esc_html( '' !== $sub ? $sub : __( 'Parcourez la boutique et ajoutez vos premiers produits.', 'famma-child' ) ); ?></p>
 	</div>

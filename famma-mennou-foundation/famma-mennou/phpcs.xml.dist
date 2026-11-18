@@ -450,6 +450,7 @@
 				<element value="famma_child_cart_checkout_button"/>
 				<element value="famma_child_cart_continue_link"/>
 				<element value="famma_child_cart_count_label"/>
+				<element value="famma_child_cart_count_many"/>
 				<element value="famma_child_cart_coupon_title"/>
 				<element value="famma_child_cart_empty"/>
 				<element value="famma_child_cart_help"/>

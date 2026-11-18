@@ -457,6 +457,7 @@ final class Express_Order {
 				 */
 				'price'         => array(
 					'decimals' => wc_get_price_decimals(),
+					'trim'     => Price_Display::trim(),
 					'decimal'  => wc_get_price_decimal_separator(),
 					'thousand' => wc_get_price_thousand_separator(),
 					'format'   => get_woocommerce_price_format(),

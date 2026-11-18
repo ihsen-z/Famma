@@ -147,6 +147,11 @@
 		var decimals = parseInt( p.decimals, 10 ) || 0;
 		var parts = amount.toFixed( decimals ).split( '.' );
 
+		// Brique « Prix sans décimales inutiles » : « 39 DT », comme wc_price().
+		if ( p.trim && parts[ 1 ] && /^0+$/.test( parts[ 1 ] ) ) {
+			parts.length = 1;
+		}
+
 		parts[ 0 ] = parts[ 0 ].replace( /\B(?=(\d{3})+(?!\d))/g, p.thousand || '' );
 
 		var number = parts.join( p.decimal || ',' );

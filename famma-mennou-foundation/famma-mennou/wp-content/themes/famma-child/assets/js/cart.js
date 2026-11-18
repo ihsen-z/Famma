@@ -10,8 +10,11 @@
  * script, jamais en CSS seul.
  *
  * WooCommerce ne remplace que le formulaire et les totaux : le libellé
- * « N articles dans votre panier » de l'en-tête est recalculé ici, à partir
- * des champs de quantité du nouveau formulaire.
+ * « N articles dans votre panier » de l'en-tête et le badge du panier dans le
+ * menu sont recalculés ici, à partir des champs de quantité du nouveau
+ * formulaire. Le badge restait sinon sur l'ancien nombre après la corbeille,
+ * « Mettre de côté » ou « + » / « − » : sur la page panier, WooCommerce ne
+ * charge pas le script qui rafraîchit les fragments du menu.
  */
 ( function ( $ ) {
 	'use strict';
@@ -40,18 +43,12 @@
 	}
 
 	/**
-	 * Réécrit « N articles dans votre panier ».
+	 * Réécrit « N articles dans votre panier » et le badge du menu.
 	 *
 	 * @param {boolean} emptied Le panier vient-il d'être vidé ?
 	 * @return {void}
 	 */
 	function refreshCount( emptied ) {
-		var label = document.querySelector( '[data-famma-cart-count]' );
-
-		if ( ! label ) {
-			return;
-		}
-
 		var count = 0;
 
 		if ( ! emptied ) {
@@ -59,6 +56,17 @@
 				var value = parseFloat( input.value );
 				count += isNaN( value ) ? 0 : value;
 			} );
+		}
+
+		document.querySelectorAll( '.famma-cart__count' ).forEach( function ( badge ) {
+			badge.textContent = String( count );
+			badge.classList.toggle( 'is-empty', 0 === count );
+		} );
+
+		var label = document.querySelector( '[data-famma-cart-count]' );
+
+		if ( ! label ) {
+			return;
 		}
 
 		if ( 0 === count ) {

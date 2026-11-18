@@ -1,5 +1,38 @@
 # Changelog — FAMMA Core
 
+## 0.3.46 — 2026-11-18 (correctifs du test en ligne du panier) · thème famma-child 0.2.29
+
+Correctifs du rapport « Test prod panier + fiche » du 18/11 (points 1, 2, 4,
+9 à 13). Une nouvelle case, livrée décochée ; le reste suit les cases du
+panier déjà en place. Pas mis en ligne.
+
+- **`price_whole` — prix sans décimales inutiles** (onglet « Partout »,
+  `Price_Display`) : « 29 DT » au lieu de « 29,000 DT ». Filtre
+  `woocommerce_price_trim_zeros` de `wc_price()` sur le site (pas dans
+  l'administration hors AJAX) : seuls les zéros de fin disparaissent, un prix
+  à 29,500 DT garde ses décimales, le réglage de WooCommerce et les montants
+  enregistrés ne changent pas. Le formulaire express et la bande « À payer »
+  de la fiche suivent la même règle (`price.trim`, `data-decimals` à 0).
+- **Badge du panier de l'en-tête à jour** (thème, `cart.js`, sans case) :
+  sur la page panier, WooCommerce ne charge pas le script des fragments ; le
+  badge restait sur l'ancien nombre après la corbeille, « Mettre de côté » ou
+  « + » / « − » jusqu'au rechargement. Il est recalculé depuis le formulaire
+  rechargé, comme le libellé « N articles ».
+- **`cart_look` complété comme la maquette** (thème) : mascotte à côté du
+  titre « Panier », compteur en pastille (textes `count_one` / `count_many`,
+  « {n} » = nombre), « 0 DT » de la phrase d'accueil en vert gras, étapes
+  lisibles dès 360 px, promesses du récapitulatif dans une seule langue avec
+  leur icône (au lieu du français et du derja mélangés), bouton « Écrire sur
+  WhatsApp » dans l'encadré d'aide (texte `help_cta`, vide = pas de bouton),
+  mascotte triste et flèche sur le bouton du panier vide.
+- **« Mettre de côté »** : message de WooCommerce remplacé par la phrase de la
+  brique, suivie du lien « Annuler ».
+- **Textes ajoutés** à FAMMA → Nouveau look → Panier (`Cart_Content`) :
+  `count_one`, `count_many`, `help_cta`, en français et en derja.
+- Nouveaux fichiers : `includes/price-display.php` (famma-core),
+  `inc/new-look-cart-head.php` (thème, tiré de `new-look-cart.php` qui
+  dépassait 300 lignes).
+
 ## 0.3.45 — 2026-11-15 (panier de la maquette, étape 4 du lot « Panier ») · thème famma-child 0.2.28
 
 Étape 4 sur 4 du plan « Panier » : « Passer au lot ». Une nouvelle case,
