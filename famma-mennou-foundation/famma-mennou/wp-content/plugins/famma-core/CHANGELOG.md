@@ -1,5 +1,29 @@
 # Changelog — FAMMA Core
 
+## 0.3.48 — 2026-11-18 (page commande comme le formulaire express) · thème famma-child 0.2.31
+
+Une nouvelle case, livrée décochée : `co_express` (onglet « Panier »).
+Pas mise en ligne.
+
+- **Une seule carte « Vos coordonnées »** (thème, `inc/new-look-checkout.php`)
+  au lieu de trois : téléphone avec « +216 » fixe et la phrase d'appel dessous,
+  nom complet, adresse de livraison (gouvernorat + « Ville, cité, rue… » dans
+  un même cadre), e-mail facultatif. « Créer un compte ? » et « Expédier à une
+  adresse différente ? » restent. Plus de carte « Mode de livraison ».
+- **Gouvernorat trouvé d'après la ville tapée**, comme sur la fiche : le script
+  de détection sort du formulaire express dans un fichier partagé
+  (`assets/js/governorate-places.js`, `Express_Order::enqueue_places()`) ;
+  le cadre d'adresse aussi (`Express_Order::address_markup()`). Aucun doublon.
+- **Règles des champs** (`Checkout_Express_Look`, `woocommerce_checkout_fields`
+  à 30) : plus de « Ville / Délégation », adresse facultative comme l'express,
+  gouvernorat toujours obligatoire, ordre téléphone → nom → adresse → e-mail.
+- **Plus de case « J'ai lu et j'accepte les conditions générales »**
+  (`woocommerce_checkout_show_terms`) : la phrase de l'express
+  (`Express_Order::legal_note_html()`) s'affiche sous le bouton.
+- **Bloc « Paiement à la livraison » caché** quand c'est le seul moyen de
+  paiement ; il reste choisi.
+- Case décochée : les trois cartes d'avant, à l'identique.
+
 ## 0.3.47 — 2026-11-18 (messages du site au style FAMMA) · thème famma-child 0.2.30
 
 Lot 53. Une nouvelle case, livrée décochée : `notices` (onglet « Partout »).

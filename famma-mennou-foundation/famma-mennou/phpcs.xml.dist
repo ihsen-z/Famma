@@ -454,6 +454,12 @@
 				<element value="famma_child_notices_on"/>
 				<element value="famma_child_notices_body_class"/>
 				<element value="famma_child_notices_enqueue"/>
+				<element value="famma_child_co_express_on"/>
+				<element value="famma_child_checkout_card_express"/>
+				<element value="famma_child_checkout_express_field"/>
+				<element value="famma_child_co_express_legal"/>
+				<element value="famma_child_co_express_body_class"/>
+				<element value="famma_child_co_express_enqueue"/>
 				<element value="famma_child_cart_coupon_title"/>
 				<element value="famma_child_cart_empty"/>
 				<element value="famma_child_cart_help"/>

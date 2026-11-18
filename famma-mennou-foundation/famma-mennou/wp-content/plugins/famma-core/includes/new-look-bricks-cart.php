@@ -5,7 +5,7 @@
  * Forme d'une entrée : voir `New_Look_Registry`. Plan du lot : 6 briques en
  * 4 étapes (Docs « Plan du lot Panier », 14/11) : étape 1 `cart_look`,
  * étape 2 `cart_split` et `cart_dock`, étape 3 `cart_promo` et `cart_save`,
- * étape 4 `cart_lot`.
+ * étape 4 `cart_lot`. Puis `co_express` (page commande comme l'express, 18/11).
  *
  * @package famma-core
  */
@@ -61,6 +61,12 @@ final class New_Look_Bricks_Cart {
 				'summary' => __( 'Sous un article, quand le panier en contient assez : le lot moins cher, avec ce qu’on garde, et un bouton pour l’échanger.', 'famma-core' ),
 				'help'    => __( 'Pour chaque produit qui a un lot (onglet « Fiche FAMMA » du produit : produit lot et nombre d’articles qu’il contient) : dès que la ligne du panier atteint ce nombre, une phrase propose le lot avec son prix et celui des articles seuls, et un bouton « Passer au lot » indique ce que le client garde. Le bouton remplace les articles par le lot (ce qui dépasse reste en articles seuls) et un message confirme le gain. Tous les prix sont ceux du catalogue ; un lot qui ne coûte pas moins cher, en rupture ou non publié n’est jamais proposé. L’échange n’envoie pas d’ajout au panier à Meta. Marche aussi sans script.', 'famma-core' ),
 				'texts'   => array( 'lot_q', 'lot_go', 'lot_keep', 'lot_done' ),
+			),
+			'co_express' => array(
+				'title'   => __( 'Page commande comme le formulaire express', 'famma-core' ),
+				'summary' => __( 'Une seule carte « Vos coordonnées » : téléphone avec +216, nom complet, adresse de livraison avec le gouvernorat trouvé tout seul, e-mail facultatif.', 'famma-core' ),
+				'help'    => __( 'Sur la page de commande, les champs prennent la forme du formulaire express de la fiche produit, dans une seule carte « Vos coordonnées » : téléphone avec « +216 » déjà écrit, nom complet, adresse de livraison (le gouvernorat et « Ville, cité, rue… » dans un même cadre : le gouvernorat se choisit tout seul d’après la ville tapée, le client peut le changer), puis l’e-mail facultatif. Le champ « Ville / Délégation » séparé disparaît : la ville se tape dans l’adresse, qui devient facultative comme dans le formulaire express ; le gouvernorat reste obligatoire. La case « J’ai lu et j’accepte les conditions générales » est remplacée par la phrase « En commandant, vous acceptez nos conditions générales » sous le bouton (rien n’est affiché si aucune page de conditions n’est choisie dans WooCommerce). La carte « Mode de livraison » disparaît, et le bloc « Paiement à la livraison » aussi quand c’est le seul moyen de paiement : il reste choisi. « Créer un compte ? » et « Expédier à une adresse différente ? » restent.', 'famma-core' ),
+				'texts'   => array(),
 			),
 		);
 	}

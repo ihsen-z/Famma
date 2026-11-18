@@ -1,0 +1,129 @@
+/*
+ * Nouveau look — page commande comme le formulaire express (brique
+ * `co_express`). Chargée seulement sur la page commande quand la case est
+ * cochée, après `checkout.css` et la feuille du formulaire express
+ * (`express-order.css` de famma-core), qui dessine les cadres « +216 » et
+ * « Gouvernorat + ville ». Ici : ce qui adapte ces cadres aux champs de
+ * WooCommerce et au thème parent, rien d'autre.
+ */
+
+/* Une seule carte : pas de pastille de numéro, titre aligné comme avant. */
+.famma-co-card--express .famma-co-card__title {
+	gap: 0;
+}
+
+/* Un champ par ligne, dans l'ordre du formulaire express. */
+.famma-co-card--express .woocommerce-billing-fields__field-wrapper {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+/*
+ * Champs posés dans les cadres : la bordure, le fond et l'anneau sont ceux du
+ * cadre. Spécificité au-dessus des règles du thème parent
+ * (`.woocommerce form .form-row .input-text`) et de l'erreur des messages du
+ * site (`body.famma-nl-notices form .form-row.woocommerce-invalid …`).
+ */
+body.famma-nl-co-express .famma-co-card .form-row .famma-express__phone-box input.input-text,
+body.famma-nl-co-express .famma-co-card .form-row .famma-express__address-box select,
+body.famma-nl-co-express .famma-co-card .form-row .famma-express__address-box input[type="text"] {
+	flex: 1;
+	inline-size: auto;
+	min-inline-size: 0;
+	min-block-size: 46px;
+	margin: 0;
+	padding-block: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+	color: var(--famma-ink);
+	font-size: 1rem;
+}
+
+body.famma-nl-co-express .famma-co-card .form-row .famma-express__phone-box input.input-text {
+	padding-inline: var(--sp-3, 12px);
+	letter-spacing: 0.02em;
+	font-variant-numeric: tabular-nums;
+}
+
+body.famma-nl-co-express .famma-co-card .form-row .famma-express__address-box input[type="text"] {
+	padding-inline: var(--sp-3, 12px);
+}
+
+/* La liste garde sa place au début du cadre et sa teinte (express-order.css). */
+body.famma-nl-co-express .famma-co-card .form-row .famma-express__address-box select {
+	flex: none;
+	max-inline-size: 52%;
+	padding-inline: var(--sp-3, 12px) var(--sp-2, 8px);
+	border-inline-end: 1px solid var(--famma-line, #E7EAF0);
+	border-start-start-radius: var(--famma-radius-sm, 8px);
+	border-end-start-radius: var(--famma-radius-sm, 8px);
+	background: var(--famma-surface-2, #F3F5F8);
+	font-weight: var(--fw-semibold, 600);
+	text-overflow: ellipsis;
+}
+
+body.famma-nl-co-express .famma-co-card .form-row .famma-express__address-box select:invalid {
+	color: var(--famma-text-2, #56617A);
+	font-weight: var(--fw-regular, 400);
+}
+
+body.famma-nl-co-express .famma-co-card .form-row .famma-express__address-box select:focus-visible {
+	background: rgba(255, 122, 0, 0.1);
+}
+
+body.famma-nl-co-express .famma-co-card .form-row .famma-express__address-box select.famma-express__flash {
+	animation: famma-express-flash 1.5s ease-out;
+}
+
+body.famma-nl-co-express .famma-co-card .form-row .famma-express__phone-box input:focus-visible,
+body.famma-nl-co-express .famma-co-card .form-row .famma-express__address-box select:focus-visible,
+body.famma-nl-co-express .famma-co-card .form-row .famma-express__address-box input:focus-visible {
+	outline: none;
+}
+
+/* WooCommerce enveloppe le champ dans un <span> : il prend toute la ligne. */
+.famma-co-card--express .famma-express__phone .woocommerce-input-wrapper {
+	display: block;
+}
+
+/* Champ en erreur (script de commande de WooCommerce) : c'est le cadre qui rougit. */
+.famma-co-card--express .form-row.woocommerce-invalid .famma-express__phone-box,
+.famma-co-card--express .form-row.woocommerce-invalid .famma-express__address-box {
+	border-color: var(--famma-danger, #D64545);
+	box-shadow: 0 0 0 1px var(--famma-danger, #D64545);
+}
+
+.famma-co-card--express .famma-co-phone-note,
+.famma-co-card--express .famma-express__hint {
+	display: block;
+	margin-block-start: var(--sp-1, 4px);
+}
+
+.famma-co-card--express .famma-express__address > label abbr {
+	text-decoration: none;
+}
+
+/* Paiement à la livraison seul moyen proposé : il reste choisi, son bloc se cache. */
+body.famma-nl-co-express.famma-co-cod-only #payment ul.wc_payment_methods {
+	display: none;
+}
+
+body.famma-nl-co-express.famma-co-cod-only #payment div.form-row.place-order {
+	margin-block-start: 0;
+}
+
+/* Phrase des conditions sous le bouton, comme le formulaire express. */
+.famma-co-legal {
+	margin: 10px 0 0;
+	color: var(--famma-text-2, #56617A);
+	font-size: var(--fs-card-meta, 0.8125rem);
+	line-height: 1.5;
+	text-align: center;
+}
+
+.famma-co-legal a {
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}

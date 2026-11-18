@@ -399,7 +399,14 @@ final class Express_Order {
 			return;
 		}
 
-		wp_enqueue_script( 'famma-express', $url . 'assets/js/express-order.js', array(), (string) filemtime( $js ), true );
+		self::enqueue_places();
+		wp_enqueue_script(
+			'famma-express',
+			$url . 'assets/js/express-order.js',
+			wp_script_is( 'famma-governorate-places', 'enqueued' ) ? array( 'famma-governorate-places' ) : array(),
+			(string) filemtime( $js ),
+			true
+		);
 
 		/*
 		 * Les points d'entrée sont demandés à WooCommerce plutôt que
@@ -465,16 +472,29 @@ final class Express_Order {
 				),
 			)
 		);
+	}
 
-		/*
-		 * Noms de lieux pour proposer le gouvernorat d'après la ville tapée :
-		 * des données, pas des chaînes à traduire, donc un script en ligne
-		 * plutôt que `wp_localize_script()`. `JSON_HEX_TAG` : aucun nom ne peut
-		 * fermer la balise <script>.
-		 */
+	/**
+	 * Script partagé « gouvernorat d'après la ville tapée » et ses noms de lieux.
+	 *
+	 * Formulaire express et page commande (brique `co_express`). Les noms sont
+	 * des données, pas des chaînes à traduire : script en ligne plutôt que
+	 * `wp_localize_script()`. `JSON_HEX_TAG` : aucun nom ne peut fermer la
+	 * balise <script>. Une seule mise en file par page.
+	 *
+	 * @return void
+	 */
+	public static function enqueue_places(): void {
+		$file = plugin_dir_path( __DIR__ ) . 'assets/js/governorate-places.js';
+
+		if ( wp_script_is( 'famma-governorate-places', 'enqueued' ) || ! file_exists( $file ) ) {
+			return;
+		}
+
+		wp_enqueue_script( 'famma-governorate-places', plugin_dir_url( __DIR__ ) . 'assets/js/governorate-places.js', array(), (string) filemtime( $file ), true );
 		wp_add_inline_script(
-			'famma-express',
-			'var fammaExpressPlaces = ' . wp_json_encode( self::places_for_script(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP ) . ';',
+			'famma-governorate-places',
+			'var fammaPlaces = ' . wp_json_encode( self::places_for_script(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP ) . ';',
 			'before'
 		);
 	}
@@ -487,7 +507,7 @@ final class Express_Order {
 	 *
 	 * @return array<string, array<int, string>>
 	 */
-	private static function places_for_script(): array {
+	public static function places_for_script(): array {
 		$states = WC()->countries->get_states( 'TN' );
 		$states = is_array( $states ) ? $states : array();
 		$out    = array();
@@ -664,27 +684,57 @@ final class Express_Order {
 	 * @return void
 	 */
 	private function address_field(): void {
-		$states = WC()->countries->get_states( 'TN' );
-		$states = is_array( $states ) ? $states : array();
-		$arabic = self::governorate_arabic_names();
-		$hint   = 'famma-express-address-hint';
+		self::address_markup(
+			array(
+				'id'    => 'famma-express',
+				'class' => 'famma-express__field famma-express__field--wide famma-express__address',
+				'tag'   => 'div',
+			)
+		);
+	}
+
+	/**
+	 * Cadre « Adresse de livraison » : gouvernorat + ville, cité, rue.
+	 *
+	 * Partagé avec la page commande (brique `co_express`, thème) : mêmes
+	 * classes, donc même feuille et même script de proposition.
+	 *
+	 * @param array<string, string> $args `id` (préfixe des identifiants), `class`,
+	 *                                    `tag` (div ou p), `row_id`, `state_id` et
+	 *                                    `line_id` (identifiants imposés), `state`
+	 *                                    et `line` (valeurs déjà saisies).
+	 * @return void
+	 */
+	public static function address_markup( array $args ): void {
+		$states  = WC()->countries->get_states( 'TN' );
+		$states  = is_array( $states ) ? $states : array();
+		$arabic  = self::governorate_arabic_names();
+		$id      = (string) ( $args['id'] ?? 'famma-express' );
+		$hint    = $id . '-address-hint';
+		$tag     = 'p' === ( $args['tag'] ?? 'div' ) ? 'p' : 'div';
+		$box     = 'p' === $tag ? 'span' : 'div';
+		$state   = (string) ( $args['state'] ?? '' );
+		$row_id  = (string) ( $args['row_id'] ?? '' );
+		$sel_id  = (string) ( $args['state_id'] ?? $id . '-billing-state' );
+		$line_id = (string) ( $args['line_id'] ?? $id . '-billing-address-1' );
 		?>
-		<div class="famma-express__field famma-express__field--wide famma-express__address">
-			<label for="famma-express-billing-address-1">
+		<<?php echo esc_attr( $tag ); ?> class="<?php echo esc_attr( (string) ( $args['class'] ?? '' ) ); ?>"<?php echo '' === $row_id ? '' : ' id="' . esc_attr( $row_id ) . '"'; ?>>
+			<label for="<?php echo esc_attr( $line_id ); ?>">
 				<?php esc_html_e( 'Adresse de livraison / عنوان التوصيل', 'famma-core' ); ?>
 				<abbr class="required" title="<?php esc_attr_e( 'required', 'famma-core' ); ?>">*</abbr>
 			</label>
-			<div class="famma-express__address-box">
-				<select id="famma-express-billing-state" name="billing_state" autocomplete="address-level1" aria-label="<?php esc_attr_e( 'Gouvernorat', 'famma-core' ); ?>" aria-describedby="<?php echo esc_attr( $hint ); ?>" required>
+			<<?php echo esc_attr( $box ); ?> class="famma-express__address-box">
+				<select id="<?php echo esc_attr( $sel_id ); ?>" name="billing_state" autocomplete="address-level1" aria-label="<?php esc_attr_e( 'Gouvernorat', 'famma-core' ); ?>" aria-describedby="<?php echo esc_attr( $hint ); ?>" required>
 					<option value=""><?php esc_html_e( 'Gouvernorat', 'famma-core' ); ?></option>
 					<?php foreach ( $states as $code => $label ) : ?>
-						<option value="<?php echo esc_attr( $code ); ?>" data-alt="<?php echo esc_attr( $arabic[ $code ] ?? '' ); ?>"><?php echo esc_html( $label ); ?></option>
+						<option value="<?php echo esc_attr( $code ); ?>" data-alt="<?php echo esc_attr( $arabic[ $code ] ?? '' ); ?>" <?php selected( $state, (string) $code ); ?>><?php echo esc_html( $label ); ?></option>
 					<?php endforeach; ?>
 				</select>
 				<input
 					type="text"
-					id="famma-express-billing-address-1"
+					id="<?php echo esc_attr( $line_id ); ?>"
 					name="billing_address_1"
+					value="<?php echo esc_attr( (string) ( $args['line'] ?? '' ) ); ?>"
 					autocomplete="address-line1"
 					autocapitalize="words"
 					enterkeyhint="send"
@@ -692,7 +742,7 @@ final class Express_Order {
 					placeholder="<?php esc_attr_e( 'Ville, cité, rue…', 'famma-core' ); ?>"
 					aria-describedby="<?php echo esc_attr( $hint ); ?>"
 				/>
-			</div>
+			</<?php echo esc_attr( $box ); ?>>
 			<?php
 			/*
 			 * Une seule langue par site : mêlés dans une phrase, le français et
@@ -701,7 +751,7 @@ final class Express_Order {
 			 */
 			?>
 			<span class="famma-express__hint" id="<?php echo esc_attr( $hint ); ?>" aria-live="polite"><?php esc_html_e( 'Choisissez le gouvernorat. La ville ou la cité est facultative, elle aide le livreur.', 'famma-core' ); ?></span>
-		</div>
+		</<?php echo esc_attr( $tag ); ?>>
 		<?php
 	}
 
@@ -713,7 +763,7 @@ final class Express_Order {
 	 *
 	 * @return array<string,string>
 	 */
-	private static function governorate_arabic_names(): array {
+	public static function governorate_arabic_names(): array {
 		return array(
 			'TN-11' => 'تونس',
 			'TN-12' => 'أريانة',
@@ -751,27 +801,36 @@ final class Express_Order {
 	 * @return void
 	 */
 	private function legal_note(): void {
+		echo self::legal_note_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- construit avec esc_attr(), esc_url() et wp_kses().
+	}
+
+	/**
+	 * Phrase « En commandant, vous acceptez nos conditions générales ».
+	 *
+	 * Remplace la case à cocher : rien à cocher, rien qui bloque. Sans page de
+	 * conditions désignée dans WooCommerce, rien n'est affiché — pas de lien
+	 * mort. Partagée avec la page commande (brique `co_express`).
+	 *
+	 * @param string $css_class Classe du paragraphe.
+	 * @return string Chaîne vide sans page de conditions.
+	 */
+	public static function legal_note_html( string $css_class = 'famma-express__legal' ): string {
 		$page_id = wc_terms_and_conditions_page_id();
 		$url     = $page_id > 0 ? get_permalink( $page_id ) : false;
 
 		if ( ! is_string( $url ) || '' === $url ) {
-			return;
+			return '';
 		}
-		?>
-		<p class="famma-express__legal">
-			<?php
-			echo wp_kses(
-				sprintf(
-					/* translators: 1: opening link tag to the terms page, 2: closing link tag. */
-					esc_html__( 'En commandant, vous acceptez nos %1$sconditions générales%2$s. / كي تطلب، راك موافق على %1$sالشروط العامة%2$s.', 'famma-core' ),
-					'<a href="' . esc_url( $url ) . '">',
-					'</a>'
-				),
-				array( 'a' => array( 'href' => array() ) )
-			);
-			?>
-		</p>
-		<?php
+
+		return '<p class="' . esc_attr( $css_class ) . '">' . wp_kses(
+			sprintf(
+				/* translators: 1: opening link tag to the terms page, 2: closing link tag. */
+				esc_html__( 'En commandant, vous acceptez nos %1$sconditions générales%2$s. / كي تطلب، راك موافق على %1$sالشروط العامة%2$s.', 'famma-core' ),
+				'<a href="' . esc_url( $url ) . '">',
+				'</a>'
+			),
+			array( 'a' => array( 'href' => array() ) )
+		) . '</p>';
 	}
 
 	/**

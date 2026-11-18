@@ -85,6 +85,12 @@ function famma_child_checkout_cards( $checkout ): void {
 		$checkout = WC()->checkout();
 	}
 
+	// Brique `co_express` : une seule carte au format du formulaire express (inc/new-look-checkout.php).
+	if ( function_exists( 'famma_child_co_express_on' ) && famma_child_co_express_on() ) {
+		famma_child_checkout_card_express( $checkout );
+		return;
+	}
+
 	$fields  = $checkout->get_checkout_fields( 'billing' );
 	$contact = array_intersect_key( $fields, array_flip( famma_child_checkout_contact_keys() ) );
 	$address = array_diff_key( $fields, $contact );
