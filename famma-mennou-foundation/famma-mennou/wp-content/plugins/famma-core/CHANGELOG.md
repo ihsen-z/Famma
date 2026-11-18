@@ -1,5 +1,37 @@
 # Changelog — FAMMA Core
 
+## 0.3.47 — 2026-11-18 (messages du site au style FAMMA) · thème famma-child 0.2.30
+
+Lot 53. Une nouvelle case, livrée décochée : `notices` (onglet « Partout »).
+Pas mis en ligne.
+
+- **Un seul style pour tous les messages de WooCommerce**, « Mon compte »
+  compris (thème, `new-look-notices.css`) : carte à fond clair, bord gauche
+  de 4 px, icône, coins arrondis, Poppins ; vert (c'est fait), bleu marine
+  (information), rouge (erreur). Propriétés logiques : la carte se retourne
+  en arabe. Le panier vide de WooCommerce (`.cart-empty`) n'est pas touché.
+- **Commande : erreur sous le champ** (thème, `new-look-notices.js`) : champ
+  encadré en rouge et phrase dessous dès que le client quitte un champ mal
+  rempli (téléphone vérifié comme famma-core : 8 chiffres tunisiens), puis à
+  « Commander ». Les erreurs déjà affichées sous leur champ sont retirées de
+  la carte du haut ; s'il n'en reste aucune, la page va au premier champ à
+  corriger. Une erreur sans champ reste en carte rouge en haut.
+- **Phrases réécrites dans la langue de la page** (`Site_Notices::rewrite()`,
+  `woocommerce_after_checkout_validation` à 1000) : nom, téléphone, gouvernorat,
+  adresse, ville, e-mail, conditions, autre champ. Plus de « de facturation »
+  ni de mélange français + arabe. Code et champ (`id`) de chaque erreur gardés.
+- **Messages en deux langues** de famma-core (quantité limitée, commande
+  refusée…) : seule la langue de la page reste (`Site_Notices::one_language()`).
+- **« Ajouté au panier »** : bandeau d'une ligne « Ajouté au panier : {p} » +
+  « Voir le panier », croix, fermé seul au bout de 5 secondes (en pause sous
+  la souris ou le clavier), jamais affiché sur le panier lui-même.
+- **Textes** (`Notice_Texts`, 14, FR + derja à relire) modifiables sous la
+  brique : « Partout » a désormais sa page de textes (`famma_page_site`).
+  Un texte vidé rend la phrase d'origine.
+- Nouveaux fichiers : `includes/notice-texts.php`, `includes/site-notices.php`
+  (famma-core) ; `inc/new-look-notices.php`, `assets/css/new-look-notices.css`,
+  `assets/js/new-look-notices.js` (thème).
+
 ## 0.3.46 — 2026-11-18 (correctifs du test en ligne du panier) · thème famma-child 0.2.29
 
 Correctifs du rapport « Test prod panier + fiche » du 18/11 (points 1, 2, 4,

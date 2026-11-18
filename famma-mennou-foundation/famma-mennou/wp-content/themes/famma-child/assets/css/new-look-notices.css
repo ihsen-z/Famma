@@ -1,0 +1,276 @@
+/**
+ * FAMMA — messages du site au style de la charte (brique `notices`).
+ *
+ * Chargée partout quand la case est cochée ; ne vise que `body.famma-nl-notices`.
+ * Une carte pour les trois sortes de messages de WooCommerce :
+ * - `.woocommerce-message` : c'est fait (vert) ;
+ * - `.woocommerce-info`    : information (bleu marine de la charte) ;
+ * - `.woocommerce-error`   : erreur (rouge).
+ * Fond très clair, bord gauche de 4 px, icône, coins arrondis. Propriétés
+ * logiques : la carte se retourne d'elle-même en arabe.
+ *
+ * À la commande, les erreurs liées à un champ s'affichent sous le champ
+ * (`.checkout-inline-error-message`, posé par WooCommerce ou par
+ * new-look-notices.js), champ encadré en rouge.
+ *
+ * Bandeau « Ajouté au panier » : `.famma-notice--added` (classe posée par le
+ * script), une ligne, une croix, fermé seul au bout de 5 secondes.
+ */
+
+body.famma-nl-notices {
+	--famma-n-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='none' stroke='%23000' stroke-width='2'/%3E%3Cpath d='m7.5 12.5 3 3 6-6.5' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	--famma-n-info: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='none' stroke='%23000' stroke-width='2'/%3E%3Cpath d='M12 11v6' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle cx='12' cy='7.5' r='1.4'/%3E%3C/svg%3E");
+	--famma-n-alert: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10.3 3.9 2.4 17.6A2 2 0 0 0 4.1 20.6h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z' fill='none' stroke='%23000' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M12 9v4.5' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle cx='12' cy='17' r='1.3'/%3E%3C/svg%3E");
+	--famma-n-close: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6 6 18' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* ---------- Carte ---------- */
+
+body.famma-nl-notices .woocommerce-message,
+body.famma-nl-notices .woocommerce-info:not(.cart-empty),
+body.famma-nl-notices .woocommerce-error {
+	--famma-n-accent: var(--famma-success);
+	--famma-n-ink: var(--famma-success-700);
+	--famma-n-bg: var(--famma-success-soft);
+	--famma-n-line: var(--famma-success-line);
+	--famma-n-icon: var(--famma-n-check);
+
+	position: relative;
+	display: flex;
+	flex-flow: row wrap;
+	align-items: center;
+	gap: 4px 12px;
+	margin: 0 0 16px;
+	padding-block: 13px;
+	padding-inline: 48px 16px;
+	list-style: none;
+	border: 1px solid var(--famma-n-line);
+	border-inline-start: 4px solid var(--famma-n-accent);
+	border-radius: var(--famma-radius);
+	background: var(--famma-n-bg);
+	box-shadow: none;
+	color: var(--famma-ink);
+	font-family: inherit;
+	font-size: 14.5px;
+	font-weight: 400;
+	line-height: 1.45;
+	text-align: start;
+}
+
+body.famma-nl-notices .woocommerce-info:not(.cart-empty) {
+	--famma-n-accent: var(--famma-blue);
+	--famma-n-ink: var(--famma-blue);
+	--famma-n-bg: var(--famma-surface-icon);
+	--famma-n-line: var(--famma-line);
+	--famma-n-icon: var(--famma-n-info);
+}
+
+body.famma-nl-notices .woocommerce-error {
+	--famma-n-accent: var(--famma-danger);
+	--famma-n-ink: var(--famma-danger-700);
+	--famma-n-bg: var(--famma-danger-soft);
+	--famma-n-line: var(--famma-danger-line);
+	--famma-n-icon: var(--famma-n-alert);
+
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+/* Icône : remplace celle de WooCommerce / Kadence. */
+body.famma-nl-notices .woocommerce-message::before,
+body.famma-nl-notices .woocommerce-info:not(.cart-empty)::before,
+body.famma-nl-notices .woocommerce-error::before {
+	content: "";
+	position: absolute;
+	inset-block-start: 14px;
+	inset-inline-start: 16px;
+	display: block;
+	width: 20px;
+	height: 20px;
+	margin: 0;
+	background-color: var(--famma-n-accent);
+	-webkit-mask: var(--famma-n-icon) center / contain no-repeat;
+	mask: var(--famma-n-icon) center / contain no-repeat;
+	font-family: inherit;
+}
+
+body.famma-nl-notices .woocommerce-message::after,
+body.famma-nl-notices .woocommerce-info:not(.cart-empty)::after,
+body.famma-nl-notices .woocommerce-error::after {
+	content: none;
+}
+
+body.famma-nl-notices .woocommerce-error li,
+body.famma-nl-notices .woocommerce-message li,
+body.famma-nl-notices .woocommerce-info li {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* Liens et boutons d'un message : liens soulignés, couleur du message. */
+body.famma-nl-notices .woocommerce-message a,
+body.famma-nl-notices .woocommerce-info:not(.cart-empty) a,
+body.famma-nl-notices .woocommerce-error a {
+	color: var(--famma-n-ink);
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+body.famma-nl-notices .woocommerce-message .button,
+body.famma-nl-notices .woocommerce-info:not(.cart-empty) .button,
+body.famma-nl-notices .woocommerce-error .button {
+	order: 2;
+	float: none;
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	margin-block: -10px;
+	margin-inline: auto 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	color: var(--famma-n-ink);
+	font-size: inherit;
+	font-weight: 700;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+body.famma-nl-notices .woocommerce-message .button:hover,
+body.famma-nl-notices .woocommerce-message .button:focus-visible {
+	background: none;
+	color: var(--famma-ink);
+}
+
+/* ---------- Bandeau « Ajouté au panier » ---------- */
+
+body.famma-nl-notices .woocommerce-message.famma-notice--added {
+	padding-block: 9px;
+	padding-inline-end: 52px;
+	font-size: 14px;
+	transition: opacity 200ms ease, transform 200ms ease;
+}
+
+body.famma-nl-notices .famma-notice--added::before {
+	inset-block-start: 50%;
+	transform: translateY(-50%);
+}
+
+body.famma-nl-notices .woocommerce-message.famma-notice--added {
+	flex-wrap: nowrap;
+}
+
+/* Une seule ligne : un nom de produit trop long finit par « … ». */
+body.famma-nl-notices .famma-added {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	font-weight: 600;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+body.famma-nl-notices .woocommerce-message .famma-added__link {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	margin-block: -10px;
+	white-space: nowrap;
+}
+
+body.famma-nl-notices .famma-notice__close {
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-end: 4px;
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--famma-radius-sm);
+	background: none;
+	color: var(--famma-text-2);
+	cursor: pointer;
+	transform: translateY(-50%);
+}
+
+body.famma-nl-notices .famma-notice__close::before {
+	content: "";
+	width: 16px;
+	height: 16px;
+	background-color: currentColor;
+	-webkit-mask: var(--famma-n-close) center / contain no-repeat;
+	mask: var(--famma-n-close) center / contain no-repeat;
+}
+
+body.famma-nl-notices .famma-notice__close:hover {
+	color: var(--famma-ink);
+}
+
+body.famma-nl-notices .famma-notice__close:focus-visible {
+	outline: 2px solid var(--famma-blue);
+	outline-offset: -2px;
+}
+
+body.famma-nl-notices .famma-notice--added.is-leaving {
+	opacity: 0;
+	transform: translateY(-6px);
+}
+
+/* ---------- Commande : erreur sous le champ ---------- */
+
+body.famma-nl-notices form .form-row.woocommerce-invalid label {
+	color: var(--famma-ink);
+}
+
+body.famma-nl-notices form .form-row.woocommerce-invalid input.input-text,
+body.famma-nl-notices form .form-row.woocommerce-invalid textarea,
+body.famma-nl-notices form .form-row.woocommerce-invalid select,
+body.famma-nl-notices form .form-row.woocommerce-invalid .select2-container .select2-selection {
+	border-color: var(--famma-danger);
+	box-shadow: 0 0 0 1px var(--famma-danger);
+}
+
+body.famma-nl-notices .woocommerce-invalid #terms {
+	outline: 2px solid var(--famma-danger);
+	outline-offset: 2px;
+}
+
+body.famma-nl-notices form .form-row .checkout-inline-error-message {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+	flex: 1 1 100%;
+	margin: 6px 0 0;
+	padding: 0;
+	color: var(--famma-danger-700);
+	font-size: 13.5px;
+	font-weight: 500;
+	line-height: 1.4;
+}
+
+body.famma-nl-notices form .form-row .checkout-inline-error-message::before {
+	content: "";
+	flex: none;
+	width: 16px;
+	height: 16px;
+	margin-block-start: 1px;
+	background-color: currentColor;
+	-webkit-mask: var(--famma-n-alert) center / contain no-repeat;
+	mask: var(--famma-n-alert) center / contain no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body.famma-nl-notices .woocommerce-message.famma-notice--added {
+		transition: none;
+	}
+
+	body.famma-nl-notices .famma-notice--added.is-leaving {
+		transform: none;
+	}
+}

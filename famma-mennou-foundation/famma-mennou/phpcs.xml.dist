@@ -451,6 +451,9 @@
 				<element value="famma_child_cart_continue_link"/>
 				<element value="famma_child_cart_count_label"/>
 				<element value="famma_child_cart_count_many"/>
+				<element value="famma_child_notices_on"/>
+				<element value="famma_child_notices_body_class"/>
+				<element value="famma_child_notices_enqueue"/>
 				<element value="famma_child_cart_coupon_title"/>
 				<element value="famma_child_cart_empty"/>
 				<element value="famma_child_cart_help"/>

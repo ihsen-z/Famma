@@ -127,13 +127,14 @@ final class New_Look_Registry {
 	}
 
 	/**
-	 * Page de textes (`Pages_Content`) d'une page du registre.
+	 * Page de textes (`Pages_Content`) d'une page du registre : la même clé.
+	 * « Partout » a la sienne depuis la brique `notices` (`Notice_Texts`).
 	 *
 	 * @param string $page Clé de page.
-	 * @return string Chaîne vide quand la page n'a pas de textes.
+	 * @return string
 	 */
 	public static function text_page( string $page ): string {
-		return 'site' === $page ? '' : $page;
+		return $page;
 	}
 
 	/**

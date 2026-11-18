@@ -58,6 +58,12 @@ final class New_Look_Bricks_Site {
 				'summary' => __( '« 29 DT » au lieu de « 29,000 DT », partout sur le site.', 'famma-core' ),
 				'help'    => __( 'Les prix ronds s’affichent sans les zéros après la virgule : « 29 DT », « 0 DT », « 29 دينار » au lieu de « 29,000 DT ». Un prix avec des millimes garde ses décimales (« 29,500 DT »). Fiche, boutique, panier, commande et e-mails envoyés pendant la commande. Les montants enregistrés ne changent pas : seul l’affichage change. Le réglage des décimales de WooCommerce reste tel quel.', 'famma-core' ),
 			),
+			'notices'     => array(
+				'title'   => __( 'Messages du site au style FAMMA', 'famma-core' ),
+				'summary' => __( 'Messages en carte verte, bleue ou rouge ; erreurs de la commande sous le champ, dans une seule langue ; bandeau court après un ajout au panier.', 'famma-core' ),
+				'help'    => __( 'Un seul style pour tous les messages de WooCommerce, « Mon compte » compris : carte à fond clair, bord gauche de couleur et icône (vert : c’est fait, bleu : information, rouge : erreur). À la commande, chaque erreur s’affiche sous son champ, encadré en rouge, dès que le client quitte un champ mal rempli puis à la validation ; elle s’efface dès que c’est corrigé. Une erreur sans champ (rupture de stock, session expirée) reste en carte rouge en haut. Les phrases sont réécrites dans la langue de la page (plus de « de facturation » ni de mélange français + arabe) ; un texte vidé rend la phrase d’origine. Après un ajout au panier : bandeau « Ajouté au panier : … » avec « Voir le panier », fermé seul au bout de 5 secondes, jamais montré sur le panier lui-même.', 'famma-core' ),
+				'texts'   => array( Notice_Texts::class ),
+			),
 		);
 	}
 }
