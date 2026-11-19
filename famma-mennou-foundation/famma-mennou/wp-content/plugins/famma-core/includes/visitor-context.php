@@ -4,8 +4,8 @@
  *
  * Regroupe ce que le collecteur REST et les événements serveur (panier,
  * commande) doivent lire de la même façon : identifiants visiteur et session
- * posés par le navigateur, type d'appareil, empreinte d'IP, détection des
- * robots et du personnel. Une seule définition, pour que les deux chemins
+ * posés par le navigateur, type d'appareil, adresse IP (en clair si le réglage
+ * le permet, empreinte sinon), détection des robots et du personnel. Une seule définition, pour que les deux chemins
  * rangent un même visiteur sous un même identifiant.
  *
  * @package famma-core
@@ -124,12 +124,35 @@ final class Visitor_Context {
 	}
 
 	/**
+	 * Adresse IP du client, validée (IPv4 ou IPv6), ou chaîne vide.
+	 *
+	 * `REMOTE_ADDR` uniquement : un en-tête `X-Forwarded-For` se forge depuis
+	 * n'importe quel navigateur. Sur l'hébergement de prod, LiteSpeed y place
+	 * déjà l'adresse du visiteur (même règle que `Capi_Signals::client_ip()`).
+	 *
+	 * @return string
+	 */
+	public static function ip(): string {
+		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? trim( sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) ) : '';
+		return false !== filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
+	}
+
+	/**
+	 * Adresse IP à enregistrer : en clair si le réglage est activé, sinon vide.
+	 *
+	 * @return string
+	 */
+	public static function stored_ip(): string {
+		return Visitor_Settings::store_ip() ? self::ip() : '';
+	}
+
+	/**
 	 * Empreinte salée et tronquée de l'IP : repère un abus, n'identifie personne.
 	 *
 	 * @return string
 	 */
 	public static function ip_hash(): string {
-		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		$ip = self::ip();
 		return '' === $ip ? '' : substr( hash_hmac( 'sha256', $ip, wp_salt( 'auth' ) ), 0, 16 );
 	}
 

@@ -11,8 +11,11 @@
  * purge quotidienne les supprime par paquets : jamais un DELETE géant qui
  * bloquerait la base sur l'hébergement mutualisé.
  *
- * Aucune IP n'est stockée en clair : seulement une empreinte salée et tronquée,
- * suffisante pour repérer un abus, inutilisable pour identifier quelqu'un.
+ * Deux colonnes pour l'adresse du visiteur :
+ * - `ip_hash` : empreinte salée et tronquée, toujours écrite, qui sert à la
+ *   limite de débit et à reconnaître un même appareil sans l'identifier ;
+ * - `ip` (schéma 2, 0.3.49) : l'adresse en clair, écrite seulement si le
+ *   réglage est activé, puis effacée par la purge après `Visitor_Settings::ip_days()`.
  *
  * @package famma-core
  */
@@ -29,17 +32,12 @@ final class Visitor_Store {
 	/**
 	 * Version du schéma ; la changer relance `dbDelta()`.
 	 */
-	private const SCHEMA = '1';
+	private const SCHEMA = '2';
 
 	/**
 	 * Option mémorisant la version du schéma installée.
 	 */
 	private const SCHEMA_OPTION = 'famma_visitor_schema_version';
-
-	/**
-	 * Option portant la durée de conservation, en jours.
-	 */
-	public const RETENTION_OPTION = 'famma_visitor_retention_days';
 
 	/**
 	 * Événement cron de purge.
@@ -93,13 +91,12 @@ final class Visitor_Store {
 	}
 
 	/**
-	 * Durée de conservation des lignes brutes, bornée entre 7 et 365 jours.
+	 * Durée de conservation des lignes brutes (voir `Visitor_Settings`).
 	 *
 	 * @return int
 	 */
 	public function retention_days(): int {
-		$days = absint( get_option( self::RETENTION_OPTION, 180 ) );
-		return max( 7, min( 365, $days ? $days : 180 ) );
+		return Visitor_Settings::retention_days();
 	}
 
 	/**
@@ -134,12 +131,14 @@ final class Visitor_Store {
 			content varchar(100) NOT NULL DEFAULT '',
 			device varchar(10) NOT NULL DEFAULT '',
 			ip_hash char(16) NOT NULL DEFAULT '',
+			ip varchar(45) NOT NULL DEFAULT '',
 			PRIMARY KEY  (id),
 			KEY event_time (event,created_at),
 			KEY created_at (created_at),
 			KEY session_id (session_id),
 			KEY visitor_id (visitor_id),
-			KEY order_id (order_id)
+			KEY order_id (order_id),
+			KEY ip (ip)
 		) $collate;"
 		);
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- schema verification needs an uncached read.
@@ -191,6 +190,7 @@ final class Visitor_Store {
 			'content'    => '%s',
 			'device'     => '%s',
 			'ip_hash'    => '%s',
+			'ip'         => '%s',
 		);
 		$tuple   = '(' . implode( ',', $columns ) . ')';
 		$values  = array();
@@ -221,7 +221,7 @@ final class Visitor_Store {
 		global $wpdb;
 		$marks = implode( ',', array_fill( 0, count( $visitor_ids ), '%s' ) );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- custom table; $marks only holds %s placeholders, values passed by spread.
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, created_at, event, page_type, path, label, num, source, medium, campaign, device FROM %i WHERE visitor_id IN ($marks) ORDER BY id LIMIT %d", $this->table(), ...array_merge( $visitor_ids, array( $limit ) ) ), ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, created_at, event, page_type, path, label, num, source, medium, campaign, device, ip FROM %i WHERE visitor_id IN ($marks) ORDER BY id LIMIT %d", $this->table(), ...array_merge( $visitor_ids, array( $limit ) ) ), ARRAY_A );
 		return is_array( $rows ) ? $rows : array();
 	}
 
@@ -243,10 +243,12 @@ final class Visitor_Store {
 	}
 
 	/**
-	 * Supprime les lignes plus anciennes que la durée de conservation.
+	 * Supprime les lignes plus anciennes que la durée de conservation, puis
+	 * efface l'IP en clair des lignes plus anciennes que sa propre durée.
 	 *
-	 * Paquets bornés et au plus vingt passages par jour : une base en retard se
-	 * rattrape en quelques jours sans jamais bloquer la boutique.
+	 * Paquets bornés et au plus vingt passages par jour pour chaque étape :
+	 * une base en retard se rattrape en quelques jours sans jamais bloquer la
+	 * boutique.
 	 *
 	 * @return void
 	 */
@@ -257,6 +259,27 @@ final class Visitor_Store {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- bounded maintenance delete on a custom table.
 			$deleted = $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE created_at < %s LIMIT %d', $this->table(), $cutoff, self::PURGE_BATCH ) );
 			if ( ! is_int( $deleted ) || $deleted < self::PURGE_BATCH ) {
+				break;
+			}
+		}
+		$this->forget_ips();
+	}
+
+	/**
+	 * Efface l'IP en clair des lignes plus anciennes que `Visitor_Settings::ip_days()`.
+	 *
+	 * Le reste de la ligne (événement, source, empreinte) est gardé : les
+	 * comptages de la période ne bougent pas.
+	 *
+	 * @return void
+	 */
+	public function forget_ips(): void {
+		global $wpdb;
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - Visitor_Settings::ip_days() * DAY_IN_SECONDS );
+		for ( $pass = 0; $pass < 20; $pass++ ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- bounded maintenance update on a custom table.
+			$done = $wpdb->query( $wpdb->prepare( "UPDATE %i SET ip = '' WHERE created_at < %s AND ip <> '' LIMIT %d", $this->table(), $cutoff, self::PURGE_BATCH ) );
+			if ( ! is_int( $done ) || $done < self::PURGE_BATCH ) {
 				break;
 			}
 		}

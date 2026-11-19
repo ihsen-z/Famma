@@ -1,5 +1,41 @@
 # Changelog — FAMMA Core
 
+## 0.3.49 — 2026-11-19 (Parcours visiteurs : adresse IP, nouvel écran, code factorisé)
+
+Plugin seul, thème inchangé. Aucune case : l'écran change pour tout le monde
+à la mise en ligne.
+
+- **Adresse IP de chaque visiteur** (demande du propriétaire du 19/11) :
+  nouvelle colonne `ip` de `wp_famma_visitor_events` (schéma 2, ajoutée par
+  `dbDelta` au premier chargement, sans toucher aux lignes existantes).
+  Écrite en clair par la collecte et par les événements serveur (panier,
+  commande), seulement si le réglage est activé (par défaut). `REMOTE_ADDR`
+  seul, validé IPv4/IPv6 (`Visitor_Context::ip()`). L'empreinte `ip_hash`
+  reste écrite pour la limite de débit.
+- **Durée de conservation propre à l'IP** (90 jours par défaut, 1 à 365,
+  jamais plus que les événements) : la purge quotidienne efface l'adresse
+  des lignes plus anciennes (`Visitor_Store::forget_ips()`) sans supprimer le
+  parcours. L'IP sort aussi dans l'export des données personnelles.
+- **Nouvel écran FAMMA → Parcours visiteurs** : en-tête marine avec le choix
+  de période, sept onglets (Vue d'ensemble, Sessions, Formulaires, Sources,
+  Produits, Performance, Réglages), cartes, tuiles d'indicateurs, entonnoir en
+  barres, répartition des types de session.
+  - Sessions : filtres type / appareil / source / adresse IP, nombre total et
+    pagination. Une IP cliquée ouvre ses sessions, avec un encart « N
+    visiteurs, N commandes sur cette adresse » (orange dès plusieurs).
+  - Parcours d'une session : fiche (arrivée, durée, appareil, source, IP,
+    visites du visiteur, commande) et chronologie avec icône par événement.
+  - Réglages : conservation des événements, enregistrement de l'IP, durée de
+    l'IP (`Visitor_Settings`, nonce + `manage_woocommerce`).
+- **Encadré « Parcours avant commande »** : affiche l'IP ; « Arrivée →
+  commande » n'affiche plus « 57 ans » pour un délai nul.
+- **Factorisation** : `Visitor_Query` (période, table, cache de cinq minutes,
+  avant recopiés dans six classes), `Visitor_Labels` (libellés d'événements,
+  champs, refus, pages, appareils), `Visitor_Ui` (cartes, tableaux, pastilles,
+  barres, liens). `visitor-admin-views.php` est remplacé par un fichier par
+  vue (`visitor-overview-views.php`, `visitor-sessions-views.php`,
+  `visitor-timeline-views.php`, `visitor-settings-views.php`).
+
 ## 0.3.48 — 2026-11-18 (page commande comme le formulaire express) · thème famma-child 0.2.31
 
 Une nouvelle case, livrée décochée : `co_express` (onglet « Panier »).

@@ -147,6 +147,7 @@ final class Visitor_Commerce {
 					'event'      => $event,
 					'device'     => Visitor_Context::device(),
 					'ip_hash'    => Visitor_Context::ip_hash(),
+					'ip'         => Visitor_Context::stored_ip(),
 				),
 			)
 		);

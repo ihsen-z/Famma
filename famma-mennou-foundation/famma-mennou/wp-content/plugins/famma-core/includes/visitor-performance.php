@@ -47,21 +47,6 @@ final class Visitor_Performance {
 	private const MIN_SAMPLES = 3;
 
 	/**
-	 * Durée du cache, en secondes.
-	 */
-	private const CACHE_TTL = 300;
-
-	/**
-	 * Début de la période, en UTC.
-	 *
-	 * @param int $days Nombre de jours.
-	 * @return string
-	 */
-	private function since( int $days ): string {
-		return gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS );
-	}
-
-	/**
 	 * Décode une ligne `lcp=…;cls=…;inp=…;ttfb=…`.
 	 *
 	 * @param string $label Valeurs empaquetées par le script.
@@ -122,20 +107,25 @@ final class Visitor_Performance {
 	 * @return array{pages: array<string, array<string, mixed>>, paths: array<string, array<string, mixed>>}
 	 */
 	public function vitals( int $days ): array {
-		$key    = 'famma_vj_vitals_' . $days;
-		$cached = get_transient( $key );
-		if ( is_array( $cached ) ) {
-			return $cached;
-		}
+		return Visitor_Query::cached( 'vitals_' . $days, fn(): array => $this->compute_vitals( $days ) );
+	}
+
+	/**
+	 * Calcule les centiles de la période (voir `vitals()`).
+	 *
+	 * @param int $days Période en jours.
+	 * @return array{pages: array<string, array<string, float|int|null>>, paths: array<string, array<string, float|int|null>>}
+	 */
+	private function compute_vitals( int $days ): array {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- bounded read of a custom table, cached just below.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- bounded read of a custom table, cached by vitals().
 		$rows  = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT page_type, path, device, label FROM %i
 				WHERE created_at >= %s AND event = 'web_vitals'
 				ORDER BY id DESC LIMIT %d",
-				Visitor_Store::instance()->table(),
-				$this->since( $days ),
+				Visitor_Query::table(),
+				Visitor_Query::since( $days ),
 				self::SAMPLE
 			),
 			ARRAY_A
@@ -157,12 +147,10 @@ final class Visitor_Performance {
 		}
 		$paths = $this->summarize( $paths, self::MIN_SAMPLES );
 		uasort( $paths, static fn( $a, $b ) => ( $b['lcp'] ?? 0 ) <=> ( $a['lcp'] ?? 0 ) );
-		$out = array(
+		return array(
 			'pages' => $this->summarize( $pages, 1 ),
 			'paths' => array_slice( $paths, 0, 15, true ),
 		);
-		set_transient( $key, $out, self::CACHE_TTL );
-		return $out;
 	}
 
 	/**
@@ -172,27 +160,25 @@ final class Visitor_Performance {
 	 * @return array<int, array<string, mixed>>
 	 */
 	public function errors( int $days ): array {
-		$key    = 'famma_vj_errors_' . $days;
-		$cached = get_transient( $key );
-		if ( is_array( $cached ) ) {
-			return $cached;
-		}
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table, cached just below.
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT label, MAX(num) AS line, COUNT(*) AS hits, COUNT(DISTINCT session_id) AS sessions,
-					COUNT(DISTINCT path) AS pages, MAX(path) AS sample_path, MAX(created_at) AS last_seen,
-					SUM(device = 'mobile') AS mobile
-				FROM %i WHERE created_at >= %s AND event = 'js_error'
-				GROUP BY label ORDER BY sessions DESC, hits DESC LIMIT 30",
-				Visitor_Store::instance()->table(),
-				$this->since( $days )
-			),
-			ARRAY_A
+		return Visitor_Query::cached(
+			'errors_' . $days,
+			static function () use ( $days ): array {
+				global $wpdb;
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table, cached by Visitor_Query::cached().
+				$rows = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT label, MAX(num) AS line, COUNT(*) AS hits, COUNT(DISTINCT session_id) AS sessions,
+							COUNT(DISTINCT path) AS pages, MAX(path) AS sample_path, MAX(created_at) AS last_seen,
+							SUM(device = 'mobile') AS mobile
+						FROM %i WHERE created_at >= %s AND event = 'js_error'
+						GROUP BY label ORDER BY sessions DESC, hits DESC LIMIT 30",
+						Visitor_Query::table(),
+						Visitor_Query::since( $days )
+					),
+					ARRAY_A
+				);
+				return is_array( $rows ) ? $rows : array();
+			}
 		);
-		$rows = is_array( $rows ) ? $rows : array();
-		set_transient( $key, $rows, self::CACHE_TTL );
-		return $rows;
 	}
 }

@@ -233,6 +233,7 @@ final class Visitor_Collector {
 			'content'    => Visitor_Context::text( $src['content'] ?? '', 100 ),
 			'device'     => Visitor_Context::device(),
 			'ip_hash'    => $ip_hash,
+			'ip'         => Visitor_Context::stored_ip(),
 		);
 		$now    = time();
 		$rows   = array();

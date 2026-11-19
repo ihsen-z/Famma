@@ -28,7 +28,7 @@ namespace Famma\Core;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Règle de classement, libellés et légende.
+ * Règle de classement, libellés et pastilles.
  */
 final class Visitor_Session_Type {
 
@@ -69,15 +69,36 @@ final class Visitor_Session_Type {
 	}
 
 	/**
-	 * Cellule du tableau des sessions, échappée.
+	 * Couleur de pastille de chaque type.
+	 */
+	private const TONES = array(
+		'engaged' => 'good',
+		'brief'   => 'info',
+		'bounce'  => 'warn',
+		'unseen'  => 'neutral',
+		'bot'     => 'bad',
+	);
+
+	/**
+	 * Pastille d'un type de session, échappée.
 	 *
 	 * @param string $kind Type calculé par CASE_SQL.
 	 * @return string
 	 */
-	public static function cell( string $kind ): string {
+	public static function badge( string $kind ): string {
 		$labels = self::labels();
 		$kind   = isset( $labels[ $kind ] ) ? $kind : 'unseen';
-		return '<span class="famma-vj__type famma-vj__type--' . esc_attr( $kind ) . '" title="' . esc_attr( $labels[ $kind ][1] ) . '">' . esc_html( $labels[ $kind ][0] ) . '</span>';
+		return Visitor_Ui::badge( $labels[ $kind ][0], self::TONES[ $kind ], $labels[ $kind ][1] );
+	}
+
+	/**
+	 * Couleur associée à un type.
+	 *
+	 * @param string $kind Type.
+	 * @return string
+	 */
+	public static function tone( string $kind ): string {
+		return self::TONES[ $kind ] ?? 'neutral';
 	}
 
 	/**
@@ -87,52 +108,31 @@ final class Visitor_Session_Type {
 	 * @return array<string, int>
 	 */
 	public static function counts( int $days ): array {
-		$key    = 'famma_vj_types_' . $days;
-		$cached = get_transient( $key );
-		if ( is_array( $cached ) ) {
-			return $cached;
-		}
-		global $wpdb;
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- AGGREGATES and CASE_SQL are class constants, no input.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- aggregate read of a custom table, cached below.
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				'SELECT ' . self::CASE_SQL . ' AS kind, COUNT(*) AS sessions FROM (
-					SELECT ' . self::AGGREGATES . ' FROM %i WHERE created_at >= %s GROUP BY session_id
-				) s GROUP BY kind',
-				Visitor_Store::instance()->table(),
-				gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS )
-			),
-			ARRAY_A
-		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
-		$out = array_fill_keys( array_keys( self::labels() ), 0 );
-		foreach ( (array) $rows as $row ) {
-			if ( isset( $out[ $row['kind'] ] ) ) {
-				$out[ $row['kind'] ] = (int) $row['sessions'];
+		return Visitor_Query::cached(
+			'types_' . $days,
+			static function () use ( $days ): array {
+				global $wpdb;
+				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- AGGREGATES and CASE_SQL are class constants, no input.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- aggregate read of a custom table, cached by Visitor_Query::cached().
+				$rows = $wpdb->get_results(
+					$wpdb->prepare(
+						'SELECT ' . self::CASE_SQL . ' AS kind, COUNT(*) AS sessions FROM (
+							SELECT ' . self::AGGREGATES . ' FROM %i WHERE created_at >= %s GROUP BY session_id
+						) s GROUP BY kind',
+						Visitor_Query::table(),
+						Visitor_Query::since( $days )
+					),
+					ARRAY_A
+				);
+				// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+				$out = array_fill_keys( array_keys( self::labels() ), 0 );
+				foreach ( (array) $rows as $row ) {
+					if ( isset( $out[ $row['kind'] ] ) ) {
+						$out[ $row['kind'] ] = (int) $row['sessions'];
+					}
+				}
+				return $out;
 			}
-		}
-		set_transient( $key, $out, 5 * MINUTE_IN_SECONDS );
-		return $out;
-	}
-
-	/**
-	 * Répartition de la période et légende de la colonne « Type ».
-	 *
-	 * @param array<string, int> $counts Sessions par type.
-	 * @return void
-	 */
-	public static function legend( array $counts ): void {
-		$total = array_sum( $counts );
-		echo '<h2>' . esc_html__( 'Qui sont ces sessions ?', 'famma-core' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Les robots déclarés (Google, Facebook, outils de mesure, préchauffage du cache) et l\'équipe connectée ne sont jamais enregistrés. Les sessions ci-dessous ont toutes exécuté le site dans un navigateur ; leur type vient de ce que le visiteur a fait.', 'famma-core' ) . '</p>';
-		echo '<table class="widefat striped famma-vj__types"><thead><tr><th>' . esc_html__( 'Type', 'famma-core' ) . '</th><th class="num">' . esc_html__( 'Sessions', 'famma-core' ) . '</th><th class="num">%</th><th>' . esc_html__( 'Signification', 'famma-core' ) . '</th></tr></thead><tbody>';
-		foreach ( self::labels() as $kind => $label ) {
-			$count = (int) ( $counts[ $kind ] ?? 0 );
-			$pct   = $total > 0 ? number_format_i18n( 100 * $count / $total, 1 ) . ' %' : '—';
-			echo '<tr><td>' . self::cell( $kind ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in cell().
-			echo '<td class="num">' . esc_html( number_format_i18n( $count ) ) . '</td><td class="num">' . esc_html( $pct ) . '</td><td>' . esc_html( $label[1] ) . '</td></tr>';
-		}
-		echo '</tbody></table>';
+		);
 	}
 }

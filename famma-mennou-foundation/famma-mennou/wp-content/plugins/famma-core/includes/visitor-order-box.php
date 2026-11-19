@@ -94,7 +94,9 @@ final class Visitor_Order_Box {
 		$pages    = 0;
 		$products = array();
 		$source   = '';
+		$ip       = '';
 		foreach ( $rows as $row ) {
+			$ip = '' !== $ip ? $ip : (string) $row['ip'];
 			if ( 'page_view' === $row['event'] ) {
 				++$pages;
 			}
@@ -112,21 +114,25 @@ final class Visitor_Order_Box {
 		/* translators: %s: traffic source. */
 		echo '<li>' . esc_html( sprintf( __( 'Source : %s', 'famma-core' ), '' !== $source ? $source : 'direct' ) ) . '</li>';
 		/* translators: %s: device family. */
-		echo '<li>' . esc_html( sprintf( __( 'Appareil : %s', 'famma-core' ), $first['device'] ) ) . '</li>';
+		echo '<li>' . esc_html( sprintf( __( 'Appareil : %s', 'famma-core' ), Visitor_Labels::device( (string) $first['device'] ) ) ) . '</li>';
+		if ( '' !== $ip ) {
+			/* translators: %s: IP address. */
+			echo '<li>' . esc_html( sprintf( __( 'Adresse IP : %s', 'famma-core' ), $ip ) ) . '</li>';
+		}
 		/* translators: %d: number of visits. */
 		echo '<li>' . esc_html( sprintf( _n( '%d visite au total', '%d visites au total', $history['sessions'], 'famma-core' ), $history['sessions'] ) ) . '</li>';
 		/* translators: 1: pages viewed, 2: distinct products viewed. */
 		echo '<li>' . esc_html( sprintf( __( 'Cette visite : %1$d pages, %2$d produits', 'famma-core' ), $pages, count( $products ) ) ) . '</li>';
 		/* translators: %s: human readable duration. */
-		echo '<li>' . esc_html( sprintf( __( 'Arrivée → commande : %s', 'famma-core' ), human_time_diff( 0, $delay ) ) ) . '</li>';
+		echo '<li>' . esc_html( sprintf( __( 'Arrivée → commande : %s', 'famma-core' ), Visitor_Ui::duration( $delay ) ) ) . '</li>';
 		echo '</ul>';
 
-		$labels = Visitor_Admin::event_labels();
+		$labels = Visitor_Labels::events();
 		echo '<ol class="famma-vj-box__events">';
 		foreach ( array_slice( $rows, -self::SHOWN ) as $row ) {
 			$what = $labels[ $row['event'] ] ?? $row['event'];
 			if ( 'form_field' === $row['event'] ) {
-				$page = Visitor_Admin_Views::field_label( $row['label'] );
+				$page = Visitor_Labels::field( $row['label'] );
 			} else {
 				$page = (int) $row['product_id'] ? get_the_title( (int) $row['product_id'] ) : $row['path'];
 			}
@@ -134,13 +140,7 @@ final class Visitor_Order_Box {
 		}
 		echo '</ol>';
 
-		$url = add_query_arg(
-			array(
-				'page'    => 'famma-visitors',
-				'session' => $session,
-			),
-			admin_url( 'admin.php' )
-		);
+		$url = Visitor_Admin::instance()->url( array( 'session' => $session ) );
 		echo '<p><a href="' . esc_url( $url ) . '">' . esc_html__( 'Voir le parcours complet', 'famma-core' ) . '</a></p>';
 	}
 }

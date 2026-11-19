@@ -1,26 +1,802 @@
-/* FAMMA — Parcours visiteurs (administration). Propriétés logiques : RTL natif. */
-.famma-vj__periods .button { margin-inline-end: 4px; }
-.famma-vj__tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-block: 16px 24px; }
-.famma-vj__tile { background: #fff; border: 1px solid #dcdcde; border-radius: 6px; padding: 14px 16px; }
-.famma-vj__tile span { color: #50575e; display: block; font-size: 12px; }
-.famma-vj__tile strong { display: block; font-size: 22px; margin-block-start: 4px; }
-.famma-vj__funnel th { inline-size: 200px; }
-.famma-vj__bar-cell { inline-size: 45%; }
-.famma-vj__bar { background: #2271b1; border-radius: 3px; display: block; block-size: 14px; }
-.famma-vj .num { text-align: end; white-space: nowrap; }
-.famma-vj__drop { color: #50575e; }
-.famma-vj__forms { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
-.famma-vj__pager { margin-block: 12px; }
-.famma-vj__retention input[type="number"] { inline-size: 90px; }
-.famma-vj__meta { color: #50575e; }
-.famma-vj__rate { font-weight: 600; }
-.famma-vj__rate--good { color: #007a3d; }
-.famma-vj__rate--warn { color: #b26200; }
-.famma-vj__rate--poor { color: #b32d2e; }
-.famma-vj__type { border-radius: 10px; display: inline-block; font-size: 12px; padding-block: 2px; padding-inline: 8px; white-space: nowrap; }
-.famma-vj__type--engaged { background: #e6f4ea; color: #00632e; }
-.famma-vj__type--brief { background: #eef4fb; color: #135e96; }
-.famma-vj__type--bounce { background: #fcf3e6; color: #8a4b00; }
-.famma-vj__type--unseen { background: #f0f0f1; color: #50575e; }
-.famma-vj__type--bot { background: #fcebea; color: #a02222; }
-.famma-vj__types { margin-block-end: 24px; max-inline-size: 960px; }
+/**
+ * FAMMA → Parcours visiteurs — écran d'administration (0.3.49).
+ *
+ * Couleurs de la charte FAMMA (marine #0B1F3A, orange en surface seulement),
+ * cartes blanches sur le fond gris de l'administration. Propriétés logiques
+ * partout (inline/block) : l'écran se retourne seul en arabe. Cibles
+ * tactiles de 40 px au moins.
+ */
+
+.famma-vj {
+	--vj-navy: #0b1f3a;
+	--vj-navy-2: #12315c;
+	--vj-blue: #1d4ed8;
+	--vj-blue-bg: #e8eefc;
+	--vj-orange: #ff7a00;
+	--vj-ink: #1d2327;
+	--vj-muted: #5b6573;
+	--vj-line: #e2e6ec;
+	--vj-card: #fff;
+	--vj-soft: #f6f8fb;
+	--vj-good: #0a6b33;
+	--vj-good-bg: #e3f4e9;
+	--vj-good-bar: #1fa65a;
+	--vj-warn: #7a4a00;
+	--vj-warn-bg: #fdf1dc;
+	--vj-warn-bar: #e6a700;
+	--vj-bad: #a02222;
+	--vj-bad-bg: #fcebea;
+	--vj-bad-bar: #d64545;
+	--vj-info: #134a9a;
+	--vj-info-bg: #e8eefc;
+	--vj-neutral: #50575e;
+	--vj-neutral-bg: #eef0f3;
+	--vj-contact: #0e6b4f;
+	--vj-contact-bg: #e1f5ee;
+	--vj-radius: 10px;
+	--vj-shadow: 0 1px 2px rgb(11 31 58 / 6%), 0 4px 14px rgb(11 31 58 / 4%);
+	color: var(--vj-ink);
+	max-inline-size: 1320px;
+}
+
+.famma-vj .dashicons {
+	inline-size: 18px;
+	block-size: 18px;
+	font-size: 18px;
+}
+
+.famma-vj__muted {
+	color: var(--vj-muted);
+}
+
+.famma-vj a {
+	color: var(--vj-blue);
+}
+
+/* ---------- En-tête ---------- */
+
+.famma-vj__header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 16px;
+	margin-block: 18px 16px;
+	padding: 22px 24px;
+	border-radius: var(--vj-radius);
+	background: linear-gradient(120deg, var(--vj-navy) 0%, var(--vj-navy-2) 100%);
+	color: #fff;
+	box-shadow: var(--vj-shadow);
+}
+
+.famma-vj__title h1 {
+	margin: 0;
+	padding: 0;
+	color: #fff;
+	font-size: 24px;
+	font-weight: 600;
+	line-height: 1.25;
+}
+
+.famma-vj__title p {
+	margin: 6px 0 0;
+	color: rgb(255 255 255 / 78%);
+	font-size: 13px;
+}
+
+.famma-vj .famma-vj__back {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	margin-block-end: 6px;
+	color: rgb(255 255 255 / 85%);
+	font-size: 13px;
+	text-decoration: none;
+}
+
+.famma-vj .famma-vj__back:hover,
+.famma-vj .famma-vj__back:focus {
+	color: #fff;
+}
+
+.famma-vj__periods {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 4px;
+	border-radius: 999px;
+	background: rgb(255 255 255 / 12%);
+}
+
+.famma-vj .famma-vj__period {
+	min-inline-size: 48px;
+	padding: 8px 14px;
+	border-radius: 999px;
+	color: #fff;
+	font-weight: 500;
+	text-align: center;
+	text-decoration: none;
+}
+
+.famma-vj .famma-vj__period:hover,
+.famma-vj .famma-vj__period:focus {
+	background: rgb(255 255 255 / 16%);
+	color: #fff;
+}
+
+.famma-vj .famma-vj__period.is-active {
+	background: var(--vj-orange);
+	color: var(--vj-navy);
+	font-weight: 700;
+}
+
+/* ---------- Onglets ---------- */
+
+.famma-vj__tabs {
+	display: flex;
+	gap: 4px;
+	margin-block-end: 20px;
+	padding-block-end: 2px;
+	border-block-end: 1px solid var(--vj-line);
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+
+.famma-vj .famma-vj__tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-block-size: 40px;
+	padding-inline: 14px;
+	border-block-end: 3px solid transparent;
+	color: var(--vj-muted);
+	font-weight: 500;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.famma-vj .famma-vj__tab:hover,
+.famma-vj .famma-vj__tab:focus {
+	color: var(--vj-navy);
+}
+
+.famma-vj .famma-vj__tab.is-active {
+	border-block-end-color: var(--vj-orange);
+	color: var(--vj-navy);
+	font-weight: 600;
+}
+
+.famma-vj__body {
+	display: grid;
+	gap: 20px;
+}
+
+/* ---------- Cartes et grilles ---------- */
+
+.famma-vj__grid {
+	display: grid;
+	gap: 20px;
+}
+
+.famma-vj__grid--2 {
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+	align-items: start;
+}
+
+.famma-vj__card {
+	padding: 20px 22px;
+	border: 1px solid var(--vj-line);
+	border-radius: var(--vj-radius);
+	background: var(--vj-card);
+	box-shadow: var(--vj-shadow);
+	min-inline-size: 0;
+}
+
+.famma-vj__card-head {
+	margin-block-end: 16px;
+}
+
+.famma-vj__card-head h2 {
+	margin: 0;
+	color: var(--vj-navy);
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.famma-vj__card-head p,
+.famma-vj__note {
+	margin: 4px 0 0;
+	color: var(--vj-muted);
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.famma-vj__note {
+	margin-block-start: 14px;
+}
+
+.famma-vj__subhead {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 18px 0 10px;
+	font-size: 14px;
+}
+
+.famma-vj__empty {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 18px;
+	border-radius: 8px;
+	background: var(--vj-soft);
+	color: var(--vj-muted);
+}
+
+/* ---------- Indicateurs ---------- */
+
+.famma-vj__kpis {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+	gap: 14px;
+}
+
+.famma-vj__kpi {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 16px 18px;
+	border: 1px solid var(--vj-line);
+	border-block-start: 3px solid var(--vj-blue);
+	border-radius: var(--vj-radius);
+	background: var(--vj-card);
+	box-shadow: var(--vj-shadow);
+}
+
+.famma-vj__kpi--good { border-block-start-color: var(--vj-good-bar); }
+.famma-vj__kpi--contact { border-block-start-color: #25d366; }
+.famma-vj__kpi--neutral { border-block-start-color: #9aa3ae; }
+
+.famma-vj__kpi-icon {
+	position: absolute;
+	inset-block-start: 14px;
+	inset-inline-end: 14px;
+	color: #b4bcc8;
+}
+
+.famma-vj__kpi-label {
+	padding-inline-end: 24px;
+	color: var(--vj-muted);
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.famma-vj__kpi-value {
+	color: var(--vj-navy);
+	font-size: 26px;
+	font-weight: 700;
+	line-height: 1.15;
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-vj__kpi-hint {
+	color: var(--vj-muted);
+	font-size: 12px;
+}
+
+/* ---------- Pastilles et barres ---------- */
+
+.famma-vj__badge {
+	display: inline-block;
+	padding: 2px 9px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1.6;
+	white-space: nowrap;
+}
+
+.famma-vj__badge + .famma-vj__badge {
+	margin-inline-start: 6px;
+}
+
+.famma-vj__badge--good { background: var(--vj-good-bg); color: var(--vj-good); }
+.famma-vj__badge--info { background: var(--vj-info-bg); color: var(--vj-info); }
+.famma-vj__badge--warn { background: var(--vj-warn-bg); color: var(--vj-warn); }
+.famma-vj__badge--bad { background: var(--vj-bad-bg); color: var(--vj-bad); }
+.famma-vj__badge--neutral { background: var(--vj-neutral-bg); color: var(--vj-neutral); }
+
+.famma-vj__bar {
+	display: block;
+	flex: 1 1 auto;
+	block-size: 8px;
+	min-inline-size: 60px;
+	border-radius: 999px;
+	background: var(--vj-soft);
+	overflow: hidden;
+}
+
+.famma-vj__bar-fill {
+	display: block;
+	block-size: 100%;
+	border-radius: 999px;
+	background: var(--vj-blue);
+}
+
+.famma-vj__bar-fill--good { background: var(--vj-good-bar); }
+.famma-vj__bar-fill--info { background: #6c8fe8; }
+.famma-vj__bar-fill--warn { background: var(--vj-warn-bar); }
+.famma-vj__bar-fill--bad { background: var(--vj-bad-bar); }
+.famma-vj__bar-fill--neutral { background: #b4bcc8; }
+
+.famma-vj__rate-cell {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-inline-size: 150px;
+}
+
+.famma-vj__rate-cell > span:last-child {
+	min-inline-size: 52px;
+	font-variant-numeric: tabular-nums;
+	text-align: end;
+}
+
+/* ---------- Entonnoir ---------- */
+
+.famma-vj__funnel {
+	display: grid;
+	gap: 14px;
+	margin: 0;
+	list-style: none;
+}
+
+.famma-vj__step {
+	margin: 0;
+}
+
+.famma-vj__step-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
+	margin-block-end: 6px;
+}
+
+.famma-vj__step-name {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 500;
+}
+
+.famma-vj__step-name .dashicons {
+	color: var(--vj-blue);
+}
+
+.famma-vj__step-figures strong {
+	color: var(--vj-navy);
+	font-size: 15px;
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-vj__step .famma-vj__bar {
+	block-size: 12px;
+}
+
+/* ---------- Types de session ---------- */
+
+.famma-vj__stack {
+	display: flex;
+	gap: 2px;
+	block-size: 14px;
+	margin-block-end: 16px;
+	border-radius: 999px;
+	overflow: hidden;
+}
+
+.famma-vj__stack-part {
+	flex-basis: 0;
+	min-inline-size: 4px;
+}
+
+.famma-vj__legend {
+	display: grid;
+	gap: 12px;
+	margin: 0;
+}
+
+.famma-vj__legend li {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 2px 12px;
+	margin: 0;
+	padding-block-end: 12px;
+	border-block-end: 1px solid var(--vj-line);
+}
+
+.famma-vj__legend li:last-child {
+	padding-block-end: 0;
+	border-block-end: 0;
+}
+
+.famma-vj__legend a {
+	text-decoration: none;
+}
+
+.famma-vj__legend-figures {
+	text-align: end;
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-vj__legend-text {
+	grid-column: 1 / -1;
+	color: var(--vj-muted);
+	font-size: 12px;
+}
+
+.famma-vj__legend-inline {
+	margin: 0 0 12px;
+}
+
+/* ---------- Tableaux ---------- */
+
+.famma-vj__table-wrap {
+	overflow-x: auto;
+	margin-inline: -4px;
+}
+
+.famma-vj__table {
+	inline-size: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+}
+
+.famma-vj__table th,
+.famma-vj__table td {
+	padding: 10px 12px;
+	border-block-end: 1px solid var(--vj-line);
+	text-align: start;
+	vertical-align: middle;
+}
+
+.famma-vj__table thead th {
+	background: var(--vj-soft);
+	color: var(--vj-muted);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.famma-vj__table tbody tr:hover {
+	background: #fafbfd;
+}
+
+.famma-vj__table tfoot th {
+	background: var(--vj-soft);
+	font-weight: 600;
+}
+
+.famma-vj .num {
+	text-align: end;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-vj__row-action {
+	text-align: end;
+}
+
+.famma-vj .famma-vj__ip {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 12px;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.famma-vj .famma-vj__ip:hover {
+	text-decoration: underline;
+}
+
+.famma-vj__order {
+	font-weight: 600;
+}
+
+/* ---------- Filtres ---------- */
+
+.famma-vj__filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 12px 14px;
+	padding: 16px 18px;
+	border: 1px solid var(--vj-line);
+	border-radius: var(--vj-radius);
+	background: var(--vj-card);
+	box-shadow: var(--vj-shadow);
+}
+
+.famma-vj__field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-inline-size: 150px;
+}
+
+.famma-vj__field span {
+	color: var(--vj-muted);
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.famma-vj__field select,
+.famma-vj__field input {
+	min-block-size: 40px;
+	border-color: var(--vj-line);
+	border-radius: 8px;
+}
+
+.famma-vj__filter-actions {
+	display: flex;
+	gap: 8px;
+}
+
+.famma-vj__filter-actions .button {
+	min-block-size: 40px;
+	line-height: 38px;
+}
+
+/* ---------- Encarts ---------- */
+
+.famma-vj__callout {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 14px 18px;
+	border-radius: var(--vj-radius);
+	border-inline-start: 4px solid var(--vj-blue);
+	background: var(--vj-info-bg);
+}
+
+.famma-vj__callout p {
+	margin: 0;
+}
+
+.famma-vj__callout--warn {
+	border-inline-start-color: var(--vj-warn-bar);
+	background: var(--vj-warn-bg);
+}
+
+.famma-vj__callout--good {
+	border-inline-start-color: var(--vj-good-bar);
+	background: var(--vj-good-bg);
+}
+
+.famma-vj__pager {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	margin-block-start: 16px;
+}
+
+/* ---------- Parcours d'une session ---------- */
+
+.famma-vj__facts {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
+	margin: 0;
+	border: 1px solid var(--vj-line);
+	border-radius: var(--vj-radius);
+	background: var(--vj-card);
+	overflow: hidden;
+	box-shadow: var(--vj-shadow);
+}
+
+.famma-vj__facts > div {
+	padding: 14px 16px;
+	outline: 1px solid var(--vj-line);
+}
+
+.famma-vj__facts dt {
+	color: var(--vj-muted);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+}
+
+.famma-vj__facts dd {
+	margin: 4px 0 0;
+	font-size: 14px;
+	font-weight: 500;
+	overflow-wrap: anywhere;
+}
+
+.famma-vj__facts .famma-vj__badge {
+	margin-block-start: 6px;
+	white-space: normal;
+}
+
+.famma-vj__timeline {
+	position: relative;
+	margin: 0;
+	padding-inline-start: 0;
+	list-style: none;
+}
+
+.famma-vj__timeline::before {
+	position: absolute;
+	inset-block: 8px;
+	inset-inline-start: 17px;
+	inline-size: 2px;
+	background: var(--vj-line);
+	content: "";
+}
+
+.famma-vj__event {
+	position: relative;
+	display: flex;
+	gap: 14px;
+	margin: 0;
+	padding-block: 8px;
+}
+
+.famma-vj__event-icon {
+	position: relative;
+	flex: 0 0 36px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 36px !important;
+	block-size: 36px !important;
+	border: 2px solid var(--vj-card);
+	border-radius: 50%;
+	background: var(--vj-neutral-bg);
+	color: var(--vj-neutral);
+	font-size: 17px !important;
+	line-height: 1;
+}
+
+.famma-vj__event--nav .famma-vj__event-icon { background: var(--vj-info-bg); color: var(--vj-info); }
+.famma-vj__event--buy .famma-vj__event-icon { background: var(--vj-good-bg); color: var(--vj-good); }
+.famma-vj__event--form .famma-vj__event-icon { background: #fff1e5; color: #b85300; }
+.famma-vj__event--error .famma-vj__event-icon { background: var(--vj-bad-bg); color: var(--vj-bad); }
+.famma-vj__event--contact .famma-vj__event-icon { background: var(--vj-contact-bg); color: var(--vj-contact); }
+.famma-vj__event--product .famma-vj__event-icon { background: #efe9fb; color: #5b34b0; }
+
+.famma-vj__event-body {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: 2px;
+	min-inline-size: 0;
+	padding-block-start: 6px;
+}
+
+.famma-vj__event-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.famma-vj__event-line time {
+	color: var(--vj-muted);
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+
+.famma-vj__event-where,
+.famma-vj__event-detail {
+	color: var(--vj-muted);
+	font-size: 13px;
+	overflow-wrap: anywhere;
+}
+
+.famma-vj__event--buy strong {
+	color: var(--vj-good);
+}
+
+.famma-vj__event--error strong {
+	color: var(--vj-bad);
+}
+
+/* ---------- Formulaires (barres par champ) ---------- */
+
+.famma-vj__bars {
+	display: grid;
+	gap: 10px;
+	margin: 0;
+}
+
+.famma-vj__bars li {
+	display: grid;
+	grid-template-columns: minmax(110px, 34%) minmax(0, 1fr) 60px;
+	align-items: center;
+	gap: 12px;
+	margin: 0;
+}
+
+.famma-vj__bars-value {
+	text-align: end;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Réglages ---------- */
+
+.famma-vj__settings {
+	display: grid;
+	gap: 20px;
+	max-inline-size: 760px;
+}
+
+.famma-vj__setting {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 12px 0 0;
+}
+
+.famma-vj__setting input[type="number"] {
+	inline-size: 96px;
+	min-block-size: 40px;
+}
+
+.famma-vj__switch {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-block-size: 40px;
+	font-weight: 500;
+}
+
+.famma-vj__switch input[type="checkbox"] {
+	margin: 0;
+}
+
+.famma-vj__settings .submit {
+	margin: 0;
+	padding: 0;
+}
+
+/* ---------- Petits écrans ---------- */
+
+@media (max-width: 782px) {
+	.famma-vj__header {
+		padding: 18px;
+	}
+
+	.famma-vj__periods {
+		inline-size: 100%;
+		justify-content: space-between;
+	}
+
+	.famma-vj__card {
+		padding: 16px;
+	}
+
+	.famma-vj__field {
+		flex: 1 1 140px;
+	}
+
+	.famma-vj__bars li {
+		grid-template-columns: minmax(0, 1fr) 60px;
+	}
+
+	.famma-vj__bars li .famma-vj__bar {
+		grid-column: 1 / -1;
+		grid-row: 2;
+	}
+}

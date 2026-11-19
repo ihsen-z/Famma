@@ -26,42 +26,9 @@ defined( 'ABSPATH' ) || exit;
 final class Visitor_Insights {
 
 	/**
-	 * Durée du cache, en secondes.
-	 */
-	private const CACHE_TTL = 300;
-
-	/**
 	 * Lignes au plus par tableau.
 	 */
 	private const LIMIT = 50;
-
-	/**
-	 * Début de la période, en UTC.
-	 *
-	 * @param int $days Nombre de jours.
-	 * @return string
-	 */
-	private function since( int $days ): string {
-		return gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS );
-	}
-
-	/**
-	 * Lit un agrégat en cache, ou le calcule et le met en cache.
-	 *
-	 * @param string   $key     Clé du transient.
-	 * @param callable $compute Calcul à exécuter en cas d'absence.
-	 * @return array<int, array<string, mixed>>
-	 */
-	private function cached( string $key, callable $compute ): array {
-		$cached = get_transient( $key );
-		if ( is_array( $cached ) ) {
-			return $cached;
-		}
-		$rows = $compute();
-		$rows = is_array( $rows ) ? $rows : array();
-		set_transient( $key, $rows, self::CACHE_TTL );
-		return $rows;
-	}
 
 	/**
 	 * Entonnoir par source, support, campagne et contenu publicitaire.
@@ -70,11 +37,11 @@ final class Visitor_Insights {
 	 * @return array<int, array<string, mixed>>
 	 */
 	public function sources( int $days ): array {
-		return $this->cached(
-			'famma_vj_sources_' . $days,
-			function () use ( $days ) {
+		return Visitor_Query::cached(
+			'sources_' . $days,
+			static function () use ( $days ) {
 				global $wpdb;
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table, cached by cached().
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table, cached by Visitor_Query::cached().
 				return $wpdb->get_results(
 					$wpdb->prepare(
 						"SELECT source, medium, campaign, content,
@@ -95,8 +62,8 @@ final class Visitor_Insights {
 						GROUP BY source, medium, campaign, content
 						ORDER BY sessions DESC
 						LIMIT %d",
-						Visitor_Store::instance()->table(),
-						$this->since( $days ),
+						Visitor_Query::table(),
+						Visitor_Query::since( $days ),
 						self::LIMIT
 					),
 					ARRAY_A
@@ -113,12 +80,12 @@ final class Visitor_Insights {
 	 * @return array<int, array<string, mixed>>
 	 */
 	public function products( int $days ): array {
-		return $this->cached(
-			'famma_vj_products_' . $days,
-			function () use ( $days ) {
+		return Visitor_Query::cached(
+			'products_' . $days,
+			static function () use ( $days ) {
 				global $wpdb;
-				$since = $this->since( $days );
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table, cached by cached().
+				$since = Visitor_Query::since( $days );
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table, cached by Visitor_Query::cached().
 				return $wpdb->get_results(
 					$wpdb->prepare(
 						"SELECT t.product_id,
@@ -138,8 +105,8 @@ final class Visitor_Insights {
 						GROUP BY t.product_id
 						ORDER BY views DESC
 						LIMIT %d",
-						Visitor_Store::instance()->table(),
-						Visitor_Store::instance()->table(),
+						Visitor_Query::table(),
+						Visitor_Query::table(),
 						$since,
 						$since,
 						self::LIMIT
@@ -157,11 +124,11 @@ final class Visitor_Insights {
 	 * @return array<int, array<string, mixed>>
 	 */
 	public function variations( int $days ): array {
-		return $this->cached(
-			'famma_vj_variations_' . $days,
-			function () use ( $days ) {
+		return Visitor_Query::cached(
+			'variations_' . $days,
+			static function () use ( $days ) {
 				global $wpdb;
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table, cached by cached().
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table, cached by Visitor_Query::cached().
 				return $wpdb->get_results(
 					$wpdb->prepare(
 						"SELECT product_id, label, COUNT(DISTINCT session_id) AS sessions
@@ -169,8 +136,8 @@ final class Visitor_Insights {
 						GROUP BY product_id, label
 						ORDER BY sessions DESC
 						LIMIT %d",
-						Visitor_Store::instance()->table(),
-						$this->since( $days ),
+						Visitor_Query::table(),
+						Visitor_Query::since( $days ),
 						self::LIMIT
 					),
 					ARRAY_A

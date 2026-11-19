@@ -26,11 +26,6 @@ defined( 'ABSPATH' ) || exit;
 final class Visitor_Form_Funnel {
 
 	/**
-	 * Durée du cache, en secondes (comme Visitor_Report).
-	 */
-	private const CACHE_TTL = 300;
-
-	/**
 	 * Événements lus au plus sur une période : borne la mémoire.
 	 */
 	public const MAX_ROWS = 20000;
@@ -51,13 +46,18 @@ final class Visitor_Form_Funnel {
 	 * @return array{products: array<int, array<string, int>>, total: array<string, int>, causes: array<string, array<string, int>>, truncated: bool}
 	 */
 	public function express( int $days ): array {
-		$key    = 'famma_vj_express_' . $days;
-		$cached = get_transient( $key );
-		if ( is_array( $cached ) ) {
-			return $cached;
-		}
+		return Visitor_Query::cached( 'express_' . $days, static fn(): array => self::compute( $days ) );
+	}
+
+	/**
+	 * Lit les événements utiles de la période et les agrège.
+	 *
+	 * @param int $days Période en jours.
+	 * @return array{products: array<int, array<string, int>>, total: array<string, int>, causes: array<string, array<string, int>>, truncated: bool}
+	 */
+	private static function compute( int $days ): array {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table, result cached in a transient just below.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table, result cached by Visitor_Query::cached().
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT session_id, product_id, event, label
@@ -65,8 +65,8 @@ final class Visitor_Form_Funnel {
 				WHERE event IN ('form_start','form_submit','form_error','order_placed') AND created_at >= %s
 					AND ( page_type = 'product' OR event = 'order_placed' )
 				LIMIT %d",
-				Visitor_Store::instance()->table(),
-				gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS ),
+				Visitor_Query::table(),
+				Visitor_Query::since( $days ),
 				self::MAX_ROWS
 			),
 			ARRAY_A
@@ -75,7 +75,6 @@ final class Visitor_Form_Funnel {
 		$out  = self::aggregate( $rows );
 
 		$out['truncated'] = count( $rows ) >= self::MAX_ROWS;
-		set_transient( $key, $out, self::CACHE_TTL );
 		return $out;
 	}
 

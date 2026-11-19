@@ -132,7 +132,7 @@ final class Visitor_Privacy {
 	 */
 	public function export( $email, $page = 1 ): array {
 		$orders = $this->orders( (string) $email, (int) $page );
-		$labels = Visitor_Admin::event_labels();
+		$labels = Visitor_Labels::events();
 		$items  = array();
 		foreach ( Visitor_Store::instance()->events_for_visitors( $this->visitor_ids( $orders ) ) as $row ) {
 			$items[] = array(
@@ -163,6 +163,10 @@ final class Visitor_Privacy {
 					array(
 						'name'  => __( 'Appareil', 'famma-core' ),
 						'value' => $row['device'],
+					),
+					array(
+						'name'  => __( 'Adresse IP', 'famma-core' ),
+						'value' => $row['ip'],
 					),
 				),
 			);

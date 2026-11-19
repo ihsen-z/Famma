@@ -1,11 +1,21 @@
 <?php
 /**
- * Parcours visiteurs — vue d'administration (FAMMA → Parcours visiteurs).
+ * Parcours visiteurs — écran d'administration (FAMMA → Parcours visiteurs).
  *
- * Lecture seule pour l'essentiel : indicateurs, entonnoir en sessions, champs
- * du formulaire où les visiteurs décrochent, liste des sessions et chronologie
- * d'une session. Seul le réglage de la durée de conservation écrit, via
- * `admin-post.php` avec nonce et capacité.
+ * Ce fichier ne fait que l'aiguillage : menu, feuille de style, période,
+ * onglet ou parcours demandé. Les données viennent des classes de lecture
+ * (`Visitor_Report`, `Visitor_Insights`, `Visitor_Performance`,
+ * `Visitor_Form_Funnel`) et le balisage des classes `*_Views`.
+ *
+ * Organisation de l'écran (0.3.49) :
+ * - Vue d'ensemble : indicateurs, entonnoir, qui sont les visiteurs ;
+ * - Sessions : liste filtrable (type, appareil, source, adresse IP) ;
+ * - Formulaires : où le formulaire express et le checkout décrochent ;
+ * - Sources, Produits, Performance : analyses détaillées ;
+ * - Réglages : conservation des événements et de l'adresse IP.
+ *
+ * Lecture seule, sauf l'onglet Réglages (`Visitor_Settings::save()`, nonce
+ * et capacité).
  *
  * @package famma-core
  */
@@ -15,19 +25,14 @@ namespace Famma\Core;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Menu, rendu et réglage de conservation.
+ * Menu, en-tête commun et aiguillage des onglets.
  */
 final class Visitor_Admin {
 
 	/**
 	 * Identifiant de la page.
 	 */
-	private const SLUG = 'famma-visitors';
-
-	/**
-	 * Action admin-post du réglage de conservation.
-	 */
-	private const SAVE = 'famma_visitor_retention';
+	public const SLUG = 'famma-visitors';
 
 	/**
 	 * Périodes proposées, en jours.
@@ -69,7 +74,23 @@ final class Visitor_Admin {
 	private function hooks(): void {
 		add_action( 'admin_menu', array( $this, 'register_menu' ), 20 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'styles' ) );
-		add_action( 'admin_post_' . self::SAVE, array( $this, 'save_retention' ) );
+	}
+
+	/**
+	 * Onglets, dans l'ordre d'affichage : libellé et icône Dashicons.
+	 *
+	 * @return array<string, array{0: string, 1: string}>
+	 */
+	private static function tabs(): array {
+		return array(
+			'overview' => array( __( 'Vue d\'ensemble', 'famma-core' ), 'dashboard' ),
+			'sessions' => array( __( 'Sessions', 'famma-core' ), 'groups' ),
+			'forms'    => array( __( 'Formulaires', 'famma-core' ), 'feedback' ),
+			'sources'  => array( __( 'Sources', 'famma-core' ), 'megaphone' ),
+			'products' => array( __( 'Produits', 'famma-core' ), 'products' ),
+			'perf'     => array( __( 'Performance', 'famma-core' ), 'performance' ),
+			'settings' => array( __( 'Réglages', 'famma-core' ), 'admin-generic' ),
+		);
 	}
 
 	/**
@@ -99,7 +120,18 @@ final class Visitor_Admin {
 		if ( '' === $this->hook || $hook !== $this->hook ) {
 			return;
 		}
-		wp_enqueue_style( 'famma-visitor-admin', plugins_url( 'assets/css/visitor-admin.css', FAMMA_CORE_FILE ), array(), FAMMA_CORE_VERSION );
+		wp_enqueue_style( 'famma-visitor-admin', plugins_url( 'assets/css/visitor-admin.css', FAMMA_CORE_FILE ), array( 'dashicons' ), FAMMA_CORE_VERSION );
+	}
+
+	/**
+	 * Paramètre GET de lecture seule, assaini en texte.
+	 *
+	 * @param string $name Nom du paramètre.
+	 * @return string
+	 */
+	private static function query_arg( string $name ): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view parameters, nothing is written.
+		return isset( $_GET[ $name ] ) && is_scalar( $_GET[ $name ] ) ? sanitize_text_field( wp_unslash( (string) $_GET[ $name ] ) ) : '';
 	}
 
 	/**
@@ -107,10 +139,23 @@ final class Visitor_Admin {
 	 *
 	 * @return int
 	 */
-	private function days(): int {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only filter.
-		$days = isset( $_GET['days'] ) ? absint( wp_unslash( $_GET['days'] ) ) : 30;
+	public function days(): int {
+		$days = absint( self::query_arg( 'days' ) );
 		return in_array( $days, self::PERIODS, true ) ? $days : 30;
+	}
+
+	/**
+	 * Libellé court d'une période (« 24 h », « 7 j »…).
+	 *
+	 * @param int $days Nombre de jours.
+	 * @return string
+	 */
+	public static function period_label( int $days ): string {
+		if ( 1 === $days ) {
+			return __( '24 h', 'famma-core' );
+		}
+		/* translators: %d: number of days. */
+		return sprintf( __( '%d j', 'famma-core' ), $days );
 	}
 
 	/**
@@ -124,32 +169,7 @@ final class Visitor_Admin {
 	}
 
 	/**
-	 * Libellés lisibles des événements.
-	 *
-	 * @return array<string, string>
-	 */
-	public static function event_labels(): array {
-		return array(
-			'page_view'         => __( 'Page vue', 'famma-core' ),
-			'page_leave'        => __( 'Sortie de page', 'famma-core' ),
-			'add_to_cart'       => __( 'Ajout au panier', 'famma-core' ),
-			'form_start'        => __( 'Formulaire commencé', 'famma-core' ),
-			'form_field'        => __( 'Champ touché', 'famma-core' ),
-			'form_submit'       => __( 'Formulaire envoyé', 'famma-core' ),
-			'form_error'        => __( 'Envoi refusé', 'famma-core' ),
-			'order_placed'      => __( 'Commande passée', 'famma-core' ),
-			'click_whatsapp'    => __( 'Clic WhatsApp', 'famma-core' ),
-			'click_phone'       => __( 'Clic téléphone', 'famma-core' ),
-			'click_outbound'    => __( 'Lien sortant', 'famma-core' ),
-			'product_media'     => __( 'Média produit', 'famma-core' ),
-			'product_variation' => __( 'Variation choisie', 'famma-core' ),
-			'web_vitals'        => __( 'Temps de chargement', 'famma-core' ),
-			'js_error'          => __( 'Erreur JavaScript', 'famma-core' ),
-		);
-	}
-
-	/**
-	 * Affiche la page : chronologie d'une session, ou synthèse de la période.
+	 * Affiche la page : parcours d'une session, ou onglet demandé.
 	 *
 	 * @return void
 	 */
@@ -157,125 +177,116 @@ final class Visitor_Admin {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			wp_die( esc_html__( 'Accès refusé.', 'famma-core' ) );
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view selector.
-		$session = isset( $_GET['session'] ) ? strtolower( sanitize_text_field( wp_unslash( $_GET['session'] ) ) ) : '';
+		$days    = $this->days();
+		$session = strtolower( self::query_arg( 'session' ) );
 		echo '<div class="wrap famma-vj">';
 		if ( Visitor_Context::is_uuid( $session ) ) {
-			Visitor_Admin_Views::timeline( $session, $this->url( array( 'days' => $this->days() ) ) );
-		} else {
-			$this->overview();
+			Visitor_Timeline_Views::render( $session, $days );
+			echo '</div>';
+			return;
 		}
-		echo '</div>';
+		$tab = sanitize_key( self::query_arg( 'tab' ) );
+		$tab = isset( self::tabs()[ $tab ] ) ? $tab : 'overview';
+		$this->header( $tab, $days );
+		echo '<div class="famma-vj__body">';
+		$this->tab( $tab, $days );
+		echo '</div></div>';
 	}
 
 	/**
-	 * Synthèse : période, indicateurs, entonnoir, formulaires, sessions.
+	 * En-tête commun : titre, état de l'IP, période et onglets.
 	 *
+	 * @param string $tab  Onglet courant.
+	 * @param int    $days Période.
 	 * @return void
 	 */
-	private function overview(): void {
-		$days = $this->days();
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only tab selector.
-		$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'summary';
-		$tabs = array(
-			'summary'  => __( 'Synthèse', 'famma-core' ),
-			'sources'  => __( 'Sources et campagnes', 'famma-core' ),
-			'products' => __( 'Produits', 'famma-core' ),
-			'perf'     => __( 'Performance', 'famma-core' ),
-		);
-		$tab  = isset( $tabs[ $tab ] ) ? $tab : 'summary';
-
+	private function header( string $tab, int $days ): void {
+		echo '<header class="famma-vj__header"><div class="famma-vj__title">';
 		echo '<h1>' . esc_html__( 'Parcours visiteurs', 'famma-core' ) . '</h1>';
-		echo '<nav class="nav-tab-wrapper">';
-		foreach ( $tabs as $key => $label ) {
+		echo '<p>' . esc_html__( 'Ce que font les visiteurs sur le site, de l\'arrivée à la commande.', 'famma-core' ) . '</p></div>';
+
+		if ( 'settings' !== $tab ) {
+			echo '<nav class="famma-vj__periods" aria-label="' . esc_attr__( 'Période', 'famma-core' ) . '">';
+			foreach ( self::PERIODS as $period ) {
+				$args = array(
+					'tab'  => $tab,
+					'days' => $period,
+				);
+				foreach ( Visitor_Report::FILTERS as $key => $empty ) {
+					$value = self::query_arg( $key );
+					if ( $empty !== $value ) {
+						$args[ $key ] = $value;
+					}
+				}
+				printf(
+					'<a href="%1$s" class="famma-vj__period%2$s"%3$s>%4$s</a>',
+					esc_url( $this->url( $args ) ),
+					$period === $days ? ' is-active' : '',
+					$period === $days ? ' aria-current="true"' : '',
+					esc_html( self::period_label( $period ) )
+				);
+			}
+			echo '</nav>';
+		}
+		echo '</header>';
+
+		echo '<nav class="famma-vj__tabs" aria-label="' . esc_attr__( 'Sections', 'famma-core' ) . '">';
+		foreach ( self::tabs() as $key => $meta ) {
 			printf(
-				'<a href="%1$s" class="nav-tab%2$s">%3$s</a>',
+				'<a href="%1$s" class="famma-vj__tab%2$s"%3$s><span class="dashicons dashicons-%4$s" aria-hidden="true"></span>%5$s</a>',
 				esc_url(
 					$this->url(
 						array(
-							'days' => $days,
 							'tab'  => $key,
+							'days' => $days,
 						)
 					)
 				),
-				$key === $tab ? ' nav-tab-active' : '',
-				esc_html( $label )
+				$key === $tab ? ' is-active' : '',
+				$key === $tab ? ' aria-current="page"' : '',
+				esc_attr( $meta[1] ),
+				esc_html( $meta[0] )
 			);
 		}
-		echo '</nav><p class="famma-vj__periods">';
-		foreach ( self::PERIODS as $period ) {
-			printf(
-				'<a href="%1$s" class="button%2$s">%3$s</a> ',
-				esc_url(
-					$this->url(
-						array(
-							'days' => $period,
-							'tab'  => $tab,
-						)
-					)
-				),
-				$period === $days ? ' button-primary' : '',
-				/* translators: %d: number of days. */
-				esc_html( sprintf( _n( '%d jour', '%d jours', $period, 'famma-core' ), $period ) )
-			);
-		}
-		echo '</p>';
-
-		if ( 'sources' === $tab ) {
-			Visitor_Insights_Views::sources( ( new Visitor_Insights() )->sources( $days ) );
-			return;
-		}
-		if ( 'perf' === $tab ) {
-			$perf = new Visitor_Performance();
-			Visitor_Performance_Views::render( $perf->vitals( $days ), $perf->errors( $days ) );
-			return;
-		}
-		if ( 'products' === $tab ) {
-			$insights = new Visitor_Insights();
-			Visitor_Insights_Views::products( $insights->products( $days ), $insights->variations( $days ) );
-			return;
-		}
-
-		$report = new Visitor_Report();
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination.
-		$paged = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1;
-		Visitor_Admin_Views::summary( $report->summary( $days ) );
-		Visitor_Form_Funnel_Views::render( ( new Visitor_Form_Funnel() )->express( $days ) );
-		Visitor_Admin_Views::forms( $report->form_fields( $days ) );
-		Visitor_Session_Type::legend( Visitor_Session_Type::counts( $days ) );
-		Visitor_Admin_Views::sessions( $report->sessions( $days, $paged ), $days, $paged, array( $this, 'url' ) );
-		$this->retention_form();
+		echo '</nav>';
 	}
 
 	/**
-	 * Formulaire du réglage de conservation.
+	 * Contenu d'un onglet.
 	 *
+	 * @param string $tab  Onglet.
+	 * @param int    $days Période.
 	 * @return void
 	 */
-	private function retention_form(): void {
-		echo '<h2>' . esc_html__( 'Conservation', 'famma-core' ) . '</h2>';
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="famma-vj__retention">';
-		wp_nonce_field( self::SAVE );
-		echo '<input type="hidden" name="action" value="' . esc_attr( self::SAVE ) . '" />';
-		echo '<label>' . esc_html__( 'Durée de conservation des événements (jours, 7 à 365)', 'famma-core' ) . ' ';
-		echo '<input type="number" min="7" max="365" name="famma_retention_days" value="' . esc_attr( (string) Visitor_Store::instance()->retention_days() ) . '" /></label> ';
-		submit_button( __( 'Enregistrer', 'famma-core' ), 'secondary', 'submit', false );
-		echo '</form>';
-	}
-
-	/**
-	 * Enregistre la durée de conservation.
-	 *
-	 * @return void
-	 */
-	public function save_retention(): void {
-		check_admin_referer( self::SAVE );
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_die( esc_html__( 'Accès refusé.', 'famma-core' ) );
+	private function tab( string $tab, int $days ): void {
+		switch ( $tab ) {
+			case 'sessions':
+				$raw = array();
+				foreach ( array_keys( Visitor_Report::FILTERS ) as $key ) {
+					$raw[ $key ] = self::query_arg( $key );
+				}
+				$paged = max( 1, absint( self::query_arg( 'paged' ) ) );
+				Visitor_Sessions_Views::render( new Visitor_Report(), $days, $paged, Visitor_Report::clean_filters( $raw ) );
+				break;
+			case 'forms':
+				Visitor_Form_Funnel_Views::render( ( new Visitor_Form_Funnel() )->express( $days ), ( new Visitor_Report() )->form_fields( $days ) );
+				break;
+			case 'sources':
+				Visitor_Insights_Views::sources( ( new Visitor_Insights() )->sources( $days ) );
+				break;
+			case 'products':
+				$insights = new Visitor_Insights();
+				Visitor_Insights_Views::products( $insights->products( $days ), $insights->variations( $days ) );
+				break;
+			case 'perf':
+				$perf = new Visitor_Performance();
+				Visitor_Performance_Views::render( $perf->vitals( $days ), $perf->errors( $days ) );
+				break;
+			case 'settings':
+				Visitor_Settings_Views::render( '' !== self::query_arg( 'saved' ) );
+				break;
+			default:
+				Visitor_Overview_Views::render( ( new Visitor_Report() )->summary( $days ), Visitor_Session_Type::counts( $days ), $days );
 		}
-		$days = isset( $_POST['famma_retention_days'] ) ? absint( wp_unslash( $_POST['famma_retention_days'] ) ) : 180;
-		update_option( Visitor_Store::RETENTION_OPTION, max( 7, min( 365, $days ) ), false );
-		wp_safe_redirect( $this->url( array( 'saved' => 1 ) ) );
-		exit;
 	}
 }
