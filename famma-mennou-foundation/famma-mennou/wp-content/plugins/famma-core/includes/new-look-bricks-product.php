@@ -150,6 +150,15 @@ final class New_Look_Bricks_Product {
 				'texts'   => array( 'thx_title', 'thx_today', 'thx_step1', 'thx_step2', 'thx_step3' ),
 				'wait'    => array(),
 			),
+			// Avis par lien WhatsApp (21/11/2026).
+			'pdp_reviews' => array(
+				'title'   => __( 'Avis par lien WhatsApp', 'famma-core' ),
+				'summary' => __( 'Sur une commande Livrée ou Terminée, un bouton « Demander un avis » prépare un WhatsApp avec un lien personnel vers le formulaire d’avis.', 'famma-core' ),
+				'help'    => __( 'Sur la fiche d’une commande Livrée ou Terminée, l’encadré « Avis client (WhatsApp) » propose un bouton par produit et par langue : il ouvre WhatsApp avec le numéro du client et le message déjà écrit, vous appuyez sur Envoyer. Le lien ouvre la fiche du produit sur un formulaire court (étoiles obligatoires, commentaire), sans e-mail ni compte. L’avis arrive en attente dans Produits → Avis, avec le libellé « acheteur certifié ». Un lien par commande, un seul avis par produit, valable le nombre de jours réglé dans WooCommerce → Réglages → Produits (30 par défaut). Sans lien, aucun formulaire d’avis n’est montré, sauf aux clients connectés dont la commande est livrée. Textes juste en dessous, à relire (derja en priorité).', 'famma-core' ),
+				'needs'   => array(),
+				'texts'   => array( Review_Texts::class ),
+				'wait'    => array(),
+			),
 		);
 	}
 }

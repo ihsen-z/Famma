@@ -393,7 +393,7 @@ final class Pages_Content {
 	public static function schema( string $page ): array {
 		return match ( $page ) {
 			'about'    => self::about_schema(),
-			'product'  => Product_Content::schema(),
+			'product'  => array_merge( Product_Content::schema(), Review_Texts::schema() ),
 			'home'     => Home_Content::schema(),
 			'delivery' => Delivery_Content::schema(),
 			'returns'  => Returns_Content::schema(),

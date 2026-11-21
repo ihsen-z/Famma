@@ -1,5 +1,41 @@
 # Changelog — FAMMA Core
 
+## 0.3.50 — 2026-11-21 (Avis par lien WhatsApp)
+
+Plugin seul, thème inchangé. Case `pdp_reviews` (FAMMA → Nouveau look →
+Fiche produit), **décochée** à la mise en ligne : rien ne change tant qu'elle
+ne l'est pas.
+
+- **Constat du 21/11** : aucun client ne pouvait laisser d'avis. Le thème
+  retire l'onglet Avis tant qu'un produit a 0 avis, et les 19 produits en ont
+  0 (rapport Docs T85C797ABDwgKukV6UBPvH). Choix du propriétaire : option C,
+  un lien envoyé par WhatsApp après la livraison, par un bouton à cliquer.
+- **Lien personnel** (`Review_Link`) : créé quand la commande passe à
+  Livrée ou Terminée (ou à l'ouverture de sa fiche si elle l'était avant).
+  Graine aléatoire en méta `_famma_review_seed`, jeton = HMAC par le sel du
+  site, jamais stocké en clair. Valable N jours (réglage
+  `famma_review_link_days`, 30 par défaut, dans WooCommerce → Réglages →
+  Produits sous les réglages des avis), un seul avis par produit.
+- **Formulaire** (`Review_Form`) : avec un lien valable, l'onglet Avis est
+  remis même à 0 avis, prénom prérempli, ni e-mail ni case « enregistrer mon
+  nom », avis marqué « acheteur certifié », note de commande, retour sur la
+  fiche avec un remerciement. Page non mise en cache (LiteSpeed,
+  `DONOTCACHEPAGE`) et non indexée. Lien expiré, déjà utilisé ou trafiqué :
+  message, et envoi refusé (403). Sans lien : formulaire réservé aux clients
+  connectés dont la commande est livrée (réglage « acheteurs certifiés »
+  forcé sur le front seulement, valeur enregistrée intacte), refus côté
+  serveur par WooCommerce. Tout avis reste en attente de validation.
+- **Bouton** (`Review_Admin`) : encadré « Avis client (WhatsApp) » sur la
+  fiche commande (HPOS), un bouton par produit et par langue qui ouvre
+  wa.me avec le numéro du client et le message prêt. Rien ne part tout seul.
+- **Textes** (`Review_Texts`, page `product`) : message, titre, phrase
+  d'accueil, remerciement, lien plus valable, en français et en derja
+  (brouillons à relire). `{prenom}`, `{produit}`, `{lien}` remplacés.
+- Essayé de bout en bout sur le site Local (banc php -S, code de la branche,
+  réglages d'avis de la prod) : lien absent avant livraison, formulaire
+  mobile, avis en attente + certifié, lien refusé au 2e usage, envoi sans
+  lien refusé, encadré dans ses trois états. Données d'essai supprimées.
+
 ## 0.3.49 — 2026-11-19 (Parcours visiteurs : adresse IP, nouvel écran, code factorisé)
 
 Plugin seul, thème inchangé. Aucune case : l'écran change pour tout le monde
