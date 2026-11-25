@@ -64,8 +64,20 @@ namespace {
 	function esc_html( string $text ): string {
 		return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
 	}
+	function esc_attr( string $text ): string {
+		return esc_html( $text );
+	}
+	function esc_attr__( string $text, string $domain ): string {
+		return esc_html( $text );
+	}
+	function esc_url( string $url ): string {
+		return esc_html( $url );
+	}
 	function number_format_i18n( $number, int $decimals = 0 ): string {
 		return number_format( (float) $number, $decimals, ',', ' ' );
+	}
+	function get_edit_post_link( int $id ) {
+		return false;
 	}
 	function get_the_title( int $id ): string {
 		global $titles;
@@ -90,7 +102,10 @@ namespace {
 
 	require dirname( __DIR__ ) . '/wp-content/plugins/famma-core/includes/visitor-collector.php';
 	require dirname( __DIR__ ) . '/wp-content/plugins/famma-core/includes/visitor-insights-views.php';
-	require dirname( __DIR__ ) . '/wp-content/plugins/famma-core/includes/visitor-admin-views.php';
+	require dirname( __DIR__ ) . '/wp-content/plugins/famma-core/includes/visitor-overview-views.php';
+	require dirname( __DIR__ ) . '/wp-content/plugins/famma-core/includes/visitor-query.php';
+	require dirname( __DIR__ ) . '/wp-content/plugins/famma-core/includes/visitor-ui.php';
+	require dirname( __DIR__ ) . '/wp-content/plugins/famma-core/includes/visitor-labels.php';
 	require dirname( __DIR__ ) . '/wp-content/plugins/famma-core/includes/visitor-form-funnel.php';
 	require dirname( __DIR__ ) . '/wp-content/plugins/famma-core/includes/visitor-form-funnel-views.php';
 
@@ -200,16 +215,16 @@ namespace {
 
 	// Affichage : échappement et nombres.
 	ob_start();
-	Visitor_Form_Funnel_Views::render( $data );
+	Visitor_Form_Funnel_Views::render( $data, array() );
 	$html = (string) ob_get_clean();
 	check( false === strpos( $html, '<b>A</b>' ) && false !== strpos( $html, 'Produit test &lt;b&gt;A&lt;/b&gt;' ), 'titre du produit échappé' );
 	check( false !== strpos( $html, 'Produit n° 20' ), 'produit sans titre : numéro affiché' );
-	check( false !== strpos( $html, '<td class="num">25,0 %</td>' ), 'produit 10 : commandes / commencés = 25,0 %' );
+	check( false !== strpos( $html, '<span>25,0 %</span>' ), 'produit 10 : commandes / commencés = 25,0 %' );
 	check( false !== strpos( $html, 'Gouvernorat' ) && false === strpos( $html, 'bogus' ), 'causes en clair, code inconnu absent' );
 	check( substr_count( $html, '<table' ) === substr_count( $html, '</table>' ), 'tableaux bien fermés' );
 
 	ob_start();
-	Visitor_Form_Funnel_Views::render( Visitor_Form_Funnel::aggregate( array() ) );
+	Visitor_Form_Funnel_Views::render( Visitor_Form_Funnel::aggregate( array() ), array() );
 	$empty = (string) ob_get_clean();
 	check( false !== strpos( $empty, 'Aucun formulaire express commencé' ) && false === strpos( $empty, '<table' ), 'période vide : message, aucun tableau' );
 

@@ -187,7 +187,8 @@ final class Famma_Capi_Fbc_Integration {
 			// famma_meta_data_profile_legacy du lot 5.
 			add_filter( 'famma_meta_data_profile_legacy', '__return_true' );
 
-			// 9. Multi-produit : SKU repris, quantités sommées, « | » neutralisé.
+			// 9. Multi-produit : ID WooCommerce même si le produit a un SKU (règle unique
+			// Meta_Ids, décision du 20/10/2026), quantités sommées, « | » neutralisé.
 			$second = new WC_Product_Simple();
 			$second->set_name( '[TEST LOCAL] Lame | inox' );
 			$second->set_sku( 'FAMMA-LOCAL-' . substr( md5( self::$run_id ), 0, 8 ) );
@@ -206,13 +207,13 @@ final class Famma_Capi_Fbc_Integration {
 				self::product_data_matches(
 					$mp,
 					array(
-						'content_ids'   => array( (string) $product->get_id(), $second->get_sku() ),
+						'content_ids'   => array( (string) $product->get_id(), (string) $second->get_id() ),
 						'content_name'  => $product->get_name() . ' | [TEST LOCAL] Lame / inox',
 						'num_items'     => 3,
 						'famma_product' => $product->get_slug() . ',' . $second->get_slug(),
 					)
 				),
-				'Multi-produit : deux ids (ID puis SKU), noms joints par « | », 3 articles, deux slugs.'
+				'Multi-produit : deux ID WooCommerce (SKU ignoré), noms joints par « | », 3 articles, deux slugs.'
 			);
 
 			// 10. Variations S et M d'un même produit : un seul slug, celui du parent.

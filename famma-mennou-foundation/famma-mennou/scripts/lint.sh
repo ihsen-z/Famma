@@ -66,5 +66,15 @@ fi
 echo "==> phpcs (standards WordPress)"
 MSYS_NO_PATHCONV=1 "${RUN[@]}" vendor/bin/phpcs
 
+
+echo
+echo "==> Suites unitaires sans WordPress (scripts/run-unit-tests.php)"
+# PHP dans le conteneur ; les suites JS (scripts du navigateur) tournent sur l'hôte si node existe.
+MSYS_NO_PATHCONV=1 "${RUN[@]}" php scripts/run-unit-tests.php --php-only
+if command -v node >/dev/null 2>&1 && command -v php >/dev/null 2>&1; then
+	php scripts/run-unit-tests.php --js-only
+else
+	echo "  (suites JS ignorées ici : node ou php absent de l'hôte ; la CI les exécute)"
+fi
 echo
 echo "Porte qualité franchie : aucune erreur PHP, aucune violation WPCS."

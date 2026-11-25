@@ -33,6 +33,9 @@ namespace Famma\Core {
 		public static function is_uuid( string $value ): bool {
 			return 1 === preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/D', $value );
 		}
+		public static function stored_ip(): string {
+			return '';
+		}
 		public static function ip_hash(): string {
 			return 'hash';
 		}

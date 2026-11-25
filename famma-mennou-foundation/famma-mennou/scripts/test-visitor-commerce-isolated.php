@@ -43,6 +43,9 @@ namespace Famma\Core {
 		public static function device(): string {
 			return 'mobile';
 		}
+		public static function stored_ip(): string {
+			return '';
+		}
 		public static function ip_hash(): string {
 			return 'hash';
 		}

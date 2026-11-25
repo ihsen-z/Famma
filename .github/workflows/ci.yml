@@ -55,6 +55,37 @@ jobs:
           cd famma-mennou-foundation/famma-mennou
           vendor/bin/phpcs
 
+  unit-tests:
+    name: Unit suites without WordPress (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '8.1', '8.3' ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, sodium
+          coverage: none
+
+      - name: Setup Node.js (browser-script suites)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # One runner, discovery by file name (scripts/tests-unit/test-*.php|js, scripts/test-*.php|js
+      # without WP_CLI). Any red suite, silent suite or PHP warning gives a non-zero exit code.
+      - name: Run every unit suite
+        run: |
+          cd famma-mennou-foundation/famma-mennou
+          php scripts/run-unit-tests.php
+
   assets-and-config-check:
     name: Asset Integrity & JSON Configuration Check
     runs-on: ubuntu-latest

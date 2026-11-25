@@ -16,6 +16,9 @@
 // Standalone runner: WordPress is never loaded, see bootstrap.php and bootstrap-capi.php.
 require __DIR__ . '/bootstrap-capi.php';
 
+// The fixtures are historical (19/10/2026): freeze the plugin clock two hours after the orders, so the 6-day guard and the F3 windows stay as asserted.
+$GLOBALS['famma_test_now'] = 1792411200; // 2026-10-19 12:00:00 UTC.
+
 use Famma\Core\Capi;
 use Famma\Core\Capi_Click_Id;
 use Famma\Core\Capi_User_Data;

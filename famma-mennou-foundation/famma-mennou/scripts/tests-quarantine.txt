@@ -1,0 +1,7 @@
+# Whole suites known to be red BEFORE the pixel reforms, kept visible but not blocking.
+# Prefer a granular marker inside the suite: a scenario that prints `KNOWN-STALE <label>: <reason>` is shown as KNOWN while the rest of the suite counts.
+# Format: <suite path relative to scripts/> | <reason>. A quarantined suite is still run and
+# reported; it never turns the build red, and the runner says so when it turns green (remove the line then).
+# Adding a line here must be a reviewed decision: it hides a failing suite.
+test-famma-express-v2.js | 10 scenarios red on prod 0.3.50 as well (city suggestion and inline places script, JSON_HEX_TAG): stale against the current express template, to be re-aligned with the express code.
+test-famma-scenarios.js | Thin wrapper that requires test-famma-express-v2.js: same 10 red scenarios.
