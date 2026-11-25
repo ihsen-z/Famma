@@ -1,5 +1,46 @@
 # Changelog — FAMMA Core
 
+## 0.3.53 — 2026-11-25 (Réformes du pixel Meta, phase B)
+
+Plugin seul, thème inchangé. Base : production 0.3.52 (lot 57). La 0.3.51 du
+lot SEO, pas encore en ligne, sera rebasée par-dessus (0.3.54).
+
+- **Surveillance** (lot 4, défauts D3, D12) : alerte rouge qui nomme les
+  commandes du site dont l'OrderPlaced, réellement mis en file, n'est pas
+  accepté 30 minutes après l'envoi prévu ; bouton « Acquitter les alertes
+  OrderPlaced ». Renvoi automatique des refus de moins de 6 jours une fois le
+  jeton validé ou au premier envoi accepté (10 par passage, une fois par
+  événement, essais exclus, Purchase seulement si encore « Livrée »).
+  E-mail d'alerte vers le nouveau champ « Adresse des alertes » de Mesure
+  (vide = aucun e-mail ; les alertes ne vont plus à l'adresse d'administration),
+  un par jour au plus tant que l'état est rouge, puis un e-mail de retour.
+  Versions d'API v26/v27 : « date pas encore fixée par Meta ». Tâches
+  planifiées retirées à la désactivation.
+- **Qualité vue par Meta** (décision Q6) : lecture quotidienne, en lecture
+  seule, de la Dataset Quality API (note de correspondance, fraîcheur,
+  couverture) affichée dans Mesure ; « Lecture impossible » sans alerte rouge
+  si le jeton n'a pas les droits. Le jeton reste en en-tête, jamais dans
+  l'URL, une option ou l'écran.
+- **InitiateCheckout avant la commande** (lot 6, défaut D6) : sur le
+  formulaire express, au premier numéro tunisien valide saisi, une fois par
+  affichage, avec la valeur affichée ; plus au clic « Confirmer ».
+  Interrupteur dans Mesure, activé par défaut.
+- **Paniers récupérés** (lot 7, défaut D5) : la commande créée depuis une
+  saisie reprend fbc/fbp de la visite d'origine et envoie OrderPlaced
+  15 minutes après sa création, revérifié au départ, avec `action_source`
+  `phone_call`. Case « Commande d'essai » dans « Créer la commande ».
+  Interrupteur dans Mesure, activé par défaut. Colonnes fbc/fbp ajoutées à la
+  table des saisies (migration vérifiée ; aucune saisie perdue si elle échoue).
+- **Identifiant visiteur `external_id`** (décision Q5) : empreinte SHA-256 du
+  cookie `famma_vid`, identique dans `fbq('init')` et sur les événements
+  serveur (OrderPlaced, Purchase, OfferAccepted, OrderCancelled,
+  OrderReturned) ; absent sans cookie ni journal des visiteurs.
+- **Tests** : le lanceur classe en échec toute suite sans PASS ; les suites
+  JS express tournent réellement. 52 suites, 50 vertes, 0 rouge, 2 en
+  quarantaine. phpcs : 0 erreur sur les fichiers de la phase B. Banc Docker du
+  25/11 : non-régression phase A et scénarios phase B conformes, 0 ligne
+  famma-core dans `debug.log`.
+
 ## 0.3.52 — 2026-11-25 (Réformes du pixel Meta, phase A)
 
 Plugin seul, thème inchangé. Base : production 0.3.50 (la 0.3.51 du lot SEO,
