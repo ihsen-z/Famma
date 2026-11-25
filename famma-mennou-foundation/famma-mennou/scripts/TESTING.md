@@ -50,4 +50,4 @@ dans le clone isolé (`scripts/compose-integration.yml`), jamais sur la producti
 | `scripts/qa/test-qa-*.php` | `bash scripts/qa/qa-l2-run-suites.sh` puis `bash scripts/qa/qa-l5-integration-run.sh` (clone `famma-qa-pixel`) |
 
 Lancées sans WordPress, ces suites sortent sans rien tester : c'est pourquoi le lanceur unitaire les écarte
-(mention de `WP_CLI`) et refuse une suite silencieuse.
+(mention de `WP_CLI`) et refuse une suite silencieuse ou qui ne compte aucun `PASS` (« 0 PASS » = rouge, jamais vert) ; les suites JS reçoivent `FAMMA_PHP` (le php du lanceur) et `FAMMA_PHP_ARGS`.

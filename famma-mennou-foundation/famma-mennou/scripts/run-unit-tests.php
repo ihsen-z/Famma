@@ -11,7 +11,7 @@
  *
  * A suite fails when its exit code is not 0, when it prints nothing (a script
  * that exits before testing anything must not look green), when a line starts
- * with FAIL, when a `RESULT x/y` line has x != y, or when PHP reports a warning,
+ * with FAIL, when no PASS line was counted (0 PASS is never green), when a `RESULT x/y` line has x != y, or when PHP reports a warning,
  * notice, deprecation or fatal error.
  *
  * Usage:  php scripts/run-unit-tests.php [--php-only] [--js-only] [--list] [--verbose] [filter...]  (filters are OR-ed, matched on the suite path)
@@ -72,6 +72,8 @@ function unit_child_env(): array {
 	$env          = getenv();
 	$path         = isset( $env['PATH'] ) ? 'PATH' : ( isset( $env['Path'] ) ? 'Path' : 'PATH' );
 	$env[ $path ] = dirname( PHP_BINARY ) . PATH_SEPARATOR . ( $env[ $path ] ?? '' );
+	// JS suites that need PHP (express places) must use this very binary; FAMMA_PHP_ARGS is inherited as is.
+	$env['FAMMA_PHP'] = PHP_BINARY;
 	return $env;
 }
 
@@ -138,6 +140,9 @@ function unit_verdict( int $code, string $output ): array {
 	}
 	if ( '' === trim( $output ) ) {
 		$reasons[] = 'no output (nothing was tested)';
+	}
+	if ( '' !== trim( $output ) && 0 === preg_match_all( '/^(?:PASS|ok)\b/mi', $output ) ) {
+		$reasons[] = '0 PASS assertion counted (a suite that proves nothing is a failure, not a green)';
 	}
 	if ( 1 === preg_match( '/^FAIL\b/m', $output ) || 1 === preg_match( '/\bFAIL(?:ED)?:/', $output ) ) {
 		$reasons[] = 'a FAIL line was printed';
