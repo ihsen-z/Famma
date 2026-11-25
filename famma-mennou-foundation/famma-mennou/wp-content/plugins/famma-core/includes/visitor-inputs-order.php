@@ -11,10 +11,13 @@
  * plus, elle reste « Attente paiement » pour qu'on puisse l'ajouter.
  *
  * ── Meta ───────────────────────────────────────────────────────────────────
- * La commande est `created_via = admin` : aucun OrderPlaced n'est envoyé
- * (`Capi::order_placed_ineligibility()`), et ni l'IP, ni le navigateur, ni
- * les cookies Meta de l'administrateur ne sont posés dessus. Seule une vraie
- * livraison déclenche ensuite le Purchase, comme pour toute commande.
+ * La commande est `created_via = admin` : ni l'IP, ni le navigateur, ni les
+ * cookies Meta de l'administrateur ne sont posés dessus. Depuis le lot 7 du
+ * pixel, les cookies Meta et l'IP de la visite d'origine y sont recopiés et
+ * OrderPlaced part 15 minutes plus tard (case « paniers récupérés »,
+ * `Capi_Recovered_Cart`) ; la case « Commande d'essai » du bouton pose
+ * `_famma_test_order` avant tout changement de statut : rien chez Meta. Seule
+ * une vraie livraison déclenche ensuite le Purchase, comme pour toute commande.
  *
  * ── Double clic ────────────────────────────────────────────────────────────
  * Un verrou (option unique) empêche deux créations simultanées ; une ligne
@@ -37,6 +40,9 @@ final class Visitor_Inputs_Order {
 
 	/** Méta de la commande : ligne de saisie d'origine. */
 	public const META_INPUT = '_famma_input_id';
+
+	/** Case « Commande d'essai » du formulaire (lot 7 du pixel, Q19). */
+	public const FIELD_TEST = 'famma_test_order';
 
 	/** Préfixe de l'option-verrou. */
 	private const LOCK = 'famma_inputs_order_lock_';
@@ -87,6 +93,7 @@ final class Visitor_Inputs_Order {
 			. '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '">'
 			. '<input type="hidden" name="id" value="' . esc_attr( (string) $id ) . '">'
 			. ( $force ? '<input type="hidden" name="force" value="1">' : '' )
+			. '<label class="famma-inputs__test"><input type="checkbox" name="' . esc_attr( self::FIELD_TEST ) . '" value="1"> ' . esc_html__( 'Commande d’essai (rien chez Meta)', 'famma-core' ) . '</label> '
 			. '<button type="submit" class="button button-primary button-small">' . ( $force ? esc_html__( 'Créer quand même', 'famma-core' ) : esc_html__( 'Créer la commande', 'famma-core' ) ) . '</button></form>';
 	}
 
@@ -173,7 +180,7 @@ final class Visitor_Inputs_Order {
 		try {
 			// Relue sous verrou : un autre clic a pu la relier entre-temps.
 			$row   = Visitor_Inputs_Rows::get( $id );
-			$order = null === $row ? null : ( self::linked_order( $row ) ?? $this->create( $row ) );
+			$order = null === $row ? null : ( self::linked_order( $row ) ?? $this->create( $row, ! empty( $_POST[ self::FIELD_TEST ] ) ) );
 		} finally {
 			delete_option( self::LOCK . $id );
 		}
@@ -205,15 +212,20 @@ final class Visitor_Inputs_Order {
 	/**
 	 * Crée la commande d'une ligne et relie la ligne à elle.
 	 *
-	 * @param array<string, string> $row Ligne de saisie.
+	 * @param array<string, string> $row  Ligne de saisie.
+	 * @param bool                  $test Case « Commande d'essai » cochée.
 	 * @return \WC_Order|null
 	 */
-	public function create( array $row ): ?\WC_Order {
+	public function create( array $row, bool $test = false ): ?\WC_Order {
 		$order = wc_create_order( array( 'created_via' => 'admin' ) );
 		if ( ! $order instanceof \WC_Order ) {
 			return null;
 		}
 		try {
+			if ( $test ) {
+				// Posé avant tout changement de statut : aucun événement Meta ne sera envoyé (lot 1).
+				$order->update_meta_data( Capi::TEST_ORDER_META, 'yes' );
+			}
 			return $this->fill( $order, $row );
 		} catch ( \Throwable $e ) {
 			// Pas de commande orpheline non reliée : un nouvel essai en créerait une seconde.
@@ -358,6 +370,7 @@ final class Visitor_Inputs_Order {
 		$order->update_meta_data( Visitor_Commerce::META_VISITOR, (string) $row['visitor_id'] );
 		$order->update_meta_data( Visitor_Commerce::META_SESSION, (string) $row['session_id'] );
 		$order->update_meta_data( '_famma_internal_shipping_cost', Config::instance()->internal_shipping_cost() );
+		Capi_Recovered_Cart::stamp( $order, $row );
 		$utm = array(
 			'utm_source'   => (string) $row['source'],
 			'utm_medium'   => (string) $row['medium'],

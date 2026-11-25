@@ -504,6 +504,7 @@ final class Tracking_Settings {
 				</form>
 				<?php Capi_Probe::instance()->render(); ?>
 				<?php Capi_Reconcile_View::render(); ?>
+				<?php Capi_Meta_Quality_View::render(); ?>
 				<?php Capi_Token_Rollback::render(); ?>
 			<?php endif; ?>
 		</div>

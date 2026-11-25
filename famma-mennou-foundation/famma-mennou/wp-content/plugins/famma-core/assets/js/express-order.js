@@ -17,7 +17,7 @@
  *                         ▼
  *   busy (bouton désactivé, « Envoi en cours… », indicateur) ──▶ prepare
  *        prepare KO / réseau ──▶ idle + message (aucun renvoi automatique)
- *        prepare OK : AddToCart / InitiateCheckout (une fois) puis
+ *        prepare OK : AddToCart (InitiateCheckout part déjà dès le téléphone saisi, lot 6) puis
  *          total serveur = total affiché ──▶ checkout
  *          total différent ──▶ review (modale ; « Valider ma commande – XX DT »
  *                              ──▶ checkout ; fermer ──▶ idle, nouveau devis)
@@ -469,6 +469,72 @@
 			formatPhone( event );
 			checkPhone( false, false );
 		} );
+	}
+
+	/*
+	 * InitiateCheckout dès qu'un numéro tunisien valide est saisi (lot 6, Q16).
+	 *
+	 * Donnée imprimée par le serveur (`earlyCheckout`, vide si l'interrupteur
+	 * « Mesure » est coupé : l'événement part alors au clic « Confirmer », voir
+	 * `acknowledgedEvents()`). Une seule fois par affichage de page : le drapeau
+	 * vit en mémoire, pas en sessionStorage. Sans Pixel chargé (visiteur
+	 * interne, bloqueur), rien n'est émis et le drapeau reste levé pour un
+	 * éventuel chargement tardif. Pas de déduplication serveur : la CAPI
+	 * n'envoie pas d'InitiateCheckout, l'identifiant est donc propre au navigateur.
+	 */
+	var earlyCheckout = fammaExpress.earlyCheckout && fammaExpress.earlyCheckout.params ? fammaExpress.earlyCheckout : null;
+	var earlyCheckoutSent = false;
+
+	function earlyCheckoutId() {
+		if ( 'function' === typeof window.fammaEventId ) {
+			return String( window.fammaEventId() );
+		}
+		if ( window.crypto && 'function' === typeof window.crypto.randomUUID ) {
+			return 'famma_ic_' + window.crypto.randomUUID();
+		}
+		return 'famma_ic_' + String( Date.now() ) + '_' + String( Math.floor( Math.random() * 1e9 ) );
+	}
+
+	/** Valeur et quantité de l'événement à la quantité choisie à cet instant. */
+	function earlyCheckoutParams() {
+		var quantity = currentQuantity();
+		var params = JSON.parse( JSON.stringify( earlyCheckout.params ) );
+		var scale = Math.pow( 10, ( fammaExpress.price && fammaExpress.price.decimals ) || 3 );
+		// Même source que le total affiché (`renderQuantity()`) et que `sameTotal()` : le prix unitaire en cours du formulaire ; l'imprimé ne sert que de repli.
+		var shown = totalNode ? parseFloat( totalNode.getAttribute( 'data-unit-price' ) || '' ) : NaN;
+		var unit = isNaN( shown ) ? earlyCheckout.unit : shown;
+		if ( 'number' === typeof unit && 'value' in params ) {
+			params.value = Math.round( quantity * unit * scale ) / scale;
+		}
+		if ( params.contents && params.contents[ 0 ] ) {
+			params.contents[ 0 ].quantity = quantity;
+		}
+		return params;
+	}
+
+	/** Envoie InitiateCheckout si le téléphone est valide et que rien n'est encore parti. */
+	function maybeEarlyCheckout() {
+		if ( ! earlyCheckout || earlyCheckoutSent || ! phoneInput || ! window.fbq ) {
+			return;
+		}
+		if ( '' === normalizePhone( String( phoneInput.value || '' ) ) ) {
+			return;
+		}
+		if ( pixel( 'InitiateCheckout', earlyCheckoutParams(), earlyCheckoutId() ) ) {
+			earlyCheckoutSent = true;
+		}
+	}
+
+	if ( earlyCheckout && phoneInput ) {
+		// `input` couvre frappe et collage ; `change`/`blur`, le remplissage automatique ; `paste` en différé, la valeur n'étant pas encore posée.
+		[ 'input', 'change', 'blur' ].forEach( function ( type ) {
+			phoneInput.addEventListener( type, maybeEarlyCheckout );
+		} );
+		phoneInput.addEventListener( 'paste', function () {
+			window.setTimeout( maybeEarlyCheckout, 0 );
+		} );
+		// Filet : remplissage automatique sans événement, détecté à l'envoi (même moment qu'avant, toujours une seule fois).
+		form.addEventListener( 'submit', maybeEarlyCheckout );
 	}
 
 	/*
@@ -1089,6 +1155,10 @@
 		[ [ 'AddToCart', tracking.add_to_cart ], [ 'InitiateCheckout', tracking.initiate_checkout ] ].forEach( function ( entry ) {
 			var data = entry[ 1 ];
 			var isCheckout = 'InitiateCheckout' === entry[ 0 ];
+			if ( isCheckout && earlyCheckout ) {
+				// Déjà parti (ou à partir) dès le téléphone saisi : jamais au clic « Confirmer ».
+				return;
+			}
 			if ( ! data || false === data.emit || ! data.event_id || emitted[ data.event_id ] || ! window.fbq || ( isCheckout && checkoutEmitted() ) || ( ! isCheckout && cartEmitted() ) ) {
 				return;
 			}

@@ -118,8 +118,11 @@ final class Capi_Health {
 	 * @return void
 	 */
 	public static function record_outcome( string $response_class, array $result ): void {
+		// Lot 4 (D3) : un refus de Meta suivi d'un envoi accepté déclenche le renvoi automatique des refus.
+		$previous = self::signals();
+		Capi_Refusal_Resend::observe( $response_class, isset( $previous['access'] ) || isset( $previous['contract'] ) );
 		if ( in_array( $response_class, array( 'accepted', 'accepted_warning' ), true ) ) {
-			$signals           = array_diff_key( self::signals(), array_flip( array( 'access', 'contract', 'registry_unavailable' ) ) );
+			$signals           = array_diff_key( $previous, array_flip( array( 'access', 'contract', 'registry_unavailable' ) ) );
 			$signals['served'] = array(
 				'requested' => (string) ( $result['version_requested'] ?? '' ),
 				'served'    => (string) ( $result['version_served'] ?? '' ),
@@ -158,6 +161,8 @@ final class Capi_Health {
 		if ( in_array( $signals['probe']['class'], array( 'accepted', 'accepted_warning' ), true ) ) {
 			if ( isset( $signals['access'] ) && Capi_Probe_Verdict::is_token_error( (int) ( $signals['access']['code'] ?? 0 ) ) ) {
 				unset( $signals['access'] );
+				// Lot 4 (D3) : jeton de nouveau valide, les refus d'envoi dus au jeton repartent.
+				Capi_Refusal_Resend::repaired();
 			}
 			$signals['served'] = array(
 				'requested' => $signals['probe']['requested'],

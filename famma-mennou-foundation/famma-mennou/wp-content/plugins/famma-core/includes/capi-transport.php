@@ -282,4 +282,37 @@ final class Capi_Transport {
 			'error'             => '',
 		);
 	}
+
+	/**
+	 * Lecture de la qualité du jeu de données (GET /{version}/dataset_quality), sans écriture chez Meta.
+	 *
+	 * Le jeton part dans l'en-tête Authorization, jamais dans l'URL. Réponse brute,
+	 * analysée par `Capi_Meta_Quality_Parser`.
+	 *
+	 * @param string $token   Jeton CAPI.
+	 * @param string $pixel   Identifiant du jeu de données.
+	 * @param string $fields  Champs demandés.
+	 * @param string $version Version de l'API.
+	 * @param int    $timeout Délai en secondes.
+	 * @return mixed Réponse de l'API HTTP de WordPress, ou WP_Error.
+	 */
+	public static function read_quality( string $token, string $pixel, string $fields, string $version, int $timeout ) {
+		$query = http_build_query(
+			array(
+				'dataset_id' => $pixel,
+				'fields'     => $fields,
+			),
+			'',
+			'&',
+			PHP_QUERY_RFC3986
+		);
+		return wp_remote_get(
+			self::HOST . rawurlencode( $version ) . '/dataset_quality?' . $query,
+			array(
+				'timeout'     => $timeout,
+				'redirection' => 0,
+				'headers'     => array( 'Authorization' => 'Bearer ' . $token ),
+			)
+		);
+	}
 }

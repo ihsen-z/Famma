@@ -151,7 +151,7 @@ final class Visitor_Collector {
 	 * @return void
 	 */
 	public function enqueue(): void {
-		if ( Visitor_Context::is_staff() || is_admin() ) {
+		if ( ! Visitor_Context::journal_loads() ) {
 			return;
 		}
 		wp_enqueue_script(

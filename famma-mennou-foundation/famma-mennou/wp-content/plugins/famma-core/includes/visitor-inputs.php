@@ -33,9 +33,9 @@ defined( 'ABSPATH' ) || exit;
 final class Visitor_Inputs {
 
 	/**
-	 * Version du schéma ; la changer relance `dbDelta()`.
+	 * Version du schéma ; la changer relance `dbDelta()`. 3 : cookies Meta `fbc`, `fbp` (lot 7 du pixel).
 	 */
-	private const SCHEMA = '2';
+	private const SCHEMA = '3';
 
 	/**
 	 * Option mémorisant la version du schéma installée.
@@ -156,7 +156,9 @@ final class Visitor_Inputs {
 			return;
 		}
 		global $wpdb;
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		if ( ! function_exists( 'dbDelta' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		}
 		$table   = $this->table();
 		$collate = $wpdb->get_charset_collate();
 		dbDelta(
@@ -184,6 +186,8 @@ final class Visitor_Inputs {
 			status varchar(16) NOT NULL DEFAULT 'open',
 			order_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			note varchar(500) NOT NULL DEFAULT '',
+			fbc varchar(640) NOT NULL DEFAULT '',
+			fbp varchar(640) NOT NULL DEFAULT '',
 			PRIMARY KEY  (id),
 			UNIQUE KEY session_id (session_id),
 			KEY visitor_id (visitor_id),
@@ -193,9 +197,39 @@ final class Visitor_Inputs {
 		);
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- schema verification needs an uncached read.
 		$found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) );
-		if ( $table === $found ) {
+		// Version validée seulement si les colonnes du lot 7 existent vraiment : sinon nouvel essai au prochain chargement (I3).
+		if ( $table === $found && $this->has_columns( array( 'fbc', 'fbp' ) ) ) {
 			update_option( self::SCHEMA_OPTION, self::SCHEMA, false );
 		}
+	}
+
+	/**
+	 * Les colonnes existent-elles dans la table (lecture directe du schéma) ?
+	 *
+	 * @param array<int, string> $columns Noms de colonnes.
+	 * @return bool
+	 */
+	private function has_columns( array $columns ): bool {
+		global $wpdb;
+		foreach ( $columns as $column ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- schema verification needs an uncached read.
+			if ( $column !== $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $this->table(), $column ) ) ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Les colonnes `fbc` / `fbp` sont-elles vérifiées (schéma installé à jour) ?
+	 *
+	 * Tant que ce n'est pas le cas, les saisies s'enregistrent sans elles :
+	 * jamais de saisie perdue à cause du suivi Meta.
+	 *
+	 * @return bool
+	 */
+	public function cookie_columns_ready(): bool {
+		return self::SCHEMA === (string) get_option( self::SCHEMA_OPTION, '' );
 	}
 
 	/**
@@ -215,7 +249,10 @@ final class Visitor_Inputs {
 	 * Une valeur vide n'efface jamais une valeur déjà reçue : le visiteur qui
 	 * vide le champ avant de partir reste joignable.
 	 *
-	 * @param array<string, int|string> $meta   visitor_id, session_id, product_id, path, source, medium, campaign, content, device.
+	 * Les cookies Meta (`fbc`, `fbp`) gardent la valeur la plus récente reçue :
+	 * Meta demande d'envoyer le dernier `_fbc` connu (lot 7 du pixel).
+	 *
+	 * @param array<string, int|string> $meta   visitor_id, session_id, product_id, path, source, medium, campaign, content, device, fbc, fbp.
 	 * @param array<string, int|string> $fields Saisies assainies (clés de FIELDS).
 	 * @return bool
 	 */
@@ -233,6 +270,11 @@ final class Visitor_Inputs {
 		}
 		if ( isset( $data['phone'] ) ) {
 			$data['phone_norm'] = Tunisia::normalize_phone( (string) $data['phone'] );
+		}
+		foreach ( $this->cookie_columns_ready() ? array( 'fbc', 'fbp' ) : array() as $cookie ) {
+			if ( '' !== (string) ( $meta[ $cookie ] ?? '' ) ) {
+				$data[ $cookie ] = (string) $meta[ $cookie ];
+			}
 		}
 		if ( (int) $meta['product_id'] > 0 ) {
 			$data['product_id'] = (int) $meta['product_id'];

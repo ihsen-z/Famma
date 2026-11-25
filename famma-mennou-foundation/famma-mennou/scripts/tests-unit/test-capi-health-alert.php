@@ -63,7 +63,7 @@ $handle  = static function (): string {
 	return '';
 };
 
-// 1. E-mail for every red reason not announced yet, never twice for the same one.
+// 1. E-mail for every red reason not announced yet; lot 4: a daily reminder while red.
 l5_reset();
 $GLOBALS['wp_test_options']['famma_capi_heartbeat'] = $now - 37 * 3600;
 $state = Capi_Health::evaluate( $now );
@@ -76,12 +76,14 @@ l5_check( 'rouge' === $state['statut'] && 2 === $mails(), 'R-CACHE-2: the state 
 $body = $GLOBALS['wp_test_mail'][1][2];
 l5_check( str_contains( $body, 'déjà en alerte rouge, signale une nouvelle panne' ) && str_contains( $body, 'Meta refuse le jeton' ) && ! str_contains( $body, 'QA-L5-FAKE-TOKEN' ), 'The e-mail says it is a new failure on top of a red state, lists the reasons, never the token.' );
 Capi_Health::evaluate( $now + 3 * 86400 );
-l5_check( 2 === $mails(), 'Same red reasons later: no repeated e-mail.' );
+l5_check( 3 === $mails() && str_contains( $GLOBALS['wp_test_mail'][2][2], 'Rappel quotidien' ), 'Lot 4 (D3): still red after 24 h with the same reasons → daily reminder (before: a single e-mail, ever).' );
+Capi_Health::evaluate( $now + 3 * 86400 + 3600 );
+l5_check( 3 === $mails(), 'Lot 4: at most one e-mail per 24 h while red (host limit of 40 e-mails a day).' );
 $GLOBALS['wp_test_options']['famma_capi_health_signals'] = array();
 Capi_Health::evaluate( $now + 4 * 86400 );
 $GLOBALS['wp_test_options']['famma_capi_health_signals'] = array( 'access' => array( 'code' => 190 ) );
-Capi_Health::evaluate( $now + 4 * 86400 + 60 );
-l5_check( 3 === $mails(), 'A red reason that went away and came back is announced again.' );
+Capi_Health::evaluate( $now + 5 * 86400 + 60 );
+l5_check( 5 === $mails() && str_contains( $GLOBALS['wp_test_mail'][4][2], 'nouvelle panne' ), 'A red reason that went away and came back is announced again, as a new failure.' );
 $announced = (array) $GLOBALS['wp_test_options']['famma_capi_health_mail_codes'];
 sort( $announced );
 l5_check( array( 'access', 'heartbeat' ) === $announced, 'The announced red codes are kept in famma_capi_health_mail_codes.' );

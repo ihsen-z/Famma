@@ -274,6 +274,26 @@ final class Capi_Delivery_Registry {
 		return $out;
 	}
 
+	/** Rejected records still resendable, newest first (lot 4, automatic resend).
+	 *
+	 * Filtered in SQL (review M2): event_time within the age limit, attempts
+	 * not exhausted, a Meta refusal class (access, contract) in the trace.
+	 *
+	 * @param int $since        Oldest event_time kept.
+	 * @param int $max_attempts Attempts limit.
+	 * @param int $limit        Rows read at most.
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function rejected_since( int $since, int $max_attempts, int $limit ): array {
+		global $wpdb;
+		if ( ! $this->unique_constraint() ) {
+			return array();
+		}
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- durable evidence must be read from the live table.
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT event_key,order_id,event_name,event_id,event_time,state,attempt_count,attempts,updated_at FROM %i WHERE state=%s AND event_time > %d AND attempt_count < %d AND (attempts LIKE %s OR attempts LIKE %s) ORDER BY event_time DESC LIMIT %d', $this->table(), 'rejected', $since, $max_attempts, '%"class":"access"%', '%"class":"contract"%', $limit ), ARRAY_A );
+		return is_array( $rows ) ? $rows : array();
+	}
+
 	/** Decoded attempt trace of a record.
 	 *
 	 * @param array $row Record or claim.

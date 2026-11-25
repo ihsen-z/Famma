@@ -68,14 +68,16 @@ final class Capi_User_Data {
 
 		$data = array_filter(
 			array(
-				'em'      => self::hash( self::email( (string) $order->get_billing_email() ) ),
-				'ph'      => self::hash( self::phone( (string) $order->get_billing_phone() ) ),
-				'fn'      => self::hash( Capi_Person_Name::normalize( $first ) ),
-				'ln'      => self::hash( Capi_Person_Name::normalize( $last ) ),
-				'ct'      => self::hash( self::billing_or_shipping( self::city( (string) $order->get_billing_city() ), self::city( (string) $order->get_shipping_city() ) ) ),
-				'st'      => self::hash( self::state( (string) $order->get_billing_state(), (string) $order->get_billing_country() ) ),
-				'zp'      => self::hash( self::billing_or_shipping( self::postcode( (string) $order->get_billing_postcode() ), self::postcode( (string) $order->get_shipping_postcode() ) ) ),
-				'country' => self::hash( self::country( (string) $order->get_billing_country() ) ),
+				'em'          => self::hash( self::email( (string) $order->get_billing_email() ) ),
+				'ph'          => self::hash( self::phone( (string) $order->get_billing_phone() ) ),
+				'fn'          => self::hash( Capi_Person_Name::normalize( $first ) ),
+				'ln'          => self::hash( Capi_Person_Name::normalize( $last ) ),
+				'ct'          => self::hash( self::billing_or_shipping( self::city( (string) $order->get_billing_city() ), self::city( (string) $order->get_shipping_city() ) ) ),
+				'st'          => self::hash( self::state( (string) $order->get_billing_state(), (string) $order->get_billing_country() ) ),
+				'zp'          => self::hash( self::billing_or_shipping( self::postcode( (string) $order->get_billing_postcode() ), self::postcode( (string) $order->get_shipping_postcode() ) ) ),
+				'country'     => self::hash( self::country( (string) $order->get_billing_country() ) ),
+				// Empreinte du cookie visiteur, la même que celle passée à fbq('init') (Capi_External_Id).
+				'external_id' => Capi_External_Id::for_order( $order ),
 			)
 		);
 

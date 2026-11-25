@@ -32,15 +32,12 @@ l5_check( 'rouge' === $state['statut'] && in_array( 'heartbeat', $codes( $state 
 l5_check( 1 === count( $GLOBALS['wp_test_mail'] ) && ! str_contains( $GLOBALS['wp_test_mail'][0][2], 'QA-L5-FAKE-TOKEN' ), 'V6: one e-mail on the switch to red, without the token.' );
 $GLOBALS['wp_test_options']['famma_capi_heartbeat'] = $now;
 Capi_Health::evaluate( $now + 60 );
+l5_check( 2 === count( $GLOBALS['wp_test_mail'] ) && str_contains( $GLOBALS['wp_test_mail'][1][2], 'revenue au vert' ), 'Lot 4: back to green after a red e-mail → one recovery e-mail.' );
 $GLOBALS['wp_test_options']['famma_capi_heartbeat'] = $now - 40 * 3600;
 Capi_Health::evaluate( $now + 120 );
-l5_check( 1 === count( $GLOBALS['wp_test_mail'] ), 'V6: two switches to red within 24 h → a single e-mail.' );
+l5_check( 2 === count( $GLOBALS['wp_test_mail'] ), 'V6: two switches to red within 24 h → a single red e-mail.' );
 Capi_Health::evaluate( $now + 86400 + 60 );
-$GLOBALS['wp_test_options']['famma_capi_heartbeat'] = $now + 86400;
-Capi_Health::evaluate( $now + 86400 + 120 );
-$GLOBALS['wp_test_options']['famma_capi_heartbeat'] = $now - 40 * 3600;
-Capi_Health::evaluate( $now + 86400 + 180 );
-l5_check( 2 === count( $GLOBALS['wp_test_mail'] ), 'V6: after 24 h, a new switch to red sends a new e-mail.' );
+l5_check( 3 === count( $GLOBALS['wp_test_mail'] ) && str_contains( $GLOBALS['wp_test_mail'][2][2], 'est passée au rouge' ), 'V6: after 24 h, the red state still on sends a new e-mail.' );
 
 // V6 — delivered order without Purchase for more than 24 h; test orders excluded.
 l5_reset();

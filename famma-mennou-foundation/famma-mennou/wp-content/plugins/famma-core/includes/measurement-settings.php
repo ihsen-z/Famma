@@ -70,6 +70,16 @@ final class Measurement_Settings {
 				)
 			);
 		}
+		// Activé par défaut (lot 6) : seule exception à la règle « coupé par défaut ».
+		register_setting(
+			$group,
+			'famma_meta_ic_early',
+			array(
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => true,
+			)
+		);
 
 		add_settings_section( self::SECTION, __( 'Réglages avancés Meta', 'famma-core' ), array( $this, 'section_intro' ), Tracking_Settings::SLUG );
 		add_settings_field( 'famma_meta_graph_version', __( 'Version de l’API Meta', 'famma-core' ), array( $this, 'render_graph_version' ), Tracking_Settings::SLUG, self::SECTION );
@@ -77,6 +87,7 @@ final class Measurement_Settings {
 		add_settings_field( 'famma_meta_pixel_loading', __( 'Chargement du Pixel', 'famma-core' ), array( $this, 'render_pixel_loading' ), Tracking_Settings::SLUG, self::SECTION );
 		add_settings_field( 'famma_track_internal', __( 'Suivre mes visites (mode test)', 'famma-core' ), array( $this, 'render_track_internal' ), Tracking_Settings::SLUG, self::SECTION );
 		add_settings_field( 'famma_meta_orderplaced_browser', __( 'OrderPlaced côté navigateur', 'famma-core' ), array( $this, 'render_orderplaced_browser' ), Tracking_Settings::SLUG, self::SECTION );
+		add_settings_field( 'famma_meta_ic_early', __( 'InitiateCheckout dès le téléphone saisi', 'famma-core' ), array( $this, 'render_ic_early' ), Tracking_Settings::SLUG, self::SECTION );
 	}
 
 	/**
@@ -192,18 +203,17 @@ final class Measurement_Settings {
 			'option'   => __( 'ce champ', 'famma-core' ),
 			'default'  => __( 'valeur par défaut du code', 'famma-core' ),
 		);
-		$status  = Capi_Graph_Version::status( $version, time() );
 		?>
 		<input type="text" id="famma_meta_graph_version" name="famma_meta_graph_version" value="<?php echo esc_attr( (string) get_option( 'famma_meta_graph_version', '' ) ); ?>" class="regular-text" pattern="v[0-9]{1,2}\.[0-9]" placeholder="<?php echo esc_attr( Config::META_GRAPH_VERSION_DEFAULT ); ?>" autocomplete="off" spellcheck="false" />
 		<p class="description">
 			<?php
 			echo esc_html(
 				sprintf(
-					/* translators: 1: Graph API version in use, 2: where it comes from, 3: end date or "inconnue". */
+					/* translators: 1: Graph API version in use, 2: where it comes from, 3: end date, "date pas encore fixée par Meta" or "inconnue". */
 					__( 'Version utilisée : %1$s (%2$s). Fin annoncée par Meta : %3$s. Format vNN.N ; laisser vide revient à la valeur par défaut.', 'famma-core' ),
 					$version,
 					$sources[ $cfg->meta_graph_version_source() ] ?? '',
-					'' !== $status['end'] ? $status['end'] : __( 'inconnue', 'famma-core' )
+					Capi_Graph_Version::end_label( $version )
 				)
 			);
 			?>
@@ -261,6 +271,15 @@ final class Measurement_Settings {
 	 */
 	public function render_orderplaced_browser(): void {
 		$this->checkbox( 'famma_meta_orderplaced_browser', Config::instance()->meta_orderplaced_browser(), __( 'Envoyer aussi OrderPlaced depuis le navigateur, avec le même identifiant.', 'famma-core' ), __( 'Désactivé par défaut : Meta garde la version du navigateur, moins riche que celle du serveur, quand les deux arrivent à moins de 5 minutes d’écart.', 'famma-core' ) );
+	}
+
+	/**
+	 * Case « InitiateCheckout dès le téléphone saisi » (activée par défaut).
+	 *
+	 * @return void
+	 */
+	public function render_ic_early(): void {
+		$this->checkbox( 'famma_meta_ic_early', Config::instance()->meta_initiate_checkout_early(), __( 'Envoyer InitiateCheckout dès qu’un numéro de téléphone tunisien valide est saisi dans le formulaire express.', 'famma-core' ), __( 'Une seule fois par affichage de page ; l’événement ne part plus au clic « Confirmer ». Décoché : il part au clic « Confirmer », avec la commande, comme avant. Après un changement, videz le cache de pages.', 'famma-core' ) );
 	}
 
 	/**

@@ -351,6 +351,9 @@ final class WC_Order {
 	public function get_id(): int {
 		return $this->id;
 	}
+	public function get_order_number(): string {
+		return (string) $this->id;
+	}
 	public function get_meta( string $key ) {
 		return $this->meta[ $key ] ?? '';
 	}

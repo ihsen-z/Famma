@@ -13,6 +13,8 @@
  * droits du jeton à vérifier ou sonde indisponible (`Capi_Probe_Verdict`),
  * Purchase manquant qu'aucun renvoi ne peut plus rattraper
  * (`Capi_Purchase_Gaps`).
+ * Lot 4 de la phase B : OrderPlaced sans accusé 30 min après la commande,
+ * rouge tant qu'un renvoi est possible, orange sinon (`Capi_Orderplaced_Watch`).
  *
  * @package Famma\Core
  */
@@ -76,6 +78,10 @@ final class Capi_Health_Rules {
 		}
 		if ( $gaps['lost'] > 0 ) {
 			$reasons[] = self::reason( 'purchase_lost', 'orange', (string) $gaps['lost'] );
+		}
+		// Lot 4 (D3) : OrderPlaced sans accusé 30 min après la commande, commandes nommées.
+		if ( $configured && $cfg->meta_sending_allowed() ) {
+			$reasons = array_merge( $reasons, Capi_Orderplaced_Watch::reasons( $now ) );
 		}
 		$version = Capi_Graph_Version::status( $cfg->meta_graph_version(), $now );
 		if ( 'critical' === $version['level'] ) {
@@ -237,6 +243,6 @@ final class Capi_Health_Rules {
 			/* translators: %s: Meta error code. */
 			'probe_unavailable' => sprintf( __( 'Sonde indisponible (code %s) : vérification impossible pour l’instant.', 'famma-core' ), $detail ),
 		);
-		return $labels[ $reason['code'] ?? '' ] ?? (string) ( $reason['code'] ?? '' );
+		return $labels[ $reason['code'] ?? '' ] ?? Capi_Orderplaced_Watch::label( $reason ) ?? (string) ( $reason['code'] ?? '' );
 	}
 }

@@ -73,7 +73,10 @@ final class Capi_Health_View {
 	 * @return void
 	 */
 	public function render_panel(): void {
-		$this->banner( Capi_Health::state(), false );
+		$state = Capi_Health::state();
+		$this->banner( $state, false );
+		// Lot 4 (relecture I2) : une alerte OrderPlaced se lève toujours par l'administrateur.
+		Capi_Orderplaced_Ack::render( $state );
 	}
 
 	/**

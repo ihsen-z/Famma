@@ -11,7 +11,10 @@
  * - un bandeau critique permanent si la version vaut le plafond codé ou
  *   moins après la date du filet (ou si sa date de fin est passée).
  *
- * Une version sans date connue ne déclenche rien.
+ * Une version sans date connue ne déclenche rien. Les versions récentes dont
+ * Meta n'a pas encore fixé la fin (`Config::META_GRAPH_VERSION_UNSCHEDULED`,
+ * calendrier Graph relu le 24/11/2026) affichent « date pas encore fixée par
+ * Meta » au lieu de « inconnue » (lot 4 de la phase B, D12), sans alerte.
  *
  * @package Famma\Core
  */
@@ -80,6 +83,20 @@ final class Capi_Graph_Version {
 	}
 
 	/**
+	 * Date de fin affichable : la date, « date pas encore fixée par Meta » ou « inconnue ».
+	 *
+	 * @param string $version Version vNN.N.
+	 * @return string
+	 */
+	public static function end_label( string $version ): string {
+		$end = (string) ( Config::META_GRAPH_VERSION_END_DATES[ $version ] ?? '' );
+		if ( '' !== $end ) {
+			return $end;
+		}
+		return in_array( $version, Config::META_GRAPH_VERSION_UNSCHEDULED, true ) ? __( 'date pas encore fixée par Meta', 'famma-core' ) : __( 'inconnue', 'famma-core' );
+	}
+
+	/**
 	 * Bandeau critique permanent, ou avertissement J-60 masquable.
 	 *
 	 * @return void
@@ -95,10 +112,10 @@ final class Capi_Graph_Version {
 				'<div class="notice notice-error"><p><strong>%s</strong></p></div>',
 				esc_html(
 					sprintf(
-						/* translators: 1: Graph API version in use, 2: end date or "inconnue", 3: recommended version. */
+						/* translators: 1: Graph API version in use, 2: end date, "date pas encore fixée par Meta" or "inconnue", 3: recommended version. */
 						__( 'FAMMA : la version de l’API Meta %1$s est en fin de vie (fin : %2$s). OrderPlaced et Purchase risquent d’être refusés. Passez à %3$s dans FAMMA → Mesure.', 'famma-core' ),
 						$version,
-						'' !== $status['end'] ? $status['end'] : __( 'inconnue', 'famma-core' ),
+						self::end_label( $version ),
 						Config::META_GRAPH_VERSION_DEFAULT
 					)
 				)

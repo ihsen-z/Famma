@@ -160,6 +160,8 @@ final class Visitor_Inputs_Collector {
 			return $done;
 		}
 		$src = isset( $data['src'] ) && is_array( $data['src'] ) ? $data['src'] : array();
+		// Cookies Meta du visiteur (requête du navigateur) : reportés sur la commande d'un panier récupéré.
+		$meta = Capi_Recovered_Cart::request_cookies();
 		$store->save(
 			array(
 				'visitor_id' => $visitor,
@@ -171,6 +173,8 @@ final class Visitor_Inputs_Collector {
 				'campaign'   => Visitor_Context::text( $src['campaign'] ?? '', 100 ),
 				'content'    => Visitor_Context::text( $src['content'] ?? '', 100 ),
 				'device'     => Visitor_Context::device(),
+				'fbc'        => $meta['fbc'],
+				'fbp'        => $meta['fbp'],
 			),
 			$fields
 		);

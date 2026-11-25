@@ -56,6 +56,11 @@ function set_transient( string $name, $value, int $expiration = 0 ): bool {
 	return true;
 }
 function wp_mail( $to, string $subject, string $message ): bool {
+	// Lot 4 (review M1): a test may simulate a mail server that refuses the message.
+	if ( ! empty( $GLOBALS['wp_test_mail_fails'] ) ) {
+		$GLOBALS['wp_test_mail_failed'][] = array( $to, $subject, $message );
+		return false;
+	}
 	$GLOBALS['wp_test_mail'][] = array( $to, $subject, $message );
 	return true;
 }
@@ -157,7 +162,7 @@ Famma_Unit_Harness::load_core_class( 'Config', 'Order_Statuses' );
 Famma_Unit_Harness::load_core_class( 'Order_Statuses', 'Stock' );
 Famma_Unit_Harness::load_core_class( 'Tunisia', 'WhatsApp' );
 Famma_Unit_Harness::load_core_class( 'Capi', 'Dashboard' );
-foreach ( array( 'meta-ids.php', 'capi-signals.php', 'capi-click-id.php', 'capi-log.php', 'capi-product-data.php', 'capi-token-vault.php', 'capi-transport.php', 'capi-person-name.php', 'capi-user-data.php', 'capi-data-profile.php', 'capi-retry.php', 'capi-health.php', 'capi-health-alert.php', 'capi-health-rules.php', 'capi-graph-version.php', 'capi-probe-verdict.php', 'capi-probe.php', 'capi-reconcile.php', 'capi-purchase-gaps.php' ) as $famma_include ) {
+foreach ( array( 'meta-ids.php', 'capi-signals.php', 'capi-click-id.php', 'capi-log.php', 'capi-product-data.php', 'capi-token-vault.php', 'capi-transport.php', 'capi-person-name.php', 'capi-user-data.php', 'visitor-context.php', 'visitor-settings.php', 'visitor-store.php', 'visitor-commerce.php', 'order-channel.php', 'visitor-inputs-order.php', 'capi-external-id.php', 'capi-recovered-cart.php', 'capi-data-profile.php', 'capi-retry.php', 'capi-health.php', 'capi-health-alert.php', 'capi-health-rules.php', 'capi-graph-version.php', 'capi-probe-verdict.php', 'capi-probe.php', 'capi-reconcile.php', 'capi-purchase-gaps.php', 'capi-orderplaced-watch.php', 'capi-orderplaced-ack.php', 'capi-refusal-resend.php' ) as $famma_include ) {
 	Famma_Unit_Harness::load_include( $famma_include );
 }
 
@@ -217,6 +222,8 @@ function l5_reset( array $options = array() ): void {
 		'famma_meta_access_token'        => 'QA-L5-FAKE-TOKEN-NOT-REAL',
 		'famma_meta_orderplaced_enabled' => true,
 		'famma_capi_registry_version'    => '1',
+		// Lot 4 : sans adresse des alertes, aucun e-mail ; adresse fictive réservée (.invalid).
+		'famma_capi_alert_email'         => 'alertes@qa.invalid',
 	);
 	$GLOBALS['wp_test_http']          = array();
 	$GLOBALS['wc_test_log']           = array();

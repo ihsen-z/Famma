@@ -125,6 +125,9 @@ require_once __DIR__ . '/includes/capi-token-rollback.php';
 require_once __DIR__ . '/includes/capi-transport.php';
 require_once __DIR__ . '/includes/capi-person-name.php';
 require_once __DIR__ . '/includes/capi-user-data.php';
+require_once __DIR__ . '/includes/capi-external-id.php';
+require_once __DIR__ . '/includes/capi-recovered-cart.php';
+require_once __DIR__ . '/includes/capi-recovered-cart-admin.php';
 require_once __DIR__ . '/includes/capi-data-profile.php';
 require_once __DIR__ . '/includes/capi-retry.php';
 require_once __DIR__ . '/includes/capi-health.php';
@@ -136,7 +139,14 @@ require_once __DIR__ . '/includes/capi-probe.php';
 require_once __DIR__ . '/includes/capi-graph-version.php';
 require_once __DIR__ . '/includes/capi-reconcile.php';
 require_once __DIR__ . '/includes/capi-reconcile-view.php';
+require_once __DIR__ . '/includes/capi-meta-quality-parser.php';
+require_once __DIR__ . '/includes/capi-meta-quality.php';
+require_once __DIR__ . '/includes/capi-meta-quality-view.php';
 require_once __DIR__ . '/includes/capi-purchase-gaps.php';
+require_once __DIR__ . '/includes/capi-orderplaced-watch.php';
+require_once __DIR__ . '/includes/capi-orderplaced-ack.php';
+require_once __DIR__ . '/includes/capi-refusal-resend.php';
+require_once __DIR__ . '/includes/capi-health-watch.php';
 require_once __DIR__ . '/includes/measurement-settings.php';
 require_once __DIR__ . '/includes/order-emails.php';
 require_once __DIR__ . '/includes/anti-abuse.php';
@@ -351,6 +361,12 @@ final class Config {
 		'v24.0' => '2028-02-18',
 		'v25.0' => '2028-07-29',
 	);
+
+	/**
+	 * Versions publiées dont Meta n'a pas encore fixé la fin (calendrier Graph
+	 * relu le 24/11/2026) : « date pas encore fixée par Meta », sans alerte.
+	 */
+	public const META_GRAPH_VERSION_UNSCHEDULED = array( 'v26.0', 'v27.0' );
 
 	/**
 	 * Filet codé (R1) : après cette date, une version inférieure ou égale au
@@ -607,6 +623,16 @@ final class Config {
 	 */
 	public function meta_orderplaced_browser(): bool {
 		return (bool) get_option( 'famma_meta_orderplaced_browser', false );
+	}
+
+	/**
+	 * InitiateCheckout du formulaire express dès qu'un téléphone valide est saisi
+	 * (lot 6, Q16) : activé par défaut ; coupé, l'événement part au clic « Confirmer ».
+	 *
+	 * @return bool
+	 */
+	public function meta_initiate_checkout_early(): bool {
+		return (bool) get_option( 'famma_meta_ic_early', true );
 	}
 
 	/**
@@ -2515,7 +2541,8 @@ final class Tracking {
 	 *
 	 * Immédiat : le code standard de Meta (bibliothèque insérée en `async`
 	 * aussitôt). Différé : la même file, la bibliothèque attend `fammaDefer`.
-	 * L'eventID du PageView est tiré dans le navigateur.
+	 * L'eventID du PageView est tiré dans le navigateur. `fammaXid()` passe
+	 * l'external_id haché du visiteur (`Capi_External_Id`), ou rien.
 	 *
 	 * @param string $pixel    Identifiant public du Pixel.
 	 * @param bool   $deferred Chargement différé.
@@ -2524,9 +2551,9 @@ final class Tracking {
 	private static function meta_base_code( string $pixel, bool $deferred ): string {
 		$insert = 't=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)';
 
-		return "!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];"
+		return Capi_External_Id::browser_script() . "!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];"
 			. ( $deferred ? 'fammaDefer(function(){' . $insert . '})' : $insert )
-			. "}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init'," . wp_json_encode( $pixel ) . ");fbq('track','PageView',{},{eventID:fammaEventId()});";
+			. "}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init'," . wp_json_encode( $pixel ) . ",fammaXid());fbq('track','PageView',{},{eventID:fammaEventId()});";
 	}
 
 	/**
@@ -2683,6 +2710,17 @@ final class Capi {
 	}
 
 	/**
+	 * Motif d'inéligibilité OrderPlaced de l'émetteur, relu par la surveillance
+	 * (lot 4, `Capi_Orderplaced_Watch`) : une seule règle pour les deux.
+	 *
+	 * @param \WC_Order $order Commande.
+	 * @return string Motif, vide si un OrderPlaced est attendu.
+	 */
+	public function order_placed_block( \WC_Order $order ): string {
+		return $this->order_placed_ineligibility( $order );
+	}
+
+	/**
 	 * Motif `test_order` pour une commande d'essai, vide sinon.
 	 *
 	 * Lu au moment de l'envoi (file, relance, « Renvoyer ») et non seulement à
@@ -2793,8 +2831,10 @@ final class Capi {
 			$order->update_meta_data( '_famma_orderplaced_event_time', $created ? $created->getTimestamp() : time() );
 			$order->update_meta_data( '_famma_orderplaced_event_id', 'famma_orderplaced_' . $order->get_id() );
 		}
+		// Panier récupéré (lot 7, Q19) : départ différé, revérifié à l'envoi ; commande du site : 0, immédiat.
+		$when = Capi_Recovered_Cart::plan( $order );
 		$order->save();
-		if ( ! $this->enqueue_order_placed( $order->get_id() ) ) {
+		if ( ! $this->enqueue_order_placed( $order->get_id(), $when ) ) {
 			return $this->outcome( $base, 'queue_failed', 'scheduler' );
 		}
 		return 'queued';
@@ -2825,11 +2865,34 @@ final class Capi {
 	/**
 	 * Enqueue the unique OrderPlaced task (Action Scheduler, WP-Cron as fallback).
 	 *
+	 * Sans heure (ou heure passée) : tâche asynchrone immédiate. Avec une heure
+	 * future (panier récupéré, `Capi_Recovered_Cart::plan()`) : tâche unique à
+	 * cette heure ; l'envoi relit alors interrupteurs, essai et statut.
+	 *
 	 * @param int $order_id Order identifier.
+	 * @param int $when     Heure de départ prévue (0 = tout de suite).
 	 * @return bool Whether a task is now waiting for this order.
 	 */
-	private function enqueue_order_placed( int $order_id ): bool {
-		return $this->enqueue_async( 'famma_capi_orderplaced_send', array( 'order_id' => $order_id ) );
+	private function enqueue_order_placed( int $order_id, int $when = 0 ): bool {
+		$args = array( 'order_id' => $order_id );
+		if ( $when <= time() ) {
+			return $this->enqueue_async( 'famma_capi_orderplaced_send', $args );
+		}
+		if ( function_exists( 'as_schedule_single_action' ) ) {
+			try {
+				if ( as_schedule_single_action( $when, 'famma_capi_orderplaced_send', $args, self::GROUP, true ) > 0 ) {
+					return true;
+				}
+			} catch ( \Exception ) {
+				return false;
+			}
+			// Une tâche unique déjà en file renvoie 0 : ce n'est pas un échec.
+			return function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( 'famma_capi_orderplaced_send', $args, self::GROUP );
+		}
+		if ( ! function_exists( 'wp_schedule_single_event' ) ) {
+			return false;
+		}
+		return wp_next_scheduled( 'famma_capi_orderplaced_send', $args ) || false !== wp_schedule_single_event( $when, 'famma_capi_orderplaced_send', $args );
 	}
 
 	/**
@@ -2849,8 +2912,8 @@ final class Capi {
 	/**
 	 * Why a checkout order cannot be reported as OrderPlaced, or an empty string.
 	 *
-	 * Exclut les commandes d'essai, de l'administration, non enregistrées,
-	 * brouillons et refusées.
+	 * Exclut les commandes d'essai, de l'administration (sauf panier récupéré,
+	 * lot 7 : `Capi_Recovered_Cart`), non enregistrées, brouillons et refusées.
 	 *
 	 * @param \WC_Order $order Checkout order.
 	 * @return string Reason token, empty when eligible.
@@ -2863,7 +2926,10 @@ final class Capi {
 			return 'test_order';
 		}
 		if ( 'checkout' !== $order->get_created_via() ) {
-			return 'created_via:' . ( '' !== (string) $order->get_created_via() ? (string) $order->get_created_via() : 'unknown' );
+			$reason = Capi_Recovered_Cart::block_reason( $order );
+			if ( '' !== $reason ) {
+				return $reason;
+			}
 		}
 		if ( $order->has_status( array( 'checkout-draft', 'draft', 'failed', 'cancelled', 'trash', 'refused', 'returned', 'failed-delivery' ) ) ) {
 			return 'status:' . $order->get_status();
@@ -4190,11 +4256,17 @@ function boot(): void {
 	Anti_Abuse::instance();
 	Checkout_Lite::instance();
 	Capi::instance();
+	// Lot 7 du pixel : OrderPlaced des paniers récupérés (file, statut, case de l'écran Mesure).
+	Capi_Recovered_Cart::instance();
 	Capi_Delivery_Registry::instance();
 	Capi_Signals::instance();
 	// Sonde et battement de cœur : leurs tâches Action Scheduler tournent aussi hors de l'administration.
 	Capi_Health::instance();
 	Capi_Probe::instance();
+	Capi_Meta_Quality::instance();
+	// Lot 4 (D3) : renvoi automatique des refus, veille horaire WP-Cron et adresse des alertes.
+	Capi_Refusal_Resend::instance();
+	Capi_Health_Watch::instance();
 	WhatsApp::instance();
 	Product_Video::instance();
 	Seo::instance();
@@ -4251,6 +4323,7 @@ function boot(): void {
 		Measurement_Settings::instance();
 		Capi_Health_View::instance();
 		Capi_Graph_Version::instance();
+		Capi_Orderplaced_Ack::instance();
 		Capi_Reconcile::instance();
 		Capi_Purchase_Gaps::instance();
 		Seo_Admin::instance();
@@ -4295,6 +4368,15 @@ function on_activation(): void {
 	flush_rewrite_rules();
 }
 
+/**
+ * Retire les tâches planifiées de la mesure Meta à la désactivation (lot 4, relecture M3).
+ *
+ * @return void
+ */
+function on_deactivation(): void {
+	Capi_Health_Watch::unschedule();
+}
+
 add_action( 'init', __NAMESPACE__ . '\\load_textdomain' );
 // Rejoué une fois la requête résolue : c'est seulement là que TranslatePress a
 // arrêté la langue de la page.
@@ -4302,3 +4384,4 @@ add_action( 'wp', __NAMESPACE__ . '\\load_textdomain', 1 );
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\boot' );
 add_action( 'before_woocommerce_init', __NAMESPACE__ . '\\declare_hpos_compatibility' );
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\on_activation' );
+register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\on_deactivation' );

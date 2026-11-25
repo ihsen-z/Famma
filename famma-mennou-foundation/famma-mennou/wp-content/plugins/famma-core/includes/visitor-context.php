@@ -179,4 +179,16 @@ final class Visitor_Context {
 	public static function is_staff(): bool {
 		return is_user_logged_in() && current_user_can( 'edit_posts' );
 	}
+
+	/**
+	 * Le script du journal (`visitor-journal.js`) est-il chargé sur cette page ?
+	 *
+	 * Règle unique, lue par `Visitor_Collector::enqueue()` et par l'external_id
+	 * du Pixel (`Capi_External_Id`) : jamais pour l'équipe connectée ni dans l'administration.
+	 *
+	 * @return bool
+	 */
+	public static function journal_loads(): bool {
+		return ! self::is_staff() && ! is_admin();
+	}
 }

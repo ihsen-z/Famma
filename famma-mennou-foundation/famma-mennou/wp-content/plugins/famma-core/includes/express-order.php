@@ -381,7 +381,8 @@ final class Express_Order {
 	 * @return void
 	 */
 	public function assets(): void {
-		if ( ! $this->eligible_product() instanceof \WC_Product ) {
+		$product = $this->eligible_product();
+		if ( ! $product instanceof \WC_Product ) {
 			return;
 		}
 
@@ -417,6 +418,7 @@ final class Express_Order {
 			'famma-express',
 			'fammaExpress',
 			array(
+				'earlyCheckout' => Express_Preparation::early_checkout_data( $product ),
 				'expressUrl'    => \WC_AJAX::get_endpoint( Express_Checkout::ENDPOINT ),
 				'prepareUrl'    => \WC_AJAX::get_endpoint( 'famma_express_prepare' ),
 				'statusUrl'     => \WC_AJAX::get_endpoint( 'famma_express_status' ),

@@ -107,6 +107,15 @@ final class Capi_Delivery_Registry {
 		$GLOBALS['famma_test_registry_stale'][ $key ]['state'] = 'uncertain';
 		return true;
 	}
+	public function rejected_since( int $since, int $max_attempts, int $limit ): array {
+		// Fixture `$GLOBALS['famma_test_registry_rejected']`, filtered like the real query.
+		$rows = array_filter(
+			$GLOBALS['famma_test_registry_rejected'] ?? array(),
+			static fn( array $row ): bool => 'rejected' === $row['state'] && (int) $row['event_time'] > $since && (int) $row['attempt_count'] < $max_attempts && 1 === preg_match( '/"class":"(access|contract)"/', (string) $row['attempts'] )
+		);
+		usort( $rows, static fn( array $a, array $b ): int => (int) $b['event_time'] <=> (int) $a['event_time'] );
+		return array_slice( $rows, 0, $limit );
+	}
 	public function for_orders( array $order_ids ): array {
 		// Fixture `$GLOBALS['famma_test_registry_orders']`: order_id => event_name => record, as the real query returns.
 		return array_intersect_key( $GLOBALS['famma_test_registry_orders'] ?? array(), array_flip( $order_ids ) );

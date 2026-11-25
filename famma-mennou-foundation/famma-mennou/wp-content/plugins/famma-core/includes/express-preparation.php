@@ -324,6 +324,41 @@ final class Express_Preparation {
 	}
 
 	/**
+	 * Données d'InitiateCheckout envoyé dès le téléphone saisi (lot 6, Q16).
+	 *
+	 * Imprimées avec la page (donc sans rien de propre au visiteur, compatibles
+	 * avec le cache de pages) : le navigateur ajuste la valeur et la quantité à
+	 * la quantité choisie au moment de l'envoi. Vide si l'interrupteur de
+	 * « Mesure » est coupé : l'événement part alors au clic « Confirmer ».
+	 *
+	 * @param \WC_Product $product Produit de la fiche.
+	 * @return array<string, mixed>
+	 */
+	public static function early_checkout_data( \WC_Product $product ): array {
+		if ( ! Config::instance()->meta_initiate_checkout_early() || ! Tracking::browser_tracking_allowed() ) {
+			return array();
+		}
+		$content_id = Meta_Ids::content_id( $product );
+		$unit       = (float) wc_get_price_to_display( $product );
+		$params     = array(
+			'content_ids'  => array( $content_id ),
+			'content_type' => 'product',
+			'currency'     => get_woocommerce_currency(),
+			'value'        => round( $unit, wc_get_price_decimals() ),
+			'contents'     => array(
+				array(
+					'id'       => $content_id,
+					'quantity' => 1,
+				),
+			),
+		);
+		return array(
+			'unit'   => $unit,
+			'params' => Tracking_Events::profile_params( $params, 'InitiateCheckout' ),
+		);
+	}
+
+	/**
 	 * Paramètres Meta complets du panier isolé, pour InitiateCheckout.
 	 *
 	 * Identifiant de chaque ligne : la règle unique `Meta_Ids::content_id()`,

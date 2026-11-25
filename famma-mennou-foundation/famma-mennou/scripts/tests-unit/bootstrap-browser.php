@@ -68,6 +68,10 @@ class WC_Product_Variable extends WC_Product {
 }
 
 Famma_Unit_Harness::load_core_class( 'Tracking', 'Capi' );
+// The Pixel base code prints the external_id script (phase B of the pixel reforms).
+Famma_Unit_Harness::load_include( 'visitor-context.php' );
+Famma_Unit_Harness::load_include( 'visitor-settings.php' );
+Famma_Unit_Harness::load_include( 'capi-external-id.php' );
 Famma_Unit_Harness::load_include( 'tracking-events.php' );
 Famma_Unit_Harness::load_include( 'browser-order-placed.php' );
 Famma_Unit_Harness::load_include( 'order-source.php' );
