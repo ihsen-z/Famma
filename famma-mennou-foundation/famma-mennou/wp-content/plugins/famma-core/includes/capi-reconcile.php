@@ -98,7 +98,7 @@ final class Capi_Reconcile {
 				if ( $cell['expected'] ) {
 					++$totals[ $event . '_expected' ];
 					$totals[ $event . '_accepted' ] += 'accepted' === $cell['state'] ? 1 : 0;
-				} elseif ( '' !== $cell['reason'] && 'not_delivered' !== $cell['reason'] ) {
+				} elseif ( '' !== $cell['reason'] && ! in_array( $cell['reason'], array( 'not_delivered', 'purchase_delay' ), true ) ) {
 					$totals['ineligible'][ $cell['reason'] ] = ( $totals['ineligible'][ $cell['reason'] ] ?? 0 ) + 1;
 				}
 			}
@@ -145,6 +145,10 @@ final class Capi_Reconcile {
 			$state = 'accepted';
 		}
 		$reason = 'accepted' === $state ? '' : $this->ineligibility( $order, $event );
+		// Purchase retardé (lot 2 des réformes) : pas encore dû, donc ni attendu ni renvoyable.
+		if ( 'Purchase' === $event && '' === $reason && 'absent' === $state && Capi::purchase_due_at( $order ) > $now ) {
+			$reason = 'purchase_delay';
+		}
 		return array(
 			'expected' => '' === $reason,
 			'reason'   => $reason,

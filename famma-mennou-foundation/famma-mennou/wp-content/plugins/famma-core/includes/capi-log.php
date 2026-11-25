@@ -53,6 +53,7 @@ final class Capi_Log {
 	 */
 	private const OUTCOME_LEVELS = array(
 		'already_sent'         => 'info',
+		'delayed'              => 'info',
 		'disabled'             => 'info',
 		'stale_sending'        => 'warning',
 		'ineligible'           => 'notice',

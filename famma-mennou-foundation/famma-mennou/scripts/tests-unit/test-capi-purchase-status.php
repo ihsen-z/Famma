@@ -1,8 +1,10 @@
 <?php
 /**
- * Lot 5, A8 (D5, T2.4) — « Terminée » for a cash-on-delivery order: COD
- * collection at priority 10, then one Purchase at priority 20; the registry
- * prevents a second send when it later moves to « Livrée ».
+ * Lot 5, A8 (D5, T2.4), revised by the pixel reforms (24-25/11/2026, rule 4):
+ * a cash-on-delivery order is collected (priority 10) and reported as a
+ * Purchase (priority 20) only through « Livrée »; « Terminée » without
+ * « Livrée » is neither collected nor reported; « Livrée » then « Terminée »
+ * gives a single Purchase.
  * Run with: php scripts/tests-unit/test-capi-purchase-status.php
  *
  * @package Famma_Test_Scenarios
@@ -27,25 +29,47 @@ l5_check( 1 === substr_count( $source, "'woocommerce_order_status_delivered', ar
 $statuses = Famma_Unit_Harness::bare( '\Famma\Core\Order_Statuses' );
 $capi     = Capi::instance();
 
-// Completed COD order: collected, then one Purchase.
+// Decisions of 24-25/11/2026 (non-negotiable rule 4): « Terminée » without ever passing through
+// « Livrée » is neither collected nor reported as a Purchase.
 l5_reset();
 $GLOBALS['famma_test_registry_stateful'] = true;
 $wc_order                                = new WC_Order( 5900 );
 $wc_order->status                        = 'completed';
 $statuses->mark_cod_paid_on_completion( 5900 );
 $capi->fire_purchase_on_status( 5900 );
-l5_check( 'yes' === $wc_order->get_meta( '_famma_cod_paid' ) && in_array( 'payment_complete', $wc_order->notes, true ), 'T2.4: « Terminée » collects the COD payment (_famma_cod_paid, payment_complete).' );
-l5_check( 1 === count( $GLOBALS['wp_test_http'] ) && (bool) $wc_order->get_meta( '_famma_purchase_sent' ), 'T2.4: « Terminée » sends one Purchase after the collection.' );
-l5_check( 'famma_purchase_5900' === json_decode( (string) $GLOBALS['wp_test_http'][0]['args']['body'], true )['data'][0]['event_id'], 'The Purchase keeps the famma_purchase_<id> identifier.' );
+l5_check( '' === $wc_order->get_meta( '_famma_cod_paid' ) && ! in_array( 'payment_complete', $wc_order->notes, true ), 'Rule 4: « Terminée » without « Livrée » is not collected (no _famma_cod_paid, no payment_complete).' );
+l5_check( str_contains( (string) ( $wc_order->notes[0] ?? '' ), 'NON encaissé' ), 'Rule 4: an order note says the COD collection was skipped.' );
+l5_check( array() === $GLOBALS['wp_test_http'] && ! $wc_order->get_meta( '_famma_purchase_sent' ) && str_contains( l5_capi_lines()[0] ?? '', 'state=ineligible reason=not_collected' ), '« Terminée » without « Livrée » sends no Purchase; the journal says not_collected.' );
+l5_check( 'not_collected' === Order_Statuses::purchase_ineligibility( $wc_order ), 'The shared Purchase rule gives not_collected for such an order.' );
+$statuses->mark_cod_paid_on_completion( 5900 );
+l5_check( '' === $wc_order->get_meta( '_famma_cod_paid' ), 'A second « Terminée » hook still collects nothing.' );
 
-// Then « Livrée »: no second send.
+// Historical order collected at « Terminée » before this rule, never « Livrée »: no Purchase either.
+$historical         = new WC_Order( 5905 );
+$historical->status = 'completed';
+$historical->meta   = array( '_famma_cod_paid' => 'yes' );
+l5_check( 'not_via_delivered' === Order_Statuses::purchase_ineligibility( $historical ), 'A collected « Terminée » order that never was « Livrée » gives not_via_delivered.' );
+
+// Then « Livrée »: the Purchase leaves, once.
 $wc_order->status = 'delivered';
+$statuses->remember_delivery( 5900 );
 $statuses->mark_cod_paid_on_delivery( 5900 );
 $capi->fire_purchase_on_status( 5900 );
-l5_check( 1 === count( $GLOBALS['wp_test_http'] ) && 1 === count( array_keys( $wc_order->notes, 'payment_complete', true ) ), 'Then « Livrée »: no second collection and no second Purchase.' );
+l5_check( array() === $GLOBALS['wp_test_http'] && str_contains( implode( PHP_EOL, l5_capi_lines() ), 'state=delayed reason=scheduled' ), 'Then « Livrée »: the Purchase is scheduled (15 min delay of lot 2), nothing sent yet.' );
+$GLOBALS['famma_test_now'] = time() + 901;
+l5_as_run_next();
+unset( $GLOBALS['famma_test_now'] );
+l5_check( 1 === count( $GLOBALS['wp_test_http'] ) && (bool) $wc_order->get_meta( '_famma_purchase_sent' ) && 1 === count( array_keys( $wc_order->notes, 'payment_complete', true ) ), 'Then « Livrée », after the delay: one Purchase, and the COD payment is not collected twice.' );
+l5_check( 'famma_purchase_5900' === json_decode( (string) $GLOBALS['wp_test_http'][0]['args']['body'], true )['data'][0]['event_id'], 'The Purchase keeps the famma_purchase_<id> identifier.' );
 $wc_order->meta = array_diff_key( $wc_order->meta, array( '_famma_purchase_sent' => true ) );
 $capi->fire_purchase_on_status( 5900 );
 l5_check( 1 === count( $GLOBALS['wp_test_http'] ), 'Even without the order marker, the registry prevents a second Purchase.' );
+
+// « Livrée » then « Terminée »: still a single Purchase.
+$wc_order->status = 'completed';
+$statuses->mark_cod_paid_on_completion( 5900 );
+$capi->fire_purchase_on_status( 5900 );
+l5_check( 1 === count( $GLOBALS['wp_test_http'] ) && '' === Order_Statuses::purchase_ineligibility( $wc_order ), '« Livrée » then « Terminée »: the order stays eligible and no second Purchase leaves.' );
 
 // Completed order of another payment method: WooCommerce behaviour, no Purchase.
 l5_reset();

@@ -184,6 +184,39 @@ final class Tracking_Settings {
 			self::SLUG,
 			'famma_section_tracking'
 		);
+		register_setting(
+			self::GROUP,
+			'famma_meta_cancel_return_enabled',
+			array(
+				'type'              => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'default'           => true,
+			)
+		);
+		add_settings_field(
+			'famma_meta_cancel_return_enabled',
+			__( 'Meta — annulations et retours (OrderCancelled, OrderReturned)', 'famma-core' ),
+			array( $this, 'render_cancel_return_toggle' ),
+			self::SLUG,
+			'famma_section_tracking'
+		);
+		register_setting(
+			self::GROUP,
+			'famma_capi_purchase_delay_minutes',
+			array(
+				'type'              => 'integer',
+				'sanitize_callback' => array( Config::class, 'sanitize_purchase_delay_minutes' ),
+				'default'           => intdiv( Config::CAPI_PURCHASE_DELAY, 60 ),
+			)
+		);
+		add_settings_field(
+			'famma_capi_purchase_delay_minutes',
+			__( 'Délai avant l’envoi du Purchase', 'famma-core' ),
+			array( $this, 'render_purchase_delay_field' ),
+			self::SLUG,
+			'famma_section_tracking',
+			array( 'label_for' => 'famma_capi_purchase_delay_minutes' )
+		);
 
 		foreach ( $this->fields() as $field ) {
 			register_setting(
@@ -260,6 +293,34 @@ final class Tracking_Settings {
 			<?php esc_html_e( 'Envoyer OfferAccepted quand une cliente accepte l’offre après achat.', 'famma-core' ); ?>
 		</label>
 		<p class="description"><?php esc_html_e( 'Désactivé par défaut. La valeur envoyée est le seul montant ajouté par l’offre. Le Purchase de la livraison inclut déjà l’article ajouté : cet événement sert à mesurer l’offre, pas à compter une vente.', 'famma-core' ); ?></p>
+		<?php
+	}
+
+	/** Display the Purchase delay field, in minutes (lot 2 des réformes). */
+	public function render_purchase_delay_field(): void {
+		$forced  = Config::capi_purchase_delay_forced();
+		$minutes = $forced
+			? (int) floor( Config::instance()->capi_purchase_delay() / 60 )
+			: Config::sanitize_purchase_delay_minutes( get_option( 'famma_capi_purchase_delay_minutes', intdiv( Config::CAPI_PURCHASE_DELAY, 60 ) ) );
+		?>
+		<input type="number" id="famma_capi_purchase_delay_minutes" name="famma_capi_purchase_delay_minutes" class="small-text" min="0" max="<?php echo esc_attr( (string) intdiv( Config::CAPI_PURCHASE_DELAY_MAX, 60 ) ); ?>" step="1" value="<?php echo esc_attr( (string) $minutes ); ?>" <?php wp_readonly( $forced ); ?> />
+		<?php esc_html_e( 'minutes (0 = immédiat, 60 au maximum)', 'famma-core' ); ?>
+		<p class="description"><?php esc_html_e( 'Le Purchase part ce nombre de minutes après le passage à « Livrée », seulement si la commande est encore livrée (ou terminée après livraison) : une livraison saisie par erreur et corrigée à temps n’envoie rien. Meta conseille un envoi dans l’heure.', 'famma-core' ); ?></p>
+		<?php if ( $forced ) : ?>
+			<p class="description"><strong><?php esc_html_e( 'La constante FAMMA_CAPI_PURCHASE_DELAY de wp-config.php impose ce délai : ce champ est ignoré tant qu’elle est définie.', 'famma-core' ); ?></strong></p>
+		<?php endif; ?>
+		<?php
+	}
+
+	/** Explain and display the cancellation and return server events switch (lot 2 des réformes). */
+	public function render_cancel_return_toggle(): void {
+		?>
+		<input type="hidden" name="famma_meta_cancel_return_enabled" value="0" />
+		<label>
+			<input type="checkbox" name="famma_meta_cancel_return_enabled" value="1" <?php checked( Config::instance()->meta_cancel_return_enabled() ); ?> />
+			<?php esc_html_e( 'Envoyer les annulations et retours à Meta', 'famma-core' ); ?>
+		</label>
+		<p class="description"><?php esc_html_e( 'Activé par défaut. OrderCancelled part une fois quand une commande dont l’OrderPlaced a été accepté passe à Annulée, Refusée ou Livraison échouée ; OrderReturned part une fois quand une commande dont le Purchase a été accepté passe à Retournée ou Remboursée. Jamais pour une commande d’essai.', 'famma-core' ); ?></p>
 		<?php
 	}
 

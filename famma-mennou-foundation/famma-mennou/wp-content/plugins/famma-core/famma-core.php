@@ -97,6 +97,8 @@ require_once __DIR__ . '/includes/meta-ids.php';
 require_once __DIR__ . '/includes/tracking-events.php';
 require_once __DIR__ . '/includes/browser-order-placed.php';
 require_once __DIR__ . '/includes/order-source.php';
+require_once __DIR__ . '/includes/test-orders.php';
+require_once __DIR__ . '/includes/category-slug-redirect.php';
 require_once __DIR__ . '/includes/order-channel.php';
 require_once __DIR__ . '/includes/order-channel-admin.php';
 require_once __DIR__ . '/includes/order-channel-list.php';
@@ -407,6 +409,16 @@ final class Config {
 	public const CAPI_STALE_SENDING = 900;
 
 	/**
+	 * Délai par défaut entre le passage à « Livrée » et l'envoi du Purchase (lot 2 des réformes, 24/11).
+	 */
+	public const CAPI_PURCHASE_DELAY = 900;
+
+	/**
+	 * Délai maximal du Purchase : Meta conseille un envoi dans l'heure.
+	 */
+	public const CAPI_PURCHASE_DELAY_MAX = 3600;
+
+	/**
 	 * Format accepté pour une version de l'API Graph : vNN.N.
 	 *
 	 * @param string $version Valeur saisie.
@@ -511,6 +523,60 @@ final class Config {
 	}
 
 	/**
+	 * Délai du Purchase après « Livrée », en secondes (900 par défaut, 0 = immédiat).
+	 *
+	 * La constante `FAMMA_CAPI_PURCHASE_DELAY` (wp-config.php, en secondes)
+	 * l'emporte sur le champ de l'écran Mesure (option
+	 * `famma_capi_purchase_delay_minutes`, en minutes) : un retour arrière (0)
+	 * se fait sans toucher à la base. Borné à une heure.
+	 *
+	 * @return int
+	 */
+	public function capi_purchase_delay(): int {
+		if ( self::capi_purchase_delay_forced() ) {
+			$seconds = constant( 'FAMMA_CAPI_PURCHASE_DELAY' );
+		} else {
+			$minutes = get_option( 'famma_capi_purchase_delay_minutes', intdiv( self::CAPI_PURCHASE_DELAY, 60 ) );
+			$seconds = is_numeric( $minutes ) ? 60 * (int) $minutes : null;
+		}
+		if ( ! is_numeric( $seconds ) ) {
+			return self::CAPI_PURCHASE_DELAY;
+		}
+
+		return max( 0, min( self::CAPI_PURCHASE_DELAY_MAX, (int) $seconds ) );
+	}
+
+	/**
+	 * Le délai du Purchase est-il imposé par la constante `FAMMA_CAPI_PURCHASE_DELAY` ?
+	 *
+	 * @return bool
+	 */
+	public static function capi_purchase_delay_forced(): bool {
+		return defined( 'FAMMA_CAPI_PURCHASE_DELAY' );
+	}
+
+	/**
+	 * Assainit le champ « Délai avant l'envoi du Purchase » (minutes, 0 à 60).
+	 *
+	 * @param mixed $value Valeur soumise.
+	 * @return int
+	 */
+	public static function sanitize_purchase_delay_minutes( $value ): int {
+		$minutes = is_numeric( $value ) ? (int) $value : intdiv( self::CAPI_PURCHASE_DELAY, 60 );
+
+		return max( 0, min( intdiv( self::CAPI_PURCHASE_DELAY_MAX, 60 ), $minutes ) );
+	}
+
+	/**
+	 * Annulations et retours envoyés à Meta (OrderCancelled, OrderReturned) : vrai par défaut.
+	 *
+	 * @return bool
+	 */
+	public function meta_cancel_return_enabled(): bool {
+		return (bool) get_option( 'famma_meta_cancel_return_enabled', true );
+	}
+
+	/**
 	 * Chargement du Pixel (D6) : `immediate` par défaut, ou `deferred`.
 	 *
 	 * @return string
@@ -598,6 +664,18 @@ final class Config {
 final class Order_Statuses {
 
 	/**
+	 * Méta : heure du dernier passage à « Livrée » (lot 2 des réformes du pixel, 24/11).
+	 */
+	public const DELIVERED_AT = '_famma_delivered_at';
+
+	/**
+	 * Statuts qui effacent le passage par « Livrée » : une commande annulée,
+	 * refusée, en échec de livraison, retournée ou remboursée qui passe
+	 * ensuite à « Terminée » ne donne pas de Purchase.
+	 */
+	public const DELIVERY_UNDONE = array( 'cancelled', 'refused', 'failed-delivery', 'returned', 'refunded' );
+
+	/**
 	 * Singleton instance.
 	 *
 	 * @var Order_Statuses|null
@@ -651,6 +729,15 @@ final class Order_Statuses {
 		add_action( 'woocommerce_order_status_delivered', array( $this, 'mark_cod_paid_on_delivery' ), 10 );
 		add_action( 'woocommerce_order_status_completed', array( $this, 'mark_cod_paid_on_completion' ), 10 );
 		add_filter( 'woocommerce_reports_order_statuses', array( $this, 'reporting_statuses' ) );
+
+		/*
+		 * Priorité 5 : l'heure de livraison est connue avant l'encaissement (10)
+		 * et avant la mise en attente du Purchase (Capi, 20). Elle sert
+		 * d'event_time au Purchase et prouve le passage par « Livrée » quand
+		 * la commande passe ensuite à « Terminée ».
+		 */
+		add_action( 'woocommerce_order_status_delivered', array( $this, 'remember_delivery' ), 5 );
+		add_action( 'woocommerce_order_status_changed', array( $this, 'forget_delivery' ), 5, 3 );
 
 		/*
 		 * Without these three filters payment_complete() does nothing at all
@@ -779,12 +866,28 @@ final class Order_Statuses {
 	 * payée sans encaissement COD ni Purchase (T2.4). Une commande d'un
 	 * autre moyen de paiement garde le comportement de WooCommerce.
 	 *
+	 * Règle non négociable n° 4 (réformes du pixel, 25/11) : une commande
+	 * payée à la livraison n'est encaissée qu'au passage par « Livrée ».
+	 * « Terminée » sans ce passage (`DELIVERED_AT`, par exemple Annulée →
+	 * Terminée) n'est plus encaissée : une note le dit. Livrée → Terminée ne
+	 * change pas (déjà encaissée à « Livrée »).
+	 *
 	 * @param int $order_id Order identifier.
 	 * @return void
 	 */
 	public function mark_cod_paid_on_completion( int $order_id ): void {
 		$o = wc_get_order( $order_id );
-		if ( ! $o instanceof \WC_Order || ! self::is_cod_order( $o ) ) {
+		if ( ! $o instanceof \WC_Order || ! self::is_cod_order( $o ) || 'yes' === $o->get_meta( '_famma_cod_paid' ) ) {
+			return;
+		}
+		if ( self::delivered_at( $o ) <= 0 ) {
+			// Une seule note, même après plusieurs passages à « Terminée ».
+			if ( $o->get_meta( '_famma_cod_skip_noted' ) ) {
+				return;
+			}
+			$o->update_meta_data( '_famma_cod_skip_noted', 1 );
+			$o->add_order_note( __( 'Paiement à la livraison NON encaissé : la commande est passée à « Terminée » sans passer par « Livrée ». Une commande payée à la livraison n\'est encaissée qu\'à la livraison : passez-la en « Livrée » si elle a bien été livrée et payée.', 'famma-core' ) );
+			$o->save();
 			return;
 		}
 		$this->collect_cod_payment( $o, __( 'Paiement à la livraison encaissé : commande passée à « Terminée ».', 'famma-core' ) );
@@ -816,18 +919,73 @@ final class Order_Statuses {
 	 * environnement, registre), mais n'attend jamais un Purchase que
 	 * l'émetteur refuserait.
 	 *
+	 * Depuis le lot 2 des réformes du pixel (24/11), « Terminée » ne compte que
+	 * si la commande est passée par « Livrée » (`DELIVERED_AT`) : « Annulée »
+	 * ou « Refusée » → « Terminée » ne donne plus de Purchase.
+	 *
 	 * @param \WC_Order $order Commande.
 	 * @return string `not_delivered`, `not_collected` (« Terminée » en paiement à
-	 *                la livraison sans encaissement, cas d'avant la 0.3.2) ou vide.
+	 *                la livraison sans encaissement, cas d'avant la 0.3.2),
+	 *                `not_via_delivered` (« Terminée » sans passage par
+	 *                « Livrée ») ou vide.
 	 */
 	public static function purchase_ineligibility( \WC_Order $order ): string {
 		if ( $order->has_status( 'delivered' ) ) {
 			return '';
 		}
 		if ( $order->has_status( 'completed' ) && self::is_cod_order( $order ) ) {
-			return 'yes' === $order->get_meta( '_famma_cod_paid' ) ? '' : 'not_collected';
+			if ( 'yes' !== $order->get_meta( '_famma_cod_paid' ) ) {
+				return 'not_collected';
+			}
+			return self::delivered_at( $order ) > 0 ? '' : 'not_via_delivered';
 		}
 		return 'not_delivered';
+	}
+
+	/**
+	 * Heure du dernier passage à « Livrée », 0 si la commande n'y est pas passée.
+	 *
+	 * @param \WC_Order $order Commande.
+	 * @return int
+	 */
+	public static function delivered_at( \WC_Order $order ): int {
+		return max( 0, (int) $order->get_meta( self::DELIVERED_AT ) );
+	}
+
+	/**
+	 * Note l'heure du passage à « Livrée » (la dernière compte).
+	 *
+	 * @param int $order_id Order identifier.
+	 * @return void
+	 */
+	public function remember_delivery( int $order_id ): void {
+		$o = wc_get_order( $order_id );
+		if ( ! $o instanceof \WC_Order ) {
+			return;
+		}
+		$o->update_meta_data( self::DELIVERED_AT, time() );
+		$o->save();
+	}
+
+	/**
+	 * Efface le passage par « Livrée » quand la commande est annulée, refusée,
+	 * en échec de livraison, retournée ou remboursée.
+	 *
+	 * @param int    $order_id Order identifier.
+	 * @param string $from     Previous status.
+	 * @param string $to       New status.
+	 * @return void
+	 */
+	public function forget_delivery( int $order_id, string $from, string $to ): void {
+		if ( ! in_array( $to, self::DELIVERY_UNDONE, true ) ) {
+			return;
+		}
+		$o = wc_get_order( $order_id );
+		if ( ! $o instanceof \WC_Order || self::delivered_at( $o ) <= 0 ) {
+			return;
+		}
+		$o->delete_meta_data( self::DELIVERED_AT );
+		$o->save();
 	}
 
 	/**
@@ -2430,6 +2588,42 @@ final class Tracking {
 final class Capi {
 
 	/**
+	 * Méta du repère « commande d'essai » (lot 1 des réformes du pixel) : aucun événement Meta.
+	 */
+	public const TEST_ORDER_META = '_famma_test_order';
+
+	/**
+	 * Méta posée quand la note « aucun événement Meta » a été écrite (effacée au décochage).
+	 */
+	public const TEST_ORDER_NOTED = '_famma_test_order_noted';
+
+	/**
+	 * Groupe Action Scheduler de la CAPI (file OrderPlaced, relances, Purchase retardé).
+	 */
+	private const GROUP = 'famma-capi';
+
+	/**
+	 * Tâche du Purchase retardé (une par commande, argument `order_id`).
+	 */
+	public const PURCHASE_DUE_HOOK = 'famma_capi_purchase_due';
+
+	/**
+	 * Tâche des événements d'annulation et de retour (arguments `order_id`, `event_name`).
+	 */
+	public const OUTCOME_HOOK = 'famma_capi_outcome_send';
+
+	/**
+	 * Statut atteint => événement serveur d'issue de commande (vocabulaire neutre).
+	 */
+	public const OUTCOME_STATUSES = array(
+		'cancelled'       => 'OrderCancelled',
+		'refused'         => 'OrderCancelled',
+		'failed-delivery' => 'OrderCancelled',
+		'returned'        => 'OrderReturned',
+		'refunded'        => 'OrderReturned',
+	);
+
+	/**
 	 * Singleton instance.
 	 *
 	 * @var Capi|null
@@ -2465,6 +2659,80 @@ final class Capi {
 		add_action( 'famma_capi_orderplaced_send', array( $this, 'send_queued_order_placed' ) );
 		add_action( 'famma_capi_offeraccepted_send', array( $this, 'send_queued_offer_accepted' ) );
 		add_action( Capi_Retry::HOOK, array( $this, 'send_retry' ), 10, 2 );
+		// Purchase retardé : la tâche rappelle la même règle que le changement de statut.
+		add_action( self::PURCHASE_DUE_HOOK, array( $this, 'fire_purchase_on_status' ) );
+		add_action( 'woocommerce_order_status_changed', array( $this, 'queue_order_outcome' ), 20, 3 );
+		add_action( self::OUTCOME_HOOK, array( $this, 'send_queued_order_outcome' ), 10, 2 );
+	}
+
+	/**
+	 * La commande est-elle une commande d'essai (`_famma_test_order`) ?
+	 *
+	 * Règle unique, lue par l'émetteur, le rapprochement et l'écran de commande.
+	 *
+	 * @param \WC_Order $order Commande.
+	 * @return bool
+	 */
+	public static function is_test_order( \WC_Order $order ): bool {
+		return (bool) $order->get_meta( self::TEST_ORDER_META );
+	}
+
+	/**
+	 * Motif `test_order` pour une commande d'essai, vide sinon.
+	 *
+	 * Lu au moment de l'envoi (file, relance, « Renvoyer ») et non seulement à
+	 * la mise en file. Sans effet de bord : la note vient de `outcome()`.
+	 *
+	 * @param \WC_Order $order Commande.
+	 * @return string
+	 */
+	private function test_order_block( \WC_Order $order ): string {
+		return self::is_test_order( $order ) ? 'test_order' : '';
+	}
+
+	/**
+	 * Écrit, une seule fois, la note « aucun événement Meta » d'une commande d'essai.
+	 *
+	 * Appelée par `outcome()` quand un envoi est réellement écarté pour ce
+	 * motif : les fonctions de motif restent sans effet de bord.
+	 *
+	 * @param int $order_id Commande dont un envoi vient d'être écarté.
+	 * @return void
+	 */
+	private function note_test_order_skipped( int $order_id ): void {
+		$order = $order_id > 0 ? wc_get_order( $order_id ) : false;
+		if ( ! $order instanceof \WC_Order || $order->get_meta( self::TEST_ORDER_NOTED ) ) {
+			return;
+		}
+		$order->update_meta_data( self::TEST_ORDER_NOTED, 1 );
+		$order->add_order_note( __( 'Commande d\'essai : aucun événement Meta envoyé (OrderPlaced, Purchase, OfferAccepted, annulation, retour).', 'famma-core' ) );
+		$order->save();
+	}
+
+	/**
+	 * Met une tâche unique en file (Action Scheduler, WP-Cron en secours).
+	 *
+	 * @param string               $hook Crochet de la tâche.
+	 * @param array<string, mixed> $args Arguments de la tâche.
+	 * @return bool Vrai si une tâche attend pour ces arguments.
+	 */
+	private function enqueue_async( string $hook, array $args ): bool {
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			if ( as_enqueue_async_action( $hook, $args, self::GROUP, true ) > 0 ) {
+				return true;
+			}
+			// Une tâche unique déjà en file renvoie 0 : ce n'est pas un échec.
+			if ( function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( $hook, $args, self::GROUP ) ) {
+				return true;
+			}
+		}
+		if ( ! function_exists( 'wp_schedule_single_event' ) ) {
+			return false;
+		}
+		if ( wp_next_scheduled( $hook, $args ) ) {
+			return true;
+		}
+		return false !== wp_schedule_single_event( time() + 1, $hook, $args );
 	}
 
 	/**
@@ -2500,21 +2768,19 @@ final class Capi {
 	 * Persist checkout acceptance and enqueue once without delaying the customer.
 	 *
 	 * @param \WC_Order $order Accepted storefront checkout.
+	 * @return string `queued`, or the outcome recorded in the famma-capi journal.
 	 */
-	private function queue_order_placed( \WC_Order $order ): void {
+	private function queue_order_placed( \WC_Order $order ): string {
 		$base = $this->log_base( $order, 'OrderPlaced' );
 		if ( ! get_option( 'famma_meta_orderplaced_enabled', false ) ) {
-			$this->outcome( $base, 'disabled', 'option' );
-			return;
+			return $this->outcome( $base, 'disabled', 'option' );
 		}
 		$reason = $this->order_placed_ineligibility( $order );
 		if ( '' !== $reason ) {
-			$this->outcome( $base, 'ineligible', $reason );
-			return;
+			return $this->outcome( $base, 'ineligible', $reason );
 		}
 		if ( $order->get_meta( '_famma_orderplaced_sent' ) ) {
-			$this->outcome( $base, 'already_sent', 'marker' );
-			return;
+			return $this->outcome( $base, 'already_sent', 'marker' );
 		}
 		$order->update_meta_data( '_famma_orderplaced_checkout_accepted', 1 );
 		if ( ! $order->get_meta( '_famma_orderplaced_event_time' ) ) {
@@ -2524,8 +2790,31 @@ final class Capi {
 		}
 		$order->save();
 		if ( ! $this->enqueue_order_placed( $order->get_id() ) ) {
-			$this->outcome( $base, 'queue_failed', 'scheduler' );
+			return $this->outcome( $base, 'queue_failed', 'scheduler' );
 		}
+		return 'queued';
+	}
+
+	/**
+	 * Remet en file l'OrderPlaced d'une commande du site qui n'est plus une commande d'essai.
+	 *
+	 * Une commande passée sur le site par un gérant connecté est marquée
+	 * d'essai dès sa création : son OrderPlaced est écarté au checkout. Si la
+	 * case est décochée (vraie commande), l'OrderPlaced repart par la file
+	 * normale, avec les mêmes gardes : interrupteur, commande du site, statut,
+	 * déjà envoyé, registre, et un event_time (création) de moins de 6 jours.
+	 *
+	 * @param \WC_Order $order Commande décochée.
+	 * @return string `queued`, `too_old`, ou l'issue consignée par la mise en file.
+	 */
+	public function requeue_order_placed( \WC_Order $order ): string {
+		$created = $order->get_date_created();
+		$time    = (int) $order->get_meta( '_famma_orderplaced_event_time' );
+		$time    = $time > 0 ? $time : ( $created ? $created->getTimestamp() : time() );
+		if ( time() - $time > Config::CAPI_MAX_EVENT_AGE && ! $order->get_meta( '_famma_orderplaced_sent' ) ) {
+			return $this->outcome( $this->log_base( $order, 'OrderPlaced' ), 'too_old', 'event_time' );
+		}
+		return $this->queue_order_placed( $order );
 	}
 
 	/**
@@ -2535,23 +2824,7 @@ final class Capi {
 	 * @return bool Whether a task is now waiting for this order.
 	 */
 	private function enqueue_order_placed( int $order_id ): bool {
-		$args = array( 'order_id' => $order_id );
-		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			if ( as_enqueue_async_action( 'famma_capi_orderplaced_send', $args, 'famma-capi', true ) > 0 ) {
-				return true;
-			}
-			// Une tâche unique déjà en file renvoie 0 : ce n'est pas un échec.
-			if ( function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( 'famma_capi_orderplaced_send', $args, 'famma-capi' ) ) {
-				return true;
-			}
-		}
-		if ( ! function_exists( 'wp_schedule_single_event' ) ) {
-			return false;
-		}
-		if ( wp_next_scheduled( 'famma_capi_orderplaced_send', $args ) ) {
-			return true;
-		}
-		return false !== wp_schedule_single_event( time() + 1, 'famma_capi_orderplaced_send', $args );
+		return $this->enqueue_async( 'famma_capi_orderplaced_send', array( 'order_id' => $order_id ) );
 	}
 
 	/**
@@ -2571,8 +2844,8 @@ final class Capi {
 	/**
 	 * Why a checkout order cannot be reported as OrderPlaced, or an empty string.
 	 *
-	 * Exclut les commandes de l'administration, non enregistrées, brouillons
-	 * et refusées.
+	 * Exclut les commandes d'essai, de l'administration, non enregistrées,
+	 * brouillons et refusées.
 	 *
 	 * @param \WC_Order $order Checkout order.
 	 * @return string Reason token, empty when eligible.
@@ -2580,6 +2853,9 @@ final class Capi {
 	private function order_placed_ineligibility( \WC_Order $order ): string {
 		if ( $order->get_id() <= 0 ) {
 			return 'unsaved';
+		}
+		if ( '' !== $this->test_order_block( $order ) ) {
+			return 'test_order';
 		}
 		if ( 'checkout' !== $order->get_created_via() ) {
 			return 'created_via:' . ( '' !== (string) $order->get_created_via() ? (string) $order->get_created_via() : 'unknown' );
@@ -2622,23 +2898,7 @@ final class Capi {
 	 * @return bool Vrai si une tâche est en file.
 	 */
 	public function queue_offer_accepted( int $order_id ): bool {
-		$hook = 'famma_capi_offeraccepted_send';
-		$args = array( 'order_id' => $order_id );
-		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			if ( as_enqueue_async_action( $hook, $args, 'famma-capi', true ) > 0 ) {
-				return true;
-			}
-			if ( function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( $hook, $args, 'famma-capi' ) ) {
-				return true;
-			}
-		}
-		if ( ! function_exists( 'wp_schedule_single_event' ) ) {
-			return false;
-		}
-		if ( wp_next_scheduled( $hook, $args ) ) {
-			return true;
-		}
-		return false !== wp_schedule_single_event( time() + 1, $hook, $args );
+		return $this->enqueue_async( 'famma_capi_offeraccepted_send', array( 'order_id' => $order_id ) );
 	}
 
 	/**
@@ -2675,9 +2935,6 @@ final class Capi {
 		if ( ! $order->get_meta( Offer_Settings::ORDER_ACCEPTED ) ) {
 			return $this->outcome( $base, 'ineligible', 'offer_not_accepted' );
 		}
-		if ( $order->get_meta( '_famma_test_order' ) ) {
-			return $this->outcome( $base, 'ineligible', 'test_order' );
-		}
 		$reason = $this->order_placed_ineligibility( $order );
 		if ( '' !== $reason ) {
 			return $this->outcome( $base, 'ineligible', $reason );
@@ -2691,15 +2948,35 @@ final class Capi {
 	 * La règle vient du circuit de commande (`Order_Statuses::purchase_ineligibility()`),
 	 * la même pour l'émetteur, le rapprochement (R8) et l'état de santé (R7).
 	 *
+	 * Une commande d'essai est écartée avant cette règle.
+	 *
 	 * @param \WC_Order $order Order concerned.
-	 * @return string `not_collected`, `status:<statut>` ou vide.
+	 * @return string `test_order`, `not_collected`, `not_via_delivered`, `status:<statut>` ou vide.
 	 */
 	private function purchase_block_reason( \WC_Order $order ): string {
+		if ( '' !== $this->test_order_block( $order ) ) {
+			return 'test_order';
+		}
 		$why = Order_Statuses::purchase_ineligibility( $order );
 		if ( '' === $why ) {
 			return '';
 		}
-		return 'not_collected' === $why ? $why : 'status:' . $order->get_status();
+		return in_array( $why, array( 'not_collected', 'not_via_delivered' ), true ) ? $why : 'status:' . $order->get_status();
+	}
+
+	/**
+	 * Heure à partir de laquelle le Purchase peut partir, 0 sans passage par « Livrée ».
+	 *
+	 * Dernier passage à « Livrée » + délai (`Config::capi_purchase_delay()`).
+	 * Partagée avec le rapprochement, qui n'attend pas un Purchase avant cette heure.
+	 *
+	 * @param \WC_Order $order Commande.
+	 * @return int
+	 */
+	public static function purchase_due_at( \WC_Order $order ): int {
+		$delivered = Order_Statuses::delivered_at( $order );
+
+		return $delivered > 0 ? $delivered + Config::instance()->capi_purchase_delay() : 0;
 	}
 
 	/**
@@ -2708,6 +2985,12 @@ final class Capi {
 	 * Priority 20, after the COD collection at priority 10. The event id makes
 	 * browser/server deduplication possible; the dispatcher owns its
 	 * persistence under the atomic delivery claim.
+	 *
+	 * Lot 2 des réformes (24/11) : le Purchase part `Config::capi_purchase_delay()`
+	 * secondes (15 min) après le dernier passage à « Livrée ». Avant, une seule
+	 * tâche Action Scheduler (`PURCHASE_DUE_HOOK`) est en attente ; elle
+	 * rappelle cette méthode, qui revérifie le statut. L'event_time est l'heure
+	 * de livraison.
 	 *
 	 * @param int $order_id Order identifier.
 	 * @return void
@@ -2726,6 +3009,24 @@ final class Capi {
 		if ( $order->get_meta( '_famma_purchase_sent' ) ) {
 			$this->outcome( $base, 'already_sent', 'marker' );
 			return;
+		}
+		$this->remember_purchase_time( $order );
+		$due = self::purchase_due_at( $order );
+		if ( $due > time() ) {
+			$scheduled = $this->schedule_purchase_due( $order_id, $due );
+			if ( in_array( $scheduled, array( 'scheduled', 'already' ), true ) ) {
+				$this->outcome( $base, 'delayed', $scheduled );
+				return;
+			}
+
+			/*
+			 * Aucune tâche n'a pu être planifiée : erreur au journal, signal à
+			 * l'état de santé, puis envoi immédiat plutôt qu'un Purchase perdu
+			 * (le statut vient d'être vérifié ; seule la vérification à +15 min
+			 * est sacrifiée).
+			 */
+			$this->outcome( $base, 'queue_failed', 'scheduler:' . $scheduled );
+			Capi_Health::signal( 'purchase_unqueued', array( 'order_id' => $order_id ) );
 		}
 
 		/**
@@ -2754,6 +3055,219 @@ final class Capi {
 	}
 
 	/**
+	 * Prend l'heure du dernier passage à « Livrée » comme event_time du Purchase.
+	 *
+	 * Jamais après la réservation du registre (`_famma_purchase_event_id` posé
+	 * sous propriété) : l'event_time d'un Purchase réclamé est immuable.
+	 *
+	 * @param \WC_Order $order Commande « Livrée » ou « Terminée ».
+	 * @return void
+	 */
+	private function remember_purchase_time( \WC_Order $order ): void {
+		$delivered = Order_Statuses::delivered_at( $order );
+		$keys      = $this->meta_keys( 'Purchase' );
+		if ( $delivered <= 0 || $order->get_meta( $keys['id'] ) || (int) $order->get_meta( $keys['time'] ) === $delivered ) {
+			return;
+		}
+		$order->update_meta_data( $keys['time'], $delivered );
+		$order->save();
+	}
+
+	/**
+	 * Planifie la tâche du Purchase retardé, une seule en attente par commande.
+	 *
+	 * Comme pour les relances (`Capi_Retry`), seule une tâche EN ATTENTE
+	 * compte : la tâche en cours qui se replanifie (nouveau passage à
+	 * « Livrée » pendant l'attente) n'est pas un doublon. Une tâche déjà en
+	 * attente garde son heure : elle revérifie l'échéance en s'exécutant.
+	 *
+	 * @param int $order_id Order identifier.
+	 * @param int $when     Échéance.
+	 * @return string `scheduled`, `already`, `failed` ou `unavailable`.
+	 */
+	private function schedule_purchase_due( int $order_id, int $when ): string {
+		$args = array( 'order_id' => $order_id );
+		if ( function_exists( 'as_schedule_single_action' ) ) {
+			if ( $this->purchase_due_pending( $args ) ) {
+				return 'already';
+			}
+			try {
+				$action_id = (int) as_schedule_single_action( $when, self::PURCHASE_DUE_HOOK, $args, self::GROUP, true );
+				if ( $action_id <= 0 && ! $this->purchase_due_pending( $args ) ) {
+					$action_id = (int) as_schedule_single_action( $when, self::PURCHASE_DUE_HOOK, $args, self::GROUP, false );
+				}
+			} catch ( \Exception ) {
+				// Action Scheduler lève une exception quand il ne peut pas enregistrer la tâche.
+				return 'failed';
+			}
+			if ( $action_id > 0 ) {
+				return 'scheduled';
+			}
+			// Une tâche en attente posée entre-temps n'est pas un échec ; aucune tâche en est un.
+			return $this->purchase_due_pending( $args ) ? 'already' : 'failed';
+		}
+		if ( function_exists( 'wp_schedule_single_event' ) ) {
+			if ( wp_next_scheduled( self::PURCHASE_DUE_HOOK, $args ) ) {
+				return 'already';
+			}
+			return false !== wp_schedule_single_event( $when, self::PURCHASE_DUE_HOOK, $args ) ? 'scheduled' : 'failed';
+		}
+		return 'unavailable';
+	}
+
+	/**
+	 * Une tâche de Purchase retardé attend-elle déjà son tour pour cette commande ?
+	 *
+	 * @param array{order_id: int} $args Arguments de la tâche.
+	 * @return bool
+	 */
+	private function purchase_due_pending( array $args ): bool {
+		if ( ! function_exists( 'as_get_scheduled_actions' ) ) {
+			return false;
+		}
+		$ids = as_get_scheduled_actions(
+			array(
+				'hook'     => self::PURCHASE_DUE_HOOK,
+				'args'     => $args,
+				'group'    => self::GROUP,
+				'status'   => 'pending',
+				'per_page' => 1,
+			),
+			'ids'
+		);
+		return is_array( $ids ) && array() !== $ids;
+	}
+
+	/**
+	 * Met en file OrderCancelled ou OrderReturned quand la commande atteint le statut concerné.
+	 *
+	 * Rien si l'événement précédent (OrderPlaced pour une annulation, Purchase
+	 * pour un retour) n'a pas été accepté par Meta. L'event_time est l'heure
+	 * du changement de statut, tant que l'envoi n'est pas réservé.
+	 *
+	 * @param int    $order_id Order identifier.
+	 * @param string $from     Previous status.
+	 * @param string $to       New status.
+	 * @return void
+	 */
+	public function queue_order_outcome( int $order_id, string $from, string $to ): void {
+		$event_name = self::OUTCOME_STATUSES[ $to ] ?? '';
+		$order      = '' !== $event_name ? wc_get_order( $order_id ) : false;
+		if ( ! $order instanceof \WC_Order ) {
+			return;
+		}
+		$base = $this->log_base( $order, $event_name );
+		if ( ! Config::instance()->meta_cancel_return_enabled() ) {
+			$this->outcome( $base, 'disabled', 'option' );
+			return;
+		}
+		$reason = $this->outcome_block_reason( $order, $event_name );
+		if ( '' !== $reason ) {
+			$this->outcome( $base, 'ineligible', $reason );
+			return;
+		}
+		$keys = $this->meta_keys( $event_name );
+		if ( $order->get_meta( $keys['sent'] ) ) {
+			$this->outcome( $base, 'already_sent', 'marker' );
+			return;
+		}
+		if ( ! $order->get_meta( $keys['id'] ) ) {
+			$order->update_meta_data( $keys['time'], time() );
+			$order->save();
+		}
+		$args = array(
+			'order_id'   => $order_id,
+			'event_name' => $event_name,
+		);
+		if ( ! $this->enqueue_async( self::OUTCOME_HOOK, $args ) ) {
+			$this->outcome( $base, 'queue_failed', 'scheduler' );
+		}
+	}
+
+	/**
+	 * Exécute la tâche OrderCancelled / OrderReturned mise en file.
+	 *
+	 * @param int    $order_id   Commande concernée.
+	 * @param string $event_name OrderCancelled ou OrderReturned.
+	 * @return void
+	 */
+	public function send_queued_order_outcome( int $order_id, string $event_name = '' ): void {
+		$order = wc_get_order( $order_id );
+		if ( ! $order instanceof \WC_Order ) {
+			$this->outcome( $this->log_base_for( $order_id, $event_name ), 'ineligible', 'order_missing' );
+			return;
+		}
+		$this->send_order_outcome( $order, $event_name );
+	}
+
+	/**
+	 * Envoie OrderCancelled ou OrderReturned, une seule fois par commande.
+	 *
+	 * Tout est relu au moment de l'envoi : interrupteur, commande d'essai,
+	 * événement précédent accepté, statut toujours concerné.
+	 *
+	 * @param \WC_Order $order      Commande.
+	 * @param string    $event_name OrderCancelled ou OrderReturned.
+	 * @param bool      $retry      Relance bornée d'un envoi incertain.
+	 * @return string Résultat consigné dans le journal famma-capi.
+	 */
+	public function send_order_outcome( \WC_Order $order, string $event_name, bool $retry = false ): string {
+		$base = $this->log_base( $order, $event_name );
+		if ( ! in_array( $event_name, self::OUTCOME_STATUSES, true ) ) {
+			return $this->outcome( $base, 'ineligible', 'event_unknown' );
+		}
+		if ( ! Config::instance()->meta_cancel_return_enabled() ) {
+			return $this->outcome( $base, 'disabled', 'option' );
+		}
+		$reason = $this->outcome_block_reason( $order, $event_name );
+		if ( '' !== $reason ) {
+			return $this->outcome( $base, 'ineligible', $reason );
+		}
+		return $this->send_order_event( $order, $event_name, (string) $base['event_id'], $retry );
+	}
+
+	/**
+	 * Pourquoi OrderCancelled / OrderReturned ne peut pas partir, ou vide.
+	 *
+	 * @param \WC_Order $order      Commande.
+	 * @param string    $event_name OrderCancelled ou OrderReturned.
+	 * @return string `test_order`, `orderplaced_not_accepted`, `purchase_not_accepted`, `status:<statut>` ou vide.
+	 */
+	private function outcome_block_reason( \WC_Order $order, string $event_name ): string {
+		if ( '' !== $this->test_order_block( $order ) ) {
+			return 'test_order';
+		}
+		if ( 'OrderCancelled' === $event_name && ! $order->get_meta( '_famma_orderplaced_sent' ) ) {
+			return 'orderplaced_not_accepted';
+		}
+		if ( 'OrderReturned' === $event_name && ! $order->get_meta( '_famma_purchase_sent' ) ) {
+			return 'purchase_not_accepted';
+		}
+		if ( ( self::OUTCOME_STATUSES[ $order->get_status() ] ?? '' ) !== $event_name ) {
+			return 'status:' . $order->get_status();
+		}
+		return '';
+	}
+
+	/**
+	 * Motif relu sous propriété du registre, juste avant le transport.
+	 *
+	 * @param \WC_Order $order      Commande relue.
+	 * @param string    $event_name Événement.
+	 * @return string Motif, vide si l'envoi peut partir.
+	 */
+	private function event_block_reason( \WC_Order $order, string $event_name ): string {
+		if ( 'Purchase' === $event_name ) {
+			return $this->purchase_block_reason( $order );
+		}
+		if ( in_array( $event_name, self::OUTCOME_STATUSES, true ) ) {
+			return $this->outcome_block_reason( $order, $event_name );
+		}
+		// La commande a pu être marquée d'essai entre la mise en file et l'envoi.
+		return $this->test_order_block( $order );
+	}
+
+	/**
 	 * Bounded retry run by Action Scheduler (D1), same event_id as the first try.
 	 *
 	 * @param int    $order_id   Order identifier.
@@ -2766,7 +3280,7 @@ final class Capi {
 			$this->outcome( $this->log_base_for( $order_id, $event_name ), 'ineligible', 'order_missing' );
 			return;
 		}
-		if ( in_array( $event_name, array( 'OrderPlaced', 'Purchase', 'OfferAccepted' ), true ) ) {
+		if ( in_array( $event_name, array( 'OrderPlaced', 'Purchase', 'OfferAccepted' ), true ) || in_array( $event_name, self::OUTCOME_STATUSES, true ) ) {
 			$this->resend( $order, $event_name );
 			return;
 		}
@@ -2786,6 +3300,9 @@ final class Capi {
 		}
 		if ( 'OfferAccepted' === $event_name ) {
 			return $this->send_offer_accepted( $order, true );
+		}
+		if ( in_array( $event_name, self::OUTCOME_STATUSES, true ) ) {
+			return $this->send_order_outcome( $order, $event_name, true );
 		}
 		$event_id = 'famma_purchase_' . $order->get_id();
 		$reason   = $this->purchase_block_reason( $order );
@@ -2808,6 +3325,15 @@ final class Capi {
 				'time'     => '_famma_offeraccepted_event_time',
 				'attempts' => '_famma_offeraccepted_attempts',
 				'id'       => '_famma_offeraccepted_event_id',
+			);
+		}
+		if ( in_array( $event_name, self::OUTCOME_STATUSES, true ) ) {
+			$prefix = '_famma_' . strtolower( $event_name );
+			return array(
+				'sent'     => $prefix . '_sent',
+				'time'     => $prefix . '_event_time',
+				'attempts' => $prefix . '_attempts',
+				'id'       => $prefix . '_event_id',
 			);
 		}
 		$is_purchase = 'Purchase' === $event_name;
@@ -2835,6 +3361,10 @@ final class Capi {
 		$base  = $this->log_base( $order, $event_name, $event_id );
 		$keys  = $this->meta_keys( $event_name );
 
+		// Dernier verrou, au moment de l'envoi : file, relance planifiée et bouton « Renvoyer ».
+		if ( '' !== $this->test_order_block( $order ) ) {
+			return $this->outcome( $base, 'ineligible', 'test_order' );
+		}
 		if ( '' === $pixel || '' === $token ) {
 			return $this->outcome( $base, 'not_configured', '' === $pixel ? 'pixel' : 'token' );
 		}
@@ -2892,7 +3422,8 @@ final class Capi {
 			$registry->finish( $claim, 'accepted', 0, 0 );
 			return $this->outcome( $base, 'already_sent', 'marker' );
 		}
-		$reason = 'Purchase' === $event_name ? $this->purchase_block_reason( $order ) : '';
+		// Relu sous propriété : statut, essai et événement précédent ont pu changer depuis la mise en file.
+		$reason = $this->event_block_reason( $order, $event_name );
 		if ( '' !== $reason ) {
 			$registry->finish( $claim, 'rejected', 0, 0 );
 			return $this->outcome( $base, 'ineligible', $reason );
@@ -2980,6 +3511,10 @@ final class Capi {
 		}
 		if ( 'OfferAccepted' === $event_name ) {
 			$custom = $this->offer_custom_data( $order, $custom );
+		}
+		if ( in_array( $event_name, self::OUTCOME_STATUSES, true ) ) {
+			// Annulation, retour : le montant de la commande et ses articles, rien d'autre.
+			$custom = array_intersect_key( $custom, array_flip( array( 'currency', 'value', 'order_id', 'content_ids' ) ) );
 		}
 		$event = array(
 			'event_name'    => $event_name,
@@ -3163,10 +3698,14 @@ final class Capi {
 	 * @return array{order_id: int, event_name: string, event_id: string}
 	 */
 	private function log_base_for( int $order_id, string $event_name ): array {
+		$slug = 'Purchase' === $event_name ? 'purchase' : 'orderplaced';
+		if ( in_array( $event_name, self::OUTCOME_STATUSES, true ) ) {
+			$slug = strtolower( $event_name );
+		}
 		return array(
 			'order_id'   => $order_id,
 			'event_name' => $event_name,
-			'event_id'   => 'famma_' . ( 'Purchase' === $event_name ? 'purchase' : 'orderplaced' ) . '_' . $order_id,
+			'event_id'   => 'famma_' . $slug . '_' . $order_id,
 		);
 	}
 
@@ -3180,6 +3719,9 @@ final class Capi {
 	 */
 	private function outcome( array $base, string $state, string $reason ): string {
 		Capi_Log::outcome( $base, $state, $reason );
+		if ( 'test_order' === $reason ) {
+			$this->note_test_order_skipped( (int) ( $base['order_id'] ?? 0 ) );
+		}
 		return $state;
 	}
 }
@@ -3624,6 +4166,7 @@ function boot(): void {
 	Tracking::instance();
 	Tracking_Events::instance();
 	Browser_Order_Placed::instance();
+	Test_Orders::instance();
 	Product_Sizes::instance();
 	Express_Order::instance();
 	Express_Idempotency::instance();
@@ -3680,6 +4223,8 @@ function boot(): void {
 	Visitor_Inputs_Collector::instance();
 	// Le formulaire public passe par admin-post.php : chargé partout.
 	Newsletter::instance();
+	// Anciennes adresses de catégorie (renommage) : redirigées en 301 sur le front.
+	Category_Slug_Redirect::instance();
 
 	// Le tableau de bord ne sert qu'à l'administration : rien de tout cela
 	// n'est chargé sur le front (règle 10).

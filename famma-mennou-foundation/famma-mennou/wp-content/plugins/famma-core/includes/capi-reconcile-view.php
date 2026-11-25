@@ -153,12 +153,15 @@ final class Capi_Reconcile_View {
 	 */
 	private static function reason_label( string $reason ): string {
 		$labels = array(
-			'admin'         => __( 'commande créée hors du site', 'famma-core' ),
-			'disabled'      => __( 'OrderPlaced désactivé', 'famma-core' ),
-			'status'        => __( 'commande annulée, échouée ou refusée', 'famma-core' ),
-			'not_accepted'  => __( 'checkout non accepté ou OrderPlaced coupé à ce moment', 'famma-core' ),
-			'not_delivered' => __( 'pas encore livrée', 'famma-core' ),
-			'not_collected' => __( '« Terminée » sans encaissement à la livraison (avant la 0.3.2) : repassez-la en « Livrée » pour l’encaisser et envoyer le Purchase', 'famma-core' ),
+			'admin'             => __( 'commande créée hors du site', 'famma-core' ),
+			'disabled'          => __( 'OrderPlaced désactivé', 'famma-core' ),
+			'status'            => __( 'commande annulée, échouée ou refusée', 'famma-core' ),
+			'not_accepted'      => __( 'checkout non accepté ou OrderPlaced coupé à ce moment', 'famma-core' ),
+			'not_delivered'     => __( 'pas encore livrée', 'famma-core' ),
+			/* translators: %d: delay in minutes before the Purchase is sent. */
+			'purchase_delay'    => sprintf( __( 'livrée : Purchase prévu %d min après la livraison (délai de vérification)', 'famma-core' ), (int) ceil( Config::instance()->capi_purchase_delay() / 60 ) ),
+			'not_via_delivered' => __( '« Terminée » sans passage par « Livrée » : aucun Purchase (annulée ou refusée puis terminée, par exemple)', 'famma-core' ),
+			'not_collected'     => __( '« Terminée » sans encaissement à la livraison (avant la 0.3.2) : repassez-la en « Livrée » pour l’encaisser et envoyer le Purchase', 'famma-core' ),
 		);
 		return $labels[ $reason ] ?? $reason;
 	}

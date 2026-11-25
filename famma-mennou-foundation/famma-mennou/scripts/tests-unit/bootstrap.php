@@ -19,6 +19,7 @@ if ( 'cli' !== PHP_SAPI ) {
 }
 
 define( 'ABSPATH', dirname( __DIR__, 2 ) . '/' );
+require __DIR__ . '/double-clock.php';
 
 final class WP_Error {
 	public function __construct( private string $code = '', private string $message = '' ) {}
@@ -356,6 +357,9 @@ final class WC_Order {
 	public function update_meta_data( string $key, $value ): void {
 		$this->meta[ $key ] = $value;
 	}
+	public function delete_meta_data( string $key ): void {
+		unset( $this->meta[ $key ] );
+	}
 	public function read_meta_data( bool $force_read = false ): void {}
 	public function save(): void {}
 	public function has_status( $status ): bool {
@@ -426,7 +430,7 @@ final class WC_Order {
 		return '49.000';
 	}
 	public function get_date_created(): DateTimeImmutable {
-		return $this->created_at ?? new DateTimeImmutable( '2026-10-19 10:00:00' );
+		return $this->created_at ?? new DateTimeImmutable( '@' . ( time() - 7200 ) ); // Relative to the clock: two hours old, never expired by the 6-day guard.
 	}
 	public function add_order_note( string $note ): void {
 		$this->notes[] = $note;

@@ -53,6 +53,10 @@ final class Capi_Health_Rules {
 		if ( isset( $signals['contract'] ) && $now - (int) ( $signals['contract']['at'] ?? 0 ) < Capi_Health::SIGNAL_WINDOW ) {
 			$reasons[] = self::reason( 'contract', 'orange', (string) (int) ( $signals['contract']['code'] ?? 0 ) );
 		}
+		// Purchase retardé qu'Action Scheduler n'a pas pu planifier (parti tout de suite, sans le délai de vérification).
+		if ( isset( $signals['purchase_unqueued'] ) && $now - (int) ( $signals['purchase_unqueued']['at'] ?? 0 ) < Capi_Health::SIGNAL_WINDOW ) {
+			$reasons[] = self::reason( 'purchase_unqueued', 'orange', (string) (int) ( $signals['purchase_unqueued']['order_id'] ?? 0 ) );
+		}
 		if ( isset( $signals['registry_unavailable'] ) || '1' !== (string) get_option( 'famma_capi_registry_version', '' ) ) {
 			$reasons[] = self::reason( 'registry', 'rouge' );
 		}
@@ -212,6 +216,8 @@ final class Capi_Health_Rules {
 			/* translators: %s: hours since the last heartbeat. */
 			'heartbeat'         => sprintf( __( 'Les tâches planifiées ne tournent plus depuis %s h : files et relances arrêtées.', 'famma-core' ), $detail ),
 			'pending_actions'   => __( 'Une tâche CAPI attend depuis plus de 2 heures (Action Scheduler).', 'famma-core' ),
+			/* translators: %s: order number. */
+			'purchase_unqueued' => sprintf( __( 'Le Purchase retardé de la commande n° %s n’a pas pu être planifié (Action Scheduler) : il est parti tout de suite, sans le délai de vérification après la livraison. Vérifiez les tâches planifiées.', 'famma-core' ), $detail ),
 			/* translators: %s: number of orders. */
 			'purchase_missing'  => sprintf( __( '%s commande(s) livrée(s) depuis plus de 24 h sans Purchase accepté par Meta : « Renvoyer » dans le rapprochement.', 'famma-core' ), $detail ),
 			/* translators: %s: number of orders. */

@@ -109,7 +109,8 @@ final class Browser_Order_Placed {
 		if ( ! $order instanceof \WC_Order || '' === $key || ! $order->key_is_valid( $key ) ) {
 			return null;
 		}
-		if ( 'checkout' !== $order->get_created_via() || $order->has_status( array( 'failed', 'cancelled' ) ) ) {
+		// Commande d'essai (lot 1 des réformes du pixel) : pas d'OrderPlaced navigateur non plus.
+		if ( 'checkout' !== $order->get_created_via() || $order->has_status( array( 'failed', 'cancelled' ) ) || $order->get_meta( '_famma_test_order' ) ) {
 			return null;
 		}
 
@@ -165,7 +166,7 @@ final class Browser_Order_Placed {
 
 		$order = wc_get_order( $order_id );
 
-		if ( ! $order instanceof \WC_Order ) {
+		if ( ! $order instanceof \WC_Order || $order->get_meta( '_famma_test_order' ) ) {
 			return $result;
 		}
 

@@ -76,13 +76,20 @@ $legacy->paid_at    = ( new DateTimeImmutable() )->setTimestamp( $now - 25 * 360
 $collected          = new WC_Order( 6101 );
 $collected->status  = 'completed';
 $collected->paid_at = $legacy->paid_at;
-$collected->meta    = array( '_famma_cod_paid' => 'yes' );
+$collected->meta    = array(
+	'_famma_cod_paid'            => 'yes',
+	Order_Statuses::DELIVERED_AT => (string) ( $now - 26 * 3600 ), // Livrée, then Terminée.
+);
+$skipped            = new WC_Order( 6104 ); // Terminée without ever passing through Livrée (decision of 24/11/2026).
+$skipped->status    = 'completed';
+$skipped->paid_at   = $legacy->paid_at;
+$skipped->meta      = array( '_famma_cod_paid' => 'yes' );
 $card               = new WC_Order( 6102 );
 $card->status       = 'completed';
 $card->payment      = 'stripe';
 $card->paid_at      = $legacy->paid_at;
-l5_check( 'not_collected' === Order_Statuses::purchase_ineligibility( $legacy ) && '' === Order_Statuses::purchase_ineligibility( $collected ) && 'not_delivered' === Order_Statuses::purchase_ineligibility( $card ) && '' === Order_Statuses::purchase_ineligibility( new WC_Order( 6103 ) ), 'One Purchase rule: delivered or collected COD « Terminée » expected; not collected → not_collected; other payment → not_delivered.' );
-$GLOBALS['wc_test_order_query'] = array( $legacy, $card );
+l5_check( 'not_collected' === Order_Statuses::purchase_ineligibility( $legacy ) && '' === Order_Statuses::purchase_ineligibility( $collected ) && 'not_delivered' === Order_Statuses::purchase_ineligibility( $card ) && 'not_via_delivered' === Order_Statuses::purchase_ineligibility( $skipped ) && '' === Order_Statuses::purchase_ineligibility( new WC_Order( 6103 ) ), 'One Purchase rule: delivered, or collected COD « Terminée » that went through « Livrée », expected; not collected → not_collected; Terminée without Livrée → not_via_delivered; other payment → not_delivered.' );
+$GLOBALS['wc_test_order_query'] = array( $legacy, $skipped, $card );
 $state                          = Capi_Health::evaluate( $now );
 l5_check( 'vert' === $state['statut'] && ! in_array( 'purchase_missing', $codes( $state ), true ) && array() === $GLOBALS['wp_test_mail'], 'V6: a « Terminée » order never collected is not a missing Purchase: no red, no e-mail.' );
 $GLOBALS['wc_test_order_query'] = array( $legacy, $collected, $card );

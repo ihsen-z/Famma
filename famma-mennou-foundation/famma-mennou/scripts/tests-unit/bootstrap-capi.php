@@ -84,6 +84,10 @@ function sanitize_key( $key ): string {
 // insert and as_has_scheduled_action() both count the pending AND the running
 // (in-progress) actions. Each action is array( timestamp, hook, args, group, unique, status ).
 function as_schedule_single_action( int $timestamp, string $hook, array $args = array(), string $group = '', bool $unique = false ): int {
+	// A test may simulate an Action Scheduler that cannot store the action (database error).
+	if ( ! empty( $GLOBALS['as_test_schedule_fails'] ) ) {
+		return 0;
+	}
 	if ( $unique && array() !== l5_as_find( $hook, $args, $group, array( 'pending', 'in-progress' ) ) ) {
 		return 0;
 	}
