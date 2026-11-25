@@ -1,5 +1,43 @@
 # Changelog — FAMMA Core
 
+## 0.3.52 — 2026-11-25 (Réformes du pixel Meta, phase A)
+
+Plugin seul, thème inchangé. Base : production 0.3.50 (la 0.3.51 du lot SEO,
+pas encore en ligne, sera rebasée par-dessus). Suite de l'évaluation
+indépendante du pixel du 11-12/11 et des décisions du propriétaire du 24-25/11.
+
+- **Commandes d'essai exclues de Meta** (lot 1, défaut D1) : case « Commande
+  d'essai » sur la commande (HPOS), cochée d'office pour une commande passée
+  sur le site par un gérant connecté. Une commande d'essai n'envoie ni
+  OrderPlaced, ni Purchase, ni OfferAccepted, ni annulation/retour ; contrôle
+  au moment de l'envoi, relances et « Renvoyer » compris. Décochée, son
+  OrderPlaced repart (mêmes gardes).
+- **Purchase retardé et revérifié** (lot 2, défaut D2) : envoyé 15 minutes
+  après « Livrée » (FAMMA → Mesure, 0 à 60 min, 0 = immédiat ; la constante
+  `FAMMA_CAPI_PURCHASE_DELAY` reste prioritaire), seulement si la commande est
+  encore « Livrée », avec l'heure réelle de livraison comme `event_time`
+  (`_famma_delivered_at`). L'heure est oubliée dès que la commande quitte
+  « Livrée »/« Terminée ». Un échec de planification part en envoi immédiat
+  et allume l'alerte `purchase_unqueued`.
+- **« Terminée » sans « Livrée »** : ni Purchase ni encaissement COD (règle 4 :
+  payée seulement à « Livrée ») ; note sur la commande. WooCommerce garde son
+  comportement natif (date de paiement, rapports), décision du 25/11.
+- **Annulations et retours** : nouveaux événements serveur `OrderCancelled`
+  (Annulée, Refusée, Livraison échouée, après un OrderPlaced accepté) et
+  `OrderReturned` (Retournée, Remboursée, après un Purchase accepté), une fois
+  chacun ; interrupteur dans Mesure, activé par défaut. Meta ne retire pas un
+  Purchase déjà reçu : ils servent au comptage et aux audiences.
+- **Anciennes adresses de catégorie** : redirection 301 générique quand le
+  slug d'une catégorie produit change (pagination et /ar/ comprises), alias
+  `beaute-sante` → `beaute-soin`. Icône de catégorie beauté : goutte.
+- **Tests** (lot 5) : lanceur `scripts/run-unit-tests.php` branché dans la CI
+  et `lint.sh` ; 43 suites, 41 vertes, 0 rouge, 2 suites JS en quarantaine
+  (déjà rouges en 0.3.50). Banc Docker du 25/11 : 27 scénarios conformes,
+  0 ligne famma-core dans `debug.log`.
+- **Retour arrière** : délai à 0 dans Mesure suffit pour le Purchase ; retour
+  à la 0.3.50 selon la procédure écrite (tâches en attente, commandes
+  d'essai ouvertes, catégorie renommée).
+
 ## 0.3.50 — 2026-11-21 (Avis par lien WhatsApp)
 
 Plugin seul, thème inchangé. Case `pdp_reviews` (FAMMA → Nouveau look →
