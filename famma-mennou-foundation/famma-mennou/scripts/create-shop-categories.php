@@ -40,7 +40,7 @@ defined( 'ABSPATH' ) || exit;
 		'maison-cuisine' => 'Maison & Cuisine',
 		'electronique'   => 'Électronique',
 		'auto-moto'      => 'Auto & Moto',
-		'beaute-sante'   => 'Beauté & Santé',
+		'beaute-soin'    => 'Beauté & Soin',
 		'accessoires'    => 'Accessoires',
 	);
 

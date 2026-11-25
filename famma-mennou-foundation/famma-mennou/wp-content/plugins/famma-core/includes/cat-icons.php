@@ -76,7 +76,7 @@ final class Cat_Icons {
 	 */
 	public static function choices(): array {
 		return array(
-			'beauty'  => __( 'Cœur et pouls (beauté, santé)', 'famma-core' ),
+			'beauty'  => __( 'Goutte (beauté, soin)', 'famma-core' ),
 			'sport'   => __( 'Haltère (sport)', 'famma-core' ),
 			'kitchen' => __( 'Marmite (cuisine)', 'famma-core' ),
 			'kids'    => __( 'Ourson (enfants)', 'famma-core' ),
@@ -93,8 +93,8 @@ final class Cat_Icons {
 	public static function shapes(): array {
 		return array(
 			'beauty'  => array(
-				'<path d="M12 20.5s-7.5-4.6-9.3-9.2A5.2 5.2 0 0 1 12 7a5.2 5.2 0 0 1 9.3 4.3C19.5 15.9 12 20.5 12 20.5z"/>',
-				'<path d="M7 12h2.5l1.5-2.5 2 4.5 1.5-2H17"/>',
+				'<path d="M12 3.5s-6 6.3-6 11a6 6 0 0 0 12 0c0-4.7-6-11-6-11z"/>',
+				'<path d="M9.2 15.2a3 3 0 0 0 2.8 2.3"/>',
 			),
 			'sport'   => array(
 				'<path d="M6.5 7v10M3.5 9.5v5M17.5 7v10M20.5 9.5v5M6.5 12h11"/>',
