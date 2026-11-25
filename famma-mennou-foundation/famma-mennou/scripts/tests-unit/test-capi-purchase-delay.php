@@ -73,10 +73,10 @@ $deliver = static function ( int $order_id ) use ( $statuses, $capi ): void {
 };
 
 // Source: the delivery time is remembered before the collection and the Purchase hook; it is
-// forgotten (priority 5, three arguments) when the order is cancelled, refused, failed, returned or refunded.
+// forgotten (priority 5, three arguments) as soon as the order leaves « Livrée » / « Terminée ».
 $source = (string) file_get_contents( ABSPATH . 'wp-content/plugins/famma-core/famma-core.php' );
 l5_check( str_contains( $source, "add_action( 'woocommerce_order_status_delivered', array( \$this, 'remember_delivery' ), 5 );" ) && str_contains( $source, "add_action( self::PURCHASE_DUE_HOOK, array( \$this, 'fire_purchase_on_status' ) );" ), 'Hooks: delivery time at priority 5, delayed task calls the same Purchase rule.' );
-l5_check( str_contains( $source, "add_action( 'woocommerce_order_status_changed', array( \$this, 'forget_delivery' ), 5, 3 );" ) && array( 'cancelled', 'refused', 'failed-delivery', 'returned', 'refunded' ) === Order_Statuses::DELIVERY_UNDONE, 'Hook: forget_delivery at priority 5 with 3 arguments, on the five undoing statuses.' );
+l5_check( str_contains( $source, "add_action( 'woocommerce_order_status_changed', array( \$this, 'forget_delivery' ), 5, 3 );" ) && array( 'delivered', 'completed' ) === Order_Statuses::DELIVERY_KEPT, 'Hook: forget_delivery at priority 5 with 3 arguments; only « Livrée » and « Terminée » keep the delivery.' );
 
 // Delay setting (« Mesure » screen, minutes): 15 min by default, 0 allowed, bounded to one hour.
 l5_reset();
@@ -286,6 +286,49 @@ $at( $t0 + 600 + 900 );
 l5_as_run_next();
 $sent = $purchases();
 l5_check( 1 === count( $sent ) && $t0 + 600 === (int) $sent[0]['event_time'] && 0 === $pending(), 'Then one Purchase, with the new delivery time as event_time.' );
+
+// Livrée → Confirmée (or Expédiée…) → Terminée: no new collection and no Purchase (Docker bench, 25/11).
+foreach ( array( 'confirmed', 'shipped', 'pending-confirm', 'processing' ) as $step_back ) {
+	l5_reset();
+	$at( $t0 );
+	$back_order = new WC_Order( 8113 );
+	$deliver( 8113 );
+	$collected = count( array_keys( $back_order->notes, 'payment_complete', true ) );
+	$at( $t0 + 120 );
+	$move( 8113, $step_back );
+	l5_check( 0 === Order_Statuses::delivered_at( $back_order ), 'Livrée → ' . $step_back . ': the delivery time is forgotten.' );
+	$at( $t0 + 240 );
+	$move( 8113, 'completed' );
+	$statuses->mark_cod_paid_on_completion( 8113 );
+	$capi->fire_purchase_on_status( 8113 );
+	$at( $t0 + 900 );
+	l5_as_run_next();
+	l5_check( array() === $purchases() && 0 === $pending() && 'not_via_delivered' === Order_Statuses::purchase_ineligibility( $back_order ), 'Livrée → ' . $step_back . ' → Terminée: no Purchase (not_via_delivered).' );
+	l5_check( 1 === $collected && 1 === count( array_keys( $back_order->notes, 'payment_complete', true ) ), 'Livrée → ' . $step_back . ' → Terminée: no new collection at « Terminée » (only the one of the earlier « Livrée »).' );
+}
+
+// Livrée → Confirmée → Livrée: one Purchase with the new delivery time.
+l5_reset();
+$at( $t0 );
+$redo = new WC_Order( 8114 );
+$deliver( 8114 );
+$at( $t0 + 120 );
+$move( 8114, 'confirmed' );
+$at( $t0 + 300 );
+$move( 8114, 'delivered' );
+$deliver( 8114 );
+$at( $t0 + 900 );
+l5_as_run_next();
+$at( $t0 + 300 + 900 );
+l5_as_run_next();
+$sent = $purchases();
+l5_check( 1 === count( $sent ) && $t0 + 300 === (int) $sent[0]['event_time'] && 1 === count( array_keys( $redo->notes, 'payment_complete', true ) ), 'Livrée → Confirmée → Livrée: one Purchase at the new delivery time, collected once.' );
+
+// A Purchase already accepted is unaffected by a later step back.
+$move( 8114, 'confirmed' );
+$move( 8114, 'completed' );
+$capi->fire_purchase_on_status( 8114 );
+l5_check( 1 === count( $purchases() ) && (bool) $redo->get_meta( '_famma_purchase_sent' ), 'Accepted Purchase: a later step back neither resends nor clears it.' );
 
 // Action Scheduler cannot store the task: error in the journal, health signal, immediate send.
 l5_reset();

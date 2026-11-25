@@ -669,11 +669,12 @@ final class Order_Statuses {
 	public const DELIVERED_AT = '_famma_delivered_at';
 
 	/**
-	 * Statuts qui effacent le passage par « Livrée » : une commande annulée,
-	 * refusée, en échec de livraison, retournée ou remboursée qui passe
-	 * ensuite à « Terminée » ne donne pas de Purchase.
+	 * Seuls statuts qui gardent le passage par « Livrée ». Tout autre statut
+	 * (Confirmée, Expédiée, Annulée, Refusée, Retournée…) l'efface : une
+	 * commande qui repasse ensuite à « Terminée » sans nouvelle livraison ne
+	 * donne ni encaissement ni Purchase (banc Docker du 25/11).
 	 */
-	public const DELIVERY_UNDONE = array( 'cancelled', 'refused', 'failed-delivery', 'returned', 'refunded' );
+	public const DELIVERY_KEPT = array( 'delivered', 'completed' );
 
 	/**
 	 * Singleton instance.
@@ -968,8 +969,12 @@ final class Order_Statuses {
 	}
 
 	/**
-	 * Efface le passage par « Livrée » quand la commande est annulée, refusée,
-	 * en échec de livraison, retournée ou remboursée.
+	 * Efface le passage par « Livrée » dès que la commande quitte « Livrée » ou
+	 * « Terminée » (retour en arrière vers Confirmée, Expédiée…, annulation,
+	 * refus, échec, retour, remboursement).
+	 *
+	 * Sans effet sur un Purchase déjà accepté (marqueur et registre) ni sur
+	 * OrderReturned, qui dépend du Purchase accepté et non de cette méta.
 	 *
 	 * @param int    $order_id Order identifier.
 	 * @param string $from     Previous status.
@@ -977,7 +982,7 @@ final class Order_Statuses {
 	 * @return void
 	 */
 	public function forget_delivery( int $order_id, string $from, string $to ): void {
-		if ( ! in_array( $to, self::DELIVERY_UNDONE, true ) ) {
+		if ( in_array( $to, self::DELIVERY_KEPT, true ) ) {
 			return;
 		}
 		$o = wc_get_order( $order_id );
