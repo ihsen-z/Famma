@@ -6,6 +6,7 @@
  * receives the request arguments, hence the token (WordPress HTTP API limit,
  * documented in includes/capi-transport.php). It is counted apart, as
  * ECART_V2, never hidden inside FUITES=0.
+ * One PASS or FAIL line per check, exit code 1 on any FAIL (reevaluation C7).
  * Run with: php scripts/tests-unit/test-capi-log-masquage.php [--json]
  * Real Capi, Config, Tunisia, Capi_Signals, Capi_Log, Capi_Product_Data, the
  * lot 5 collaborators (transport, user data, vault…) and Tracking_Settings;
@@ -231,6 +232,14 @@ foreach ( array( 'famma-core.php', 'includes/capi-log.php', 'includes/capi-signa
 // Declared gap to V2: paths where a third-party http_api_debug listener sees the token.
 $v2_gaps = count( array_filter( array_column( $rows, 'http_api_debug_voi' ) ) );
 
+// Guards against a silent suite: all the paths ran, famma-core never listens to http_api_debug itself,
+// and the third-party listener stand-in really saw the request (otherwise the declared V2 gap would be measured on nothing).
+$expected_rows = count( $paths ) + 1 + 2;
+$count_ok      = count( $rows ) === $expected_rows;
+$core_ok       = 0 === $core_listener;
+$v2_ok         = $v2_gaps > 0;
+$failures     += ( $count_ok ? 0 : 1 ) + ( $core_ok ? 0 : 1 ) + ( $v2_ok ? 0 : 1 );
+
 if ( in_array( '--json', $argv, true ) ) {
 	echo json_encode(
 		array(
@@ -242,15 +251,19 @@ if ( in_array( '--json', $argv, true ) ) {
 		),
 		JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
 	) . PHP_EOL;
-	exit( 0 );
+	exit( 0 === $failures ? 0 : 1 );
 }
+// One PASS / FAIL line per check, exit code 1 on any FAIL (reevaluation C7: the old report-only output asserted nothing).
 foreach ( $rows as $row ) {
-	echo $row['verdict'] . ': ' . $row['chemin'] . ( '' !== $row['fuite_journal'] ? ' [journal: « ' . $row['fuite_journal'] . ' »]' : '' ) . ( '' !== $row['fuite_url'] ? ' [url: « ' . $row['fuite_url'] . ' »]' : '' ) . ( '' !== $row['fuite_notes'] ? ' [notes: « ' . $row['fuite_notes'] . ' »]' : '' ) . ' | http_api_debug voit le jeton: ' . ( $row['http_api_debug_voi'] ? 'oui (ÉCART V2 déclaré)' : 'non' ) . PHP_EOL;
+	echo ( 'MASQUE' === $row['verdict'] ? 'PASS' : 'FAIL' ) . ': ' . $row['chemin'] . ' (token masked from log, order notes, URL)' . ( '' !== $row['fuite_journal'] ? ' [LEAK journal: « ' . $row['fuite_journal'] . ' »]' : '' ) . ( '' !== $row['fuite_url'] ? ' [LEAK url: « ' . $row['fuite_url'] . ' »]' : '' ) . ( '' !== $row['fuite_notes'] ? ' [LEAK notes: « ' . $row['fuite_notes'] . ' »]' : '' ) . PHP_EOL;
 	if ( '' !== $row['ligne_journal'] ) {
 		echo '    ' . str_replace( "\n", "\n    ", $row['ligne_journal'] ) . PHP_EOL;
 	}
 }
-echo 'Occurrences de http_api_debug dans famma-core : ' . $core_listener . PHP_EOL;
-echo 'CHECKS=' . count( $rows ) . ' FUITES=' . $failures . ' ECART_V2=' . $v2_gaps . PHP_EOL;
-echo 'ÉCART V2 (déclaré, non corrigé) : un écouteur tiers de http_api_debug reçoit les arguments de la requête, donc le jeton, sur ' . $v2_gaps . ' chemin(s) ; limite de l’API HTTP de WordPress, voir includes/capi-transport.php. T1.6 et V2 ne sont donc pas entièrement verts.' . PHP_EOL;
+echo ( $count_ok ? 'PASS' : 'FAIL' ) . ': the suite still runs all its paths (' . count( $rows ) . ' of ' . $expected_rows . ' expected).' . PHP_EOL;
+echo ( $core_ok ? 'PASS' : 'FAIL' ) . ': famma-core never listens to http_api_debug (' . $core_listener . ' occurrence(s)).' . PHP_EOL;
+echo ( $v2_ok ? 'PASS' : 'FAIL' ) . ': the third-party http_api_debug stand-in really received the request on ' . $v2_gaps . ' path(s) (the declared V2 gap is measured on something).' . PHP_EOL;
+echo 'CHECKS=' . ( count( $rows ) + 3 ) . ' FUITES=' . $failures . ' ECART_V2=' . $v2_gaps . PHP_EOL;
+echo 'INFO: declared gap to V2, not a failure: a third-party http_api_debug listener receives the request arguments, hence the token, on ' . $v2_gaps . ' path(s); WordPress HTTP API limit, see includes/capi-transport.php.' . PHP_EOL;
 echo 'No network requests or database writes were performed.' . PHP_EOL;
+exit( 0 === $failures ? 0 : 1 );

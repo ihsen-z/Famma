@@ -10,6 +10,9 @@
  * @package Famma_Test_Scenarios
  */
 
+// phpcs:disable Squiz.Commenting.FunctionComment.WrongStyle -- Line comments label groups of doubles.
+// phpcs:disable WordPress.WP.GlobalVariablesOverride.Prohibited -- Standalone runner outside WordPress: local fixtures, no WordPress global exists.
+
 // Standalone runner: WordPress is never loaded, see bootstrap.php and bootstrap-capi.php.
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals -- Doubles keep the names of the API they replace.
 // phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter -- Doubles keep the signatures of the API they replace.
@@ -97,7 +100,13 @@ l5_reset( array( Capi_Orderplaced_Watch::SINCE => $now - 6 * 3600 ) );
 // Lot 7 stores the planned send time in `_famma_orderplaced_due_at` (Capi_Recovered_Cart::due_at()).
 $GLOBALS['wc_test_order_query'] = array( $recov( 7410, 40 * 60, $accept + array( Capi_Recovered_Cart::DUE_META => $now - 25 * 60 ) ), $order( 7411, 40 * 60, $accept ) );
 l5_check( array( 7411 => '7411' ) === Capi_Orderplaced_Watch::sort( $now )['missing'], 'Q19: recovered cart queued for 15 min after creation, 40 min old = 25 min after its planned send → not yet; site order 40 min old → reported.' );
-l5_check( array( 7410 => '7410', 7411 => '7411' ) === Capi_Orderplaced_Watch::sort( $now + 10 * 60 )['missing'], 'Q19: 35 min after the planned send → the recovered cart is reported too.' );
+l5_check(
+	array(
+		7410 => '7410',
+		7411 => '7411',
+	) === Capi_Orderplaced_Watch::sort( $now + 10 * 60 )['missing'],
+	'Q19: 35 min after the planned send → the recovered cart is reported too.'
+);
 add_filter( 'famma_capi_orderplaced_due_at', static fn( int $due ): int => $due + 3600 );
 l5_check( array() === Capi_Orderplaced_Watch::sort( $now + 10 * 60 )['missing'], 'Filter famma_capi_orderplaced_due_at can move the planned send time.' );
 unset( $GLOBALS['wp_test_hooks']['famma_capi_orderplaced_due_at'] );
@@ -142,7 +151,7 @@ l5_check( 0 === Capi_Orderplaced_Ack::acknowledge_all( $now ), 'Nothing left to 
 
 // M1 — send lock, recovery e-mail sent once even when the mail server refuses it.
 l5_reset();
-$GLOBALS['wp_test_options']['famma_capi_heartbeat'] = $now - 37 * 3600;
+$GLOBALS['wp_test_options']['famma_capi_heartbeat']    = $now - 37 * 3600;
 $GLOBALS['wp_test_options'][ Capi_Health_Alert::LOCK ] = $now - 30;
 Capi_Health::evaluate( $now );
 l5_check( 0 === $mails(), 'M1: another evaluation holds the send lock → no second e-mail.' );
@@ -175,17 +184,17 @@ $rows = array( $row( 7430, 2 * 3600 ) );
 for ( $n = 0; $n < 120; $n++ ) {
 	$rows[] = $row( 7500 + $n, 600 + $n, 5 );
 }
-$GLOBALS['famma_test_registry_stateful'] = true;
-$GLOBALS['famma_test_registry_rejected'] = $rows;
+$GLOBALS['famma_test_registry_stateful']        = true;
+$GLOBALS['famma_test_registry_rejected']        = $rows;
 $GLOBALS['famma_test_registry'][ $key( 7430 ) ] = array(
 	'state'         => 'rejected',
 	'attempt_count' => 1,
 	'event_time'    => $now - 2 * 3600,
 	'order_id'      => 7430,
 );
-$target = $order( 7430, 2 * 3600, $accept );
+$target                         = $order( 7430, 2 * 3600, $accept );
 $GLOBALS['wp_test_environment'] = 'staging';
-$first  = Capi_Refusal_Resend::sweep( $now );
+$first                          = Capi_Refusal_Resend::sweep( $now );
 l5_check( 1 === $first['resent'] && ! isset( get_option( Capi_Refusal_Resend::DONE, array() )[ $key( 7430 ) ] ), 'M2: 120 newer exhausted refusals do not hide the older resendable one; outcome « blocked_environment » (nothing sent) → not marked as resent.' );
 $GLOBALS['wp_test_environment'] = 'production';
 Capi_Refusal_Resend::sweep( $now + 60 );
@@ -193,7 +202,7 @@ l5_check( $target->get_meta( '_famma_orderplaced_sent' ) && isset( get_option( C
 
 // M3 — scheduled tasks removed on deactivation.
 $GLOBALS['wp_test_cron'] = array(
-	Capi_Health_Watch::HOOK  => $now,
+	Capi_Health_Watch::HOOK   => $now,
 	Capi_Refusal_Resend::HOOK => $now,
 );
 if ( class_exists( \Famma\Core\Capi_Meta_Quality::class ) ) {

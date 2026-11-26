@@ -114,12 +114,16 @@ final class Capi_Recovered_Cart {
 
 	/**
 	 * Motif d'exclusion d'une commande qui ne vient pas du checkout, vide si
-	 * c'est un panier récupéré qui peut envoyer OrderPlaced.
+	 * c'est un panier récupéré (ou une commande saisie à la main dans
+	 * l'administration, `Capi_Manual_Order`, L6) qui peut envoyer OrderPlaced.
 	 *
 	 * @param \WC_Order $order Commande dont `created_via` n'est pas `checkout`.
-	 * @return string `created_via:<origine>`, `recovered_cart:disabled`, `recovered_cart:no_product` ou vide.
+	 * @return string `created_via:<origine>`, `recovered_cart:disabled`, `recovered_cart:no_product`, `manual_order:*` ou vide.
 	 */
 	public static function block_reason( \WC_Order $order ): string {
+		if ( Capi_Manual_Order::is_manual( $order ) ) {
+			return Capi_Manual_Order::block_reason( $order );
+		}
 		if ( ! self::is_recovered( $order ) ) {
 			$via = (string) $order->get_created_via();
 			return 'created_via:' . ( '' !== $via ? $via : 'unknown' );
@@ -148,10 +152,12 @@ final class Capi_Recovered_Cart {
 	 * jamais le départ.
 	 *
 	 * @param \WC_Order $order Commande mise en file.
-	 * @return int Heure de départ (0 pour une commande qui n'est pas un panier récupéré : immédiat).
+	 * Même délai pour une commande saisie à la main dans l'administration (L6).
+	 *
+	 * @return int Heure de départ (0 pour une commande du site : immédiat).
 	 */
 	public static function plan( \WC_Order $order ): int {
-		if ( ! self::is_recovered( $order ) ) {
+		if ( ! self::is_recovered( $order ) && ! Capi_Manual_Order::is_manual( $order ) ) {
 			return 0;
 		}
 		$due = self::due_at( $order );

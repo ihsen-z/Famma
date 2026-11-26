@@ -85,7 +85,7 @@ $full_cycle = static function ( int $id, array $meta ) use ( $capi, $statuses, $
 };
 
 // Pure function: SHA-256 hex of the lower-case UUID; nothing for a non-UUID.
-l5_check( $expected === Capi_External_Id::from_visitor( $visitor ) && $expected === Capi_External_Id::from_visitor( ' ' . strtoupper( $visitor ) . ' ' ), 'from_visitor(): SHA-256 hex of the trimmed, lower-case UUID.' );
+l5_check( Capi_External_Id::from_visitor( $visitor ) === $expected && Capi_External_Id::from_visitor( ' ' . strtoupper( $visitor ) . ' ' ) === $expected, 'from_visitor(): SHA-256 hex of the trimmed, lower-case UUID.' );
 l5_check( 1 === preg_match( '/^[0-9a-f]{64}$/D', $expected ), 'The fingerprint is 64 lower-case hexadecimal characters.' );
 l5_check( '' === Capi_External_Id::from_visitor( '' ) && '' === Capi_External_Id::from_visitor( 'abc' ) && '' === Capi_External_Id::from_visitor( '5d6e7f80-91a2-1b3c-8d4e-5f60718293a4' ), 'Empty, arbitrary or non-v4 identifiers: no external_id.' );
 
@@ -102,7 +102,7 @@ $events = $sent();
 ksort( $events );
 l5_check( array( 'OfferAccepted', 'OrderCancelled', 'OrderPlaced', 'OrderReturned', 'Purchase' ) === array_keys( $events ), 'Setup: OrderPlaced, OfferAccepted, Purchase, OrderReturned and OrderCancelled all left.' );
 foreach ( $events as $name => $event ) {
-	l5_check( $expected === ( $event['user_data']['external_id'] ?? '' ), $name . ': user_data.external_id = expected fingerprint (sent value = expected value).' );
+	l5_check( ( $event['user_data']['external_id'] ?? '' ) === $expected, $name . ': user_data.external_id = expected fingerprint (sent value = expected value).' );
 }
 l5_check( ! str_contains( (string) wp_json_encode( $GLOBALS['wp_test_http'] ), $visitor ), 'The raw visitor identifier never leaves: only its fingerprint.' );
 
@@ -124,6 +124,6 @@ foreach ( array( array(), array( '_famma_visitor_id' => 'pas-un-uuid' ) ) as $in
 $admin              = new WC_Order( 9850 );
 $admin->created_via = 'admin';
 $admin->meta        = array( '_famma_visitor_id' => strtoupper( $visitor ) );
-l5_check( $expected === ( Capi_User_Data::build( $admin, false )['external_id'] ?? '' ), 'Off-site order: external_id from the stored visitor, upper case normalised.' );
+l5_check( ( Capi_User_Data::build( $admin, false )['external_id'] ?? '' ) === $expected, 'Off-site order: external_id from the stored visitor, upper case normalised.' );
 
 echo 'RESULT ' . $GLOBALS['l5_checks'] . '/' . $GLOBALS['l5_checks'] . PHP_EOL;

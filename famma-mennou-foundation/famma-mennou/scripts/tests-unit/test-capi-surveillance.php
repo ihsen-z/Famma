@@ -9,6 +9,9 @@
  * @package Famma_Test_Scenarios
  */
 
+// phpcs:disable Squiz.Commenting.FunctionComment.WrongStyle -- Line comments label groups of doubles.
+// phpcs:disable WordPress.WP.GlobalVariablesOverride.Prohibited -- Standalone runner outside WordPress: local fixtures, no WordPress global exists.
+
 // Standalone runner: WordPress is never loaded, see bootstrap.php and bootstrap-capi.php.
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals -- Doubles keep the names of the API they replace.
 // phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter -- Doubles keep the signatures of the API they replace.
@@ -100,10 +103,17 @@ $GLOBALS['wc_test_order_query']        = array(
 	$order( 7008, 3 * 3600 ),
 	$order( 7009, 45 * 60, array(), 'cancelled' ),
 );
-$state = Capi_Health::evaluate( $now );
-$miss  = $find( $state, 'orderplaced_missing' );
+$state                                 = Capi_Health::evaluate( $now );
+$miss                                  = $find( $state, 'orderplaced_missing' );
 l5_check( 'rouge' === $state['statut'] && 'rouge' === ( $miss['niveau'] ?? '' ) && '7001' === ( $miss['detail'] ?? '' ), 'OrderPlaced not accepted 31 min after the order → red, order n° 7001 named; 20 min old, test order, before the start date, back-office order, already sent, accepted in the registry, cancelled → not reported.' );
-l5_check( array( 'code' => 'orderplaced_lost', 'niveau' => 'orange', 'detail' => '7008' ) === $find( $state, 'orderplaced_lost' ), 'Uncertain for 2 days, no resend possible any more → orange, n° 7008 named.' );
+l5_check(
+	array(
+		'code'   => 'orderplaced_lost',
+		'niveau' => 'orange',
+		'detail' => '7008',
+	) === $find( $state, 'orderplaced_lost' ),
+	'Uncertain for 2 days, no resend possible any more → orange, n° 7008 named.'
+);
 l5_check( str_contains( \Famma\Core\Capi_Health_Rules::label( $miss ), 'n° 7001' ), 'The label names the order.' );
 $body = (string) ( $GLOBALS['wp_test_mail'][0][2] ?? '' );
 l5_check( 1 === $mails() && str_contains( $body, '7001' ) && ! str_contains( $body, '22123456' ) && ! str_contains( $body, 'QA-L5-FAKE-TOKEN' ), 'The e-mail names the order number, never the phone nor the token.' );
@@ -114,7 +124,7 @@ unset( $GLOBALS['wp_test_hooks']['famma_capi_orderplaced_expected'] );
 $GLOBALS['wp_test_options']['famma_meta_orderplaced_enabled'] = false;
 l5_check( array() === Capi_Orderplaced_Watch::sort( $now )['missing'], 'OrderPlaced switched off: nothing expected, nothing reported.' );
 $GLOBALS['wp_test_options']['famma_meta_orderplaced_enabled'] = true;
-$many                           = array();
+$many = array();
 for ( $n = 0; $n < 12; $n++ ) {
 	$many[] = $order( 7200 + $n, 40 * 60 );
 }
@@ -136,8 +146,8 @@ if ( class_exists( \Famma\Core\Capi_Meta_Quality::class ) ) {
 }
 
 // 2. Automatic resend of refusals once the problem is fixed.
-$key = static fn( string $name, int $id ): string => hash( 'sha256', '000000000000001|' . $name . '|famma_' . strtolower( $name ) . '_' . $id );
-$row = static function ( string $name, int $id, int $age, string $class = 'access' ) use ( $now, $key ): array {
+$key   = static fn( string $name, int $id ): string => hash( 'sha256', '000000000000001|' . $name . '|famma_' . strtolower( $name ) . '_' . $id );
+$row   = static function ( string $name, int $id, int $age, string $class = 'access' ) use ( $now, $key ): array {
 	return array(
 		'event_key'     => $key( $name, $id ),
 		'order_id'      => $id,
@@ -146,10 +156,17 @@ $row = static function ( string $name, int $id, int $age, string $class = 'acces
 		'event_time'    => $now - $age,
 		'state'         => 'rejected',
 		'attempt_count' => 1,
-		'attempts'      => wp_json_encode( array( array( 'state' => 'rejected', 'class' => $class ) ) ),
+		'attempts'      => wp_json_encode(
+			array(
+				array(
+					'state' => 'rejected',
+					'class' => $class,
+				),
+			)
+		),
 	);
 };
-$seed = static function ( array $rows ): void {
+$seed  = static function ( array $rows ): void {
 	$GLOBALS['famma_test_registry_stateful'] = true;
 	$GLOBALS['famma_test_registry_rejected'] = $rows;
 	foreach ( $rows as $item ) {
@@ -168,7 +185,14 @@ l5_reset();
 $placed   = $order( 7101, 86400, array( '_famma_orderplaced_checkout_accepted' => 1 ) );
 $bought   = $order( 7102, 2 * 86400, array( '_famma_purchase_event_time' => $now - 86400 ), 'delivered' );
 $returned = $order( 7103, 2 * 86400, array( '_famma_purchase_event_time' => $now - 86400 ), 'returned' );
-$test     = $order( 7105, 86400, array( '_famma_orderplaced_checkout_accepted' => 1, '_famma_test_order' => 1 ) );
+$test     = $order(
+	7105,
+	86400,
+	array(
+		'_famma_orderplaced_checkout_accepted' => 1,
+		'_famma_test_order'                    => 1,
+	)
+);
 $local    = $order( 7106, 86400, array( '_famma_orderplaced_checkout_accepted' => 1 ) );
 $old      = $order( 7104, 7 * 86400, array( '_famma_orderplaced_checkout_accepted' => 1 ) );
 $seed( array( $row( 'OrderPlaced', 7101, 86400 ), $row( 'Purchase', 7102, 86400, 'contract' ), $row( 'Purchase', 7103, 86400 ), $row( 'OrderPlaced', 7104, 7 * 86400 ), $row( 'OrderPlaced', 7105, 86400 ), $row( 'OrderPlaced', 7106, 86400, '' ) ) );

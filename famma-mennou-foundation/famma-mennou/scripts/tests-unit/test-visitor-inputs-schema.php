@@ -9,6 +9,10 @@
  * @package Famma_Test_Scenarios
  */
 
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound, WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid -- Doubles keep the names of the WordPress API they replace (ARRAY_A, dbDelta).
+// phpcs:disable Squiz.Commenting.VariableComment.Missing -- Doubles are documented by the API they replace.
+// phpcs:disable WordPress.WP.GlobalVariablesOverride.Prohibited -- Standalone runner outside WordPress: $wpdb is a double.
+
 // Standalone runner: WordPress is never loaded, see bootstrap.php and bootstrap-capi.php.
 require __DIR__ . '/bootstrap-capi.php';
 Famma_Unit_Harness::load_include( 'visitor-inputs.php' );
@@ -67,10 +71,10 @@ final class Famma_Test_Inputs_Wpdb {
 		return $this->insert( $table, $data );
 	}
 }
-// phpcs:enable
+// phpcs:enable WordPress.NamingConventions.PrefixAllGlobals, Squiz.Commenting.FunctionComment.Missing
 
-$base = array( 'created_at', 'updated_at', 'visitor_id', 'session_id', 'product_id', 'path', 'first_name', 'phone', 'phone_norm', 'state', 'address', 'city', 'size', 'quantity', 'source', 'medium', 'campaign', 'content', 'device', 'status', 'order_id', 'note' );
-$meta = array(
+$base   = array( 'created_at', 'updated_at', 'visitor_id', 'session_id', 'product_id', 'path', 'first_name', 'phone', 'phone_norm', 'state', 'address', 'city', 'size', 'quantity', 'source', 'medium', 'campaign', 'content', 'device', 'status', 'order_id', 'note' );
+$meta   = array(
 	'visitor_id' => '0a1b2c3d-4e5f-4a6b-9c7d-8e9f0a1b2c3d',
 	'session_id' => '7c1e2d3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f',
 	'product_id' => 0,
@@ -103,7 +107,7 @@ $inputs->install();
 l5_check( '3' === get_option( 'famma_visitor_inputs_schema' ) && $inputs->cookie_columns_ready(), 'I3: both columns present: schema 3 validated.' );
 $inputs->save( $meta, array( 'first_name' => 'Amel' ) );
 $last = end( $GLOBALS['wpdb']->writes );
-l5_check( $meta['fbc'] === ( $last['fbc'] ?? '' ) && $meta['fbp'] === ( $last['fbp'] ?? '' ), 'Schema 3: the latest fbc/fbp are recorded with the input.' );
+l5_check( ( $last['fbc'] ?? '' ) === $meta['fbc'] && ( $last['fbp'] ?? '' ) === $meta['fbp'], 'Schema 3: the latest fbc/fbp are recorded with the input.' );
 $inputs->install();
 l5_check( 3 === count( $GLOBALS['famma_test_dbdelta'] ), 'Schema 3 installed: dbDelta is not run again.' );
 

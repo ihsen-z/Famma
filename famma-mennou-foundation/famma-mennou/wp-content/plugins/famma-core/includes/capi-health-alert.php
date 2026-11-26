@@ -197,6 +197,18 @@ final class Capi_Health_Alert {
 	}
 
 	/**
+	 * E-mail d'essai (bouton de FAMMA → Mesure) : même gabarit que l'alerte, clairement marqué « essai »,
+	 * sans raison, sans jeton ni donnée client, et sans effet sur les règles d'envoi des vraies alertes.
+	 *
+	 * @param string $to Destinataire (adresse des alertes).
+	 * @return bool Vrai si `wp_mail()` a accepté le message.
+	 */
+	public static function send_test( string $to ): bool {
+		$intro = __( 'ESSAI : ceci est un e-mail d’essai envoyé depuis FAMMA → Mesure pour vérifier que les alertes de la mesure Meta arrivent bien. Aucune alerte réelle : la mesure n’est pas en cause.', 'famma-core' );
+		return self::send( $to, self::body( $intro, array( 'raisons' => array() ) ), __( 'FAMMA : e-mail d’essai des alertes (essai)', 'famma-core' ) );
+	}
+
+	/**
 	 * Corps de l'e-mail de retour : vert, ou orange avec ce qui reste à surveiller.
 	 *
 	 * @param array<string, mixed> $state État calculé.

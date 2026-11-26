@@ -28,6 +28,8 @@ PHPRC=<dossier avec un php.ini chargeant les mêmes extensions> \
 php -n -d extension_dir=... -d extension=mbstring -d extension=sodium scripts/run-unit-tests.php
 ```
 
+Format des suites : une ligne `PASS:` ou `FAIL:` par contrôle, et un code de sortie 1 dès qu'un `FAIL` apparaît (jamais de rapport « à lire » qui sort 0). `test-capi-log-masquage.php` et `test-capi-normalisation.php`, longtemps muettes, suivent ce format depuis la réévaluation C7 (preuve : un défaut injecté dans une copie hors du dépôt, `redact()` neutralisé ou l'indicatif 216 retiré, les rend rouges, code 1). Le défaut déclaré V2 (`http_api_debug` d'un plugin tiers voit le jeton) reste une ligne `INFO:` : une limite de WordPress, pas un échec.
+
 `scripts/tests-quarantine.txt` liste les suites déjà rouges avant les réformes du pixel : elles tournent,
 s'affichent `KNOWN` et ne bloquent pas la CI. Ajouter une ligne cache une suite en échec : décision à relire.
 Le lanceur signale quand une suite quarantainée redevient verte (retirer alors la ligne).

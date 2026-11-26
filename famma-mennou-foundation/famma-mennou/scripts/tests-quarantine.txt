@@ -3,8 +3,6 @@
 # Format: <suite path relative to scripts/> | <reason>. A quarantined suite is still run and
 # reported; it never turns the build red, and the runner says so when it turns green (remove the line then).
 # Adding a line here must be a reviewed decision: it hides a failing suite.
-# Empty since the JS fix: test-famma-express-v2.js (and its wrapper test-famma-scenarios.js) showed "0 PASS" only because
+# Empty again since the C7 rewrite (test-capi-log-masquage and test-capi-normalisation now assert with PASS/FAIL and exit 1 on failure); empty since the JS fix: test-famma-express-v2.js (and its wrapper test-famma-scenarios.js) showed "0 PASS" only because
 # the suite crashed at load (child `php` without mbstring, see tests-js-rapport.md); it now counts 96 PASS and lists its 10
 # stale scenarios one by one as KNOWN-STALE inside the suite (STALE set in test-famma-express-v2.js).
-tests-unit/test-capi-log-masquage.php | Report-style suite: prints MASQUE: lines and never PASS/FAIL, exit 0 whatever happens, so it asserts nothing (0 PASS rule of the runner). To rewrite with PASS/FAIL assertions (owner of the CAPI suites).
-tests-unit/test-capi-normalisation.php | Report-style suite: prints CONFORME:/ECART: lines (CHECKS=36 ECARTS=1) and never PASS/FAIL, exit 0 even with an ECART, so it asserts nothing (0 PASS rule of the runner). To rewrite with PASS/FAIL assertions (owner of the CAPI suites).

@@ -480,6 +480,7 @@ final class Tracking_Settings {
 				?>
 			</form>
 			<?php if ( current_user_can( 'manage_woocommerce' ) ) : ?>
+				<?php Capi_Health_Alert_Test::render(); ?>
 				<h2><?php esc_html_e( 'Tester les événements sans créer de commande', 'famma-core' ); ?></h2>
 				<p><?php esc_html_e( 'Envoie un seul événement synthétique dans les événements de test Meta. Aucune commande, vente, donnée client ou modification de stock. Le code de test est obligatoire.', 'famma-core' ); ?></p>
 				<form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post">

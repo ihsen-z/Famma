@@ -8,6 +8,8 @@
  * @package Famma_Test_Scenarios
  */
 
+// phpcs:disable Squiz.Commenting.FunctionComment.Missing -- Doubles are documented by the API they replace.
+
 // Standalone runner: WordPress is never loaded, see bootstrap.php and bootstrap-capi.php.
 require __DIR__ . '/bootstrap-capi.php';
 
@@ -37,9 +39,9 @@ use Famma\Core\Capi_Health;
 use Famma\Core\Capi_Meta_Quality;
 use Famma\Core\Capi_Meta_Quality_View;
 
-$base  = time();
-$token = 'QA-QUALITY-FAKE-TOKEN-NOT-REAL';
-$reset = static function () use ( $token ): void {
+$base    = time();
+$token   = 'QA-QUALITY-FAKE-TOKEN-NOT-REAL';
+$reset   = static function () use ( $token ): void {
 	$GLOBALS['wp_test_options']       = array(
 		'famma_meta_pixel_id'     => '1234567890',
 		'famma_meta_access_token' => $token,
@@ -80,7 +82,7 @@ l5_check( 'ok' === $data['status'] && 2 === count( $data['events'] ), 'OK answer
 l5_check( 5.4 === Capi_Meta_Quality::score( 'OrderPlaced' ) && 7.0 === Capi_Meta_Quality::score( 'PageView' ) && null === Capi_Meta_Quality::score( 'Purchase' ), 'score() exposes the match note, null when unknown' );
 l5_check( 'real_time' === $data['events'][0]['frequency'] && 88.3 === $data['events'][0]['coverage'], 'freshness and coverage kept' );
 l5_check( false !== strpos( $request['url'], '/dataset_quality?dataset_id=1234567890' ) && false === strpos( $request['url'], $token ) && false === strpos( $request['url'], 'access_token' ), 'URL has the dataset and no token' );
-l5_check( 'Bearer ' . $token === ( $request['args']['headers']['Authorization'] ?? '' ), 'token sent in the Authorization header' );
+l5_check( ( $request['args']['headers']['Authorization'] ?? '' ) === 'Bearer ' . $token, 'token sent in the Authorization header' );
 l5_check( $base === $data['read_at'], 'read date stored' );
 $html = $screen();
 l5_check( false !== strpos( $html, 'OrderPlaced' ) && false !== strpos( $html, '5,4' ) && false !== strpos( $html, 'en temps réel' ), 'screen shows event, note and freshness' );
@@ -97,7 +99,17 @@ l5_check( 2 === count( $GLOBALS['wp_test_http'] ), 'a call after 24 h' );
 $reset();
 $GLOBALS['wp_test_http_response'] = l5_response( 200, $ok_body );
 Capi_Meta_Quality::refresh( $base - 100000 );
-$GLOBALS['wp_test_http_response'] = l5_response( 403, (string) json_encode( array( 'error' => array( 'code' => 200, 'message' => 'Permissions error ' . $token ) ) ) );
+$GLOBALS['wp_test_http_response'] = l5_response(
+	403,
+	(string) json_encode(
+		array(
+			'error' => array(
+				'code'    => 200,
+				'message' => 'Permissions error ' . $token,
+			),
+		)
+	)
+);
 Capi_Meta_Quality::refresh( $base );
 $data = Capi_Meta_Quality::get();
 $html = $screen();
@@ -120,7 +132,7 @@ foreach ( array(
 	$reset();
 	$GLOBALS['wp_test_http_response'] = $response;
 	Capi_Meta_Quality::refresh( $base );
-	l5_check( $reason === Capi_Meta_Quality::get()['reason'], 'failure classed ' . $reason );
+	l5_check( Capi_Meta_Quality::get()['reason'] === $reason, 'failure classed ' . $reason );
 }
 
 // 5. Not configured: no call.

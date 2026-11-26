@@ -13,6 +13,9 @@
  * @package Famma_Test_Scenarios
  */
 
+// phpcs:disable Squiz.Commenting.VariableComment.Missing -- Doubles are documented by the API they replace.
+// phpcs:disable WordPress.WP.GlobalVariablesOverride.Prohibited -- Standalone runner outside WordPress: $wpdb is a double, $order a local fixture.
+
 // Standalone runner: WordPress is never loaded, see bootstrap.php and bootstrap-capi.php.
 require __DIR__ . '/bootstrap-capi.php';
 
@@ -43,7 +46,7 @@ function esc_url( string $url ): string {
 function wp_nonce_field( $action, string $name = '_wpnonce', bool $referer = true, bool $display = true ): string {
 	return '<input type="hidden" name="' . $name . '" value="nonce-' . $action . '">';
 }
-// phpcs:enable
+// phpcs:enable WordPress.NamingConventions.PrefixAllGlobals, Squiz.Commenting.FunctionComment.Missing
 
 $GLOBALS['wpdb'] = new Famma_Test_Wpdb();
 $capi            = Capi::instance();
@@ -69,10 +72,10 @@ $recovered_order = static function ( int $id, array $extra = array() ) use ( $pr
 	$order->country     = 'TN';
 	$order->items       = array( new WC_Order_Item_Product( $product, 1 ) );
 	$order->meta        = $extra + array(
-		Order_Channel::META                => Order_Channel::RECOVERED,
-		Visitor_Inputs_Order::META_INPUT   => 55,
-		'_famma_visitor_id'                => $visitor,
-		'_famma_visitor_session'           => $session,
+		Order_Channel::META              => Order_Channel::RECOVERED,
+		Visitor_Inputs_Order::META_INPUT => 55,
+		'_famma_visitor_id'              => $visitor,
+		'_famma_visitor_session'         => $session,
 	);
 	Capi_Recovered_Cart::stamp(
 		$order,
@@ -84,7 +87,7 @@ $recovered_order = static function ( int $id, array $extra = array() ) use ( $pr
 	);
 	return $order;
 };
-$sent = static function (): array {
+$sent            = static function (): array {
 	return array_map( static fn( array $call ): array => json_decode( (string) $call['args']['body'], true )['data'][0], $GLOBALS['wp_test_http'] );
 };
 
@@ -113,12 +116,12 @@ $queued_at                               = time();
 l5_check( 'queued' === Capi_Recovered_Cart::queue( $order ) && 1 === count( $GLOBALS['as_test_actions'] ), 'Recovered cart, switch untouched (on by default): OrderPlaced queued once.' );
 $task = $GLOBALS['as_test_actions'][0];
 l5_check( 'famma_capi_orderplaced_send' === $task[1] && 'famma-capi' === $task[3] && $task[0] >= $queued_at + 900 && $task[0] <= time() + 900, 'Q19: the task waits 15 minutes (group famma-capi), not an immediate async action.' );
-l5_check( $task[0] === Capi_Recovered_Cart::due_at( $order ) && 900 === Capi_Recovered_Cart::delay(), 'Q19: due_at() exposes the planned send time (15 min by default) for the surveillance.' );
+l5_check( Capi_Recovered_Cart::due_at( $order ) === $task[0] && 900 === Capi_Recovered_Cart::delay(), 'Q19: due_at() exposes the planned send time (15 min by default) for the surveillance.' );
 l5_check( $order->get_date_created()->getTimestamp() === (int) $order->get_meta( '_famma_orderplaced_event_time' ), 'event_time = order creation time, not the delayed send time.' );
 l5_as_run_next();
 $events = $sent();
 l5_check( 1 === count( $events ) && 'OrderPlaced' === $events[0]['event_name'] && 'famma_orderplaced_9712' === $events[0]['event_id'], 'Recovered cart: one OrderPlaced sent, stable event_id.' );
-l5_check( $fbc === ( $events[0]['user_data']['fbc'] ?? '' ) && $fbp === ( $events[0]['user_data']['fbp'] ?? '' ), 'Recovered cart: OrderPlaced carries the fbc and fbp of the original visit.' );
+l5_check( ( $events[0]['user_data']['fbc'] ?? '' ) === $fbc && ( $events[0]['user_data']['fbp'] ?? '' ) === $fbp, 'Recovered cart: OrderPlaced carries the fbc and fbp of the original visit.' );
 l5_check( 'phone_call' === $events[0]['action_source'] && ! isset( $events[0]['user_data']['client_user_agent'] ) && ! isset( $events[0]['event_source_url'] ), 'Q20: recovered cart = action_source phone_call, no user agent, no event_source_url.' );
 l5_check( hash( 'sha256', '0a1b2c3d-4e5f-4a6b-9c7d-8e9f0a1b2c3d' ) === ( $events[0]['user_data']['external_id'] ?? '' ), 'Recovered cart: external_id = SHA-256 of the visitor of the input row.' );
 l5_check( 'already_sent' === Capi_Recovered_Cart::queue( $order ), 'Recovered cart: a second queue answers already_sent (marker).' );
@@ -211,7 +214,7 @@ $again                                        = $recovered_order( 9731 );
 $planned                                      = time() + 120;
 $again->meta[ Capi_Recovered_Cart::DUE_META ] = $planned;
 Capi_Recovered_Cart::queue( $again );
-l5_check( $planned === Capi_Recovered_Cart::due_at( $again ) && $planned === $GLOBALS['as_test_actions'][0][0], 'A re-queue keeps the planned time, it never pushes the departure later.' );
+l5_check( Capi_Recovered_Cart::due_at( $again ) === $planned && $GLOBALS['as_test_actions'][0][0] === $planned, 'A re-queue keeps the planned time, it never pushes the departure later.' );
 
 // Commandes du site : OrderPlaced immédiat, pas d'heure différée, source inchangée.
 l5_reset();

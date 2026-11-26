@@ -1,6 +1,7 @@
 <?php
 /**
  * T1.4 — Normalisation and hashing of the CAPI user_data block, against the Meta rules.
+ * One PASS or FAIL line per check, exit code 1 on any FAIL (reevaluation C7: no more report-only output).
  * Run with: php scripts/tests-unit/test-capi-normalisation.php [--json]
  * The real Capi_User_Data::build() (lot 5, A13; 0.3.4, D1 to D6), Config, Tunisia and Capi_Signals are exercised; no network.
  *
@@ -160,7 +161,9 @@ foreach ( array(
 	);
 }
 
-// Fields Meta recommends that user_data() never builds.
+// Fields Meta recommends. external_id (phase B, Capi_External_Id) is the SHA-256 of the visitor UUID frozen on the order
+// (`_famma_visitor_id`); it is never invented: absent without a valid UUID. zp is optional and only sent with a postcode (0.3.4, D4).
+$visitor_uuid           = '5d6e7f80-91a2-4b3c-8d4e-5f60718293a4';
 $full_order             = new WC_Order( 1498 );
 $full_order->email      = 'client.test@example.invalid';
 $full_order->phone      = '22123456';
@@ -169,23 +172,40 @@ $full_order->last_name  = 'Client';
 $full_order->city       = 'Sousse';
 $full_order->state      = 'TN-51';
 $full_order->country    = 'TN';
-$full_keys              = array_keys( l5_user_data( $full_order ) );
-foreach ( array( 'external_id', 'zp' ) as $missing_key ) {
-	$present = in_array( $missing_key, $full_keys, true );
-	// zp is optional for Meta and only sent when a postcode was entered (0.3.4, D4): this order has none, information only.
-	$verdict = $present ? 'CONFORME' : ( 'zp' === $missing_key ? 'INFO' : 'ECART' );
-	$ecarts += 'ECART' === $verdict ? 1 : 0;
-	$rows[]  = array(
-		'champ'          => $missing_key,
-		'entree'         => 'commande complète (e-mail, téléphone, nom, ville, gouvernorat, pays), sans code postal',
-		'attendu_meta'   => 'external_id: hashing recommended; zp: hashing required when sent',
-		'envoye'         => $present ? 'présent' : ( 'zp' === $missing_key ? '(omis : aucun code postal saisi)' : '(jamais construit)' ),
-		'hash_envoye'    => '',
-		'verdict'        => $verdict,
+$full_order->meta[ \Famma\Core\Visitor_Commerce::META_VISITOR ] = $visitor_uuid;
+$full_data              = l5_user_data( $full_order );
+$full_keys              = array_keys( $full_data );
+$anonymous_order        = new WC_Order( 1497 );
+$anonymous_order->email = 'client.test@example.invalid';
+$invalid_order          = new WC_Order( 1496 );
+$invalid_order->email   = 'client.test@example.invalid';
+$invalid_order->meta[ \Famma\Core\Visitor_Commerce::META_VISITOR ] = 'not-a-uuid';
+$extra = array(
+	array( 'external_id', 'commande complète avec identifiant visiteur UUID', 'sha256(identifiant visiteur)', hash( 'sha256', $visitor_uuid ), $full_data['external_id'] ?? null ),
+	array( 'external_id', 'commande sans identifiant visiteur', '(omis, jamais inventé)', null, l5_user_data( $anonymous_order )['external_id'] ?? null ),
+	array( 'external_id', 'identifiant visiteur invalide (pas un UUID)', '(omis)', null, l5_user_data( $invalid_order )['external_id'] ?? null ),
+	array( 'zp', 'commande complète sans code postal', '(omis : facultatif, jamais inventé)', null, $full_data['zp'] ?? null ),
+);
+foreach ( $extra as $extra_case ) {
+	list( $key, $input, $expected_label, $expected_value, $sent ) = $extra_case;
+	$conforme = $sent === $expected_value;
+	$ecarts  += $conforme ? 0 : 1;
+	$rows[]   = array(
+		'champ'          => $key,
+		'entree'         => $input,
+		'attendu_meta'   => $expected_label,
+		'envoye'         => null === $sent ? '(omis)' : 'présent',
+		'hash_envoye'    => null === $sent ? '' : substr( (string) $sent, 0, 16 ) . '…',
+		'verdict'        => $conforme ? 'CONFORME' : 'ECART',
 		'regle_meta'     => 'external_id recommandé (identifiant annonceur) ; zp facultatif',
 		'cles_user_data' => $full_keys,
 	);
 }
+
+// A suite that silently lost its cases proves nothing: the case count is itself a check.
+$expected_rows = count( $cases ) + 3 + count( $extra );
+$count_ok      = count( $rows ) === $expected_rows && count( $cases ) >= 30;
+$ecarts       += $count_ok ? 0 : 1;
 
 if ( in_array( '--json', $argv, true ) ) {
 	echo json_encode(
@@ -196,10 +216,13 @@ if ( in_array( '--json', $argv, true ) ) {
 		),
 		JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
 	) . PHP_EOL;
-	exit( 0 );
+	exit( 0 === $ecarts ? 0 : 1 );
 }
+// One PASS / FAIL line per check: the runner counts them, and the exit code is not 0 as soon as one FAIL appears.
 foreach ( $rows as $row ) {
-	echo $row['verdict'] . ': ' . $row['champ'] . ' « ' . $row['entree'] . ' » → envoyé « ' . $row['envoye'] . ' » ; attendu Meta « ' . $row['attendu_meta'] . ' »' . PHP_EOL;
+	echo ( 'CONFORME' === $row['verdict'] ? 'PASS' : 'FAIL' ) . ': ' . $row['champ'] . ' « ' . $row['entree'] . ' » → envoyé « ' . $row['envoye'] . ' » ; attendu Meta « ' . $row['attendu_meta'] . ' »' . PHP_EOL;
 }
-echo 'CHECKS=' . count( $rows ) . ' ECARTS=' . $ecarts . PHP_EOL;
+echo ( $count_ok ? 'PASS' : 'FAIL' ) . ': the suite still runs all its cases (' . count( $rows ) . ' of ' . $expected_rows . ' expected).' . PHP_EOL;
+echo 'CHECKS=' . ( count( $rows ) + 1 ) . ' ECARTS=' . $ecarts . PHP_EOL;
 echo 'No network requests or database writes were performed.' . PHP_EOL;
+exit( 0 === $ecarts ? 0 : 1 );

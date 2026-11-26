@@ -128,6 +128,7 @@ require_once __DIR__ . '/includes/capi-user-data.php';
 require_once __DIR__ . '/includes/capi-external-id.php';
 require_once __DIR__ . '/includes/capi-recovered-cart.php';
 require_once __DIR__ . '/includes/capi-recovered-cart-admin.php';
+require_once __DIR__ . '/includes/capi-manual-order.php';
 require_once __DIR__ . '/includes/capi-data-profile.php';
 require_once __DIR__ . '/includes/capi-retry.php';
 require_once __DIR__ . '/includes/capi-health.php';
@@ -147,6 +148,7 @@ require_once __DIR__ . '/includes/capi-orderplaced-watch.php';
 require_once __DIR__ . '/includes/capi-orderplaced-ack.php';
 require_once __DIR__ . '/includes/capi-refusal-resend.php';
 require_once __DIR__ . '/includes/capi-health-watch.php';
+require_once __DIR__ . '/includes/capi-health-alert-test.php';
 require_once __DIR__ . '/includes/measurement-settings.php';
 require_once __DIR__ . '/includes/order-emails.php';
 require_once __DIR__ . '/includes/anti-abuse.php';
@@ -2913,7 +2915,8 @@ final class Capi {
 	 * Why a checkout order cannot be reported as OrderPlaced, or an empty string.
 	 *
 	 * Exclut les commandes d'essai, de l'administration (sauf panier récupéré,
-	 * lot 7 : `Capi_Recovered_Cart`), non enregistrées, brouillons et refusées.
+	 * lot 7 : `Capi_Recovered_Cart`, et commande saisie dans l'écran de
+	 * commande, L6 : `Capi_Manual_Order`), non enregistrées, brouillons et refusées.
 	 *
 	 * @param \WC_Order $order Checkout order.
 	 * @return string Reason token, empty when eligible.
@@ -4258,6 +4261,8 @@ function boot(): void {
 	Capi::instance();
 	// Lot 7 du pixel : OrderPlaced des paniers récupérés (file, statut, case de l'écran Mesure).
 	Capi_Recovered_Cart::instance();
+	// L6 (Q24) : OrderPlaced des commandes saisies dans l'écran de commande, même délai.
+	Capi_Manual_Order::instance();
 	Capi_Delivery_Registry::instance();
 	Capi_Signals::instance();
 	// Sonde et battement de cœur : leurs tâches Action Scheduler tournent aussi hors de l'administration.
@@ -4267,6 +4272,7 @@ function boot(): void {
 	// Lot 4 (D3) : renvoi automatique des refus, veille horaire WP-Cron et adresse des alertes.
 	Capi_Refusal_Resend::instance();
 	Capi_Health_Watch::instance();
+	Capi_Health_Alert_Test::instance();
 	WhatsApp::instance();
 	Product_Video::instance();
 	Seo::instance();

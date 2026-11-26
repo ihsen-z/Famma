@@ -8,11 +8,11 @@
  * produit d'origine, pour mesurer la vraie part de chaque canal et son taux
  * de livraison.
  *
- * ── Ce que ce champ ne fait PAS ────────────────────────────────────────────
- * Il ne change rien à ce qui part vers Meta : ni OrderPlaced (toujours
- * réservé aux commandes du site), ni Purchase, ni son `action_source`. C'est
- * une donnée interne, sans effet sur le Pixel ni sur l'apprentissage des
- * campagnes.
+ * ── Effet côté Meta ────────────────────────────────────────────────────────
+ * Depuis L6 (Q24, 26/11), une commande saisie dans l'écran de commande envoie
+ * OrderPlaced (`Capi_Manual_Order`) : ce canal en fixe seulement
+ * l'`action_source` (`chat` pour Messenger, WhatsApp, Instagram, sinon
+ * `phone_call`). La référence « pub ou produit d'origine » reste interne.
  *
  * Une commande passée sur le site (`created_via = checkout`) est « Site »
  * d'office : rien n'est écrit pour elle, le canal est déduit à la lecture.

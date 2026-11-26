@@ -336,7 +336,7 @@ namespace {
 	// phpcs:ignore Squiz.PHP.Eval.Discouraged -- Runs the real plugin source read from the plugin file, never external input.
 	eval( 'namespace Famma\\Core;' . substr( $source, $tunisia_start, $tunisia_end - $tunisia_start ) );
 	// Real lot 5 collaborators: token vault, single transport, user data normalisation, data profile.
-	foreach ( array( 'capi-token-vault.php', 'capi-click-id.php', 'capi-transport.php', 'capi-person-name.php', 'capi-user-data.php', 'visitor-context.php', 'visitor-settings.php', 'visitor-store.php', 'visitor-commerce.php', 'order-channel.php', 'visitor-inputs-order.php', 'capi-external-id.php', 'capi-recovered-cart.php', 'capi-data-profile.php' ) as $famma_include ) {
+	foreach ( array( 'capi-token-vault.php', 'capi-click-id.php', 'capi-transport.php', 'capi-person-name.php', 'capi-user-data.php', 'visitor-context.php', 'visitor-settings.php', 'visitor-store.php', 'visitor-commerce.php', 'order-channel.php', 'visitor-inputs-order.php', 'capi-external-id.php', 'capi-recovered-cart.php', 'capi-manual-order.php', 'capi-data-profile.php' ) as $famma_include ) {
 		require dirname( __DIR__ ) . '/wp-content/plugins/famma-core/includes/' . $famma_include;
 	}
 	$GLOBALS['options']                            = array(
