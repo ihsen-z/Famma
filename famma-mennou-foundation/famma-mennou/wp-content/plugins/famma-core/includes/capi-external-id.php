@@ -34,6 +34,12 @@ defined( 'ABSPATH' ) || exit;
 final class Capi_External_Id {
 
 	/**
+	 * Clé sessionStorage de l'empreinte du téléphone (lot 59, Q22) : SHA-256
+	 * de « 216 » + 8 chiffres, posée par `express-order.js`, jamais le numéro.
+	 */
+	public const PHONE_KEY = 'famma_ph';
+
+	/**
 	 * Empreinte d'un identifiant visiteur, ou chaîne vide s'il n'est pas un UUID du journal.
 	 *
 	 * @param string $visitor_id Valeur du cookie `famma_vid` (ou de `_famma_visitor_id`).
@@ -59,7 +65,15 @@ final class Capi_External_Id {
 	 * Script imprimé avant `fbq('init')` : définit `fammaXid()`.
 	 *
 	 * `fammaXid()` renvoie `{external_id: <empreinte>}`, ou `undefined` sans
-	 * cookie valide. Au tout premier affichage, le pixel passe avant le
+	 * cookie valide. Lot 59 (Q22) : si le formulaire express a déjà reçu un
+	 * numéro tunisien valide dans cet onglet, son empreinte SHA-256 (jamais le
+	 * numéro, voir `PHONE_KEY`) est ajoutée en `ph`.
+	 *
+	 * Pourquoi seulement au chargement suivant : `fbevents.js` ne remplace les
+	 * données d'un Pixel déjà initialisé que si elles étaient vides ; sinon un
+	 * second `fbq('init')` est ignoré (« Duplicate Pixel ID »), et
+	 * `fbq('set','userData')` est réservé aux Pixels Shopify. Sur la page de
+	 * saisie, `ph` part donc par le doublon serveur (`Capi_Mirror`). Au tout premier affichage, le pixel passe avant le
 	 * journal (pied de page, `defer`) : si le journal se charge sur cette page,
 	 * le cookie `famma_vid` est créé ici, aux mêmes règles que
 	 * `visitor-journal.js` (UUID v4, même durée, `path=/`, `SameSite=Lax`) ;
@@ -76,7 +90,9 @@ final class Capi_External_Id {
 			. 'm=document.cookie.match(/(?:^|; )' . Visitor_Context::VISITOR_COOKIE . '=([^;]*)/),v=m?decodeURIComponent(m[1]).toLowerCase():"";'
 			. 'if(!m&&d>0){if(c&&c.randomUUID){v=c.randomUUID();}else if(c&&c.getRandomValues){var b=c.getRandomValues(new Uint8Array(16));b[6]=b[6]&15|64;b[8]=b[8]&63|128;v="";for(var i=0;i<16;i++){v+=(b[i]<16?"0":"")+b[i].toString(16)+(3===i||5===i||7===i||9===i?"-":"");}}'
 			. 'if(re.test(v)){document.cookie="' . Visitor_Context::VISITOR_COOKIE . '="+v+";path=/;max-age="+d*86400+";SameSite=Lax"+("https:"===location.protocol?";Secure":"");}}'
-			. 'if(!re.test(v)){return;}var h=fammaSha256(v);return h?{external_id:h}:void 0;}catch(e){}};'
+			. 'var o={},h=re.test(v)?fammaSha256(v):"",p="";if(h){o.external_id=h;}'
+			. 'try{p=window.sessionStorage.getItem("' . self::PHONE_KEY . '")||"";}catch(e){}if(/^[0-9a-f]{64}$/.test(p)){o.ph=p;}'
+			. 'return o.external_id||o.ph?o:void 0;}catch(e){}};'
 			. self::sha256_script();
 	}
 

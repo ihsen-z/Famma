@@ -512,6 +512,40 @@
 		return params;
 	}
 
+	/**
+	 * Empreinte du téléphone pour la correspondance avancée (lot 59, Q22).
+	 *
+	 * SHA-256 de « 216 » + les 8 chiffres normalisés : le format que la CAPI
+	 * hache déjà (`Capi_User_Data::phone()`). Calculée dans le navigateur
+	 * (`fammaSha256`, posé avec le Pixel) ; seule l'empreinte est gardée, en
+	 * mémoire et dans l'onglet (sessionStorage) : le relais du doublon serveur
+	 * la joint aux événements qui suivent, et `fammaXid()` la passe à
+	 * `fbq('init')` aux chargements suivants. Jamais le numéro en clair.
+	 */
+	function rememberPhoneHash() {
+		if ( ! window.fbq || 'function' !== typeof window.fammaSha256 || ! phoneInput ) {
+			return;
+		}
+		var national = normalizePhone( String( phoneInput.value || '' ) );
+		var hash = national ? window.fammaSha256( '216' + national ) : '';
+		if ( ! hash || hash === window.fammaPh ) {
+			return;
+		}
+		window.fammaPh = hash;
+		try {
+			window.sessionStorage.setItem( 'famma_ph', hash );
+		} catch ( error ) {
+			// Sans stockage, l'empreinte vaut pour cette page seulement.
+		}
+	}
+
+	if ( phoneInput ) {
+		[ 'input', 'change', 'blur' ].forEach( function ( type ) {
+			phoneInput.addEventListener( type, rememberPhoneHash );
+		} );
+		form.addEventListener( 'submit', rememberPhoneHash );
+	}
+
 	/** Envoie InitiateCheckout si le téléphone est valide et que rien n'est encore parti. */
 	function maybeEarlyCheckout() {
 		if ( ! earlyCheckout || earlyCheckoutSent || ! phoneInput || ! window.fbq ) {
@@ -520,7 +554,8 @@
 		if ( '' === normalizePhone( String( phoneInput.value || '' ) ) ) {
 			return;
 		}
-		if ( pixel( 'InitiateCheckout', earlyCheckoutParams(), earlyCheckoutId() ) ) {
+		rememberPhoneHash();
+		if ( pixel( 'InitiateCheckout', earlyCheckoutParams(), earlyCheckoutId(), earlyCheckout.pid ? [ [ earlyCheckout.pid, currentQuantity() ] ] : null ) ) {
 			earlyCheckoutSent = true;
 		}
 	}
@@ -826,17 +861,24 @@
 	/**
 	 * Émet un événement Meta, si le Pixel est présent.
 	 *
+	 * Avec `items` (ID WooCommerce, quantité), l'événement est aussi relayé au
+	 * doublon serveur, même eventID (lot 59, `fammaRelay`, absent si coupé).
+	 *
 	 * @param {string} name   Nom de l'événement standard.
 	 * @param {Object} params Paramètres de l'événement.
 	 * @param {string} id     Identifiant de déduplication (celui du serveur).
+	 * @param {Array}  items  Articles `[ID, quantité]` pour le relais (facultatif).
 	 * @return {boolean}
 	 */
-	function pixel( name, params, id ) {
+	function pixel( name, params, id, items ) {
 		if ( ! window.fbq || ! id || ! params ) {
 			return false;
 		}
 		try {
 			window.fbq( 'track', name, params, { eventID: id } );
+			if ( items && items.length && 'function' === typeof window.fammaRelay ) {
+				window.fammaRelay( name, id, items );
+			}
 			return true;
 		} catch ( error ) {
 			// A third-party tracking failure must never block a valid checkout.
@@ -1162,7 +1204,7 @@
 			if ( ! data || false === data.emit || ! data.event_id || emitted[ data.event_id ] || ! window.fbq || ( isCheckout && checkoutEmitted() ) || ( ! isCheckout && cartEmitted() ) ) {
 				return;
 			}
-			if ( ! pixel( entry[ 0 ], data.params, data.event_id ) ) {
+			if ( ! pixel( entry[ 0 ], data.params, data.event_id, data.items ) ) {
 				return;
 			}
 			if ( isCheckout ) {

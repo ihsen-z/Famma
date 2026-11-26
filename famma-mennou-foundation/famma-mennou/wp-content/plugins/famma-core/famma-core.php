@@ -149,6 +149,11 @@ require_once __DIR__ . '/includes/capi-orderplaced-ack.php';
 require_once __DIR__ . '/includes/capi-refusal-resend.php';
 require_once __DIR__ . '/includes/capi-health-watch.php';
 require_once __DIR__ . '/includes/capi-health-alert-test.php';
+require_once __DIR__ . '/includes/capi-mirror.php';
+require_once __DIR__ . '/includes/capi-mirror-event.php';
+require_once __DIR__ . '/includes/capi-mirror-queue.php';
+require_once __DIR__ . '/includes/capi-mirror-health.php';
+require_once __DIR__ . '/includes/capi-mirror-settings.php';
 require_once __DIR__ . '/includes/measurement-settings.php';
 require_once __DIR__ . '/includes/order-emails.php';
 require_once __DIR__ . '/includes/anti-abuse.php';
@@ -635,6 +640,16 @@ final class Config {
 	 */
 	public function meta_initiate_checkout_early(): bool {
 		return (bool) get_option( 'famma_meta_ic_early', true );
+	}
+
+	/**
+	 * Doublon serveur (CAPI) de PageView, ViewContent, AddToCart et
+	 * InitiateCheckout, même event_id que le Pixel (lot 59, Q21) : activé par défaut.
+	 *
+	 * @return bool
+	 */
+	public function meta_browser_mirror(): bool {
+		return (bool) get_option( 'famma_meta_browser_mirror', true );
 	}
 
 	/**
@@ -2306,8 +2321,10 @@ final class Tracking {
 	/**
 	 * Générateur d'eventID du navigateur (S3-a) : `crypto.randomUUID()`, sinon
 	 * un UUID v4 tiré de `crypto.getRandomValues()`, sinon horloge et hasard.
+	 * Le dernier identifiant tiré reste lisible dans `window.fammaLastEventId` :
+	 * le relais du doublon serveur (lot 59, `Capi_Mirror`) le reprend tel quel.
 	 */
-	public const EVENT_ID_SCRIPT = 'window.fammaEventId=window.fammaEventId||function(){var c=window.crypto,b,h="",i;if(c&&c.randomUUID){return c.randomUUID();}if(c&&c.getRandomValues){b=new Uint8Array(16);c.getRandomValues(b);b[6]=b[6]&15|64;b[8]=b[8]&63|128;for(i=0;i<16;i++){h+=(b[i]+256).toString(16).slice(1)+(3===i||5===i||7===i||9===i?"-":"");}return h;}return Date.now().toString(36)+"-"+Math.random().toString(36).slice(2)+"-"+Math.random().toString(36).slice(2);};';
+	public const EVENT_ID_SCRIPT = 'window.fammaEventId=window.fammaEventId||function(){var c=window.crypto,b,h="",i;if(c&&c.randomUUID){h=c.randomUUID();}else if(c&&c.getRandomValues){b=new Uint8Array(16);c.getRandomValues(b);b[6]=b[6]&15|64;b[8]=b[8]&63|128;for(i=0;i<16;i++){h+=(b[i]+256).toString(16).slice(1)+(3===i||5===i||7===i||9===i?"-":"");}}else{h=Date.now().toString(36)+"-"+Math.random().toString(36).slice(2)+"-"+Math.random().toString(36).slice(2);}window.fammaLastEventId=h;return h;};';
 
 	/**
 	 * Singleton instance.
@@ -2544,7 +2561,9 @@ final class Tracking {
 	 * Immédiat : le code standard de Meta (bibliothèque insérée en `async`
 	 * aussitôt). Différé : la même file, la bibliothèque attend `fammaDefer`.
 	 * L'eventID du PageView est tiré dans le navigateur. `fammaXid()` passe
-	 * l'external_id haché du visiteur (`Capi_External_Id`), ou rien.
+	 * l'external_id haché du visiteur (`Capi_External_Id`), ou rien. Le
+	 * PageView est relayé au doublon serveur avec le même eventID (lot 59,
+	 * `fammaRelay`, défini par `Capi_Mirror` seulement si le doublon est actif).
 	 *
 	 * @param string $pixel    Identifiant public du Pixel.
 	 * @param bool   $deferred Chargement différé.
@@ -2555,7 +2574,7 @@ final class Tracking {
 
 		return Capi_External_Id::browser_script() . "!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];"
 			. ( $deferred ? 'fammaDefer(function(){' . $insert . '})' : $insert )
-			. "}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init'," . wp_json_encode( $pixel ) . ",fammaXid());fbq('track','PageView',{},{eventID:fammaEventId()});";
+			. "}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init'," . wp_json_encode( $pixel ) . ",fammaXid());fbq('track','PageView',{},{eventID:fammaEventId()});" . Capi_Mirror::relay_call( 'PageView' );
 	}
 
 	/**
@@ -4273,6 +4292,9 @@ function boot(): void {
 	Capi_Refusal_Resend::instance();
 	Capi_Health_Watch::instance();
 	Capi_Health_Alert_Test::instance();
+	// Lot 59 (Q21) : doublon serveur des événements navigateur (relais, file, envoi groupé, case de « Mesure »).
+	Capi_Mirror::instance();
+	Capi_Mirror_Settings::instance();
 	WhatsApp::instance();
 	Product_Video::instance();
 	Seo::instance();
@@ -4381,6 +4403,7 @@ function on_activation(): void {
  */
 function on_deactivation(): void {
 	Capi_Health_Watch::unschedule();
+	wp_clear_scheduled_hook( Capi_Mirror::CRON );
 }
 
 add_action( 'init', __NAMESPACE__ . '\\load_textdomain' );

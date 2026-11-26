@@ -100,7 +100,10 @@ final class Capi_Health_Rules {
 		if ( Capi_Signals::test_mode_enabled() && ! Config::valid_test_event_code( $cfg->meta_test_event_code() ) ) {
 			$reasons[] = self::reason( 'test_code_invalid', 'orange' );
 		}
-		return array_merge( $reasons, self::probe_reasons( $signals ) );
+		$reasons = array_merge( $reasons, self::probe_reasons( $signals ) );
+		// Raisons ajoutées par un module (lot 59 : échecs du doublon serveur, toujours orange).
+		$extra = apply_filters( 'famma_capi_health_reasons', array(), $signals, $now );
+		return is_array( $extra ) ? array_merge( $reasons, array_values( $extra ) ) : $reasons;
 	}
 
 	/**
@@ -243,6 +246,7 @@ final class Capi_Health_Rules {
 			/* translators: %s: Meta error code. */
 			'probe_unavailable' => sprintf( __( 'Sonde indisponible (code %s) : vérification impossible pour l’instant.', 'famma-core' ), $detail ),
 		);
-		return $labels[ $reason['code'] ?? '' ] ?? Capi_Orderplaced_Watch::label( $reason ) ?? (string) ( $reason['code'] ?? '' );
+		$label  = $labels[ $reason['code'] ?? '' ] ?? Capi_Orderplaced_Watch::label( $reason ) ?? apply_filters( 'famma_capi_health_label', null, $reason );
+		return is_string( $label ) ? $label : (string) ( $reason['code'] ?? '' );
 	}
 }

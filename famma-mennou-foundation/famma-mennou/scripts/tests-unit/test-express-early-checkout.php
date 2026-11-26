@@ -44,7 +44,7 @@ $product = new WC_Product( 16, 'QA-L5-SKU', 'QA-L5 Ceinture', 'qa-l5-ceinture', 
 lb_reset();
 l5_check( true === Config::instance()->meta_initiate_checkout_early(), 'Interrupteur activé par défaut (option absente).' );
 $data = Express_Preparation::early_checkout_data( $product );
-l5_check( array( 'unit', 'params' ) === array_keys( $data ), 'Interrupteur actif : la donnée du script porte unit et params.' );
+l5_check( array( 'pid', 'unit', 'params' ) === array_keys( $data ) && $product->get_id() === $data['pid'], 'Interrupteur actif : la donnée du script porte pid (relais du doublon serveur, lot 59), unit et params.' );
 l5_check( 49.0 === $data['unit'], 'unit = prix affiché unitaire.' );
 l5_check( 49.0 === (float) $data['params']['value'] && 'product' === $data['params']['content_type'], 'params : value (quantité 1) et content_type.' );
 l5_check( array( '16' ) === array_map( 'strval', $data['params']['content_ids'] ), 'params : content_ids = règle unique Meta_Ids.' );

@@ -279,6 +279,7 @@ final class Express_Preparation {
 
 	/**
 	 * Bloc `tracking` du devis : AddToCart et InitiateCheckout acquittés.
+	 * `items` (ID WooCommerce, quantité) sert au relais du doublon serveur (lot 59).
 	 *
 	 * Les identifiants restent ceux du serveur (`famma_add_<prep>`,
 	 * `famma_checkout_<prep>`), dans une réponse AJAX jamais mise en cache.
@@ -313,12 +314,14 @@ final class Express_Preparation {
 				'emit'     => $delta > 0,
 				'event_id' => 'famma_add_' . $id,
 				'params'   => Tracking_Events::profile_params( $params, 'AddToCart' ),
+				'items'    => array( array( $product->get_id(), (int) round( $delta ) ) ),
 				'previous' => $previous,
 				'unit'     => $unit,
 			),
 			'initiate_checkout' => array(
 				'event_id' => 'famma_checkout_' . $id,
 				'params'   => Tracking_Events::profile_params( self::cart_tracking(), 'InitiateCheckout' ),
+				'items'    => self::cart_items(),
 			),
 		);
 	}
@@ -353,6 +356,7 @@ final class Express_Preparation {
 			),
 		);
 		return array(
+			'pid'    => $product->get_id(),
 			'unit'   => $unit,
 			'params' => Tracking_Events::profile_params( $params, 'InitiateCheckout' ),
 		);
@@ -385,6 +389,21 @@ final class Express_Preparation {
 			'currency'     => get_woocommerce_currency(),
 			'value'        => (float) WC()->cart->get_total( 'edit' ),
 		);
+	}
+
+	/**
+	 * Articles du panier isolé pour le doublon serveur (lot 59) : `[ID WooCommerce, quantité]`.
+	 *
+	 * @return array<int, int[]>
+	 */
+	private static function cart_items(): array {
+		$items = array();
+		foreach ( WC()->cart->get_cart() as $item ) {
+			if ( ( $item['data'] ?? null ) instanceof \WC_Product ) {
+				$items[] = array( $item['data']->get_id(), (int) $item['quantity'] );
+			}
+		}
+		return $items;
 	}
 
 	/**

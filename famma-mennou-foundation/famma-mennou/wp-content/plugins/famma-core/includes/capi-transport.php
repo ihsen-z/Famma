@@ -101,10 +101,11 @@ final class Capi_Transport {
 	 * @param string               $pixel   Identifiant du Pixel.
 	 * @param string               $token   Jeton CAPI.
 	 * @param array<string, mixed> $payload Corps sans le jeton (`data`, `test_event_code`).
-	 * @param string               $version Version forcée, sinon celle de Config.
+	 * @param string               $version  Version forcée, sinon celle de Config.
+	 * @param int                  $expected Événements dans `data` : l'accusé doit tous les compter (envoi groupé, lot 59).
 	 * @return array<string, mixed> Résultat classé (voir l'en-tête du fichier).
 	 */
-	public static function send_events( string $pixel, string $token, array $payload, string $version = '' ): array {
+	public static function send_events( string $pixel, string $token, array $payload, string $version = '', int $expected = 1 ): array {
 		$cfg     = Config::instance();
 		$version = '' !== $version ? $version : $cfg->meta_graph_version();
 		if ( ! $cfg->meta_sending_allowed() ) {
@@ -119,7 +120,7 @@ final class Capi_Transport {
 				'body'        => wp_json_encode( $payload + array( 'access_token' => $token ) ),
 			)
 		);
-		return self::classify( $response, $version );
+		return self::classify( $response, $version, false, max( 1, $expected ) );
 	}
 
 	/**
@@ -168,10 +169,11 @@ final class Capi_Transport {
 	 *
 	 * @param mixed  $response Réponse de l'API HTTP de WordPress, ou WP_Error.
 	 * @param string $version  Version demandée.
-	 * @param bool   $probe    Sonde : l'accusé est un `id` numérique ; sinon `events_received` = 1.
+	 * @param bool   $probe    Sonde : l'accusé est un `id` numérique ; sinon `events_received` = `$expected`.
+	 * @param int    $expected Événements envoyés (1 hors envoi groupé).
 	 * @return array<string, mixed>
 	 */
-	public static function classify( $response, string $version, bool $probe = false ): array {
+	public static function classify( $response, string $version, bool $probe = false, int $expected = 1 ): array {
 		$result = self::empty_result( $version );
 		if ( is_wp_error( $response ) ) {
 			$message          = (string) $response->get_error_message();
@@ -199,7 +201,7 @@ final class Capi_Transport {
 		$result['error']            = (string) ( $error['error_user_msg'] ?? ( $error['message'] ?? '' ) );
 
 		if ( $http >= 200 && $http < 300 && ( array() === $error || 0 === $result['code'] ) ) {
-			$acknowledged = $probe ? self::has_id( $body ) : 1 === $result['events_received'];
+			$acknowledged = $probe ? self::has_id( $body ) : $expected === $result['events_received'];
 			if ( $acknowledged && array() === $error ) {
 				$warning          = $result['messages'] > 0 || $result['version_mismatch'];
 				$result['class']  = $warning ? 'accepted_warning' : 'accepted';

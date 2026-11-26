@@ -101,8 +101,10 @@ final class Tracking_Events {
 	 * `DOMContentLiteSpeedLoaded` (JS retardé de LiteSpeed), et en dernier
 	 * recours par un court sondage relancé à chaque interaction (jQuery chargé
 	 * tardivement). Jamais deux fois. `fbq` est lu au moment de l'ajout.
+	 * Doublon serveur (lot 59) : l'ajout est relayé avec le même eventID et
+	 * l'ID WooCommerce du bouton (`data-product_id`), si `fammaRelay` existe.
 	 */
-	public const AJAX_LISTENER_SCRIPT = '(function(keep){var done=false,t=0,n=0,d=document,w=window;function go(){if(done||!w.jQuery||!d.body){return;}done=true;if(t){clearInterval(t);t=0;}w.jQuery(d.body).on("added_to_cart",function(e,f,c,btn){try{if(!w.fbq){return;}var b=btn&&btn.length?btn[0]:btn;if(!b||!b.getAttribute){return;}var id=b.getAttribute("data-famma-content-id")||b.getAttribute("data-product_id");if(!id){return;}var v=parseFloat(b.getAttribute("data-famma-value")||"0"),q=parseFloat(b.getAttribute("data-quantity")||"1")||1,p={content_type:"product",content_ids:[id],contents:[{id:id,quantity:q}],value:v*q,currency:b.getAttribute("data-famma-currency")||undefined},o={};keep.forEach(function(x){if(x in p){o[x]=p[x];}});w.fbq("track","AddToCart",o,{eventID:w.fammaEventId?w.fammaEventId():String(Date.now())+"-"+id});}catch(err){}});}function poll(){if(done||t){return;}n=0;t=setInterval(function(){go();if(!done&&++n>=40){clearInterval(t);t=0;}},500);}go();if(!done){d.addEventListener("DOMContentLoaded",go);d.addEventListener("DOMContentLiteSpeedLoaded",go);w.addEventListener("DOMContentLiteSpeedLoaded",go);w.addEventListener("load",function(){go();poll();});["pointerdown","keydown","touchstart","scroll"].forEach(function(x){w.addEventListener(x,poll,{passive:true});});}})(%s);';
+	public const AJAX_LISTENER_SCRIPT = '(function(keep){var done=false,t=0,n=0,d=document,w=window;function go(){if(done||!w.jQuery||!d.body){return;}done=true;if(t){clearInterval(t);t=0;}w.jQuery(d.body).on("added_to_cart",function(e,f,c,btn){try{if(!w.fbq){return;}var b=btn&&btn.length?btn[0]:btn;if(!b||!b.getAttribute){return;}var id=b.getAttribute("data-famma-content-id")||b.getAttribute("data-product_id");if(!id){return;}var v=parseFloat(b.getAttribute("data-famma-value")||"0"),q=parseFloat(b.getAttribute("data-quantity")||"1")||1,p={content_type:"product",content_ids:[id],contents:[{id:id,quantity:q}],value:v*q,currency:b.getAttribute("data-famma-currency")||undefined},o={};keep.forEach(function(x){if(x in p){o[x]=p[x];}});var eid=w.fammaEventId?w.fammaEventId():String(Date.now())+"-"+id;w.fbq("track","AddToCart",o,{eventID:eid});var pid=parseInt(b.getAttribute("data-product_id")||"0",10);if(w.fammaRelay&&pid>0){w.fammaRelay("AddToCart",eid,[[pid,q]]);}}catch(err){}});}function poll(){if(done||t){return;}n=0;t=setInterval(function(){go();if(!done&&++n>=40){clearInterval(t);t=0;}},500);}go();if(!done){d.addEventListener("DOMContentLoaded",go);d.addEventListener("DOMContentLiteSpeedLoaded",go);w.addEventListener("DOMContentLiteSpeedLoaded",go);w.addEventListener("load",function(){go();poll();});["pointerdown","keydown","touchstart","scroll"].forEach(function(x){w.addEventListener(x,poll,{passive:true});});}})(%s);';
 
 	/**
 	 * Instance partagée.
@@ -260,6 +262,7 @@ final class Tracking_Events {
 		}
 
 		$pending[] = array(
+			'pid'      => $product->get_id(),
 			'id'       => Meta_Ids::content_id( $product ),
 			'quantity' => (float) $quantity,
 			'value'    => (float) wc_get_price_to_display( $product ) * (float) $quantity,
@@ -301,13 +304,17 @@ final class Tracking_Events {
 	 * moment d'entrer dans du JavaScript. L'eventID est tiré dans le
 	 * navigateur, à chaque affichage (S3-a).
 	 *
+	 * Avec des articles (ID WooCommerce, quantité), l'appel est suivi du
+	 * relais au doublon serveur, même eventID (lot 59, `Capi_Mirror`).
+	 *
 	 * @param string               $event  Nom de l'événement standard Meta.
 	 * @param array<string, mixed> $params Paramètres complets de l'événement.
+	 * @param array<int, int[]>    $items  Articles `[ID, quantité]` relayés au serveur.
 	 * @return string
 	 */
-	private function fbq_call( string $event, array $params ): string {
+	private function fbq_call( string $event, array $params, array $items = array() ): string {
 		return 'fbq("track",' . wp_json_encode( $event ) . ',' . wp_json_encode( self::profile_params( $params, $event ) )
-			. ',{eventID:fammaEventId()});';
+			. ',{eventID:fammaEventId()});' . ( array() !== $items ? Capi_Mirror::relay_call( $event, $items ) : '' );
 	}
 
 	/**
@@ -343,7 +350,8 @@ final class Tracking_Events {
 				'content_name' => $product->get_name(),
 				'value'        => (float) wc_get_price_to_display( $product ),
 				'currency'     => get_woocommerce_currency(),
-			)
+			),
+			array( array( $product->get_id(), 1 ) )
 		);
 	}
 
@@ -362,6 +370,7 @@ final class Tracking_Events {
 
 		$contents = array();
 		$ids      = array();
+		$items    = array();
 
 		foreach ( WC()->cart->get_cart() as $item ) {
 			$product = $item['data'] ?? null;
@@ -372,6 +381,7 @@ final class Tracking_Events {
 
 			$id         = Meta_Ids::content_id( $product );
 			$ids[]      = $id;
+			$items[]    = array( $product->get_id(), (int) $item['quantity'] );
 			$contents[] = array(
 				'id'       => $id,
 				'quantity' => (float) $item['quantity'],
@@ -399,7 +409,8 @@ final class Tracking_Events {
 					'num_items'    => (int) WC()->cart->get_cart_contents_count(),
 					'value'        => $value,
 					'currency'     => get_woocommerce_currency(),
-				)
+				),
+				$items
 			)
 		);
 	}
@@ -426,7 +437,8 @@ final class Tracking_Events {
 					),
 					'value'        => (float) $line['value'],
 					'currency'     => (string) $line['currency'],
-				)
+				),
+				isset( $line['pid'] ) ? array( array( (int) $line['pid'], (int) $line['quantity'] ) ) : array()
 			);
 		}
 
