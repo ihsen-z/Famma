@@ -170,7 +170,7 @@ l5_check( 1 === count( $GLOBALS['wp_test_mail_failed'] ?? array() ) && 1 === $ma
 l5_reset();
 Capi_Refusal_Resend::instance();
 $key  = static fn( int $id ): string => hash( 'sha256', '000000000000001|OrderPlaced|famma_orderplaced_' . $id );
-$row  = static fn( int $id, int $age, int $attempts = 1, string $class = 'access' ): array => array(
+$row  = static fn( int $id, int $age, int $attempts = 1, string $failure_class = 'access' ): array => array(
 	'event_key'     => $key( $id ),
 	'order_id'      => $id,
 	'event_name'    => 'OrderPlaced',
@@ -178,7 +178,7 @@ $row  = static fn( int $id, int $age, int $attempts = 1, string $class = 'access
 	'event_time'    => $now - $age,
 	'state'         => 'rejected',
 	'attempt_count' => $attempts,
-	'attempts'      => wp_json_encode( array( array( 'class' => $class ) ) ),
+	'attempts'      => wp_json_encode( array( array( 'class' => $failure_class ) ) ),
 );
 $rows = array( $row( 7430, 2 * 3600 ) );
 for ( $n = 0; $n < 120; $n++ ) {

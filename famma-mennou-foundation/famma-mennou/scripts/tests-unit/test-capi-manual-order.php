@@ -57,7 +57,7 @@ $entered = static function ( int $id, string $channel = 'telephone', array $meta
 	$order->meta        = $meta + array( Order_Channel::META => $channel );
 	return $order;
 };
-$sent = static function (): array {
+$sent    = static function (): array {
 	return array_map( static fn( array $call ): array => json_decode( (string) $call['args']['body'], true )['data'][0], $GLOBALS['wp_test_http'] );
 };
 

@@ -147,7 +147,7 @@ if ( class_exists( \Famma\Core\Capi_Meta_Quality::class ) ) {
 
 // 2. Automatic resend of refusals once the problem is fixed.
 $key   = static fn( string $name, int $id ): string => hash( 'sha256', '000000000000001|' . $name . '|famma_' . strtolower( $name ) . '_' . $id );
-$row   = static function ( string $name, int $id, int $age, string $class = 'access' ) use ( $now, $key ): array {
+$row   = static function ( string $name, int $id, int $age, string $failure_class = 'access' ) use ( $now, $key ): array {
 	return array(
 		'event_key'     => $key( $name, $id ),
 		'order_id'      => $id,
@@ -160,7 +160,7 @@ $row   = static function ( string $name, int $id, int $age, string $class = 'acc
 			array(
 				array(
 					'state' => 'rejected',
-					'class' => $class,
+					'class' => $failure_class,
 				),
 			)
 		),

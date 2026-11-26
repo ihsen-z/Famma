@@ -87,7 +87,7 @@ l5_check( $base === $data['read_at'], 'read date stored' );
 $html = $screen();
 l5_check( false !== strpos( $html, 'OrderPlaced' ) && false !== strpos( $html, '5,4' ) && false !== strpos( $html, 'en temps réel' ), 'screen shows event, note and freshness' );
 l5_check( false === strpos( $html, $token ), 'token absent from the screen' );
-l5_check( false === strpos( serialize( get_option( 'famma_meta_quality' ) ), $token ), 'token absent from the stored option' );
+l5_check( false === strpos( wp_json_encode( get_option( 'famma_meta_quality' ) ), $token ), 'token absent from the stored option' );
 
 // 2. At most one call per 24 h (also after a success).
 Capi_Meta_Quality::refresh( $base + 86399 );
@@ -115,7 +115,7 @@ $data = Capi_Meta_Quality::get();
 $html = $screen();
 l5_check( 'unavailable' === $data['status'] && 'permission' === $data['reason'], 'error 200 classed as permission' );
 l5_check( false !== strpos( $html, 'Lecture impossible' ), 'screen says Lecture impossible' );
-l5_check( false === strpos( $html . serialize( get_option( 'famma_meta_quality' ) ), $token ), 'Meta message (with token) never stored nor shown' );
+l5_check( false === strpos( $html . wp_json_encode( get_option( 'famma_meta_quality' ) ), $token ), 'Meta message (with token) never stored nor shown' );
 l5_check( 2 === count( $data['events'] ) && $base - 100000 === $data['read_at'], 'last known notes and read date kept' );
 $state = Capi_Health::state();
 l5_check( 'rouge' !== $state['statut'], 'no red alert from a quality read failure' );

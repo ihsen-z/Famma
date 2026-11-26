@@ -10,6 +10,7 @@
  */
 
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound, WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid -- Doubles keep the names of the WordPress API they replace (ARRAY_A, dbDelta).
+// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter -- Doubles keep the signatures of the API they replace.
 // phpcs:disable Squiz.Commenting.VariableComment.Missing -- Doubles are documented by the API they replace.
 // phpcs:disable WordPress.WP.GlobalVariablesOverride.Prohibited -- Standalone runner outside WordPress: $wpdb is a double.
 
