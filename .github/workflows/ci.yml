@@ -2,9 +2,10 @@ name: CI & Quality Gate
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [ master, main, 'claude/**' ]
   pull_request:
     branches: [ master, main ]
+  workflow_dispatch:
 
 jobs:
   php-quality-gate:
