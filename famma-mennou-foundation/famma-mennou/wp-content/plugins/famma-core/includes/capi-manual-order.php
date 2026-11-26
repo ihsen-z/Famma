@@ -183,7 +183,12 @@ final class Capi_Manual_Order {
 	 * @return string Issue (`waiting`, `already`, ou celle de `Capi`).
 	 */
 	public static function maybe_queue( \WC_Order $order ): string {
-		if ( $order->get_meta( '_famma_orderplaced_checkout_accepted' ) || $order->get_meta( '_famma_orderplaced_sent' ) ) {
+		if ( $order->get_meta( '_famma_orderplaced_sent' ) ) {
+			return 'already';
+		}
+		// Déjà en file : la tâche attend, ou elle a été tentée (le bouton « Renvoyer » reste la voie de reprise).
+		// Une tâche écartée sans tentative (essai coché puis décoché, annulée puis rétablie) repart (relecture M7).
+		if ( $order->get_meta( '_famma_orderplaced_checkout_accepted' ) && ( self::task_waiting( $order->get_id() ) || (int) $order->get_meta( '_famma_orderplaced_attempts' ) > 0 ) ) {
 			return 'already';
 		}
 		if ( ! self::is_manual( $order ) || '' !== self::block_reason( $order ) || Capi::is_test_order( $order )
@@ -191,6 +196,20 @@ final class Capi_Manual_Order {
 			return 'waiting';
 		}
 		return Capi::instance()->requeue_order_placed( $order );
+	}
+
+	/**
+	 * Une tâche OrderPlaced attend-elle (ou tourne-t-elle) pour cette commande ?
+	 *
+	 * @param int $order_id Commande.
+	 * @return bool
+	 */
+	private static function task_waiting( int $order_id ): bool {
+		$args = array( 'order_id' => $order_id );
+		if ( function_exists( 'as_has_scheduled_action' ) ) {
+			return as_has_scheduled_action( 'famma_capi_orderplaced_send', $args, 'famma-capi' );
+		}
+		return function_exists( 'wp_next_scheduled' ) && false !== wp_next_scheduled( 'famma_capi_orderplaced_send', $args );
 	}
 
 	/**

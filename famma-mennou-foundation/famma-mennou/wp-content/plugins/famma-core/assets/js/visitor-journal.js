@@ -9,6 +9,10 @@
  * Le journal n'envoie que le nom du champ touché. Les valeurs saisies dans les
  * formulaires de commande partent à part, vers famma/v1/inputs, et seulement
  * si le réglage « Capture des saisies » est actif (ctx.inputs).
+ *
+ * Doublon CAPI (lot 59) : si le relais `fammaRelay` est sur la page, le
+ * journal s'y attache et emporte ses événements dans ses propres envois,
+ * sous `m` : aucune requête de plus par page.
  */
 ( function () {
 	'use strict';
@@ -132,8 +136,14 @@
 		}
 	}
 
+	var relay = window.fammaRelay && window.fammaRelay.take && window.fammaRelay.attach ? window.fammaRelay : null;
+	if ( relay ) {
+		relay.attach();
+	}
+
 	function flush() {
-		if ( ! queue.length ) {
+		var mirror = relay ? relay.take() : null;
+		if ( ! queue.length && ! mirror ) {
 			return;
 		}
 		var now = Date.now();
@@ -142,7 +152,11 @@
 			delete e.at;
 			return e;
 		} );
-		send( ctx.endpoint, { v: visitor, s: session, src: state.src, e: events } );
+		var payload = { v: visitor, s: session, src: state.src, e: events };
+		if ( mirror ) {
+			payload.m = mirror;
+		}
+		send( ctx.endpoint, payload );
 	}
 
 	// ── Page vue, puis temps actif et profondeur de défilement à la sortie ──

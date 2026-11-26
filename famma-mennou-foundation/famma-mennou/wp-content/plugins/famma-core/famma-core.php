@@ -149,8 +149,13 @@ require_once __DIR__ . '/includes/capi-orderplaced-ack.php';
 require_once __DIR__ . '/includes/capi-refusal-resend.php';
 require_once __DIR__ . '/includes/capi-health-watch.php';
 require_once __DIR__ . '/includes/capi-health-alert-test.php';
+require_once __DIR__ . '/includes/rate-counter.php';
 require_once __DIR__ . '/includes/capi-mirror.php';
+require_once __DIR__ . '/includes/capi-mirror-script.php';
+require_once __DIR__ . '/includes/capi-mirror-route.php';
 require_once __DIR__ . '/includes/capi-mirror-event.php';
+require_once __DIR__ . '/includes/capi-mirror-data.php';
+require_once __DIR__ . '/includes/capi-mirror-store.php';
 require_once __DIR__ . '/includes/capi-mirror-queue.php';
 require_once __DIR__ . '/includes/capi-mirror-health.php';
 require_once __DIR__ . '/includes/capi-mirror-settings.php';
@@ -2322,7 +2327,7 @@ final class Tracking {
 	 * Générateur d'eventID du navigateur (S3-a) : `crypto.randomUUID()`, sinon
 	 * un UUID v4 tiré de `crypto.getRandomValues()`, sinon horloge et hasard.
 	 * Le dernier identifiant tiré reste lisible dans `window.fammaLastEventId` :
-	 * le relais du doublon serveur (lot 59, `Capi_Mirror`) le reprend tel quel.
+	 * le relais du doublon serveur (lot 59, `Capi_Mirror_Script`) le reprend tel quel.
 	 */
 	public const EVENT_ID_SCRIPT = 'window.fammaEventId=window.fammaEventId||function(){var c=window.crypto,b,h="",i;if(c&&c.randomUUID){h=c.randomUUID();}else if(c&&c.getRandomValues){b=new Uint8Array(16);c.getRandomValues(b);b[6]=b[6]&15|64;b[8]=b[8]&63|128;for(i=0;i<16;i++){h+=(b[i]+256).toString(16).slice(1)+(3===i||5===i||7===i||9===i?"-":"");}}else{h=Date.now().toString(36)+"-"+Math.random().toString(36).slice(2)+"-"+Math.random().toString(36).slice(2);}window.fammaLastEventId=h;return h;};';
 
@@ -2574,7 +2579,7 @@ final class Tracking {
 
 		return Capi_External_Id::browser_script() . "!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];"
 			. ( $deferred ? 'fammaDefer(function(){' . $insert . '})' : $insert )
-			. "}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init'," . wp_json_encode( $pixel ) . ",fammaXid());fbq('track','PageView',{},{eventID:fammaEventId()});" . Capi_Mirror::relay_call( 'PageView' );
+			. "}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init'," . wp_json_encode( $pixel ) . ",fammaXid());fbq('track','PageView',{},{eventID:fammaEventId()});" . Capi_Mirror_Script::relay_call( 'PageView' );
 	}
 
 	/**
@@ -4403,7 +4408,7 @@ function on_activation(): void {
  */
 function on_deactivation(): void {
 	Capi_Health_Watch::unschedule();
-	wp_clear_scheduled_hook( Capi_Mirror::CRON );
+	Capi_Mirror::deactivate();
 }
 
 add_action( 'init', __NAMESPACE__ . '\\load_textdomain' );

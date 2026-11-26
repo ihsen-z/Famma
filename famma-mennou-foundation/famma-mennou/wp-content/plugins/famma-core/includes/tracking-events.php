@@ -101,10 +101,11 @@ final class Tracking_Events {
 	 * `DOMContentLiteSpeedLoaded` (JS retardé de LiteSpeed), et en dernier
 	 * recours par un court sondage relancé à chaque interaction (jQuery chargé
 	 * tardivement). Jamais deux fois. `fbq` est lu au moment de l'ajout.
-	 * Doublon serveur (lot 59) : l'ajout est relayé avec le même eventID et
-	 * l'ID WooCommerce du bouton (`data-product_id`), si `fammaRelay` existe.
+	 * Doublon serveur (lot 59) : l'ajout est relayé avec le même eventID, la
+	 * même valeur et l'ID WooCommerce du bouton (`data-product_id`), si
+	 * `fammaRelay` existe.
 	 */
-	public const AJAX_LISTENER_SCRIPT = '(function(keep){var done=false,t=0,n=0,d=document,w=window;function go(){if(done||!w.jQuery||!d.body){return;}done=true;if(t){clearInterval(t);t=0;}w.jQuery(d.body).on("added_to_cart",function(e,f,c,btn){try{if(!w.fbq){return;}var b=btn&&btn.length?btn[0]:btn;if(!b||!b.getAttribute){return;}var id=b.getAttribute("data-famma-content-id")||b.getAttribute("data-product_id");if(!id){return;}var v=parseFloat(b.getAttribute("data-famma-value")||"0"),q=parseFloat(b.getAttribute("data-quantity")||"1")||1,p={content_type:"product",content_ids:[id],contents:[{id:id,quantity:q}],value:v*q,currency:b.getAttribute("data-famma-currency")||undefined},o={};keep.forEach(function(x){if(x in p){o[x]=p[x];}});var eid=w.fammaEventId?w.fammaEventId():String(Date.now())+"-"+id;w.fbq("track","AddToCart",o,{eventID:eid});var pid=parseInt(b.getAttribute("data-product_id")||"0",10);if(w.fammaRelay&&pid>0){w.fammaRelay("AddToCart",eid,[[pid,q]]);}}catch(err){}});}function poll(){if(done||t){return;}n=0;t=setInterval(function(){go();if(!done&&++n>=40){clearInterval(t);t=0;}},500);}go();if(!done){d.addEventListener("DOMContentLoaded",go);d.addEventListener("DOMContentLiteSpeedLoaded",go);w.addEventListener("DOMContentLiteSpeedLoaded",go);w.addEventListener("load",function(){go();poll();});["pointerdown","keydown","touchstart","scroll"].forEach(function(x){w.addEventListener(x,poll,{passive:true});});}})(%s);';
+	public const AJAX_LISTENER_SCRIPT = '(function(keep){var done=false,t=0,n=0,d=document,w=window;function go(){if(done||!w.jQuery||!d.body){return;}done=true;if(t){clearInterval(t);t=0;}w.jQuery(d.body).on("added_to_cart",function(e,f,c,btn){try{if(!w.fbq){return;}var b=btn&&btn.length?btn[0]:btn;if(!b||!b.getAttribute){return;}var id=b.getAttribute("data-famma-content-id")||b.getAttribute("data-product_id");if(!id){return;}var v=parseFloat(b.getAttribute("data-famma-value")||"0"),q=parseFloat(b.getAttribute("data-quantity")||"1")||1,p={content_type:"product",content_ids:[id],contents:[{id:id,quantity:q}],value:v*q,currency:b.getAttribute("data-famma-currency")||undefined},o={};keep.forEach(function(x){if(x in p){o[x]=p[x];}});var eid=w.fammaEventId?w.fammaEventId():String(Date.now())+"-"+id;w.fbq("track","AddToCart",o,{eventID:eid});var pid=parseInt(b.getAttribute("data-product_id")||"0",10);if(w.fammaRelay&&pid>0){w.fammaRelay("AddToCart",eid,[[pid,q]],p.value);}}catch(err){}});}function poll(){if(done||t){return;}n=0;t=setInterval(function(){go();if(!done&&++n>=40){clearInterval(t);t=0;}},500);}go();if(!done){d.addEventListener("DOMContentLoaded",go);d.addEventListener("DOMContentLiteSpeedLoaded",go);w.addEventListener("DOMContentLiteSpeedLoaded",go);w.addEventListener("load",function(){go();poll();});["pointerdown","keydown","touchstart","scroll"].forEach(function(x){w.addEventListener(x,poll,{passive:true});});}})(%s);';
 
 	/**
 	 * Instance partagée.
@@ -305,7 +306,7 @@ final class Tracking_Events {
 	 * navigateur, à chaque affichage (S3-a).
 	 *
 	 * Avec des articles (ID WooCommerce, quantité), l'appel est suivi du
-	 * relais au doublon serveur, même eventID (lot 59, `Capi_Mirror`).
+	 * relais au doublon serveur, même eventID et même valeur (lot 59, `Capi_Mirror_Script`).
 	 *
 	 * @param string               $event  Nom de l'événement standard Meta.
 	 * @param array<string, mixed> $params Paramètres complets de l'événement.
@@ -313,8 +314,10 @@ final class Tracking_Events {
 	 * @return string
 	 */
 	private function fbq_call( string $event, array $params, array $items = array() ): string {
-		return 'fbq("track",' . wp_json_encode( $event ) . ',' . wp_json_encode( self::profile_params( $params, $event ) )
-			. ',{eventID:fammaEventId()});' . ( array() !== $items ? Capi_Mirror::relay_call( $event, $items ) : '' );
+		$sent  = self::profile_params( $params, $event );
+		$value = isset( $sent['value'] ) && is_numeric( $sent['value'] ) ? (float) $sent['value'] : null;
+		return 'fbq("track",' . wp_json_encode( $event ) . ',' . wp_json_encode( $sent )
+			. ',{eventID:fammaEventId()});' . ( array() !== $items ? Capi_Mirror_Script::relay_call( $event, $items, $value ) : '' );
 	}
 
 	/**

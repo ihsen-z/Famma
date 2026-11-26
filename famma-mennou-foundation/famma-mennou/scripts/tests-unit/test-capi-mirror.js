@@ -3,9 +3,11 @@
  *
  * Les scripts sont produits par le vrai PHP (même binaire et mêmes options que le
  * lanceur : FAMMA_PHP, FAMMA_PHP_ARGS) puis exécutés dans une VM Node :
- * - fiche produit : PageView + ViewContent relayés en UN seul envoi par affichage,
+ * - avec le journal des visiteurs (cas courant) : le relais ne fait AUCUNE requête, ses
+ *   événements partent dans l'envoi du journal, sous `m` : une seule requête par page (I4) ;
+ * - sans journal : PageView + ViewContent relayés en UN seul envoi une fois le DOM prêt,
  *   chacun avec l'eventID passé à fbq ; sortie de page = envoi immédiat, jamais deux fois ;
- * - AddToCart en AJAX (liste) : même eventID pour fbq et le relais, ID WooCommerce et quantité ;
+ * - AddToCart en AJAX (liste) : même eventID et même valeur pour fbq et le relais ;
  * - doublon coupé (relais absent) : la page tourne, rien n'est relayé ;
  * - express : numéro valide → empreinte SHA-256 de « 216 » + 8 chiffres (celle de la CAPI)
  *   en mémoire et dans l'onglet, jointe au relais ; InitiateCheckout relayé avec son eventID ;
@@ -33,19 +35,25 @@ const fromPhp = JSON.parse(execFileSync(php, [...phpArgs, '-r', [
   'require $argv[1] . "/scripts/tests-unit/bootstrap-browser.php";',
   'lb_reset(); $GLOBALS["wc_test_is_product"] = true; $GLOBALS["wc_test_current_product"] = new WC_Product(501, "", "Masque", "masque", 22.0);',
   'Famma_Unit_Harness::bare("\\\\Famma\\\\Core\\\\Tracking")->enqueue_tracking(); Famma_Unit_Harness::bare("\\\\Famma\\\\Core\\\\Tracking_Events")->enqueue_events();',
-  'echo json_encode(array("pixels" => lb_inline("famma-pixels"), "relay" => \\Famma\\Core\\Capi_Mirror::browser_script(), "xid" => \\Famma\\Core\\Capi_External_Id::browser_script(), "ajax" => \\Famma\\Core\\Tracking_Events::AJAX_LISTENER_SCRIPT));',
+  'echo json_encode(array("pixels" => lb_inline("famma-pixels"), "relay" => \\Famma\\Core\\Capi_Mirror_Script::browser_script(), "xid" => \\Famma\\Core\\Capi_External_Id::browser_script(), "ajax" => \\Famma\\Core\\Tracking_Events::AJAX_LISTENER_SCRIPT));',
 ].join(' '), '--', root], { encoding: 'utf8' }));
+
+const journal = fs.readFileSync(path.join(root, 'wp-content/plugins/famma-core/assets/js/visitor-journal.js'), 'utf8');
 
 /** Navigateur minimal : minuteries manuelles, sendBeacon espionné, stockage d'onglet. */
 function page(options = {}) {
   const beacons = [], fbq = [], timers = [], winL = {}, docL = {}, store = new Map(Object.entries(options.storage || {}));
   class Blob { constructor(parts, opts) { this.text = parts.join(''); this.type = opts && opts.type; } }
   const document = {
-    cookie: 'famma_vid=3f2b8c1e-9d4a-4c7b-8e2f-1a6d5c4b3e21', readyState: 'complete', visibilityState: 'visible', body: {},
+    cookie: 'famma_vid=3f2b8c1e-9d4a-4c7b-8e2f-1a6d5c4b3e21', readyState: options.readyState || 'complete', visibilityState: 'visible', body: {}, referrer: '',
+    documentElement: { scrollHeight: 1000 }, querySelectorAll: () => [],
     addEventListener(t, f) { (docL[t] = docL[t] || []).push(f); },
   };
+  const local = new Map();
   const context = {
-    document, Blob, JSON, Date, Math, String, Number, Uint8Array, parseFloat, parseInt, decodeURIComponent, encodeURIComponent,
+    document, Blob, JSON, Date, Math, String, Number, Object, Array, RegExp, URL, URLSearchParams, Uint8Array, parseFloat, parseInt, decodeURIComponent, encodeURIComponent,
+    innerHeight: 800, scrollY: 0, performance: { getEntriesByType: () => [] },
+    localStorage: { getItem: (k) => (local.has(k) ? local.get(k) : null), setItem: (k, v) => local.set(k, String(v)) },
     location: { href: 'https://qa.invalid/produit/masque/?utm_source=fb', protocol: 'https:', search: '?utm_source=fb', pathname: '/produit/masque/', hostname: 'qa.invalid' },
     navigator: { sendBeacon(url, blob) { beacons.push({ url, body: JSON.parse(blob.text), type: blob.type }); return true; } },
     crypto: crypto.webcrypto,
@@ -60,10 +68,15 @@ function page(options = {}) {
   const run = (code) => vm.runInContext(code, context);
   if (options.relay !== false) run(fromPhp.relay);
   run(fromPhp.pixels);
+  if (options.journal) {
+    context.fammaJournal = { endpoint: 'https://qa.invalid/wp-json/famma/v1/collect', pageType: 'product', productId: 501, days: 180 };
+    run(journal);
+  }
   return {
     context, beacons, fbq, store, run,
     tick() { timers.splice(0).forEach((cb) => cb && cb()); },
     leave() { (winL.pagehide || []).forEach((f) => f()); },
+    ready() { document.readyState = 'interactive'; (docL.DOMContentLoaded || []).forEach((f) => f()); },
     track: (name) => fbq.filter((c) => 'track' === c[0] && name === c[1]),
   };
 }
@@ -73,7 +86,32 @@ function test(name, run) {
   try { run(); passed++; console.log('PASS: ' + name); } catch (e) { failed++; console.log('FAIL: ' + name + '\n     ' + String(e && e.message).split('\n').join('\n     ')); }
 }
 
-test('fiche produit : PageView + ViewContent relayés en UN seul envoi après le délai de regroupement', () => {
+test('I4 — journal présent : le relais ne fait aucune requête ; le doublon part dans l’envoi du journal (UNE requête par page)', () => {
+  const p = page({ journal: true });
+  p.tick();
+  assert.equal(p.beacons.length, 0, 'aucun envoi propre au relais');
+  p.leave();
+  assert.equal(p.beacons.length, 1, 'une seule requête pour la page');
+  const sent = p.beacons[0];
+  assert.equal(sent.url, 'https://qa.invalid/wp-json/famma/v1/collect');
+  assert.deepEqual(sent.body.e.map((e) => e.n), ['page_view', 'page_leave']);
+  assert.deepEqual(sent.body.m.e.map((e) => e.n), ['PageView', 'ViewContent']);
+  assert.equal(sent.body.m.e[0].id, p.track('PageView')[0][3].eventID);
+  assert.equal(sent.body.m.e[1].v, 22, 'valeur du Pixel jointe');
+  p.leave();
+  assert.equal(p.beacons.length, 1, 'rien deux fois');
+});
+
+test('sans journal, page encore en chargement : envoi propre seulement une fois le DOM prêt', () => {
+  const p = page({ readyState: 'loading' });
+  p.tick();
+  assert.equal(p.beacons.length, 0);
+  p.ready();
+  assert.equal(p.beacons.length, 1);
+  assert.equal(p.beacons[0].url, 'https://qa.invalid/wp-json/famma/v1/meta-relay');
+});
+
+test('sans journal : PageView + ViewContent relayés en UN seul envoi après le délai de regroupement', () => {
   const p = page();
   assert.equal(p.beacons.length, 0, 'rien avant le délai');
   p.tick();
@@ -122,6 +160,8 @@ test('AddToCart en AJAX : même eventID pour fbq et le relais, ID WooCommerce et
   assert.equal(relayed.n, 'AddToCart');
   assert.equal(relayed.id, atc[0][3].eventID);
   assert.deepEqual(relayed.i, [[501, 2]]);
+  assert.equal(relayed.v, 44, 'même valeur que fbq (22 × 2)');
+  assert.equal(relayed.v, atc[0][2].value);
 });
 
 test('doublon coupé (relais absent) : la page tourne, fbq part, rien n’est relayé', () => {
@@ -211,7 +251,8 @@ test('express : InitiateCheckout relayé une fois, même eventID que fbq, articl
   const ic = t.fbq.filter((c) => 'InitiateCheckout' === c[1]);
   assert.equal(ic.length, 1);
   assert.equal(t.relayed.length, 1);
-  assert.equal(JSON.stringify(t.relayed[0]), JSON.stringify(['InitiateCheckout', ic[0][3].eventID, [[123, 2]]]));
+  assert.equal(JSON.stringify(t.relayed[0].slice(0, 3)), JSON.stringify(['InitiateCheckout', ic[0][3].eventID, [[123, 2]]]));
+  assert.equal(t.relayed[0][3], ic[0][2].value, 'même valeur que le Pixel (M3)');
 });
 
 test('ph haché passé au Pixel : au chargement suivant, fammaXid() donne {external_id, ph} à fbq(init)', () => {

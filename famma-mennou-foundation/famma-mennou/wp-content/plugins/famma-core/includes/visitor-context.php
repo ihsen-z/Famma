@@ -86,6 +86,55 @@ final class Visitor_Context {
 	}
 
 	/**
+	 * Limite des routes publiques du navigateur (journal, saisies, doublon CAPI).
+	 *
+	 * Compte `$cost` unités (appels ou événements) pour le groupe d'adresses
+	 * sur la tranche de dix minutes : une lecture, puis une écriture d'une
+	 * seule ligne bornée (`Rate_Counter`), et aucune écriture une fois la
+	 * limite atteinte (lot 59, I2).
+	 *
+	 * @param string $route Nom court de la route (`vj`, `vi`, `mr`).
+	 * @param int    $limit Unités acceptées sur dix minutes.
+	 * @param int    $cost  Unités de cet appel.
+	 * @param int    $now   Horloge (tests), maintenant par défaut.
+	 * @return bool Vrai si l'appel dépasse la limite.
+	 */
+	public static function beacon_limited( string $route, int $limit, int $cost = 1, int $now = 0 ): bool {
+		$group = self::rate_group();
+		if ( '' === $group ) {
+			return false;
+		}
+		$now  = $now > 0 ? $now : time();
+		$name = $route . '_' . $group;
+		if ( Rate_Counter::used( $name, $now ) + $cost > $limit ) {
+			return true;
+		}
+		Rate_Counter::add( $name, $cost, $now );
+		return false;
+	}
+
+	/**
+	 * Groupe d'adresses du compteur : empreinte salée tronquée à 3 caractères
+	 * (4 096 groupes au plus, donc 4 096 lignes au plus par route) ; une IPv6
+	 * compte pour son /64, qu'un abonné reçoit en entier ; une IPv4 écrite en
+	 * IPv6 (`::ffff:a.b.c.d`) compte pour son IPv4.
+	 *
+	 * @return string
+	 */
+	public static function rate_group(): string {
+		$ip     = self::ip();
+		$packed = '' !== $ip ? inet_pton( $ip ) : false;
+		if ( false === $packed ) {
+			return '';
+		}
+		if ( 16 === strlen( $packed ) ) {
+			$mapped = str_repeat( "\0", 10 ) . "\xff\xff" === substr( $packed, 0, 12 );
+			$packed = $mapped ? substr( $packed, 12 ) : substr( $packed, 0, 8 );
+		}
+		return substr( hash_hmac( 'sha256', bin2hex( $packed ), wp_salt( 'auth' ) ), 0, 3 );
+	}
+
+	/**
 	 * Identifiant lu dans un cookie, ou chaîne vide s'il est absent ou invalide.
 	 *
 	 * @param string $name Nom du cookie.

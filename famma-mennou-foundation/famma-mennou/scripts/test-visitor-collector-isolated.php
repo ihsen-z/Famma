@@ -39,7 +39,7 @@ namespace Famma\Core {
 		public static function ip_hash(): string {
 			return 'hash';
 		}
-		public static function rate_limited( string $prefix, int $limit ): bool {
+		public static function beacon_limited( string $route, int $limit, int $cost = 1, int $now = 0 ): bool {
 			return false;
 		}
 		public static function path( $value ): string {

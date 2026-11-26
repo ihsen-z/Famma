@@ -43,7 +43,7 @@ final class Visitor_Inputs_Collector {
 	private const MAX_BODY = 4096;
 
 	/**
-	 * Envois acceptés par empreinte d'IP sur dix minutes.
+	 * Envois acceptés par groupe d'adresses sur dix minutes (`Visitor_Context::beacon_limited`).
 	 */
 	private const RATE_LIMIT = 60;
 
@@ -146,7 +146,7 @@ final class Visitor_Inputs_Collector {
 		}
 		$visitor = strtolower( Visitor_Context::text( $data['v'], 36 ) );
 		$session = strtolower( Visitor_Context::text( $data['s'], 36 ) );
-		if ( ! Visitor_Context::is_uuid( $visitor ) || ! Visitor_Context::is_uuid( $session ) || Visitor_Context::rate_limited( 'famma_vi_', self::RATE_LIMIT ) ) {
+		if ( ! Visitor_Context::is_uuid( $visitor ) || ! Visitor_Context::is_uuid( $session ) || Visitor_Context::beacon_limited( 'vi', self::RATE_LIMIT ) ) {
 			return $done;
 		}
 		$fields = array();

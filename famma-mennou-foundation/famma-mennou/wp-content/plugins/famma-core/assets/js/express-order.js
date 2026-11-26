@@ -862,7 +862,8 @@
 	 * Émet un événement Meta, si le Pixel est présent.
 	 *
 	 * Avec `items` (ID WooCommerce, quantité), l'événement est aussi relayé au
-	 * doublon serveur, même eventID (lot 59, `fammaRelay`, absent si coupé).
+	 * doublon serveur, même eventID et même valeur (lot 59, `fammaRelay`,
+	 * absent si coupé ; le serveur borne la valeur).
 	 *
 	 * @param {string} name   Nom de l'événement standard.
 	 * @param {Object} params Paramètres de l'événement.
@@ -877,7 +878,7 @@
 		try {
 			window.fbq( 'track', name, params, { eventID: id } );
 			if ( items && items.length && 'function' === typeof window.fammaRelay ) {
-				window.fammaRelay( name, id, items );
+				window.fammaRelay( name, id, items, params.value );
 			}
 			return true;
 		} catch ( error ) {

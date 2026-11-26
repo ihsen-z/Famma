@@ -75,7 +75,7 @@ final class Visitor_Collector {
 	private const MAX_BODY = 16384;
 
 	/**
-	 * Lots acceptés par empreinte d'IP sur dix minutes.
+	 * Lots acceptés par groupe d'adresses sur dix minutes (`Visitor_Context::beacon_limited`).
 	 */
 	private const RATE_LIMIT = 120;
 
@@ -213,13 +213,17 @@ final class Visitor_Collector {
 			return $done;
 		}
 		$data = json_decode( $body, true );
+		// Doublon CAPI (lot 59, I4) : ses événements voyagent dans ce même envoi, sous `m`, avec leurs propres contrôles.
+		if ( is_array( $data ) && isset( $data['m'] ) ) {
+			Capi_Mirror_Route::accept_payload( $data['m'], time() );
+		}
 		if ( ! is_array( $data ) || ! isset( $data['v'], $data['s'], $data['e'] ) || ! is_array( $data['e'] ) ) {
 			return $done;
 		}
 		$visitor = strtolower( Visitor_Context::text( $data['v'], 36 ) );
 		$session = strtolower( Visitor_Context::text( $data['s'], 36 ) );
 		$ip_hash = Visitor_Context::ip_hash();
-		if ( ! Visitor_Context::is_uuid( $visitor ) || ! Visitor_Context::is_uuid( $session ) || Visitor_Context::rate_limited( 'famma_vj_', self::RATE_LIMIT ) ) {
+		if ( ! Visitor_Context::is_uuid( $visitor ) || ! Visitor_Context::is_uuid( $session ) || Visitor_Context::beacon_limited( 'vj', self::RATE_LIMIT ) ) {
 			return $done;
 		}
 
