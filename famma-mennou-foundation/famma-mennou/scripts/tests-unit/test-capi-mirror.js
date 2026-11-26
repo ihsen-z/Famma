@@ -12,6 +12,8 @@
  * - express : numéro valide → empreinte SHA-256 de « 216 » + 8 chiffres (celle de la CAPI)
  *   en mémoire et dans l'onglet, jointe au relais ; InitiateCheckout relayé avec son eventID ;
  *   au chargement suivant, fammaXid() la passe à fbq('init') en `ph` ; jamais le numéro en clair.
+ * - N6 : adresse longue et nombreux événements : chaque envoi reste sous la taille lue par le
+ *   serveur, le journal n'est jamais perdu, tout part en plusieurs envois ; sans fragment ;
  * Aucune requête réelle, numéros synthétiques.
  *
  * Usage : node scripts/tests-unit/test-capi-mirror.js
@@ -54,8 +56,8 @@ function page(options = {}) {
     document, Blob, JSON, Date, Math, String, Number, Object, Array, RegExp, URL, URLSearchParams, Uint8Array, parseFloat, parseInt, decodeURIComponent, encodeURIComponent,
     innerHeight: 800, scrollY: 0, performance: { getEntriesByType: () => [] },
     localStorage: { getItem: (k) => (local.has(k) ? local.get(k) : null), setItem: (k, v) => local.set(k, String(v)) },
-    location: { href: 'https://qa.invalid/produit/masque/?utm_source=fb', protocol: 'https:', search: '?utm_source=fb', pathname: '/produit/masque/', hostname: 'qa.invalid' },
-    navigator: { sendBeacon(url, blob) { beacons.push({ url, body: JSON.parse(blob.text), type: blob.type }); return true; } },
+    location: { href: options.href || 'https://qa.invalid/produit/masque/?utm_source=fb', protocol: 'https:', search: '?utm_source=fb', pathname: '/produit/masque/', hostname: 'qa.invalid' },
+    navigator: { sendBeacon(url, blob) { beacons.push({ url, body: JSON.parse(blob.text), type: blob.type, bytes: Buffer.byteLength(blob.text) }); return true; } },
     crypto: crypto.webcrypto,
     sessionStorage: { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) },
     setTimeout(cb) { timers.push(cb); return timers.length; }, clearTimeout(id) { timers[id - 1] = null; },
@@ -68,6 +70,7 @@ function page(options = {}) {
   const run = (code) => vm.runInContext(code, context);
   if (options.relay !== false) run(fromPhp.relay);
   run(fromPhp.pixels);
+  if (options.oldRelay) delete context.fammaRelay.size;
   if (options.journal) {
     context.fammaJournal = { endpoint: 'https://qa.invalid/wp-json/famma/v1/collect', pageType: 'product', productId: 501, days: 180 };
     run(journal);
@@ -180,6 +183,48 @@ test('empreinte du téléphone dans l’onglet : jointe au relais ; valeur non c
   const bad = page({ storage: { famma_ph: '21620123456' } });
   bad.tick();
   assert.equal(bad.beacons[0].body.ph, undefined);
+});
+
+// ── N6 : taille des envois ───────────────────────────────────────────────────
+const longHref = 'https://qa.invalid/produit/masque/?utm_source=fb&q=' + 'x'.repeat(3000) + '#avis';
+function burst(p, n) {
+  for (let k = 0; k < n; k++) p.run('fammaRelay("AddToCart","atc-' + k + '",[[501,1]],22);');
+}
+test('N6 — journal : adresse longue et 14 événements : envois sous 16 Ko, journal gardé, tout part en compléments', () => {
+  const p = page({ journal: true, href: longHref });
+  burst(p, 12);
+  p.leave();
+  assert.ok(p.beacons.length >= 2 && p.beacons.length <= 5, 'compléments bornés : ' + p.beacons.length);
+  p.beacons.forEach((b) => {
+    assert.equal(b.url, 'https://qa.invalid/wp-json/famma/v1/collect');
+    assert.ok(b.bytes <= 16384, 'envoi sous la limite du journal : ' + b.bytes);
+    if (b.body.m) assert.ok(Buffer.byteLength(JSON.stringify(b.body.m)) <= 8000, 'partie m sous 8 000 octets');
+  });
+  assert.deepEqual(p.beacons[0].body.e.map((e) => e.n), ['page_view', 'page_leave'], 'journal dans le premier envoi');
+  assert.ok(p.beacons.slice(1).every((b) => 0 === b.body.e.length), 'compléments sans événement du journal');
+  const ids = p.beacons.flatMap((b) => (b.body.m ? b.body.m.e.map((e) => e.id) : []));
+  assert.equal(ids.length, 14, 'PageView + ViewContent + 12 AddToCart, aucun perdu');
+  assert.equal(new Set(ids).size, 14, 'aucun envoyé deux fois');
+  const u = p.beacons.flatMap((b) => (b.body.m ? b.body.m.e.map((e) => e.u) : []));
+  assert.ok(u.every((x) => x.length <= 1000 && !x.includes('#')), 'adresse coupée à 1 000 caractères, sans fragment');
+});
+test('N6 — journal : ancien relais (sans size) : un seul envoi, comme avant', () => {
+  const p = page({ journal: true, oldRelay: true });
+  burst(p, 12);
+  p.leave();
+  assert.equal(p.beacons.length, 1);
+  assert.deepEqual(p.beacons[0].body.e.map((e) => e.n), ['page_view', 'page_leave']);
+});
+test('N6 — sans journal : 25 événements à adresse longue : envois propres sous 8 Ko, aucun perdu', () => {
+  const p = page({ href: longHref });
+  burst(p, 23);
+  p.leave();
+  assert.ok(p.beacons.length >= 3);
+  p.beacons.forEach((b) => {
+    assert.equal(b.url, 'https://qa.invalid/wp-json/famma/v1/meta-relay');
+    assert.ok(b.bytes <= 8192 && b.body.e.length <= 10, 'route propre : ' + b.bytes + ' octets');
+  });
+  assert.equal(p.beacons.flatMap((b) => b.body.e).length, 25);
 });
 
 // ── Formulaire express (vrai express-order.js) ───────────────────────────────

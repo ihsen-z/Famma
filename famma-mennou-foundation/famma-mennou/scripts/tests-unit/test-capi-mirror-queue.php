@@ -10,7 +10,9 @@
  * - décision sur les lignes elles-mêmes, aucune ligne orpheline (M1) ;
  * - refus de contenu renvoyé par moitiés, seul l'événement fautif perdu (M5) ;
  * - désactivation : file, verrou et compteurs supprimés (M6) ;
- * - santé : refus, écarts et pertes en orange, jamais rouge, aucun e-mail ;
+ * - santé (N5) : orange seulement au-delà d'un seuil de pertes réelles sur
+ *   24 h ; le bruit (origine, visiteur inconnu, limite, rejeu) n'est que
+ *   compté ; jamais rouge, aucun e-mail ;
  * - jeton, téléphone et IP jamais dans le journal ; graph.facebook.com
  *   seulement dans capi-transport.php (V3).
  * Run with: php scripts/tests-unit/test-capi-mirror-queue.php
@@ -112,18 +114,65 @@ $last = Capi_Mirror_Queue::flush( $now + 670 );
 l5_check( 2 === $last['lost'] && array() === mirror_queued() && 3 === count( $GLOBALS['wp_test_http'] ), 'Trois tentatives au plus, puis le lot est écarté.' );
 add_filter( 'famma_capi_health_reasons', array( Capi_Mirror_Health::class, 'health_reasons' ), 10, 3 );
 add_filter( 'famma_capi_health_label', array( Capi_Mirror_Health::class, 'health_label' ), 10, 2 );
+$mirror_reasons = static fn( int $at ): array => array_values( array_filter( Capi_Health_Rules::reasons( Capi_Health::signals(), $at ), static fn( array $r ): bool => 'mirror_lost' === $r['code'] ) );
 Capi_Mirror_Health::record_many( array( 'origin' => 4 ), $now + 700 );
-$reasons = Capi_Health_Rules::reasons( Capi_Health::signals(), $now + 800 );
-$mirror  = array_values( array_filter( $reasons, static fn( array $r ): bool => 'mirror_lost' === $r['code'] ) );
-l5_check( 1 === count( $mirror ) && 'orange' === $mirror[0]['niveau'], 'Santé : pertes et refus = UNE raison orange (jamais rouge).' );
-l5_check( str_contains( Capi_Health_Rules::label( $mirror[0] ), '2 perdu(s)' ) && str_contains( Capi_Health_Rules::label( $mirror[0] ), '4 refusé(s)' ) && str_contains( Capi_Health_Rules::label( $mirror[0] ), 'transient,origin' ), 'Santé : libellé lisible (perdus, refusés, corrigés, motifs).' );
+l5_check( array() === $mirror_reasons( $now + 800 ), 'N5 : 2 pertes réelles et 4 refus d’origine sur 24 h : sous le seuil, pas d’orange.' );
+Capi_Mirror_Health::record_many(
+	array(
+		'origin'  => 5000,
+		'unknown' => 5000,
+		'rate'    => 5000,
+		'replay'  => 5000,
+	),
+	$now + 710
+);
+l5_check( array() === $mirror_reasons( $now + 800 ), 'N5 : 20 000 refus de bruit (origine, visiteur inconnu, limite, rejeu) : compteurs seulement, jamais d’orange.' );
+Capi_Mirror_Health::record_many(
+	array(
+		'sent'     => 100,
+		'contract' => 25,
+	),
+	$now + 720
+);
+$mirror = $mirror_reasons( $now + 800 );
+l5_check( 1 === count( $mirror ) && 'orange' === $mirror[0]['niveau'], 'N5 : 27 événements réels perdus sur 127 en 24 h (≥ 20 et ≥ 5 %) : UNE raison orange (jamais rouge).' );
+$label = Capi_Health_Rules::label( $mirror[0] );
+l5_check( str_contains( $label, '27 événement(s) réel(s)' ) && str_contains( $label, 'sur 127' ) && str_contains( $label, 'seuil : 20 et 5 %' ) && str_contains( $label, 'transient,contract' ) && ! str_contains( $label, 'origin,' ), 'N5 : libellé lisible (pertes réelles, base, seuils, motifs de perte seulement).' );
 $GLOBALS['wp_test_mail'] = array();
 $famma_wpdb              = $GLOBALS['wpdb'];
 unset( $GLOBALS['wpdb'] ); // Verrou de l'alerte par option (sa requête SQL n'est pas doublée ici).
 $state           = Capi_Health::evaluate( $now + 800 );
 $GLOBALS['wpdb'] = $famma_wpdb;
 l5_check( 'orange' === $state['statut'] && array() === $GLOBALS['wp_test_mail'], 'Santé : état orange, aucune alerte e-mail pour le doublon.' );
-l5_check( array() === Capi_Mirror_Health::health_reasons( array(), array(), $now + 800 + 8 * DAY_IN_SECONDS ), 'Santé : plus rien après 7 jours.' );
+l5_check( array() === Capi_Mirror_Health::health_reasons( array(), array(), $now + 800 + DAY_IN_SECONDS ), 'N5 : seuil sur 24 h glissantes : plus d’orange le lendemain.' );
+$week = Capi_Mirror_Health::totals( $now + 800 + DAY_IN_SECONDS, 'week' );
+l5_check( 100 === $week['sent'] && 27 === $week['issue'] && 20004 === $week['noise'] && 0 === Capi_Mirror_Health::totals( $now + 800 + 8 * DAY_IN_SECONDS, 'week' )['issue'], 'N5 : compteurs des 7 jours gardés pour le réglage (envoyés, pertes, bruit), remis à zéro après 7 jours.' );
+mirror_reset();
+Capi_Mirror_Health::record_many(
+	array(
+		'sent'     => 1000,
+		'oversize' => 25,
+	),
+	$now
+);
+l5_check( array() === Capi_Mirror_Health::health_reasons( array(), array(), $now ), 'N5 : 25 pertes sur 1 025 (2,4 %) : sous la part minimale, pas d’orange.' );
+$GLOBALS['wp_test_hooks']['famma_capi_mirror_alert_thresholds'] = array(
+	array(
+		static fn(): array => array(
+			'min'   => 10,
+			'share' => 2,
+		),
+		1,
+	),
+);
+l5_check(
+	1 === count( Capi_Mirror_Health::health_reasons( array(), array(), $now ) ) && array(
+		'min'   => 10,
+		'share' => 2,
+	) === Capi_Mirror_Health::thresholds(),
+	'N5 : seuils réglables par le filtre famma_capi_mirror_alert_thresholds (rien en dur dans l’interface).'
+);
+unset( $GLOBALS['wp_test_hooks']['famma_capi_mirror_alert_thresholds'] );
 
 // ── M5 : refus de contenu renvoyé par moitiés ───────────────────────────────
 mirror_reset();

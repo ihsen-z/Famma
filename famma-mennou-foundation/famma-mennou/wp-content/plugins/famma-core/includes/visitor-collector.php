@@ -70,9 +70,15 @@ final class Visitor_Collector {
 	private const MAX_EVENTS = 25;
 
 	/**
-	 * Taille maximale du corps, en octets.
+	 * Taille maximale du corps du journal, en octets.
 	 */
 	private const MAX_BODY = 16384;
+
+	/**
+	 * Taille maximale lue quand le lot porte aussi le doublon CAPI (`m`) :
+	 * au-delà de {@see MAX_BODY}, seul `m` est écarté (lot 59, N6).
+	 */
+	private const MAX_BODY_WITH_MIRROR = 24576;
 
 	/**
 	 * Lots acceptés par groupe d'adresses sur dix minutes (`Visitor_Context::beacon_limited`).
@@ -209,22 +215,45 @@ final class Visitor_Collector {
 	public function collect( \WP_REST_Request $request ): \WP_REST_Response {
 		$done = new \WP_REST_Response( null, 204 );
 		$body = (string) $request->get_body();
-		if ( '' === $body || strlen( $body ) > self::MAX_BODY || Visitor_Context::is_bot() || Visitor_Context::is_staff() ) {
+		if ( '' === $body || strlen( $body ) > self::MAX_BODY_WITH_MIRROR || Visitor_Context::is_bot() || Visitor_Context::is_staff() ) {
 			return $done;
 		}
 		$data = json_decode( $body, true );
-		// Doublon CAPI (lot 59, I4) : ses événements voyagent dans ce même envoi, sous `m`, avec leurs propres contrôles.
-		if ( is_array( $data ) && isset( $data['m'] ) ) {
-			Capi_Mirror_Route::accept_payload( $data['m'], time() );
-		}
-		if ( ! is_array( $data ) || ! isset( $data['v'], $data['s'], $data['e'] ) || ! is_array( $data['e'] ) ) {
+		if ( ! is_array( $data ) ) {
 			return $done;
+		}
+		// Doublon CAPI (lot 59, N6) : un lot trop gros perd sa partie `m`, jamais les événements du journal.
+		$mirror = $data['m'] ?? null;
+		if ( strlen( $body ) > self::MAX_BODY ) {
+			if ( null === $mirror ) {
+				return $done;
+			}
+			Capi_Mirror_Route::oversized( $mirror, time() );
+			$mirror = null;
+		}
+		$recorded = $this->record( $data );
+		// Les événements du doublon voyagent dans ce même envoi (I4), avec leurs propres contrôles (N1 : visiteur connu).
+		if ( null !== $mirror ) {
+			Capi_Mirror_Route::accept_payload( $mirror, time(), $recorded );
+		}
+		return $done;
+	}
+
+	/**
+	 * Enregistre les événements du journal d'un lot.
+	 *
+	 * @param array<string, mixed> $data Lot décodé.
+	 * @return string Visiteur dont au moins un événement vient d'être enregistré, sinon vide.
+	 */
+	private function record( array $data ): string {
+		if ( ! isset( $data['v'], $data['s'], $data['e'] ) || ! is_array( $data['e'] ) ) {
+			return '';
 		}
 		$visitor = strtolower( Visitor_Context::text( $data['v'], 36 ) );
 		$session = strtolower( Visitor_Context::text( $data['s'], 36 ) );
 		$ip_hash = Visitor_Context::ip_hash();
 		if ( ! Visitor_Context::is_uuid( $visitor ) || ! Visitor_Context::is_uuid( $session ) || Visitor_Context::beacon_limited( 'vj', self::RATE_LIMIT ) ) {
-			return $done;
+			return '';
 		}
 
 		$src    = isset( $data['src'] ) && is_array( $data['src'] ) ? $data['src'] : array();
@@ -267,8 +296,7 @@ final class Visitor_Collector {
 				'num'        => min( 86400, absint( $event['x'] ?? 0 ) ),
 			);
 		}
-		Visitor_Store::instance()->insert_many( $rows );
-		return $done;
+		return Visitor_Store::instance()->insert_many( $rows ) > 0 ? $visitor : '';
 	}
 
 	/**

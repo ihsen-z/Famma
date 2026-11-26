@@ -69,11 +69,19 @@ final class Capi_Mirror_Settings {
 	}
 
 	/**
-	 * Case à cocher.
+	 * Case à cocher et compteurs des 7 derniers jours (N5 : le bruit n'est visible qu'ici).
 	 *
 	 * @return void
 	 */
 	public function render(): void {
+		$week   = Capi_Mirror_Health::totals( time(), 'week' );
+		$limits = Capi_Mirror_Health::thresholds();
+		$noise  = array();
+		foreach ( $week['reasons'] as $reason => $count ) {
+			if ( 'noise' === Capi_Mirror_Health::kind( (string) $reason ) ) {
+				$noise[] = $reason . ' ' . $count;
+			}
+		}
 		?>
 		<input type="hidden" name="<?php echo esc_attr( self::OPTION ); ?>" value="0" />
 		<label>
@@ -81,6 +89,24 @@ final class Capi_Mirror_Settings {
 			<?php esc_html_e( 'Envoyer aussi par la CAPI PageView, ViewContent, AddToCart et InitiateCheckout, avec le même identifiant que le Pixel.', 'famma-core' ); ?>
 		</label>
 		<p class="description"><?php esc_html_e( 'Meta garde un seul exemplaire de chaque événement. Envoi groupé toutes les 1 à 5 minutes, sans ralentir les pages. Après un changement, videz le cache de pages.', 'famma-core' ); ?></p>
+		<p class="description">
+		<?php
+		echo esc_html(
+			sprintf(
+				/* translators: 1: events sent, 2: real events lost or refused, 3: their reason codes, 4: events sent with a corrected value, 5: noise refusals, 6: noise reason codes with counts, 7: minimum count threshold, 8: minimum share threshold in percent. */
+				__( '7 derniers jours : %1$s envoyé(s) ; %2$s perdu(s) ou refusé(s) (%3$s) ; %4$s corrigé(s) ; %5$s refus de bruit, jamais en alerte (%6$s). Alerte orange seulement si, sur 24 h, les pertes atteignent %7$s événements et %8$s %%.', 'famma-core' ),
+				(string) $week['sent'],
+				(string) $week['issue'],
+				array() !== $week['codes'] ? implode( ', ', $week['codes'] ) : '-',
+				(string) $week['adjusted'],
+				(string) $week['noise'],
+				array() !== $noise ? implode( ', ', $noise ) : '-',
+				(string) $limits['min'],
+				(string) $limits['share']
+			)
+		);
+		?>
+		</p>
 		<?php
 	}
 }

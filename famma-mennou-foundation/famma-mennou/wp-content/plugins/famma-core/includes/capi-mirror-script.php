@@ -29,6 +29,17 @@ final class Capi_Mirror_Script {
 	public const RELAY_DELAY_MS = 800;
 
 	/**
+	 * Taille maximale d'un lot du relais (`m` ou envoi propre), en octets :
+	 * sous {@see Capi_Mirror_Event::MAX_BODY}, avec une marge pour l'enveloppe (N6).
+	 */
+	public const RELAY_MAX_BYTES = Capi_Mirror_Event::MAX_BODY - 192;
+
+	/**
+	 * Longueur gardée de l'adresse de la page (sans le fragment `#…`).
+	 */
+	public const URL_MAX = 1000;
+
+	/**
 	 * Appel du relais qui suit un `fbq('track')` imprimé par PHP.
 	 *
 	 * L'eventID est celui que `fammaEventId()` vient de tirer
@@ -65,7 +76,13 @@ final class Capi_Mirror_Script {
 	}
 
 	/**
-	 * Script `fammaRelay(nom, eventID, articles, valeur)`, avec `take()` et `attach()`.
+	 * Script `fammaRelay(nom, eventID, articles, valeur)`, avec `take(max)`, `size()` et `attach()`.
+	 *
+	 * `take(max)` (N6) remplit le lot entrée par entrée et s'arrête avant de
+	 * dépasser `max` octets (au plus {@see RELAY_MAX_BYTES}) : le journal lui
+	 * donne la place qui reste dans son envoi, puis reprend la suite dans
+	 * d'autres envois tant que `size()` n'est pas nul. Une entrée qui ne tient
+	 * même pas seule dans un lot vide est écartée (jamais de boucle sans fin).
 	 *
 	 * Une paire nom + eventID n'est gardée qu'une fois par affichage. Chaque
 	 * entrée porte son âge (pas l'heure du navigateur) ; le lot porte `ph`,
@@ -80,7 +97,10 @@ final class Capi_Mirror_Script {
 	public static function browser_script(): string {
 		return 'window.fammaRelay=window.fammaRelay||(function(u,w,d){var q=[],k={},t=0,j=0;'
 			. 'function ph(){var h=w.fammaPh||"";if(!h){try{h=w.sessionStorage.getItem("' . Capi_External_Id::PHONE_KEY . '")||"";}catch(e){}}return /^[0-9a-f]{64}$/.test(h)?h:"";}'
-			. 'function take(){if(!q.length){return null;}var n=Date.now(),b={e:q.splice(0,' . Capi_Mirror_Event::MAX_EVENTS . ').map(function(x){var o={n:x.n,id:x.id,u:x.u,a:n-x.s,i:x.i};if(null!=x.v){o.v=x.v;}return o;})},p=ph();if(p){b.ph=p;}return b;}'
+			. 'function z(s){try{return encodeURIComponent(s).replace(/%[0-9A-F]{2}/g,"x").length;}catch(e){return 3*s.length;}}'
+			. 'function take(m){if(!q.length){return null;}var L=' . self::RELAY_MAX_BYTES . ',n=Date.now(),b={e:[]},p=ph(),c,x,o,l;m=m>0&&m<L?m:L;if(p){b.ph=p;}c=z(JSON.stringify(b));'
+			. 'while(q.length&&b.e.length<' . Capi_Mirror_Event::MAX_EVENTS . '){x=q[0];o={n:x.n,id:x.id,u:x.u,a:n-x.s,i:x.i};if(null!=x.v){o.v=x.v;}l=z(JSON.stringify(o))+1;'
+			. 'if(c+l>m){if(b.e.length||m<L){break;}q.shift();continue;}b.e.push(o);c+=l;q.shift();}return b.e.length?b:null;}'
 			. 'function own(){if(t){clearTimeout(t);t=0;}var b,s;while((b=take())){s=JSON.stringify(b);'
 			. 'try{if(navigator.sendBeacon&&navigator.sendBeacon(u,new Blob([s],{type:"text/plain"}))){continue;}}catch(e){}'
 			. 'try{if(w.fetch){w.fetch(u,{method:"POST",body:s,keepalive:true,credentials:"same-origin",headers:{"Content-Type":"text/plain"}}).catch(function(){});}}catch(e){}}}'
@@ -88,9 +108,9 @@ final class Capi_Mirror_Script {
 			. 'function leave(){if(!j){own();}}'
 			. 'w.addEventListener("pagehide",leave);d.addEventListener("visibilitychange",function(){if("hidden"===d.visibilityState){leave();}});'
 			. 'var f=function(n,id,i,v){w.fammaLastEventId=void 0;if(!n||!id||k[n+"|"+id]){return;}k[n+"|"+id]=1;'
-			. 'var x={n:String(n),id:String(id),u:String(location.href).slice(0,2000),s:Date.now(),i:i||[]};if("number"===typeof v&&isFinite(v)){x.v=v;}'
+			. 'var x={n:String(n),id:String(id),u:String(location.href).split("#")[0].slice(0,' . self::URL_MAX . '),s:Date.now(),i:i||[]};if("number"===typeof v&&isFinite(v)){x.v=v;}'
 			. 'q.push(x);if(!j&&!t){t=setTimeout(due,' . self::RELAY_DELAY_MS . ');}};'
-			. 'f.take=take;f.attach=function(){j=1;if(t){clearTimeout(t);t=0;}};return f;'
+			. 'f.take=take;f.size=function(){return q.length;};f.attach=function(){j=1;if(t){clearTimeout(t);t=0;}};return f;'
 			. '})(' . wp_json_encode( rest_url( Capi_Mirror::ROUTE_NAMESPACE . Capi_Mirror::ROUTE ) ) . ',window,document);';
 	}
 

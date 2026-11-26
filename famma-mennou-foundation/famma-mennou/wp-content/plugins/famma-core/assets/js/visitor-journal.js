@@ -12,7 +12,10 @@
  *
  * Doublon CAPI (lot 59) : si le relais `fammaRelay` est sur la page, le
  * journal s'y attache et emporte ses événements dans ses propres envois,
- * sous `m` : aucune requête de plus par page.
+ * sous `m` : aucune requête de plus par page. Chaque envoi reste sous la
+ * taille lue par le serveur (N6) : `m` ne prend que la place libre, et ce qui
+ * ne tient pas part dans des envois de complément (au plus 5 par vidage, et
+ * 60 Ko au total, sous le quota de sendBeacon).
  */
 ( function () {
 	'use strict';
@@ -141,22 +144,44 @@
 		relay.attach();
 	}
 
+	// Sous les 16 384 octets lus par famma/v1/collect, et le total sous le quota de sendBeacon (64 Ko).
+	var BODY_MAX = 15000;
+	var FLUSH_MAX = 60000;
+	var ROUNDS = 5;
+
+	function bytes( text ) {
+		try {
+			return encodeURIComponent( text ).replace( /%[0-9A-F]{2}/g, 'x' ).length;
+		} catch ( e ) {
+			return 3 * text.length;
+		}
+	}
+
 	function flush() {
-		var mirror = relay ? relay.take() : null;
-		if ( ! queue.length && ! mirror ) {
-			return;
+		var budget = FLUSH_MAX;
+		for ( var round = 0; round < ROUNDS; round++ ) {
+			var now = Date.now();
+			var events = round ? [] : queue.splice( 0, 25 ).map( function ( e ) {
+				e.a = now - e.at;
+				delete e.at;
+				return e;
+			} );
+			var payload = { v: visitor, s: session, src: state.src, e: events };
+			var room = Math.min( BODY_MAX, budget ) - bytes( JSON.stringify( payload ) ) - 8;
+			var mirror = relay && room > 0 ? relay.take( room ) : null;
+			if ( ! events.length && ! mirror ) {
+				return;
+			}
+			if ( mirror ) {
+				payload.m = mirror;
+			}
+			budget -= bytes( JSON.stringify( payload ) );
+			send( ctx.endpoint, payload );
+			// Ancien relais (sans size) : un seul envoi, comme avant.
+			if ( ! relay || ! relay.size || ! relay.size() ) {
+				return;
+			}
 		}
-		var now = Date.now();
-		var events = queue.splice( 0, 25 ).map( function ( e ) {
-			e.a = now - e.at;
-			delete e.at;
-			return e;
-		} );
-		var payload = { v: visitor, s: session, src: state.src, e: events };
-		if ( mirror ) {
-			payload.m = mirror;
-		}
-		send( ctx.endpoint, payload );
 	}
 
 	// ── Page vue, puis temps actif et profondeur de défilement à la sortie ──

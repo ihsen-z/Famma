@@ -175,7 +175,9 @@ function wp_remote_post( string $url, array $args = array() ) {
 		'url'  => $url,
 		'args' => $args,
 	);
-	$response                  = $GLOBALS['wp_test_http_response'] ?? new WP_Error( 'http_request_failed', 'No fixture' );
+	// Optional responder (lot 59, N3): the answer depends on the request body.
+	$responder = $GLOBALS['wp_test_http_responder'] ?? null;
+	$response  = is_callable( $responder ) ? $responder( $url, $args ) : ( $GLOBALS['wp_test_http_response'] ?? new WP_Error( 'http_request_failed', 'No fixture' ) );
 	// WP_Http::request() fires this action with the request arguments, body included.
 	do_action( 'http_api_debug', $response, 'response', 'WpOrg\Requests\Requests', $args, $url );
 	return $response;

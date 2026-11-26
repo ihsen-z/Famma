@@ -61,15 +61,17 @@ $hidden   = new WC_Product( 502, '', 'Brouillon', 'brouillon', 10.0 );
  */
 function mirror_reset( array $options = array() ): void {
 	lb_reset( $options );
-	$GLOBALS['wp_test_post_status'] = array( 502 => 'draft' );
-	$GLOBALS['wp_test_auth_user']   = false;
-	$GLOBALS['wp_test_user_caps']   = array();
-	$GLOBALS['wp_test_cron']        = array();
-	$GLOBALS['mirror_race']         = null;
-	$GLOBALS['mirror_race_on']      = '';
-	$GLOBALS['wpdb']                = new Mirror_Test_Wpdb();
-	$_SERVER['REMOTE_ADDR']         = '197.0.0.10';
-	$_SERVER['HTTP_USER_AGENT']     = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148';
+	$GLOBALS['wp_test_post_status']    = array( 502 => 'draft' );
+	$GLOBALS['wp_test_auth_user']      = false;
+	$GLOBALS['wp_test_user_caps']      = array();
+	$GLOBALS['wp_test_cron']           = array();
+	$GLOBALS['mirror_race']            = null;
+	$GLOBALS['mirror_race_on']         = '';
+	$GLOBALS['wp_test_http_responder'] = null;
+	$GLOBALS['wpdb']                   = new Mirror_Test_Wpdb();
+	$GLOBALS['wpdb']->known            = array( $GLOBALS['vid'] );
+	$_SERVER['REMOTE_ADDR']            = '197.0.0.10';
+	$_SERVER['HTTP_USER_AGENT']        = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148';
 	mirror_headers( 'https://qa.invalid', 'https://qa.invalid/produit/masque/' );
 	$_COOKIE = array(
 		'_fbp'      => 'fb.1.1795000000000.1234567890',
@@ -142,7 +144,7 @@ function mirror_by_name(): array {
 /** Health counters by reason, zero when absent. */
 function mirror_health(): array {
 	$state = get_option( Capi_Mirror_Health::OPTION, array() );
-	return (array) ( $state['reasons'] ?? array() ) + array_fill_keys( array( 'origin', 'site', 'rate', 'content', 'replay', 'adjusted', 'expired', 'contract', 'transient' ), 0 );
+	return (array) ( $state['reasons'] ?? array() ) + array_fill_keys( array( 'origin', 'unknown', 'site', 'rate', 'content', 'replay', 'adjusted', 'oversize', 'sent', 'expired', 'contract', 'transient' ), 0 );
 }
 
 /**

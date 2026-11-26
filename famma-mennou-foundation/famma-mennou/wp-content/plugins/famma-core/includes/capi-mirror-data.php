@@ -151,4 +151,22 @@ final class Capi_Mirror_Data {
 		}
 		return '';
 	}
+
+	/**
+	 * Le journal des visiteurs a-t-il déjà enregistré ce visiteur (N1) ?
+	 *
+	 * Lecture indexée (`visitor_id`) d'une seule ligne, faite seulement quand
+	 * le lot n'a pas lui-même été enregistré par le journal dans le même envoi.
+	 *
+	 * @param string $visitor Valeur du cookie `famma_vid` (uuid).
+	 * @return bool
+	 */
+	public static function journal_knows( string $visitor ): bool {
+		if ( ! Visitor_Context::is_uuid( $visitor ) ) {
+			return false;
+		}
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Journal des visiteurs, lecture indexée sur visitor_id d'une ligne ; jamais mise en cache (anti-abus).
+		return null !== $wpdb->get_var( $wpdb->prepare( 'SELECT 1 FROM %i WHERE visitor_id = %s LIMIT 1', Visitor_Store::instance()->table(), $visitor ) );
+	}
 }

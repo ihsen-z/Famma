@@ -16,7 +16,7 @@
  * - `Capi_Mirror_Event` et `Capi_Mirror_Data` : événement validé, valeurs recalculées ;
  * - `Capi_Mirror_Store` : lignes de la file, verrou et marques de rejeu ;
  * - `Capi_Mirror_Queue` : envoi groupé par la tâche WP-Cron, jamais pendant une requête du navigateur ;
- * - `Capi_Mirror_Health` : refus et pertes comptés en orange.
+ * - `Capi_Mirror_Health` : envois, refus et pertes comptés ; orange au-delà d'un seuil sur 24 h.
  *
  * @package Famma\Core
  */

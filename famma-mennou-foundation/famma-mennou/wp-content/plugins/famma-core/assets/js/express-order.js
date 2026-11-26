@@ -1353,7 +1353,11 @@
 		if ( params.contents && params.contents[ 0 ] ) {
 			params.contents[ 0 ].quantity = delta;
 		}
-		return { add_to_cart: { emit: delta > 0, event_id: add.event_id, params: params }, initiate_checkout: t.initiate_checkout };
+		// Articles du relais (lot 59) : même quantité que le Pixel, sinon l'AddToCart express n'a pas de doublon serveur.
+		var items = ( add.items || [] ).map( function ( item, index ) {
+			return 0 === index ? [ item[ 0 ], delta ] : item;
+		} );
+		return { add_to_cart: { emit: delta > 0, event_id: add.event_id, params: params, items: items }, initiate_checkout: t.initiate_checkout };
 	}
 
 	/**

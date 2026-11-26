@@ -12,12 +12,22 @@
  * the API », Batch Requests : « You can send up to 1,000 events in data »,
  * « ideally within an hour of the event occurring »). Un événement qui
  * attend plus d'une heure est écarté ; `event_time` reste bien en deçà des
- * 7 jours. Un refus de contenu d'un lot de plusieurs événements est renvoyé
- * par moitiés (M5) : seul l'événement fautif est perdu, au plus
- * {@see MAX_REQUESTS} requêtes par tâche.
+ * 7 jours.
  *
- * Santé : un événement écarté sans accusé de Meta est compté par
- * `Capi_Mirror_Health` (orange, jamais rouge, aucun e-mail).
+ * Refus de contenu (M5, N3) : un lot de plusieurs événements refusé par Meta
+ * est renvoyé par moitiés, récursivement, jusqu'à isoler CHAQUE événement
+ * fautif ; les bons partent. Budget dur : {@see MAX_REQUESTS} requêtes par
+ * tâche, vérifié avant CHAQUE requête. Isoler k fautifs parmi n coûte au plus
+ * 1 + 2·k·⌈log2 n⌉ requêtes ; ce qui n'a pas pu être essayé faute de budget
+ * reste en file INTACT (`deferred`, ni perdu ni compté comme tentative) et
+ * repart à la tâche suivante, jusqu'à l'attente maximale d'une heure. Pire
+ * cas (tout le lot refusé) : 20 requêtes par tâche, donc au plus 240 par
+ * heure. Les index de `error_user_msg` / `error_data` de Meta ne sont pas
+ * utilisés (format non garanti).
+ *
+ * Santé : chaque événement envoyé et chaque événement écarté sans accusé de
+ * Meta est compté par `Capi_Mirror_Health` (orange au-delà d'un seuil, jamais
+ * rouge, aucun e-mail).
  *
  * @package Famma\Core
  */
@@ -47,7 +57,7 @@ final class Capi_Mirror_Queue {
 	public const MAX_WAIT = 3600;
 
 	/**
-	 * Requêtes à Meta au plus par tâche (renvois par moitiés compris).
+	 * Requêtes à Meta au plus par tâche (renvois par moitiés compris), vérifié avant chaque requête.
 	 */
 	public const MAX_REQUESTS = 20;
 
@@ -55,7 +65,7 @@ final class Capi_Mirror_Queue {
 	 * Envoie un lot à Meta (tâche WP-Cron uniquement).
 	 *
 	 * @param int $now Horloge (tests), maintenant par défaut.
-	 * @return array{sent: int, kept: int, lost: int, class: string, requests: int}
+	 * @return array{sent: int, kept: int, lost: int, deferred: int, class: string, requests: int}
 	 */
 	public static function flush( int $now = 0 ): array {
 		$now    = $now > 0 ? $now : time();
@@ -63,6 +73,7 @@ final class Capi_Mirror_Queue {
 			'sent'     => 0,
 			'kept'     => 0,
 			'lost'     => 0,
+			'deferred' => 0,
 			'class'    => '',
 			'requests' => 0,
 		);
@@ -80,6 +91,8 @@ final class Capi_Mirror_Queue {
 		} finally {
 			Capi_Mirror_Store::unlock( $token );
 		}
+		// Base du seuil d'alerte (N5) : les événements réellement acceptés par Meta.
+		Capi_Mirror_Health::record_many( array( 'sent' => (int) $report['sent'] ), $now );
 		return $report;
 	}
 
@@ -89,7 +102,7 @@ final class Capi_Mirror_Queue {
 	 * @param array<string, array<string, mixed>> $rows   Lignes décodées, par nom.
 	 * @param int                                 $now    Horloge.
 	 * @param array<string, mixed>                $report Compte rendu à compléter.
-	 * @return array{sent: int, kept: int, lost: int, class: string, requests: int}
+	 * @return array{sent: int, kept: int, lost: int, deferred: int, class: string, requests: int}
 	 */
 	private static function send( array $rows, int $now, array $report ): array {
 		$expired = array();
@@ -122,6 +135,8 @@ final class Capi_Mirror_Queue {
 	/**
 	 * Une requête pour ces lignes, puis la suite donnée à la réponse.
 	 *
+	 * Budget épuisé : les lignes restent en file sans rien changer (N3).
+	 *
 	 * @param array<string, array<string, mixed>> $rows   Lignes décodées, par nom.
 	 * @param int                                 $now    Horloge.
 	 * @param string                              $test   Code de test Meta, ou vide.
@@ -129,6 +144,10 @@ final class Capi_Mirror_Queue {
 	 * @return void
 	 */
 	private static function deliver( array $rows, int $now, string $test, array &$report ): void {
+		if ( $report['requests'] >= self::MAX_REQUESTS ) {
+			$report['deferred'] += count( $rows );
+			return;
+		}
 		$class = self::post( $rows, $test );
 		++$report['requests'];
 		$report['class'] = $class;
@@ -137,7 +156,7 @@ final class Capi_Mirror_Queue {
 			$report['sent'] += count( $rows );
 			return;
 		}
-		if ( 'contract' === $class && count( $rows ) > 1 && $report['requests'] + 2 <= self::MAX_REQUESTS ) {
+		if ( 'contract' === $class && count( $rows ) > 1 ) {
 			$half = intdiv( count( $rows ), 2 );
 			self::deliver( array_slice( $rows, 0, $half, true ), $now, $test, $report );
 			self::deliver( array_slice( $rows, $half, null, true ), $now, $test, $report );

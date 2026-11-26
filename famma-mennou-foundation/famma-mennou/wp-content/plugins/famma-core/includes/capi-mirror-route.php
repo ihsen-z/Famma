@@ -8,12 +8,15 @@
  * - la route propre `famma/v1/meta-relay`, pour une page sans journal.
  * Aucune ne contacte Meta : la file part par la tâche WP-Cron (`Capi_Mirror_Queue`).
  *
- * Ordre des contrôles (I1, I2) : interrupteur, équipe, robot ; origine
+ * Ordre des contrôles (I1, I2, N1) : interrupteur, équipe, robot ; origine
  * (`Origin`, à défaut `Referer`) sur l'hôte du site, ce qui ferme la porte
- * aux autres sites ; plafond du site LU avant toute écriture ; limite par
- * groupe d'adresses comptée en ÉVÉNEMENTS ; validation de chaque événement ;
- * mise en file en une requête, un event_id déjà reçu depuis 24 h refusé.
- * Chaque refus et chaque écart est compté dans l'état de santé (orange).
+ * aux autres sites ; visiteur CONNU du journal (cookie `famma_vid` dont le
+ * serveur a déjà enregistré au moins un événement, dans ce même envoi ou
+ * avant) : un inconnu est refusé sans rien compter dans le plafond du site ;
+ * plafond du site LU avant toute écriture ; limite par groupe d'adresses
+ * comptée en ÉVÉNEMENTS, qui est la vraie limite ; validation de chaque
+ * événement ; mise en file en une requête, un event_id déjà reçu depuis 24 h
+ * refusé. Chaque refus et chaque écart est compté (`Capi_Mirror_Health`).
  *
  * @package Famma\Core
  */
@@ -33,9 +36,11 @@ final class Capi_Mirror_Route {
 	private const RATE_LIMIT = 120;
 
 	/**
-	 * Événements acceptés pour tout le site sur dix minutes (filtre `famma_capi_mirror_site_limit`).
+	 * Garde-fou de la base : événements acceptés pour tout le site sur dix
+	 * minutes (filtre `famma_capi_mirror_site_limit`), visiteurs connus seulement.
+	 * La limite principale est celle par groupe d'adresses ({@see RATE_LIMIT}).
 	 */
-	private const SITE_LIMIT = 600;
+	private const SITE_LIMIT = 6000;
 
 	/**
 	 * Déclare la route propre du relais (pas de nonce : page en cache).
@@ -82,11 +87,12 @@ final class Capi_Mirror_Route {
 	/**
 	 * Contrôles puis mise en file ; testable sans serveur REST.
 	 *
-	 * @param mixed $payload Lot décodé : `e` (entrées), `ph` (empreinte).
-	 * @param int   $now     Horloge.
+	 * @param mixed  $payload  Lot décodé : `e` (entrées), `ph` (empreinte).
+	 * @param int    $now      Horloge.
+	 * @param string $recorded Visiteur dont le journal vient d'enregistrer un événement dans ce même envoi, ou vide.
 	 * @return int Événements mis en file.
 	 */
-	public static function accept_payload( $payload, int $now ): int {
+	public static function accept_payload( $payload, int $now, string $recorded = '' ): int {
 		if ( ! is_array( $payload ) || ! isset( $payload['e'] ) || ! is_array( $payload['e'] ) ) {
 			return 0;
 		}
@@ -94,7 +100,7 @@ final class Capi_Mirror_Route {
 		if ( 0 === $count || ! Capi_Mirror::enabled() || self::internal_sender() || Visitor_Context::is_bot() ) {
 			return 0;
 		}
-		$refused = self::refusal( $count, $now );
+		$refused = self::refusal( $count, $now, $recorded );
 		if ( '' !== $refused ) {
 			Capi_Mirror_Health::record_many( array( $refused => $count ), $now );
 			return 0;
@@ -122,19 +128,38 @@ final class Capi_Mirror_Route {
 	 * est le compteur de l'état de santé ; le compteur par groupe n'est écrit
 	 * que pour un lot dans les limites (I2).
 	 *
-	 * @param int $count Événements annoncés (bornés à `MAX_EVENTS`).
-	 * @param int $now   Horloge.
-	 * @return string `origin`, `site`, `rate` ou vide.
+	 * @param int    $count    Événements annoncés (bornés à `MAX_EVENTS`).
+	 * @param int    $now      Horloge.
+	 * @param string $recorded Visiteur enregistré par le journal dans ce même envoi, ou vide.
+	 * @return string `origin`, `unknown`, `site`, `rate` ou vide.
 	 */
-	private static function refusal( int $count, int $now ): string {
+	private static function refusal( int $count, int $now, string $recorded ): string {
 		if ( ! self::same_origin() ) {
 			return 'origin';
+		}
+		$visitor = Visitor_Context::cookie_id( Visitor_Context::VISITOR_COOKIE );
+		if ( '' === $visitor || ( $visitor !== $recorded && ! Capi_Mirror_Data::journal_knows( $visitor ) ) ) {
+			return 'unknown';
 		}
 		$site = max( 0, (int) apply_filters( 'famma_capi_mirror_site_limit', self::SITE_LIMIT ) );
 		if ( Rate_Counter::used( 'mr_site', $now ) + $count > $site ) {
 			return 'site';
 		}
 		return Visitor_Context::beacon_limited( 'mr', self::RATE_LIMIT, $count, $now ) ? 'rate' : '';
+	}
+
+	/**
+	 * Lot du journal trop gros (N6) : sa partie `m` est écartée et comptée, le journal est gardé.
+	 *
+	 * @param mixed $payload Partie `m` du lot.
+	 * @param int   $now     Horloge.
+	 * @return void
+	 */
+	public static function oversized( $payload, int $now ): void {
+		$count = is_array( $payload ) && is_array( $payload['e'] ?? null ) ? min( count( $payload['e'] ), Capi_Mirror_Event::MAX_EVENTS ) : 0;
+		if ( $count > 0 && Capi_Mirror::enabled() ) {
+			Capi_Mirror_Health::record_many( array( 'oversize' => $count ), $now );
+		}
 	}
 
 	/**

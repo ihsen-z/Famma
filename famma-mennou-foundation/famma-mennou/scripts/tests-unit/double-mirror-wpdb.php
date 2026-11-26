@@ -20,15 +20,17 @@
 
 const ARRAY_A = 'ARRAY_A';
 
-/** In-memory `wp_options` with the statements of Rate_Counter, Capi_Mirror_Store, Visitor_Store and Capi_Mirror_Data. */
+/** In-memory `wp_options` (and journal rows: `journal`, `known` visitors) with the statements of Rate_Counter, Capi_Mirror_Store, Visitor_Store and Capi_Mirror_Data. */
 final class Mirror_Test_Wpdb {
-	public string $options   = 'wp_options';
-	public string $prefix    = 'wp_';
-	public int $reads        = 0;
-	public int $writes       = 0;
-	public int $reads_inputs = 0;
-	public array $journal    = array();
-	public array $inputs     = array();
+	public string $options    = 'wp_options';
+	public string $prefix     = 'wp_';
+	public int $reads         = 0;
+	public int $writes        = 0;
+	public int $reads_inputs  = 0;
+	public int $reads_journal = 0;
+	public array $journal     = array();
+	public array $inputs      = array();
+	public array $known       = array();
 
 	public function esc_like( string $text ): string {
 		return addcslashes( $text, '_%\\' );
@@ -54,6 +56,15 @@ final class Mirror_Test_Wpdb {
 	public function get_var( array $prepared ) {
 		$this->race( $prepared['q'] );
 		++$this->reads;
+		if ( str_starts_with( $prepared['q'], 'SELECT 1 FROM' ) ) {
+			++$this->reads_journal;
+			$visitor = (string) $prepared['a'][1];
+			$seen    = in_array( $visitor, $this->known, true );
+			foreach ( $this->journal as $row ) {
+				$seen = $seen || in_array( $visitor, $row, true );
+			}
+			return $seen ? '1' : null;
+		}
 		$value = $GLOBALS['wp_test_options'][ (string) $prepared['a'][0] ] ?? null;
 		return null === $value ? null : (string) $value;
 	}

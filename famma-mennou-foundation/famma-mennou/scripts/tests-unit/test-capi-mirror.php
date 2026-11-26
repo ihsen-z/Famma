@@ -247,7 +247,7 @@ l5_check( str_contains( Tracking_Events::AJAX_LISTENER_SCRIPT, 'w.fammaRelay("Ad
 $GLOBALS['wp_test_scripts']['famma-pixels'] = array( 'after' => array() );
 Capi_Mirror_Script::enqueue_relay();
 $relay = implode( '', $GLOBALS['wp_test_scripts']['famma-pixels']['after'] );
-l5_check( str_contains( $relay, 'window.fammaRelay=window.fammaRelay||' ) && str_contains( $relay, 'f.take=take;f.attach=' ) && str_contains( $relay, '"https:\/\/qa.invalid\/wp-json\/famma\/v1\/meta-relay"' ), 'Relais imprimé pour un visiteur suivi : take/attach pour le journal, route propre en secours.' );
+l5_check( str_contains( $relay, 'window.fammaRelay=window.fammaRelay||' ) && str_contains( $relay, 'f.take=take;f.size=' ) && str_contains( $relay, '"https:\/\/qa.invalid\/wp-json\/famma\/v1\/meta-relay"' ), 'Relais imprimé pour un visiteur suivi : take/size/attach pour le journal, route propre en secours.' );
 mirror_reset( array( 'famma_meta_browser_mirror' => false ) );
 $GLOBALS['wp_test_scripts']['famma-pixels'] = array( 'after' => array() );
 Capi_Mirror_Script::enqueue_relay();
