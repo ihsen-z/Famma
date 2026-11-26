@@ -13,7 +13,7 @@
  * @package Famma_Test_Scenarios
  */
 
-// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter -- Doubles keep the signatures of the API they replace.
+// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter, Generic.Classes.DuplicateClassName -- Each standalone runner defines its own double of the API it replaces.
 // phpcs:disable Squiz.Commenting.VariableComment.Missing -- Doubles are documented by the API they replace.
 // phpcs:disable WordPress.WP.GlobalVariablesOverride.Prohibited -- Standalone runner outside WordPress: $wpdb is a double, $order a local fixture.
 
