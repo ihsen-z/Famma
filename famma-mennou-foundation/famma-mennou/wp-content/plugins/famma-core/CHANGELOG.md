@@ -1,5 +1,34 @@
 # Changelog — FAMMA Core
 
+## 0.3.54 — 2026-11-26 (Réformes du pixel Meta, lot 59 + C6 + L6)
+
+Plugin seul, thème inchangé. Base : production 0.3.53 (lot 58). La 0.3.51 du
+lot SEO, pas encore en ligne, sera rebasée par-dessus (0.3.55).
+
+- **Doublon serveur des événements du navigateur** (lot 59, Q21) : PageView,
+  ViewContent, AddToCart (boutique et formulaire express) et InitiateCheckout
+  repartent par la Conversions API avec le même event_id que le Pixel. Ils sont
+  portés par l'envoi du journal des visiteurs (une seule requête par page), puis
+  envoyés par lots par WP-Cron toutes les 5 minutes, jamais pendant la visite.
+  Valeurs recalculées depuis WooCommerce ; IP, user-agent, fbp, fbc et
+  external_id pris côté serveur. Seuls les visiteurs connus du journal sont
+  relayés ; origine du site exigée, rejeu refusé 24 h, limite par groupe
+  d'adresses, quantités bornées, URL réduite aux paramètres de campagne.
+  Interrupteur « Doublon serveur » dans FAMMA → Mesure (activé), avec les
+  compteurs des 7 jours ; orange seulement au-delà de 20 pertes réelles et 5 %
+  sur 24 h.
+- **Téléphone haché dans le navigateur** (Q22) : empreinte SHA-256 identique à
+  la CAPI, acceptée côté serveur seulement si le visiteur a bien saisi ce numéro.
+- **Commandes saisies à la main** (L6, Q24) : OrderPlaced 15 minutes après
+  l'enregistrement d'une commande créée dans l'écran de commande WooCommerce
+  (Messenger, WhatsApp, Instagram en « chat », sinon « phone_call »), revérifié
+  au départ ; jamais pour une commande d'essai ; interrupteur dans Mesure.
+- **E-mail d'essai des alertes** (C6) : bouton dans Mesure.
+- **Compteurs de débit** du journal et des saisies des visiteurs bornés et
+  atomiques ; file et verrou d'envoi atomiques ; nettoyage à la désactivation.
+- Tests : 59 suites vertes, CI sur les branches de travail ; bancs Docker du
+  26/11 conformes (complet + ciblé).
+
 ## 0.3.53 — 2026-11-25 (Réformes du pixel Meta, phase B)
 
 Plugin seul, thème inchangé. Base : production 0.3.52 (lot 57). La 0.3.51 du
